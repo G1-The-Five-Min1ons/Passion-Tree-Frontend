@@ -1,0 +1,8 @@
+# .dockerignore
+.dart_tool/
+build/
+.git/
+.github/
+.vscode/
+node_modules/
+*.log
