@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'core/theme/theme.dart'
+import 'core/theme/theme.dart';
 
 void main() {
   runApp(const MyApp());
