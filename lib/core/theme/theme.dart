@@ -15,7 +15,7 @@ class AppTheme {
         onSurface: AppColors.textPrimary,
       ),
       
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: AppColors.surface, //แก้ชั่วคราวจาก background เป็น surface จะได้ดูสี component ได้
 
       textTheme: TextTheme(
         // หัวข้อใหญ่สุด ใช้ Pixel Font
@@ -26,7 +26,7 @@ class AppTheme {
         // หัวข้อทั่วไป ใช้ Rubik SemiBold
         headlineMedium: AppTypography.h1SemiBold,
         headlineSmall: AppTypography.h2SemiBold,
-        titleLarge: AppTypography.titleSemiBold,
+        titleLarge: AppTypography.titleSemiBold, 
 
         // เนื้อหาทั่วไป ใช้ Rubik Regular/Medium
         bodyLarge: AppTypography.bodyRegular,
