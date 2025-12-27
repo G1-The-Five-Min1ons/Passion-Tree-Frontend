@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import '../../theme/typography.dart';
 
+
 // 1. ตัววาดขอบหยัก
 class _PixelBorderPainter extends CustomPainter {
   final Color color;
@@ -10,7 +11,7 @@ class _PixelBorderPainter extends CustomPainter {
   _PixelBorderPainter({required this.color, required this.pixelSize});
 
   @override
-void paint(Canvas canvas, Size size) {
+  void paint(Canvas canvas, Size size) {
   final paint = Paint()
     ..color = color
     ..style = PaintingStyle.fill;
@@ -94,6 +95,7 @@ class PixelTextField extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final ScrollController scrollController = ScrollController();
 
+    //ถ้าตอนเอาไปใช้ไม่ได้กำหนดสีมา ก็จะใช้สีจาก Theme ที่กำหนดไว้แล้วแทน
     final activeBorderColor = borderColor ?? colorScheme.primary;
     final activeLabelColor = labelColor ?? colorScheme.onSurface;
     final activeTextColor = textColor ?? colorScheme.onSurface;
