@@ -9,46 +9,49 @@ class _PixelBorderPainter extends CustomPainter {
   _PixelBorderPainter({required this.color, required this.pixelSize});
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
+void paint(Canvas canvas, Size size) {
+  final paint = Paint()
+    ..color = color
+    ..style = PaintingStyle.fill;
 
-    double w = size.width;
-    double h = size.height;
-    double p = pixelSize;
+  double w = size.width;
+  double h = size.height;
+  double p = pixelSize;
+  double s = p * 0.5; //ความหนาของขอบที่เพิ่มมา
 
-    // --- ส่วนที่ 1: เส้นขอบตรงหลัก (ปรับให้ Overlap เข้าไปในหยัก) ---
-    canvas.drawRect(Rect.fromLTWH(p * 3, 0, w - (p * 6), p), paint); // บน
-    canvas.drawRect(Rect.fromLTWH(p * 3, h - p, w - (p * 6), p), paint); // ล่าง
-    canvas.drawRect(Rect.fromLTWH(0, p * 3, p, h - (p * 6)), paint); // ซ้าย
-    canvas.drawRect(Rect.fromLTWH(w - p, p * 3, p, h - (p * 6)), paint); // ขวา
+  // --- 1. เส้นขอบตรงหลัก ---
+  canvas.drawRect(Rect.fromLTWH(p * 3, 0, w - (p * 6), p), paint); // บน 
+  canvas.drawRect(Rect.fromLTWH(0, p * 3, p, h - (p * 6)), paint); // ซ้าย 
+  
+  //เพิ่มความหนา
+  canvas.drawRect(Rect.fromLTWH(w - p - s, p * 3, p + s, h - (p * 6)), paint); // ขวา
+  canvas.drawRect(Rect.fromLTWH(p * 3, h - p - s, w - (p * 6), p + s), paint); // ล่าง
 
-    // --- ส่วนที่ 2: วาดรอยหยัก 4 ขั้นมุม ---
-    // มุมบนซ้าย
-    canvas.drawRect(Rect.fromLTWH(p * 3, p, p, p), paint);
-    canvas.drawRect(Rect.fromLTWH(p * 2, p, p, p * 2), paint); 
-    canvas.drawRect(Rect.fromLTWH(p, p * 2, p, p * 2), paint); 
-    canvas.drawRect(Rect.fromLTWH(p, p * 3, p, p), paint);
+  // --- 2. รอยหยักมุม ---
+  // มุมบนซ้าย
+  canvas.drawRect(Rect.fromLTWH(p * 3, p, p, p), paint);
+  canvas.drawRect(Rect.fromLTWH(p * 2, p, p, p * 2), paint); 
+  canvas.drawRect(Rect.fromLTWH(p, p * 2, p, p * 2), paint); 
+  canvas.drawRect(Rect.fromLTWH(p, p * 3, p, p), paint);
 
-    // มุมบนขวา
-    canvas.drawRect(Rect.fromLTWH(w - (p * 4), p, p, p), paint);
-    canvas.drawRect(Rect.fromLTWH(w - (p * 3), p, p, p * 2), paint);
-    canvas.drawRect(Rect.fromLTWH(w - (p * 2), p * 2, p, p * 2), paint);
-    canvas.drawRect(Rect.fromLTWH(w - (p * 2), p * 3, p, p), paint);
+  // มุมบนขวา (เพิ่มความหนา)
+  canvas.drawRect(Rect.fromLTWH(w - (p * 4), p, p, p), paint);
+  canvas.drawRect(Rect.fromLTWH(w - (p * 3), p, p, p * 2), paint);
+  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, p * 2, p + s, p * 2), paint);
+  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, p * 3, p + s, p), paint);
 
-    // มุมล่างซ้าย
-    canvas.drawRect(Rect.fromLTWH(p * 3, h - (p * 2), p, p), paint);
-    canvas.drawRect(Rect.fromLTWH(p * 2, h - (p * 3), p, p * 2), paint);
-    canvas.drawRect(Rect.fromLTWH(p, h - (p * 4), p, p * 2), paint);
-    canvas.drawRect(Rect.fromLTWH(p, h - (p * 4), p, p), paint);
+  // มุมล่างซ้าย (เพิ่มความหนา)
+  canvas.drawRect(Rect.fromLTWH(p * 3, h - (p * 2) - s, p, p + s), paint);
+  canvas.drawRect(Rect.fromLTWH(p * 2, h - (p * 3) - s, p, p * 2 + s), paint);
+  canvas.drawRect(Rect.fromLTWH(p, h - (p * 4), p, p * 2), paint);
+  canvas.drawRect(Rect.fromLTWH(p, h - (p * 4), p, p), paint);
 
-    // มุมล่างขวา
-    canvas.drawRect(Rect.fromLTWH(w - (p * 4), h - (p * 2), p, p), paint);
-    canvas.drawRect(Rect.fromLTWH(w - (p * 3), h - (p * 3), p, p * 2), paint);
-    canvas.drawRect(Rect.fromLTWH(w - (p * 2), h - (p * 4), p, p * 2), paint);
-    canvas.drawRect(Rect.fromLTWH(w - (p * 2), h - (p * 4), p, p), paint);
-  }
+  // มุมล่างขวา (เพิ่มความหนา)
+  canvas.drawRect(Rect.fromLTWH(w - (p * 4), h - (p * 2) - s, p, p + s), paint);
+  canvas.drawRect(Rect.fromLTWH(w - (p * 3), h - (p * 3) - s, p, p * 2 + s), paint);
+  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, h - (p * 4), p + s, p * 2), paint);
+  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, h - (p * 4), p + s, p), paint);
+}
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
@@ -80,7 +83,6 @@ class PixelTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // แสดง Label (เรียกใช้สีจาก onSurface ใน Theme)
         Text(
           label,
           style: AppTypography.subtitleSemiBold.copyWith(
@@ -92,7 +94,7 @@ class PixelTextField extends StatelessWidget {
         // ใช้ Stack เพื่อให้ Painter วาดทับบนพื้นหลังได้
         Stack(
           children: [
-            // ชั้นที่ 1: พื้นหลัง (เรียกใช้สี surface จาก Theme)
+            // ชั้นที่ 1: พื้นหลัง 
             Container(
               height: height,
               decoration: BoxDecoration(
@@ -106,7 +108,7 @@ class PixelTextField extends StatelessWidget {
                 size: Size(double.infinity, height),
                 painter: _PixelBorderPainter(
                   color: colorScheme.primary, 
-                  pixelSize: 4, // ความหนาของขอบพิกเซล
+                  pixelSize: 3, // ความหนาของขอบพิกเซล
                 ),
               ),
             ),
@@ -124,7 +126,7 @@ class PixelTextField extends StatelessWidget {
                 ),
                 decoration: InputDecoration(
                   hintText: hintText,
-                  hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.5)),
+                  hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
                   border: InputBorder.none, // ซ่อนขอบเดิม
                   isDense: true,
                 ),
