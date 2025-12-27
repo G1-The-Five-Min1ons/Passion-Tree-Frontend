@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import '../../theme/typography.dart';
 
 // 1. ตัววาดขอบหยัก
@@ -66,6 +67,12 @@ class PixelTextField extends StatelessWidget {
   final TextEditingController? controller;
   final bool isPassword;
   final double height;
+  final double? width;
+  final double pixelSize;
+  final Color? borderColor;
+  final Color? labelColor;
+  final Color? textColor;
+  final Color? hintColor;
 
   const PixelTextField({
     super.key,
@@ -74,29 +81,46 @@ class PixelTextField extends StatelessWidget {
     this.controller,
     this.isPassword = false,
     this.height = 56.0,
+    this.width,
+    this.pixelSize = 3.0, // ความหนาของขอบพิกเซล
+    this.borderColor,
+    this.labelColor,
+    this.textColor,
+    this.hintColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final ScrollController scrollController = ScrollController();
+
+    final activeBorderColor = borderColor ?? colorScheme.primary;
+    final activeLabelColor = labelColor ?? colorScheme.onSurface;
+    final activeTextColor = textColor ?? colorScheme.onSurface;
+    final activeHintColor = hintColor ?? AppColors.textSecondary.withValues(alpha: 0.5);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTypography.subtitleSemiBold.copyWith(
-            color: colorScheme.onSurface,
+        Padding(
+          padding: const EdgeInsets.only(left: 10),
+          child: Text(
+            label,
+            style: AppTypography.subtitleSemiBold.copyWith(
+              color: activeLabelColor,
+            ),
           ),
         ),
         const SizedBox(height: 8),
         
-        // ใช้ Stack เพื่อให้ Painter วาดทับบนพื้นหลังได้
-        Stack(
+        // ใช้ SizedBox หุ้มเพื่อควบคุมความกว้างที่รับมาจาก Constructor
+        SizedBox(
+          width: width ?? double.infinity, 
+          height: height,
+          child: Stack(
           children: [
             // ชั้นที่ 1: พื้นหลัง 
             Container(
-              height: height,
               decoration: BoxDecoration(
                 color: colorScheme.surface,
               ),
@@ -105,34 +129,42 @@ class PixelTextField extends StatelessWidget {
             // ชั้นที่ 2: วาดขอบหยัก
             IgnorePointer(
               child: CustomPaint(
-                size: Size(double.infinity, height),
+                size: Size(width ?? double.infinity, height),
                 painter: _PixelBorderPainter(
-                  color: colorScheme.primary, 
-                  pixelSize: 3, // ความหนาของขอบพิกเซล
+                  color: activeBorderColor,
+                  pixelSize: pixelSize,
                 ),
               ),
             ),
             
             // ชั้นที่ 3: ช่องกรอกข้อความ
-            Container(
-              height: height,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              alignment: Alignment.center,
-              child: TextField(
-                controller: controller,
-                obscureText: isPassword,
-                style: AppTypography.bodyRegular.copyWith(
-                  color: colorScheme.onSurface,
-                ),
-                decoration: InputDecoration(
-                  hintText: hintText,
-                  hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
-                  border: InputBorder.none, // ซ่อนขอบเดิม
-                  isDense: true,
+              Container(
+                height: height,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                alignment: Alignment.topLeft,
+                child: Scrollbar(
+                  controller: scrollController, 
+                  thumbVisibility: true,
+                child: TextField(
+                  controller: controller,
+                  scrollController: scrollController,
+                  maxLines: null,
+                  expands: true, 
+                  obscureText: isPassword,
+                  style: AppTypography.bodyRegular.copyWith(
+                    color: activeTextColor,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hintText,
+                    hintStyle: TextStyle(color: activeHintColor),
+                    border: InputBorder.none, // ซ่อนขอบเดิม
+                    isDense: true,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
