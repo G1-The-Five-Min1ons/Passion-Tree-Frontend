@@ -15,7 +15,7 @@ class AppTheme {
         onSurface: AppColors.textPrimary,
       ),
       
-      scaffoldBackgroundColor: AppColors.surface, //แก้ชั่วคราวจาก background เป็น surface จะได้ดูสี component ได้
+      scaffoldBackgroundColor: AppColors.background, //ถ้าอยากดูสี component ชัดให้แก้จาก background เป็น surface แต่อย่าลืมแก้กลับ
 
       textTheme: TextTheme(
         // หัวข้อใหญ่สุด ใช้ Pixel Font

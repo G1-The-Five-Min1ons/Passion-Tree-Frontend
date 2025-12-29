@@ -165,3 +165,14 @@ class _PixelRadioGroupState extends State<PixelRadioGroup> {
     );
   }
 }
+
+//---------------------- วิธีเรียกใช้ ----------------------//
+//int _score = 0; --- ต้องกำหนดไว้ด้วย เพื่อให้เก็บค่าที่เลือกลง db แต่ตอนนี้ยังไม่มี logic
+/* PixelRadioGroup(
+            onSelected: (value) {
+              setState(() {
+                _score = value;
+              });
+            }
+          ),
+*/

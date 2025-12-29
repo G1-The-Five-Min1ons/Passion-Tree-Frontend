@@ -172,3 +172,16 @@ class PixelTextField extends StatelessWidget {
     );
   }
 }
+
+//---------------------- วิธีเรียกใช้ ----------------------//
+/*
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 30), -- กันขอบกล่องติดขอบจอเกินไป
+              child: PixelTextField(
+                label: 'เทส', -- ชื่อหัวข้อข้างบน
+                hintText: 'Summary', --ตัวอักษรข้างใน
+                height: 46, -- จัดการความสูง บรรทัดเดียว 46 กำลังสวย
+                //borderColor: Theme.of(context).colorScheme.error, -- ใส่เมื่อต้องการเปลี่ยนสีขอบ
+              ),
+            ),
+*/

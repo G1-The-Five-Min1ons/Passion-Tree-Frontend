@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'core/theme/theme.dart';
-import 'core/common_widgets/selections.dart/radio.dart';
+import 'core/common_widgets/selections/radio.dart';
+import 'core/common_widgets/inputs/text_field.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +17,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: AppTheme.lightTheme,
       themeMode: ThemeMode.light,
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Learning Path'),
     );
   }
 }
@@ -33,12 +35,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
+     return Scaffold(
+      appBar: AppBarWidget(
+        title: "Learning Path",
+        showBackButton: true,
+        ),
+    body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -49,7 +51,16 @@ class _MyHomePageState extends State<MyHomePage> {
               });
             }
           ),
-          
+
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 30), // กันขอบกล่องติดขอบจอเกินไป
+              child: PixelTextField(
+                label: 'เทส',
+                hintText: 'Summary',
+                height: 46,
+                //borderColor: Theme.of(context).colorScheme.error,
+              ),
+            ),
           ],
         ),
       ),
