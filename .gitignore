@@ -41,6 +41,7 @@ app.*.map.json
 /android/app/release
 
 # FVM
-.fvm/versions/          # ignore Flutter SDK cache
 !.fvm/fvm_config.json   # commit config
-.fvm/flutter_sdk        # ignore symlink (ต้องให้เพื่อนสร้างใหม่เอง)
+
+# FVM Version Cache
+.fvm/
