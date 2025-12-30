@@ -19,7 +19,8 @@ migrate_working_dir/
 .idea/
 
 # VS Code
-.vscode/
+# แนะนำให้คอมเมนต์ .vscode/ ออก เพื่อให้เพื่อนในทีมได้รับค่า dart.flutterSdkPath ร่วมกัน
+# .vscode/
 
 # Flutter / Dart / Pub
 **/doc/api/
@@ -41,7 +42,7 @@ app.*.map.json
 /android/app/release
 
 # FVM
-!.fvm/fvm_config.json   # commit config
+!.fvmrc         # เก็บไฟล์คอนฟิกหลักไว้ (สำคัญมาก)
 
 # FVM Version Cache
 .fvm/
