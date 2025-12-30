@@ -39,3 +39,9 @@ class AppTheme {
     );
   }
 }
+
+class AppSpacing {
+  static const double xmargin = 30.0;
+  static const double ymargin = 50.0;
+  static const double elementgap = 16.0;
+}
