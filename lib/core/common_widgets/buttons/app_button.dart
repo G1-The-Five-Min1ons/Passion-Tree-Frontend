@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'button_enums.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 
 class AppButton extends StatefulWidget {
   final AppButtonVariant variant;
