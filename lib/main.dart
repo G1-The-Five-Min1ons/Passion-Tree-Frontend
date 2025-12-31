@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
+import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
+
+
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
@@ -43,6 +49,40 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const Text('You have pushed the button this many times:'),
+        Text(
+          'TEST',
+          style: const TextStyle(
+            fontFamily: 'PressStart2P',
+            fontSize: 20,
+          ),
+        ),
+
+        // ===== Pixel Button =====
+        //text only 
+        AppButton(
+              variant: AppButtonVariant.text,
+              text: 'Text',
+              onPressed: () {
+                debugPrint('Submit pressed');
+              },
+            ),
+
+        //textWithIcon
+        AppButton(
+              variant: AppButtonVariant.textWithIcon,
+              text: 'Like',
+              icon: const PixelIcon('assets/icons/Pixel_heart.png'),
+              onPressed: () {},
+            ),
+
+        //icon only
+        AppButton(
+              variant: AppButtonVariant.iconOnly,
+              icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
+              onPressed: () {},
+            ),
+
 
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 30), // กันขอบกล่องติดขอบจอเกินไป
