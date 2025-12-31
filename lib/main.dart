@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
-import 'core/theme/theme.dart';
-import 'core/common_widgets/inputs/text_field.dart';
+import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'features/reflection_tree/presentation/pages/reflection_tree.dart';
 
 void main() {

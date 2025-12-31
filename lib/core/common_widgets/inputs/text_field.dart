@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import '../../theme/typography.dart';
+import 'package:passion_tree_frontend/core/theme/typography.dart';
 
 
 // 1. ตัววาดขอบหยัก
