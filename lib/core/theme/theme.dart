@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'colors.dart';
-import 'typography.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/core/theme/typography.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
@@ -38,4 +38,10 @@ class AppTheme {
       ),
     );
   }
+}
+
+class AppSpacing {
+  static const double xmargin = 30.0;
+  static const double ymargin = 50.0;
+  static const double elementgap = 16.0;
 }

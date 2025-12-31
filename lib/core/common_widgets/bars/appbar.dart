@@ -18,8 +18,10 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     final Color contentColor = Theme.of(context).colorScheme.onPrimary;
 
     return Container(
+      height: preferredSize.height + MediaQuery.of(context).padding.top,
       color : backgroundColor.withValues(alpha: 0.6), 
       child : SafeArea( //ไม่ให้ทับเนื้อหาสำคัญเช่น เวลา แบตเตอรี่
+        bottom : false,
         child: Stack(
           alignment: Alignment.center,
           children: [

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
-import 'core/theme/theme.dart';
-import 'core/common_widgets/selections/radio.dart';
-import 'core/common_widgets/inputs/text_field.dart';
+import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
+import 'features/reflection_tree/presentation/pages/reflection_tree.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: AppTheme.lightTheme,
       themeMode: ThemeMode.light,
-      home: const MyHomePage(title: 'Learning Path'),
+      home: const ReflectionTreePage(),
     );
   }
 }
@@ -31,7 +31,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _score = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -44,13 +43,6 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            PixelRadioGroup(
-            onSelected: (value) {
-              setState(() {
-                _score = value;
-              });
-            }
-          ),
 
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 30), // กันขอบกล่องติดขอบจอเกินไป
