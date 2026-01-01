@@ -6,7 +6,7 @@ enum AppButtonVariant {
   iconOnly,      // ➕ อย่างเดียว
 }
 
-enum AppButtonSize {small,large}
-enum NavigationButtonWeight { light, medium }
+enum AppButtonSize { small }
+enum NavigationButtonWeight { light }
 
 enum NavigationDirection { left, right, up, down }

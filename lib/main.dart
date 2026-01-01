@@ -3,8 +3,7 @@ import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
-
-
+import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 
 void main() {
   runApp(const MyApp());
@@ -126,6 +125,14 @@ class _MyHomePageState extends State<MyHomePage> {
               variant: AppButtonVariant.iconOnly,
               icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
               onPressed: () {},
+            ),
+
+        // ===== Navigation Button =====
+        NavigationButton(
+              direction: NavigationDirection.right,
+              onPressed: () {
+                debugPrint('Right pressed');
+              },
             ),
 
           ],
