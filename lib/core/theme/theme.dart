@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'colors.dart';
-import 'typography.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/core/theme/typography.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
@@ -15,7 +15,7 @@ class AppTheme {
         onSurface: AppColors.textPrimary,
       ),
       
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: AppColors.background, //ถ้าอยากดูสี component ชัดให้แก้จาก background เป็น surface แต่อย่าลืมแก้กลับ
 
       textTheme: TextTheme(
         // หัวข้อใหญ่สุด ใช้ Pixel Font
@@ -26,7 +26,7 @@ class AppTheme {
         // หัวข้อทั่วไป ใช้ Rubik SemiBold
         headlineMedium: AppTypography.h1SemiBold,
         headlineSmall: AppTypography.h2SemiBold,
-        titleLarge: AppTypography.titleSemiBold,
+        titleLarge: AppTypography.titleSemiBold, 
 
         // เนื้อหาทั่วไป ใช้ Rubik Regular/Medium
         bodyLarge: AppTypography.bodyRegular,
@@ -38,4 +38,10 @@ class AppTheme {
       ),
     );
   }
+}
+
+class AppSpacing {
+  static const double xmargin = 30.0;
+  static const double ymargin = 50.0;
+  static const double elementgap = 16.0;
 }
