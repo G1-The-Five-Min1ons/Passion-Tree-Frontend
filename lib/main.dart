@@ -4,6 +4,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button_white.dart';
 
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
@@ -82,14 +83,20 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {},
             ),
 
-        // ===== Navigation Button =====
-        NavigationButton(
-              direction: NavigationDirection.right,
-              onPressed: () {
-                debugPrint('Right pressed');
-              },
-            ),
-
+            // ===== Navigation Button =====
+            NavigationButton(
+                  direction: NavigationDirection.right,
+                  onPressed: () {
+                    debugPrint('Right pressed');
+                  },
+                ),
+            // ===== White Navigation Button =====
+            NavigationButtonWhite(
+                  direction: NavigationDirection.left,
+                  onPressed: () {
+                    debugPrint('Left pressed');
+                  },
+                ),
             // ===== ปุ่มไปหน้า Reflection =====
             AppButton(
               variant: AppButtonVariant.text,

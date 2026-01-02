@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 
-class NavigationButton extends StatelessWidget {
+class NavigationButtonWhite extends StatelessWidget {
   final NavigationDirection direction;
   final VoidCallback onPressed;
 
-  const NavigationButton({
+  const NavigationButtonWhite({
     super.key,
     required this.direction,
     required this.onPressed,
@@ -25,20 +25,20 @@ class NavigationButton extends StatelessWidget {
     );
   }
 
-  /// ขนาดปุ่ม (อิงจาก Figma)
-  double _size() => 30;
+  /// ขนาดปุ่ม 
+  double _size() => 20;
 
-  /// path ของ pixel navigation button
+  /// path ของ white navigation button (ซ้าย / ขวา เท่านั้น)
   String _assetPath() {
     switch (direction) {
       case NavigationDirection.left:
-        return 'assets/buttons/navigation/pixel/left_small_light.png';
+        return 'assets/buttons/navigation/white/left_white.png';
       case NavigationDirection.right:
-        return 'assets/buttons/navigation/pixel/right_small_light.png';
-      case NavigationDirection.up:
-        return 'assets/buttons/navigation/pixel/up_small_light.png';
-      case NavigationDirection.down:
-        return 'assets/buttons/navigation/pixel/down_small_light.png';
+        return 'assets/buttons/navigation/white/right_white.png';
+      default:
+        throw UnsupportedError(
+          'NavigationButtonWhite supports only left & right directions',
+        );
     }
   }
 }
