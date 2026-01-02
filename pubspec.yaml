@@ -63,7 +63,9 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - assets/icons/
-    - assets/buttons/navigation/
+    - assets/buttons/navigation/pixel/
+    - assets/buttons/navigation/white/
+
     
 
   # An image asset can refer to one or more resolution-specific "variants", see
