@@ -13,5 +13,7 @@ class AppColors{
   static const Color status = Color(0xFF2AB930);
   static const Color cancel = Color(0xFFDA100B);
   static const Color warning = Color(0xFFFFCD29);
+  static const Color bar = Color(0XFF00327C);
+  static const Color iconbar = Color(0XFF8ABCFF);
 }
 

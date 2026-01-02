@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
+import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
+
+import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/reflection_tree.dart';
 
 void main() {
   runApp(const MyApp());
@@ -9,30 +18,19 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: AppTheme.lightTheme,
       themeMode: ThemeMode.light,
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Home'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
@@ -40,52 +38,89 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+      appBar: AppBarWidget(
+        title: "Learning Path",
+        showBackButton: true,
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
            mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text('TEST', style: Theme.of(context).textTheme.displaySmall),
             Text('button:', style: AppPixelTypography.title),
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('You have pushed the button this many times:'),
+            Text(
+              'TEST',
+              style: const TextStyle(
+                fontFamily: 'PressStart2P',
+                fontSize: 20,
+              ),
+            ),
+
+            // ===== Pixel Button =====
+            //text only 
+            AppButton(
+              variant: AppButtonVariant.text,
+              text: 'Text',
+              onPressed: () {
+                debugPrint('Submit pressed');
+              },
+            ),
+
+            //textWithIcon
+            AppButton(
+              variant: AppButtonVariant.textWithIcon,
+              text: 'Like',
+              icon: const PixelIcon('assets/icons/Pixel_heart.png'),
+              onPressed: () {},
+            ),
+
+            //icon only
+            AppButton(
+              variant: AppButtonVariant.iconOnly,
+              icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
+              onPressed: () {},
+            ),
+
+        // ===== Navigation Button =====
+        NavigationButton(
+              direction: NavigationDirection.right,
+              onPressed: () {
+                debugPrint('Right pressed');
+              },
+            ),
+
+            // ===== ปุ่มไปหน้า Reflection =====
+            AppButton(
+              variant: AppButtonVariant.text,
+              text: 'Go to Reflection',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ReflectionTreePage(),
+                  ),
+                );
+              },
+            ),
+
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 30), // กันขอบกล่องติดขอบจอเกินไป
+              child: PixelTextField(
+                label: 'เทส',
+                hintText: 'Summary',
+                height: 46,
+                //borderColor: Theme.of(context).colorScheme.error,
+              ),
+            ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
