@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
@@ -48,12 +47,10 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
         child: Column(
-           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text('TEST', style: Theme.of(context).textTheme.displaySmall),
             Text('button:', style: AppPixelTypography.title),
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
             const Text('You have pushed the button this many times:'),
             Text(
               'TEST',
