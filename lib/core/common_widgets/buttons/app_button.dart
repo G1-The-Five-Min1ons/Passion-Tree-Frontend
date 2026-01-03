@@ -15,7 +15,7 @@ class AppButton extends StatefulWidget {
     required this.onPressed,
     this.text,
     this.icon,
-    this.size = AppButtonSize.large,
+    this.size = AppButtonSize.small,
   });
 
   @override

@@ -1,4 +1,8 @@
+.fvmrc
 # Miscellaneous
+# FVM
+.fvm/
+.fvmrc
 *.class
 *.log
 *.pyc

@@ -39,6 +39,12 @@ class AppPixelTypography {
     fontSize: 10,
     fontWeight: FontWeight.w400,
   );
+
+  static const TextStyle littleSmall = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 8,
+    fontWeight: FontWeight.w400,
+  );
 }
 
 //Rubik (UI / Content)
