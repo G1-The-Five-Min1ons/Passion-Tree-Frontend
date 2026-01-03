@@ -29,10 +29,15 @@ class LearningPathOverviewPage extends StatelessWidget {
             // ===== HEADER TITLE =====
             Container(
               height: 72,
-              color: colors.primary.withValues(alpha: 0.25),
               alignment: Alignment.centerLeft,
-              child: const Text('HEADER TITLE'),
+              child: Text(
+                'Learning Paths',
+                style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
             ),
+
 
             // Header → Search (40)
             const SizedBox(height: 40),
@@ -49,11 +54,13 @@ class LearningPathOverviewPage extends StatelessWidget {
             const SizedBox(height: 40),
 
             // ===== POPULAR TITLE =====
-            Container(
-              height: 24,
-              color: colors.surface.withValues(alpha: 0.6),
-              child: const Text('POPULAR TITLE'),
+            Text(
+              'Popular\nLearning Paths',
+              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
             ),
+
 
             // Title → Content (40)
             const SizedBox(height: 40),
@@ -69,10 +76,11 @@ class LearningPathOverviewPage extends StatelessWidget {
             const SizedBox(height: 60),
 
             // ===== ALL TITLE =====
-            Container(
-              height: 24,
-              color: colors.surface.withValues(alpha: 0.6),
-              child: const Text('ALL TITLE'),
+           Text(
+              'All Learning Paths',
+              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
             ),
 
             // Title → Content (40)
