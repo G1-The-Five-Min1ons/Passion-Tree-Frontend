@@ -6,7 +6,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button_white.dart';
-
+import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_overview_page.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/reflection_tree.dart';
@@ -113,6 +113,21 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
             ),
+
+            // ===== ปุ่มไปหน้า Learning Path =====
+            AppButton(
+              variant: AppButtonVariant.text,
+              text: 'Go to Learning Path',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LearningPathOverviewPage(),
+                  ),
+                );
+              },
+            ),
+
 
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 30), // กันขอบกล่องติดขอบจอเกินไป
