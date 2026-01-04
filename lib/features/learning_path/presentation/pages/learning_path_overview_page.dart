@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
-
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 class LearningPathOverviewPage extends StatelessWidget {
   const LearningPathOverviewPage({super.key});
 
@@ -13,10 +12,6 @@ class LearningPathOverviewPage extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: const AppBarWidget(
-        title: 'Learning Paths',
-        showBackButton: false,
-      ),
       body: Padding(
         padding: const EdgeInsets.only(
           left: AppSpacing.xmargin,
@@ -66,10 +61,14 @@ class LearningPathOverviewPage extends StatelessWidget {
             const SizedBox(height: 40),
 
             // ===== POPULAR LIST =====
-            Container(
-              height: 180,
-              color: colors.primary.withValues(alpha: 0.15),
-              child: const Center(child: Text('POPULAR LIST')),
+          SizedBox(
+              height: 245,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: 5,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, __) => CourseCard(),
+              ),
             ),
 
             // Section → Section (60)
