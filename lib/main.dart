@@ -8,9 +8,9 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_but
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button_white.dart';
 
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
-import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/reflection_tree.dart';
 
+import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album.dart';
 
 void main() {
@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: AppTheme.lightTheme,
       themeMode: ThemeMode.light,
-      home: const MyHomePage(title: 'Home'),
+      home: const HomeBarWidget(),
     );
   }
 }

@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 class PixelIcon extends StatelessWidget {
   final String asset;
   final double size;
+  final Color? color;
 
   const PixelIcon(
     this.asset, {
     super.key,
     this.size = 16, // ค่า default ตาม Figma
+    this.color,
   });
 
   @override
@@ -17,6 +19,7 @@ class PixelIcon extends StatelessWidget {
       asset,
       width: size,
       height: size,
+      color: color,
       filterQuality: FilterQuality.none, //สำคัญไม่งั้นพิกเซลจะถูกเบลอ
     );
   }
