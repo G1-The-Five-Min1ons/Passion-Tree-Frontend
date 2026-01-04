@@ -65,10 +65,13 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
 
       BottomNavigationBarItem _buildNavItem(String label, String assetPath, int index) {
         return BottomNavigationBarItem(
-          icon: PixelIcon(
+          icon: Padding(
+          padding: const EdgeInsets.only(bottom: 5),
+          child: PixelIcon(
             assetPath,
             size: 24,
             color: _selectedIndex == index ? Colors.white : null,
+            ),
           ),
           label: label,
         );
