@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/mockdata/albumdata.dart';
@@ -12,10 +11,6 @@ class ReflectionTreePage extends StatelessWidget {
     final albumList = AlbumData.albums;
 
     return Scaffold(
-      appBar: AppBarWidget(
-        title: "Reflect",
-        showBackButton: false,
-      ),
       body: Padding(
         padding: const EdgeInsets.only(
           left: AppSpacing.xmargin,

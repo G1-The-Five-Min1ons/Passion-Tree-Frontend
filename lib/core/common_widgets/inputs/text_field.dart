@@ -22,51 +22,46 @@ class _PixelBorderPainter extends CustomPainter {
   double s = p * 0.5; //ความหนาของขอบที่เพิ่มมา
 
   final fillPaint = Paint()
-  ..color = fillColor // นี่คือสีขาว (Surface)
+  ..color = fillColor 
   ..style = PaintingStyle.fill;
 
-// วาดสี่เหลี่ยม 3 อันซ้อนกันเป็นทรง "กากบาท" 
-// เพื่อให้ได้พื้นหลังที่เว้าหลบมุมพิกเซลพอดีเป๊ะ
-  canvas.drawRect(Rect.fromLTWH(p * 2, p * 2, w - (p * 4), h - (p * 3)), fillPaint);
-  canvas.drawRect(Rect.fromLTWH(p * 3.8, 0, w - (p * 7), h), fillPaint);
-  canvas.drawRect(Rect.fromLTWH(0, p * 3.8, w, h - (p * 7)), fillPaint);
+  canvas.drawRect(Rect.fromLTWH(p * 2, p * 2, w - (p * 4), h - (p * 4)), fillPaint);
+  canvas.drawRect(Rect.fromLTWH(p * 3, 0, w - (p * 6), h), fillPaint);
+  canvas.drawRect(Rect.fromLTWH(0, p * 3, w, h - (p * 6)), fillPaint);
 
   final borderPaint = Paint()
     ..color = color
     ..style = PaintingStyle.fill;
 
   // --- 1. เส้นขอบตรงหลัก ---
-  canvas.drawRect(Rect.fromLTWH(p * 3, 0, w - (p * 6), p), borderPaint); // บน 
-  canvas.drawRect(Rect.fromLTWH(0, p * 3, p, h - (p * 6)), borderPaint); // ซ้าย 
+  canvas.drawRect(Rect.fromLTWH(p * 2, 0, w - (p * 4), p), borderPaint); // บน 
+  canvas.drawRect(Rect.fromLTWH(0, p * 2, p, h - (p * 4)), borderPaint); // ซ้าย 
 
   //เพิ่มความหนา
-  canvas.drawRect(Rect.fromLTWH(w - p - s, p * 3, p + s, h - (p * 6)), borderPaint); // ขวา
-  canvas.drawRect(Rect.fromLTWH(p * 3, h - p - s, w - (p * 6), p + s), borderPaint); // ล่าง
+  canvas.drawRect(Rect.fromLTWH(w - p - s, p * 2, p + s, h - (p * 4)), borderPaint); // ขวา
+  canvas.drawRect(Rect.fromLTWH(p * 2, h - p - s, w - (p * 4), p + s), borderPaint); // ล่าง
 
   // --- 2. รอยหยักมุม ---
   // มุมบนซ้าย
-  canvas.drawRect(Rect.fromLTWH(p * 3, p, p, p), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(p * 2, p, p, p * 2), borderPaint); 
-  canvas.drawRect(Rect.fromLTWH(p, p * 2, p, p * 2), borderPaint); 
-  canvas.drawRect(Rect.fromLTWH(p, p * 3, p, p), borderPaint);
+  canvas.drawRect(Rect.fromLTWH(p * 2, p, p, p), borderPaint);
+  canvas.drawRect(Rect.fromLTWH(p, p, p, p * 2), borderPaint); 
+  canvas.drawRect(Rect.fromLTWH(p, p * 2, p, p), borderPaint); 
 
   // มุมบนขวา (เพิ่มความหนา)
-  canvas.drawRect(Rect.fromLTWH(w - (p * 4), p, p, p), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(w - (p * 3), p, p, p * 2), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, p * 2, p + s, p * 2), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, p * 3, p + s, p), borderPaint);
+  canvas.drawRect(Rect.fromLTWH(w - (p * 3) - s, p, p, p), borderPaint);
+  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, p, p + s, p), borderPaint);
+  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, p * 2, p + s, p), borderPaint);
 
   // มุมล่างซ้าย (เพิ่มความหนา)
-  canvas.drawRect(Rect.fromLTWH(p * 3, h - (p * 2) - s, p, p + s), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(p * 2, h - (p * 3) - s, p, p * 2 + s), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(p, h - (p * 4), p, p * 2), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(p, h - (p * 4), p, p), borderPaint);
+  canvas.drawRect(Rect.fromLTWH(p * 2, h - (p * 2) - s, p, p + s), borderPaint);
+  canvas.drawRect(Rect.fromLTWH(p, h - (p * 2) - s, p, p + s), borderPaint);
+  canvas.drawRect(Rect.fromLTWH(p, h - (p * 3) - s, p, p), borderPaint);
+
 
   // มุมล่างขวา (เพิ่มความหนา)
-  canvas.drawRect(Rect.fromLTWH(w - (p * 4), h - (p * 2) - s, p, p + s), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(w - (p * 3), h - (p * 3) - s, p, p * 2 + s), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, h - (p * 4), p + s, p * 2), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, h - (p * 4), p + s, p), borderPaint);
+  canvas.drawRect(Rect.fromLTWH(w - (p * 3) - s, h - (p * 2) - s, p, p + s), borderPaint);
+  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, h - (p * 2) - s, p + s, p + s), borderPaint);
+  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, h - (p * 3) - s, p + s, p), borderPaint);
 }
 
   @override
