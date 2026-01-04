@@ -8,10 +8,10 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_but
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button_white.dart';
 
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
-import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/reflection_tree.dart';
 
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album.dart';
 
 void main() {
   runApp(const MyApp());
@@ -115,16 +115,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
             ),
-
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 30), // กันขอบกล่องติดขอบจอเกินไป
-              child: PixelTextField(
-                label: 'เทส',
-                hintText: 'Summary',
-                height: 46,
-                //borderColor: Theme.of(context).colorScheme.error,
-              ),
-            ),
+            PixelAlbumCover(
+            size: 150,
+            imageUrl: 'https://images.theconversation.com/files/45159/original/rptgtpxd-1396254731.jpg?ixlib=rb-4.1.0&q=45&auto=format&w=1356&h=668&fit=crop',
+            title: 'Science',
+            subtitle: 'Edited 10 minutes ago',
+            )
           ],
         ),
       ),
