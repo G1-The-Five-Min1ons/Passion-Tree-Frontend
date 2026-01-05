@@ -14,118 +14,128 @@ class LearningPathOverviewPage extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.only(
-          left: AppSpacing.xmargin,
-          right: AppSpacing.xmargin,
-          top: AppSpacing.ymargin,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ===== HEADER TITLE =====
-            Container(
-              height: 72,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Learning Paths',
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimary,
-                ),
-              ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: AppSpacing.xmargin,
+              right: AppSpacing.xmargin,
+              top: AppSpacing.ymargin,
             ),
-
-
-            // Header → Search (40)
-            const SizedBox(height: 40),
-
-            // ===== SEARCH BAR =====
-            Container(
-              height: 44,
-              color: colors.secondary.withValues(alpha: 0.25),
-              alignment: Alignment.centerLeft,
-              child: const Text('SEARCH BAR'),
-            ),
-
-            // Title → Section (40)
-            const SizedBox(height: 40),
-
-            // ===== POPULAR TITLE =====
-            Text(
-              'Popular\nLearning Paths',
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
-            ),
-
-
-            // Title → Content (40)
-            const SizedBox(height: 40),
-
-            // ===== POPULAR LIST =====
-          SizedBox(
-              height: PixelCourseCard.cardHeight, // 245
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 3),
-                itemCount: mockCourses.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  return PixelCourseCard(course: mockCourses[index]);
-                },
-              ),
-            ),
-
-
-            // Section → Section (60)
-            const SizedBox(height: 60),
-
-            // ===== ALL TITLE =====
-           Text(
-              'All Learning Paths',
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
-            ),
-
-            // Title → Content (40)
-            const SizedBox(height: 40),
-
-            // ===== ALL LIST =====
-            Expanded(
-              child: Container(
-                color: colors.primary.withValues(alpha: 0.15),
-                child: const Center(child: Text('ALL LIST')),
-              ),
-            ),
-
-            // Content → More button (40)
-            const SizedBox(height: 40),
-
-            // ===== MORE BUTTON =====
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'More',
-                    style: AppPixelTypography.smallTitle.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ===== HEADER TITLE =====
+                SizedBox(
+                  height: 72,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Learning Paths',
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 5), // ตาม Figma
-                  NavigationButton(
-                    direction: NavigationDirection.down,
-                    onPressed: () {
-                      debugPrint('Down pressed');
+                ),
+
+                // Header → Search (40)
+                const SizedBox(height: 40),
+
+                // ===== SEARCH BAR =====
+                Container(
+                  height: 44,
+                  width: double.infinity,
+                  color: colors.secondary.withValues(alpha: 0.25),
+                  alignment: Alignment.centerLeft,
+                  child: const Text('SEARCH BAR'),
+                ),
+
+                // Title → Section (40)
+                const SizedBox(height: 40),
+
+                // ===== POPULAR TITLE =====
+                Text(
+                  'Popular\nLearning Paths',
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+
+                // Title → Content (40)
+                const SizedBox(height: 40),
+
+                // ===== POPULAR LIST =====
+                SizedBox(
+                  height: PixelCourseCard.cardHeight, // 245
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    itemCount: mockCourses.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemBuilder: (context, index) {
+                      return PixelCourseCard(course: mockCourses[index]);
                     },
                   ),
-                ],
-              ),
+                ),
+
+                // Section → Section (60)
+                const SizedBox(height: 60),
+
+                // ===== ALL TITLE =====
+                Text(
+                  'All Learning Paths',
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+
+                // Title → Content (40)
+                const SizedBox(height: 40),
+
+                // ===== ALL LIST =====
+                // (placeholder ตอนนี้ — ไม่ใช้ Expanded)
+                Container(
+                  height: 300, // mock ความสูงไว้ก่อน
+                  width: double.infinity,
+                  color: colors.primary.withValues(alpha: 0.15),
+                  alignment: Alignment.center,
+                  child: const Text('ALL LIST'),
+                ),
+
+                // Content → More button (40)
+                const SizedBox(height: 40),
+
+                // ===== MORE BUTTON =====
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'More',
+                        style: AppPixelTypography.smallTitle.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      NavigationButton(
+                        direction: NavigationDirection.down,
+                        onPressed: () {
+                          debugPrint('Down pressed');
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                // bottom safe spacing
+                const SizedBox(height: 40),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
+
