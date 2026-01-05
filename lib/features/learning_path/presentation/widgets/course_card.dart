@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 
 /// =======================================================
 /// Pixel Painter (private)
@@ -138,10 +139,16 @@ class PixelCourseCard extends StatelessWidget {
   static const double cardWidth = 180;
   static const double cardHeight = 245;
 
+  final Course course;
   final double pixelSize;
   final Color? color;
 
-  const PixelCourseCard({super.key, this.pixelSize = 3, this.color});
+  const PixelCourseCard({
+    super.key,
+    required this.course,
+    this.pixelSize = 3,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -153,18 +160,17 @@ class PixelCourseCard extends StatelessWidget {
       height: cardHeight,
       child: Stack(
         children: [
-          // ---------- Content ----------
           Positioned.fill(
             child: ClipPath(
               clipper: _PixelCourseClipper(pixelSize),
               child: Column(
                 children: [
-                  // Image section
+                  // Image (mock)
                   SizedBox(
                     height: 90,
                     width: double.infinity,
                     child: Container(
-                      color: colors.primary.withOpacity(0.25),
+                      color: colors.primary.withValues(alpha: 0.15),
                       alignment: Alignment.center,
                       child: Text(
                         'IMAGE',
@@ -173,7 +179,7 @@ class PixelCourseCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Info section
+                  // Info
                   Expanded(
                     child: Container(
                       width: double.infinity,
@@ -186,8 +192,8 @@ class PixelCourseCard extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  'Biology 101',
-                                  style: AppPixelTypography.smallTitle,
+                                  course.title,
+                                  style: AppTypography.subtitleSemiBold,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -196,27 +202,30 @@ class PixelCourseCard extends StatelessWidget {
                                 Icons.more_horiz,
                                 size: 16,
                                 color: colors.onSurface,
-                              ),
+                              ),//อาจจะเปลี่ยนเป็นเรียกใช้เมื่อสร้างตัวแม่ต้นแบบเสร็จ
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Last Updated: 2 days ago',
-                            style: textTheme.bodySmall,
+                            'Last Updated: ${course.updatedAt}',
+                            style: AppTypography.smallBodyMedium,
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'มุ่งเน้นให้ผู้เรียนเข้าใจความสัมพันธ์ของสิ่งมีชีวิต...',
-                            style: textTheme.bodySmall,
+                            course.description,
+                            style: AppTypography.smallBodyMedium,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const Spacer(),
                           Text(
-                            'Students Enrolled: 200',
-                            style: textTheme.bodySmall,
+                            'Students Enrolled: ${course.students}',
+                            style: AppTypography.smallBodyMedium,
                           ),
-                          Text('15 modules', style: textTheme.bodySmall),
+                          Text(
+                            '${course.modules} modules',
+                            style: AppTypography.smallBodyMedium,
+                          ),
                         ],
                       ),
                     ),
@@ -226,7 +235,6 @@ class PixelCourseCard extends StatelessWidget {
             ),
           ),
 
-          // ---------- Pixel Border ----------
           Positioned.fill(
             child: IgnorePointer(
               child: CustomPaint(

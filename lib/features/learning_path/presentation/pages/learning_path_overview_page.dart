@@ -4,6 +4,8 @@ import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
+
 class LearningPathOverviewPage extends StatelessWidget {
   const LearningPathOverviewPage({super.key});
 
@@ -62,17 +64,18 @@ class LearningPathOverviewPage extends StatelessWidget {
 
             // ===== POPULAR LIST =====
           SizedBox(
-              height: PixelCourseCard.cardHeight, // = 245
+              height: PixelCourseCard.cardHeight, // 245
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                itemCount: 5, // mock ก่อน
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                itemCount: mockCourses.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemBuilder: (context, index) {
-                  return const PixelCourseCard();
+                  return PixelCourseCard(course: mockCourses[index]);
                 },
               ),
             ),
+
 
             // Section → Section (60)
             const SizedBox(height: 60),
