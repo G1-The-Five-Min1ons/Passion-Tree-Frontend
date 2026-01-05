@@ -57,7 +57,7 @@ class LearningPathOverviewPage extends StatelessWidget {
                 // ===== POPULAR TITLE =====
                 Text(
                   'Popular\nLearning Paths',
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  style: AppPixelTypography.title.copyWith(
                     color: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
@@ -71,10 +71,10 @@ class LearningPathOverviewPage extends StatelessWidget {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 3),
-                    itemCount: mockCourses.length,
+                    itemCount: popularCourses.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (context, index) {
-                      return PixelCourseCard(course: mockCourses[index]);
+                      return PixelCourseCard(course: popularCourses[index]);
                     },
                   ),
                 ),
@@ -85,8 +85,8 @@ class LearningPathOverviewPage extends StatelessWidget {
                 // ===== ALL TITLE =====
                 Text(
                   'All Learning Paths',
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
+                  style: AppPixelTypography.title.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
 
@@ -94,14 +94,22 @@ class LearningPathOverviewPage extends StatelessWidget {
                 const SizedBox(height: 40),
 
                 // ===== ALL LIST =====
-                // (placeholder ตอนนี้ — ไม่ใช้ Expanded)
-                Container(
-                  height: 300, // mock ความสูงไว้ก่อน
-                  width: double.infinity,
-                  color: colors.primary.withValues(alpha: 0.15),
-                  alignment: Alignment.center,
-                  child: const Text('ALL LIST'),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: allCourses.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, // 2 การ์ดต่อแถว
+                    mainAxisSpacing: 35, // ระยะห่างแนวตั้ง
+                    crossAxisSpacing: 12, // ระยะห่างแนวนอน
+                    childAspectRatio:
+                        PixelCourseCard.cardWidth / PixelCourseCard.cardHeight,
+                  ),
+                    itemBuilder: (context, index) {
+                      return PixelCourseCard(course: allCourses[index]);
+                  },
                 ),
+
 
                 // Content → More button (40)
                 const SizedBox(height: 40),
