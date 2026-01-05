@@ -68,6 +68,7 @@ flutter:
     - assets/icons/Profile.png
     - assets/icons/Pixel_plus.png
     - assets/icons/Pixel_heart.png
+    - assets/icons/Pixel_star.png
     - assets/buttons/navigation/pixel/
     - assets/buttons/navigation/white/
     - assets/images/courses/

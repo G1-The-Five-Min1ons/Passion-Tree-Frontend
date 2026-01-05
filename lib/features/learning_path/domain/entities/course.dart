@@ -5,6 +5,8 @@ class Course {
   final int students;
   final int modules;
   final String imageAsset;
+  final double rating;
+
 
   const Course({
     required this.title,
@@ -12,7 +14,8 @@ class Course {
     required this.instructor,
     required this.students,
     required this.modules,
-     required this.imageAsset,
+    required this.imageAsset,
+    required this.rating,
   });
 }
 

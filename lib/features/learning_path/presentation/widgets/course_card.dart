@@ -165,25 +165,65 @@ class PixelCourseCard extends StatelessWidget {
                   SizedBox(
                     height: 90,
                     width: double.infinity,
-                    child: ClipRect(
-                      child: Image.asset(
-                        course.imageAsset,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          // fallback ถ้ารูปหาย / path ผิด
-                          return Container(
-                            color: colors.primary.withValues(alpha: 0.15),
-                            alignment: Alignment.center,
-                            child: Text(
-                              'NO IMAGE',
-                              style: AppPixelTypography.smallTitle,
+                    child: Stack(
+                      children: [
+                        // ---------- Course Image ----------
+                        Positioned.fill(
+                          child: ClipRect(
+                            child: Image.asset(
+                              course.imageAsset,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: colors.primary.withValues(alpha: 0.15),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'NO IMAGE',
+                                    style: AppPixelTypography.smallTitle,
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+
+                        // ---------- Star Review Badge ----------
+                        Positioned(
+                          top: pixelSize,
+                          right: pixelSize,
+                          child: SizedBox(
+                            width: 67,
+                            height: 23,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: colors.primary, // พื้นหลัง
+                              ),
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset(
+                                    'assets/icons/Pixel_star.png',
+                                    width: 20,
+                                    height: 15,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    course.rating.toStringAsFixed(1),
+                                    style: AppTypography.bodySemiBold.copyWith(
+                                    color: colors.secondary, 
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+
+                      ],
                     ),
                   ),
-
 
                   // Info
                   Expanded(

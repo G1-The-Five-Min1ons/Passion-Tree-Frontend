@@ -7,6 +7,7 @@ final mockCourses = [
     instructor: 'ดร.บีเค ',
     students: 200,
     modules: 15,
+    rating: 4.8,
     imageAsset: 'assets/images/courses/biology_101.png',
   ),
   Course(
@@ -15,6 +16,7 @@ final mockCourses = [
     instructor: 'อ.อะตอม',
     students: 180,
     modules: 12,
+    rating: 4.8,
     imageAsset: 'assets/images/courses/microbiology.png',
   ),
 ];
