@@ -28,7 +28,7 @@ class LearningPathOverviewPage extends StatelessWidget {
               child: Text(
                 'Learning Paths',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
+                color: Theme.of(context).colorScheme.onPrimary,
                 ),
               ),
             ),
@@ -62,12 +62,15 @@ class LearningPathOverviewPage extends StatelessWidget {
 
             // ===== POPULAR LIST =====
           SizedBox(
-              height: 245,
+              height: PixelCourseCard.cardHeight, // = 245
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: 5,
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                itemCount: 5, // mock ก่อน
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (_, __) => CourseCard(),
+                itemBuilder: (context, index) {
+                  return const PixelCourseCard();
+                },
               ),
             ),
 

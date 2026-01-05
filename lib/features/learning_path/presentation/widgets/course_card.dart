@@ -1,51 +1,170 @@
 import 'package:flutter/material.dart';
-import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 
+/// =======================================================
+/// Pixel Painter (private)
+/// =======================================================
+class _PixelCoursePainter extends CustomPainter {
+  final Color color;
+  final double pixelSize;
+  final Color fillColor;
 
-class CourseCard extends StatelessWidget {
-  CourseCard({super.key});
+  _PixelCoursePainter({
+    required this.color,
+    required this.pixelSize,
+    required this.fillColor,
+  });
 
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final p = pixelSize;
+    final s = p * 0.5;
+
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+
+    final borderPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // fill
+    canvas.drawRect(
+      Rect.fromLTWH(p * 2, p * 2, w - (p * 4), h - (p * 4)),
+      fillPaint,
+    );
+    canvas.drawRect(Rect.fromLTWH(p * 3, 0, w - (p * 6), h), fillPaint);
+    canvas.drawRect(Rect.fromLTWH(0, p * 3, w, h - (p * 6)), fillPaint);
+
+    // borders
+    canvas.drawRect(Rect.fromLTWH(p * 2, 0, w - (p * 4), p), borderPaint);
+    canvas.drawRect(Rect.fromLTWH(0, p * 2, p, h - (p * 4)), borderPaint);
+    canvas.drawRect(
+      Rect.fromLTWH(w - p - s, p * 2, p + s, h - (p * 4)),
+      borderPaint,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(p * 2, h - p - s, w - (p * 4), p + s),
+      borderPaint,
+    );
+
+    // corners
+    canvas.drawRect(Rect.fromLTWH(p * 2, p, p, p), borderPaint);
+    canvas.drawRect(Rect.fromLTWH(p, p, p, p * 2), borderPaint);
+    canvas.drawRect(Rect.fromLTWH(p, p * 2, p, p), borderPaint);
+
+    canvas.drawRect(Rect.fromLTWH(w - (p * 3) - s, p, p, p), borderPaint);
+    canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, p, p + s, p), borderPaint);
+    canvas.drawRect(
+      Rect.fromLTWH(w - (p * 2) - s, p * 2, p + s, p),
+      borderPaint,
+    );
+
+    canvas.drawRect(
+      Rect.fromLTWH(p * 2, h - (p * 2) - s, p, p + s),
+      borderPaint,
+    );
+    canvas.drawRect(Rect.fromLTWH(p, h - (p * 2) - s, p, p + s), borderPaint);
+    canvas.drawRect(Rect.fromLTWH(p, h - (p * 3) - s, p, p), borderPaint);
+
+    canvas.drawRect(
+      Rect.fromLTWH(w - (p * 3) - s, h - (p * 2) - s, p, p + s),
+      borderPaint,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(w - (p * 2) - s, h - (p * 2) - s, p + s, p + s),
+      borderPaint,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(w - (p * 2) - s, h - (p * 3) - s, p + s, p),
+      borderPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// =======================================================
+/// Clipper (private)
+/// =======================================================
+class _PixelCourseClipper extends CustomClipper<Path> {
+  final double p;
+  _PixelCourseClipper(this.p);
+
+  @override
+  Path getClip(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final path = Path();
+
+    path.moveTo(p * 2, 0);
+    path.lineTo(w - p * 2, 0);
+    path.lineTo(w - p * 2, p);
+    path.lineTo(w - p, p);
+    path.lineTo(w - p, p * 2);
+    path.lineTo(w, p * 2);
+    path.lineTo(w, h - p * 2);
+    path.lineTo(w - p, h - p * 2);
+    path.lineTo(w - p, h - p);
+    path.lineTo(w - p * 2, h - p);
+    path.lineTo(w - p * 2, h);
+    path.lineTo(p * 2, h);
+    path.lineTo(p * 2, h - p);
+    path.lineTo(p, h - p);
+    path.lineTo(p, h - p * 2);
+    path.lineTo(0, h - p * 2);
+    path.lineTo(0, p * 2);
+    path.lineTo(p, p * 2);
+    path.lineTo(p, p);
+    path.lineTo(p * 2, p);
+    path.close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+/// =======================================================
+/// Public Widget
+/// =======================================================
+class PixelCourseCard extends StatelessWidget {
   static const double cardWidth = 180;
   static const double cardHeight = 245;
 
-  // พื้นที่ content ที่ปลอดภัย (หักจากขอบ + padding ภายใน PixelTextField)
-  static const double contentWidth = 173;
-  static const double imageHeight = 82;
+  final double pixelSize;
+  final Color? color;
+
+  const PixelCourseCard({super.key, this.pixelSize = 3, this.color});
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return SizedBox(
       width: cardWidth,
       height: cardHeight,
       child: Stack(
         children: [
-          // ---------- Pixel Border ----------
-          PixelTextField(
-            label: '',
-            height: cardHeight,
-            width: cardWidth,
-            hintText: '',
-          ),
-
-          // ---------- Content (ล็อกให้อยู่ในกรอบแน่ ๆ) ----------
-          Align(
-            alignment: Alignment.topCenter,
-            child: SizedBox(
-              width: contentWidth, // สำคัญมาก
-              height: cardHeight - 12, // กันล่างไม่ชนขอบ
+          // ---------- Content ----------
+          Positioned.fill(
+            child: ClipPath(
+              clipper: _PixelCourseClipper(pixelSize),
               child: Column(
                 children: [
-                  const SizedBox(height: 8),
-
-                  // ================= IMAGE =================
+                  // Image section
                   SizedBox(
-                    width: contentWidth,
-                    height: imageHeight,
+                    height: 90,
+                    width: double.infinity,
                     child: Container(
-                      color: AppColors.surface,
+                      color: colors.primary.withOpacity(0.25),
                       alignment: Alignment.center,
                       child: Text(
                         'IMAGE',
@@ -54,66 +173,68 @@ class CourseCard extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 8),
-
-                  // ================= CONTENT SECTION =================
+                  // Info section
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // title row
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                height: 12,
-                                color: AppColors.surface,
+                    child: Container(
+                      width: double.infinity,
+                      color: colors.surface,
+                      padding: EdgeInsets.all(AppSpacing.elementgap / 2),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Biology 101',
+                                  style: AppPixelTypography.smallTitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Icon(Icons.more_horiz, size: 14),
-                          ],
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        Container(
-                          height: 10,
-                          width: 110,
-                          color: AppColors.surface,
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Container(
-                          height: 10,
-                          width: contentWidth,
-                          color: AppColors.surface,
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          height: 10,
-                          width: 120,
-                          color: AppColors.surface,
-                        ),
-
-                        const Spacer(),
-
-                        Container(
-                          height: 10,
-                          width: 140,
-                          color: AppColors.surface,
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          height: 10,
-                          width: 90,
-                          color: AppColors.surface,
-                        ),
-                      ],
+                              Icon(
+                                Icons.more_horiz,
+                                size: 16,
+                                color: colors.onSurface,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Last Updated: 2 days ago',
+                            style: textTheme.bodySmall,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'มุ่งเน้นให้ผู้เรียนเข้าใจความสัมพันธ์ของสิ่งมีชีวิต...',
+                            style: textTheme.bodySmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const Spacer(),
+                          Text(
+                            'Students Enrolled: 200',
+                            style: textTheme.bodySmall,
+                          ),
+                          Text('15 modules', style: textTheme.bodySmall),
+                        ],
+                      ),
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // ---------- Pixel Border ----------
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _PixelCoursePainter(
+                  color: color ?? colors.primary,
+                  pixelSize: pixelSize,
+                  fillColor: Colors.transparent,
+                ),
               ),
             ),
           ),
@@ -122,5 +243,3 @@ class CourseCard extends StatelessWidget {
     );
   }
 }
-
-
