@@ -15,4 +15,6 @@ final mockCourses = [
     students: 180,
     modules: 12,
   ),
+
+  
 ];

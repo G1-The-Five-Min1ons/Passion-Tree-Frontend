@@ -153,7 +153,6 @@ class PixelCourseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return SizedBox(
       width: cardWidth,
@@ -188,6 +187,7 @@ class PixelCourseCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // ---------- Title + menu ----------
                           Row(
                             children: [
                               Expanded(
@@ -202,29 +202,44 @@ class PixelCourseCard extends StatelessWidget {
                                 Icons.more_horiz,
                                 size: 16,
                                 color: colors.onSurface,
-                              ),//อาจจะเปลี่ยนเป็นเรียกใช้เมื่อสร้างตัวแม่ต้นแบบเสร็จ
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 4),
+
+                          const SizedBox(height: 5),
+
+                          // ---------- Updated ----------
                           Text(
                             'Last Updated: ${course.updatedAt}',
                             style: AppTypography.smallBodyMedium,
                           ),
-                          const SizedBox(height: 6),
+
+                          const SizedBox(height: 10),
+
+                          // ---------- Description ----------
                           Text(
                             course.description,
                             style: AppTypography.smallBodyMedium,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const Spacer(),
-                          Text(
-                            'Students Enrolled: ${course.students}',
-                            style: AppTypography.smallBodyMedium,
-                          ),
-                          Text(
-                            '${course.modules} modules',
-                            style: AppTypography.smallBodyMedium,
+
+                          const SizedBox(height: 10),
+
+                          // ---------- Bottom info ----------
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Students Enrolled: ${course.students}',
+                                style: AppTypography.smallBodyMedium,
+                              ),
+                              //const SizedBox(height: 10),
+                              Text(
+                                '${course.modules} modules',
+                                style: AppTypography.smallBodyMedium,
+                              ),
+                            ],
                           ),
                         ],
                       ),
