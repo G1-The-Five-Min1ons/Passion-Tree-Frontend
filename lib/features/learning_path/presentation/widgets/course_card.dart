@@ -132,9 +132,6 @@ class _PixelCourseClipper extends CustomClipper<Path> {
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
-/// =======================================================
-/// Public Widget
-/// =======================================================
 class PixelCourseCard extends StatelessWidget {
   static const double cardWidth = 180;
   static const double cardHeight = 245;
@@ -208,9 +205,9 @@ class PixelCourseCard extends StatelessWidget {
 
                           const SizedBox(height: 5),
 
-                          // ---------- Updated ----------
+                          // ---------- Instructor ----------
                           Text(
-                            'Last Updated: ${course.updatedAt}',
+                            'สอนโดย อ.อะตอม',
                             style: AppTypography.smallBodyMedium,
                           ),
 
@@ -231,10 +228,9 @@ class PixelCourseCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Students Enrolled: ${course.students}',
+                                '${course.students} learners',
                                 style: AppTypography.smallBodyMedium,
                               ),
-                              //const SizedBox(height: 10),
                               Text(
                                 '${course.modules} modules',
                                 style: AppTypography.smallBodyMedium,
@@ -245,6 +241,7 @@ class PixelCourseCard extends StatelessWidget {
                       ),
                     ),
                   ),
+
                 ],
               ),
             ),
