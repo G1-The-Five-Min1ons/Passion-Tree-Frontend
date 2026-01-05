@@ -165,15 +165,25 @@ class PixelCourseCard extends StatelessWidget {
                   SizedBox(
                     height: 90,
                     width: double.infinity,
-                    child: Container(
-                      color: colors.primary.withValues(alpha: 0.15),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'IMAGE',
-                        style: AppPixelTypography.smallTitle,
+                    child: ClipRect(
+                      child: Image.asset(
+                        course.imageAsset,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          // fallback ถ้ารูปหาย / path ผิด
+                          return Container(
+                            color: colors.primary.withValues(alpha: 0.15),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'NO IMAGE',
+                              style: AppPixelTypography.smallTitle,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
+
 
                   // Info
                   Expanded(
