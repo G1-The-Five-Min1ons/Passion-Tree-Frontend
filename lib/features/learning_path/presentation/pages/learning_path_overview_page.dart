@@ -113,7 +113,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
 
                 // ===== SEARCH BAR & FILTER =====
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 1),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -122,7 +122,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           controller: _searchController,
                         ),
                       ),
-                      const SizedBox(width: 12), // เปลี่ยนจาก 8 เป็น 12
+                      const SizedBox(width: 12), 
                       FilterSection(
                         selectedCategory: _selectedCategory,
                         ratingRange: _ratingRange,
