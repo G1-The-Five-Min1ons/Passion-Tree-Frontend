@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
@@ -8,18 +9,16 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_overview_page.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_status_page.dart';
 
-class LearningPathOverviewLoginPage extends StatefulWidget {
-  const LearningPathOverviewLoginPage({super.key});
+
+class LearningPathStatusPage extends StatefulWidget {
+  const LearningPathStatusPage({super.key});
 
   @override
-  State<LearningPathOverviewLoginPage> createState() =>
-      _LearningPathOverviewLoginPageState();
+  State<LearningPathStatusPage> createState() => _LearningPathStatusPageState();
 }
 
-class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLoginPage> {
+class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
   final TextEditingController _searchController = TextEditingController();
 
   // Filter state
@@ -104,7 +103,7 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== HEADER TITLE + NavigationButton =====
+                // ===== HEADER TITLE (removed NavigationButton left/right) =====
                 SizedBox(
                   height: 72,
                   child: Row(
@@ -114,19 +113,16 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'Learning Paths',
-                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                            ),
+                            style: Theme.of(context).textTheme.displayLarge
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
+                                ),
                           ),
                         ),
                       ),
-                      // NavigationButton (left) at right side
-                      NavigationButton(
-                        direction: NavigationDirection.left,
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
+                      // NavigationButton removed
                     ],
                   ),
                 ),
@@ -165,35 +161,25 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                 // Title → Section (40)
                 const SizedBox(height: 40),
 
-                // ===== My Learning Paths Titles + navigation button =====
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'My Learning Paths',
-                      style: AppPixelTypography.title.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      ),
+                // ===== My Learning Paths Titles in progress  =====
+                RichText(
+                  text: TextSpan(
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
                     ),
-                    SizedBox(
-                      width: 18,
-                      height: 30,
-                      child: NavigationButton(
-                        direction: NavigationDirection.right,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LearningPathStatusPage(),
-                            ),
-                          );
-                        },
+                    children: [
+                      const TextSpan(text: 'Status : '),
+                      TextSpan(
+                        text: 'In progress',
+                        style: AppPixelTypography.smallTitle.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
-                // Title → Content (40)
+                // ห่างจาก card 40
                 const SizedBox(height: 40),
 
                 // ===== MY LEARNING PATHS LIST (fixed 2 cards, grid) =====
@@ -210,52 +196,76 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredPopular.length < 2 ? filteredPopular.length : 2,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 35,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: PixelCourseCard.cardWidth / PixelCourseCard.cardHeight,
-                    ),
+                    itemCount: filteredPopular.length < 2
+                        ? filteredPopular.length
+                        : 2,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 35,
+                          crossAxisSpacing: 12,
+                          childAspectRatio:
+                              PixelCourseCard.cardWidth /
+                              PixelCourseCard.cardHeight,
+                        ),
                     itemBuilder: (context, index) {
                       return PixelCourseCard(course: filteredPopular[index]);
                     },
                   ),
 
-                // ===== RECOMMENDED FOR YOU SECTION =====
                 const SizedBox(height: 60),
-                Text(
-                  'Recommended for you',
-                  style: AppPixelTypography.title.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
+                
+                // ===== My Learning Paths Titles Completed=====
+                RichText(
+                  text: TextSpan(
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                    children: const [
+                      TextSpan(text: 'Status : '),
+                      TextSpan(
+                        text: 'Completed',
+                        style: TextStyle(color: AppColors.status),
+                      ),
+                    ],
                   ),
                 ),
+
+                // ห่างจาก card 40
                 const SizedBox(height: 40),
-                SizedBox(
-                  height: PixelCourseCard.cardHeight,
-                  child: filteredPopular.isEmpty // ใช้ filteredPopular เป็น mock data
-                      ? Center(
-                          child: Text(
-                            'No recommended paths found',
-                            style: AppTypography.subtitleSemiBold.copyWith(
-                              color: colors.onPrimary,
-                            ),
-                          ),
-                        )
-                      : ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 0),
-                          itemCount: filteredPopular.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (context, index) {
-                            return PixelCourseCard(
-                              course: filteredPopular[index],
-                            );
-                          },
+
+                // ===== MY LEARNING PATHS LIST (fixed 2 cards, grid) =====
+                if (filteredPopular.isEmpty)
+                  Center(
+                    child: Text(
+                      'No popular paths found',
+                      style: AppTypography.subtitleSemiBold.copyWith(
+                        color: colors.onPrimary,
+                      ),
+                    ),
+                  )
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: filteredPopular.length < 2
+                        ? filteredPopular.length
+                        : 2,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 35,
+                          crossAxisSpacing: 12,
+                          childAspectRatio:
+                              PixelCourseCard.cardWidth /
+                              PixelCourseCard.cardHeight,
                         ),
-                ),
-                // ===== END RECOMMENDED FOR YOU SECTION =====
+                    itemBuilder: (context, index) {
+                      return PixelCourseCard(course: filteredPopular[index]);
+                    },
+                  ),
+                
+              
 
                 // Section → Section (60)
                 const SizedBox(height: 60),
