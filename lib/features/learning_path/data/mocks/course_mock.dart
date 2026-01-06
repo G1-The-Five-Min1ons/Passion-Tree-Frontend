@@ -11,6 +11,7 @@ final mockCourses = [
     rating: 4.8,
     imageAsset: 'assets/images/courses/biology_101.png',
     category: 'Science',
+    status: CourseStatus.inProgress,
   ),
   Course(
     title: 'Microbiology',
@@ -21,6 +22,7 @@ final mockCourses = [
     rating: 4.8,
     imageAsset: 'assets/images/courses/microbiology.png',
     category: 'Science',
+    status: CourseStatus.inProgress,
   ),
   Course(
     title: 'Genetics',
@@ -31,6 +33,7 @@ final mockCourses = [
     rating: 4.9,
     imageAsset: 'assets/images/courses/genetics.png',
     category: 'Science',
+    status: CourseStatus.completed,
   ),
   Course(
     title: 'Criminal Law',
@@ -41,6 +44,7 @@ final mockCourses = [
     rating: 4.7,
     imageAsset: 'assets/images/courses/law.png',
     category: 'Law',
+    status: CourseStatus.inProgress,
   ),
   Course(
     title: 'Cybersecurity',
@@ -51,6 +55,7 @@ final mockCourses = [
     rating: 4.9,
     imageAsset: 'assets/images/courses/cybersecurity.png',
     category: 'Technology',
+    status: CourseStatus.completed,
   ),
   Course(
     title: 'C++',
@@ -61,6 +66,7 @@ final mockCourses = [
     rating: 4.6,
     imageAsset: 'assets/images/courses/tech.png',
     category: 'Technology',
+    status: CourseStatus.inProgress,
   ),
   Course(
     title: 'Cell Biology',
@@ -71,6 +77,7 @@ final mockCourses = [
     rating: 4.8,
     imageAsset: 'assets/images/courses/cell.png',
     category: 'Science',
+    status: CourseStatus.inProgress,
   ),
   Course(
     title: 'Chemistry',
@@ -81,6 +88,7 @@ final mockCourses = [
     rating: 4.7,
     imageAsset: 'assets/images/courses/chemistry.png',
     category: 'Science',
+    status: CourseStatus.completed,
   ),
   
   

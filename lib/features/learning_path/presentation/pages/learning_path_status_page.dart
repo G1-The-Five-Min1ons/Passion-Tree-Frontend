@@ -20,6 +20,10 @@ class LearningPathStatusPage extends StatefulWidget {
 
 class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
   final TextEditingController _searchController = TextEditingController();
+  
+  //status
+  int inProgressShown = 2;
+  int completedShown = 2;
 
   // Filter state
   String? _selectedCategory;
@@ -90,6 +94,14 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
 
     // NEW: Limit the number of cards shown in ALL LIST
     final shownAllCourses = filteredAll.take(_allListShownCount).toList();
+
+    final inProgressCourses = mockCourses
+        .where((c) => c.status == CourseStatus.inProgress)
+        .toList();
+
+    final completedCourses = mockCourses
+        .where((c) => c.status == CourseStatus.completed)
+        .toList();
 
     return Scaffold(
       body: SafeArea(
@@ -162,6 +174,16 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                 const SizedBox(height: 40),
 
                 // ===== My Learning Paths Titles in progress  =====
+                Text(
+                  'My Learning Paths',
+                  style: AppPixelTypography.title.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // ===== My Learning Paths (In progress) =====
                 RichText(
                   text: TextSpan(
                     style: AppPixelTypography.smallTitle.copyWith(
@@ -179,14 +201,12 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                   ),
                 ),
 
-                // ห่างจาก card 40
                 const SizedBox(height: 40),
 
-                // ===== MY LEARNING PATHS LIST (fixed 2 cards, grid) =====
-                if (filteredPopular.isEmpty)
+                if (inProgressCourses.isEmpty)
                   Center(
                     child: Text(
-                      'No popular paths found',
+                      'No in-progress paths found',
                       style: AppTypography.subtitleSemiBold.copyWith(
                         color: colors.onPrimary,
                       ),
@@ -196,9 +216,9 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredPopular.length < 2
-                        ? filteredPopular.length
-                        : 2,
+                    itemCount: inProgressCourses.length < inProgressShown
+                        ? inProgressCourses.length
+                        : inProgressShown,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
@@ -209,13 +229,38 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                               PixelCourseCard.cardHeight,
                         ),
                     itemBuilder: (context, index) {
-                      return PixelCourseCard(course: filteredPopular[index]);
+                      return PixelCourseCard(course: inProgressCourses[index]);
                     },
+                  ),
+
+                if (inProgressShown < inProgressCourses.length)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 40),
+                    child: Center(
+                      child: NavigationButton(
+                        direction: NavigationDirection.down,
+                        onPressed: () {
+                          setState(() {
+                            inProgressShown += 2;
+                          });
+                        },
+                      ),
+                    ),
                   ),
 
                 const SizedBox(height: 60),
                 
                 // ===== My Learning Paths Titles Completed=====
+                Text(
+                  'My Learning Paths',
+                  style: AppPixelTypography.title.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // ===== My Learning Paths (Completed) =====
                 RichText(
                   text: TextSpan(
                     style: AppPixelTypography.smallTitle.copyWith(
@@ -231,14 +276,12 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                   ),
                 ),
 
-                // ห่างจาก card 40
                 const SizedBox(height: 40),
 
-                // ===== MY LEARNING PATHS LIST (fixed 2 cards, grid) =====
-                if (filteredPopular.isEmpty)
+                if (completedCourses.isEmpty)
                   Center(
                     child: Text(
-                      'No popular paths found',
+                      'No completed paths found',
                       style: AppTypography.subtitleSemiBold.copyWith(
                         color: colors.onPrimary,
                       ),
@@ -248,9 +291,9 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredPopular.length < 2
-                        ? filteredPopular.length
-                        : 2,
+                    itemCount: completedCourses.length < completedShown
+                        ? completedCourses.length
+                        : completedShown,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
@@ -261,81 +304,24 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                               PixelCourseCard.cardHeight,
                         ),
                     itemBuilder: (context, index) {
-                      return PixelCourseCard(course: filteredPopular[index]);
-                    },
-                  ),
-                
-              
-
-                // Section → Section (60)
-                const SizedBox(height: 60),
-
-                // ===== ALL TITLE =====
-                Text(
-                  'All Learning Paths',
-                  style: AppPixelTypography.title.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                ),
-
-                // Title → Content (40)
-                const SizedBox(height: 40),
-
-                // ===== ALL LIST =====
-                if (shownAllCourses.isEmpty)
-                  Center(
-                    child: Text(
-                      'No learning paths found',
-                      style: AppTypography.subtitleSemiBold.copyWith(
-                        color: colors.onPrimary,
-                      ),
-                    ),
-                  )
-                else
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: shownAllCourses.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2, // 2 การ์ดต่อแถว
-                          mainAxisSpacing: 35, // ระยะห่างแนวตั้ง
-                          crossAxisSpacing: 12, // ระยะห่างแนวนอน
-                          childAspectRatio:
-                              PixelCourseCard.cardWidth /
-                              PixelCourseCard.cardHeight,
-                        ),
-                    itemBuilder: (context, index) {
-                      return PixelCourseCard(course: shownAllCourses[index]);
+                      return PixelCourseCard(course: completedCourses[index]);
                     },
                   ),
 
-                // Content → More button (40)
-                const SizedBox(height: 40),
-
-                // ===== MORE BUTTON (always visible) =====
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'More',
-                        style: AppPixelTypography.smallTitle.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      NavigationButton(
+                if (completedShown < completedCourses.length)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 40),
+                    child: Center(
+                      child: NavigationButton(
                         direction: NavigationDirection.down,
                         onPressed: () {
                           setState(() {
-                            _allListShownCount += 4;
+                            completedShown += 2;
                           });
                         },
                       ),
-                    ],
+                    ),
                   ),
-                ),
 
                 // bottom safe spacing
                 const SizedBox(height: 40),
