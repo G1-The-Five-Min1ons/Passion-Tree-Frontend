@@ -10,6 +10,7 @@ final mockCourses = [
     modules: 15,
     rating: 4.8,
     imageAsset: 'assets/images/courses/biology_101.png',
+    category: 'Science',
   ),
   Course(
     title: 'Microbiology',
@@ -19,6 +20,7 @@ final mockCourses = [
     modules: 12,
     rating: 4.8,
     imageAsset: 'assets/images/courses/microbiology.png',
+    category: 'Science',
   ),
   Course(
     title: 'Genetics',
@@ -28,6 +30,7 @@ final mockCourses = [
     modules: 18,
     rating: 4.9,
     imageAsset: 'assets/images/courses/genetics.png',
+    category: 'Science',
   ),
   Course(
     title: 'Criminal Law',
@@ -37,6 +40,7 @@ final mockCourses = [
     modules: 10,
     rating: 4.7,
     imageAsset: 'assets/images/courses/Law.png',
+    category: 'Law',
   ),
   Course(
     title: 'Cybersecurity',
@@ -46,6 +50,7 @@ final mockCourses = [
     modules: 20,
     rating: 4.9,
     imageAsset: 'assets/images/courses/Cybersecurity.png',
+    category: 'Technology',
   ),
   Course(
     title: 'C++',
@@ -55,6 +60,7 @@ final mockCourses = [
     modules: 8,
     rating: 4.6,
     imageAsset: 'assets/images/courses/tech.png',
+    category: 'Technology',
   ),
   
   

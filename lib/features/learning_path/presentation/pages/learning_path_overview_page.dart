@@ -4,14 +4,83 @@ import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
 
-class LearningPathOverviewPage extends StatelessWidget {
+class LearningPathOverviewPage extends StatefulWidget {
   const LearningPathOverviewPage({super.key});
+
+  @override
+  State<LearningPathOverviewPage> createState() =>
+      _LearningPathOverviewPageState();
+}
+
+class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
+  final TextEditingController _searchController = TextEditingController();
+
+  // Filter state
+  String? _selectedCategory;
+  RangeValues? _ratingRange;
+  int? _maxModules;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Course> _filterCourses(List<Course> courses) {
+    return courses.where((Course c) {
+      // Search query filter
+      final query = _searchController.text.trim().toLowerCase();
+      final matchesSearch =
+          query.isEmpty ||
+          c.title.toLowerCase().contains(query) ||
+          c.description.toLowerCase().contains(query) ||
+          c.instructor.toLowerCase().contains(query);
+
+      // Category filter
+      final matchesCategory =
+          _selectedCategory == null || c.category == _selectedCategory;
+
+      // Rating filter (range)
+      final matchesRating =
+          _ratingRange == null ||
+          (c.rating >= _ratingRange!.start && c.rating <= _ratingRange!.end);
+
+      // Modules filter
+      final matchesModules = _maxModules == null || c.modules <= _maxModules!;
+
+      return matchesSearch &&
+          matchesCategory &&
+          matchesRating &&
+          matchesModules;
+    }).toList();
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _selectedCategory = null;
+      _ratingRange = null;
+      _maxModules = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final filteredPopular = _filterCourses(popularCourses);
+    final filteredAll = _filterCourses(allCourses);
 
     return Scaffold(
       body: SafeArea(
@@ -42,13 +111,32 @@ class LearningPathOverviewPage extends StatelessWidget {
                 // Header → Search (40)
                 const SizedBox(height: 40),
 
-                // ===== SEARCH BAR =====
-                Container(
-                  height: 44,
-                  width: double.infinity,
-                  color: colors.secondary.withValues(alpha: 0.25),
-                  alignment: Alignment.centerLeft,
-                  child: const Text('SEARCH BAR'),
+                // ===== SEARCH BAR & FILTER =====
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: LearningPathSearchBar(
+                          controller: _searchController,
+                        ),
+                      ),
+                      const SizedBox(width: 12), // เปลี่ยนจาก 8 เป็น 12
+                      FilterSection(
+                        selectedCategory: _selectedCategory,
+                        ratingRange: _ratingRange,
+                        maxModules: _maxModules,
+                        onFiltersChanged: (category, rating, modules) {
+                          setState(() {
+                            _selectedCategory = category;
+                            _ratingRange = rating;
+                            _maxModules = modules;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
 
                 // Title → Section (40)
@@ -68,15 +156,27 @@ class LearningPathOverviewPage extends StatelessWidget {
                 // ===== POPULAR LIST =====
                 SizedBox(
                   height: PixelCourseCard.cardHeight, // 245
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 3),
-                    itemCount: popularCourses.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      return PixelCourseCard(course: popularCourses[index]);
-                    },
-                  ),
+                  child: filteredPopular.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No popular paths found',
+                            style: AppTypography.subtitleSemiBold.copyWith(
+                              color: colors.onPrimary,
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          itemCount: filteredPopular.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
+                          itemBuilder: (context, index) {
+                            return PixelCourseCard(
+                              course: filteredPopular[index],
+                            );
+                          },
+                        ),
                 ),
 
                 // Section → Section (60)
@@ -86,7 +186,7 @@ class LearningPathOverviewPage extends StatelessWidget {
                 Text(
                   'All Learning Paths',
                   style: AppPixelTypography.title.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
+                    color: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
 
@@ -94,22 +194,33 @@ class LearningPathOverviewPage extends StatelessWidget {
                 const SizedBox(height: 40),
 
                 // ===== ALL LIST =====
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: allCourses.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, // 2 การ์ดต่อแถว
-                    mainAxisSpacing: 35, // ระยะห่างแนวตั้ง
-                    crossAxisSpacing: 12, // ระยะห่างแนวนอน
-                    childAspectRatio:
-                        PixelCourseCard.cardWidth / PixelCourseCard.cardHeight,
-                  ),
+                if (filteredAll.isEmpty)
+                  Center(
+                    child: Text(
+                      'No learning paths found',
+                      style: AppTypography.subtitleSemiBold.copyWith(
+                        color: colors.onPrimary,
+                      ),
+                    ),
+                  )
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: filteredAll.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2, // 2 การ์ดต่อแถว
+                          mainAxisSpacing: 35, // ระยะห่างแนวตั้ง
+                          crossAxisSpacing: 12, // ระยะห่างแนวนอน
+                          childAspectRatio:
+                              PixelCourseCard.cardWidth /
+                              PixelCourseCard.cardHeight,
+                        ),
                     itemBuilder: (context, index) {
-                      return PixelCourseCard(course: allCourses[index]);
-                  },
-                ),
-
+                      return PixelCourseCard(course: filteredAll[index]);
+                    },
+                  ),
 
                 // Content → More button (40)
                 const SizedBox(height: 40),
@@ -146,4 +257,3 @@ class LearningPathOverviewPage extends StatelessWidget {
     );
   }
 }
-
