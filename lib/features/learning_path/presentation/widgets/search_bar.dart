@@ -79,7 +79,7 @@ class LearningPathSearchBar extends StatelessWidget {
   const LearningPathSearchBar({
     super.key,
     required this.controller,
-    this.hintText = 'Find learning paths...',
+    this.hintText = 'Search for learning paths...',
     this.height = 46.0,
     this.pixelSize = 3.0,
     this.borderColor,
@@ -115,8 +115,8 @@ class LearningPathSearchBar extends StatelessWidget {
           // ช่องกรอกข้อความ
           Container(
             height: height,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            alignment: Alignment.topLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 12), // ปรับ padding
+            alignment: Alignment.centerLeft, // ปรับ alignment
             child: Row(
               children: [
                 // Search Icon
@@ -137,11 +137,11 @@ class LearningPathSearchBar extends StatelessWidget {
                     child: TextField(
                       controller: controller,
                       scrollController: scrollController,
-                      maxLines: null,
-                      expands: true,
-                      style: AppTypography.bodyRegular.copyWith(
+                      maxLines: 1, // ปรับเป็น 1
+                      style: AppTypography.subtitleRegular.copyWith(
                         color: activeTextColor,
                       ),
+                      textAlignVertical: TextAlignVertical.center, // เพิ่มบรรทัดนี้
                       decoration: InputDecoration(
                         hintText: hintText,
                         hintStyle: TextStyle(color: activeHintColor),

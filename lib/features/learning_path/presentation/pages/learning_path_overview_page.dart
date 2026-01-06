@@ -25,6 +25,9 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
   RangeValues? _ratingRange;
   int? _maxModules;
 
+  // === NEW: State for controlling number of shown cards ===
+  int _allListShownCount = 4;
+
   @override
   void initState() {
     super.initState();
@@ -73,6 +76,8 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
       _selectedCategory = null;
       _ratingRange = null;
       _maxModules = null;
+      // NEW: Reset shown count when filters are cleared
+      _allListShownCount = 4;
     });
   }
 
@@ -81,6 +86,9 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     final colors = Theme.of(context).colorScheme;
     final filteredPopular = _filterCourses(popularCourses);
     final filteredAll = _filterCourses(allCourses);
+
+    // NEW: Limit the number of cards shown in ALL LIST
+    final shownAllCourses = filteredAll.take(_allListShownCount).toList();
 
     return Scaffold(
       body: SafeArea(
@@ -113,7 +121,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
 
                 // ===== SEARCH BAR & FILTER =====
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 1),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -122,7 +130,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           controller: _searchController,
                         ),
                       ),
-                      const SizedBox(width: 12), // เปลี่ยนจาก 8 เป็น 12
+                      const SizedBox(width: 12), 
                       FilterSection(
                         selectedCategory: _selectedCategory,
                         ratingRange: _ratingRange,
@@ -167,7 +175,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                         )
                       : ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
                           itemCount: filteredPopular.length,
                           separatorBuilder: (_, __) =>
                               const SizedBox(width: 12),
@@ -194,7 +202,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                 const SizedBox(height: 40),
 
                 // ===== ALL LIST =====
-                if (filteredAll.isEmpty)
+                if (shownAllCourses.isEmpty)
                   Center(
                     child: Text(
                       'No learning paths found',
@@ -207,7 +215,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredAll.length,
+                    itemCount: shownAllCourses.length,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2, // 2 การ์ดต่อแถว
@@ -218,14 +226,14 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                               PixelCourseCard.cardHeight,
                         ),
                     itemBuilder: (context, index) {
-                      return PixelCourseCard(course: filteredAll[index]);
+                      return PixelCourseCard(course: shownAllCourses[index]);
                     },
                   ),
 
                 // Content → More button (40)
                 const SizedBox(height: 40),
 
-                // ===== MORE BUTTON =====
+                // ===== MORE BUTTON (always visible) =====
                 Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -240,7 +248,9 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                       NavigationButton(
                         direction: NavigationDirection.down,
                         onPressed: () {
-                          debugPrint('Down pressed');
+                          setState(() {
+                            _allListShownCount += 4;
+                          });
                         },
                       ),
                     ],
