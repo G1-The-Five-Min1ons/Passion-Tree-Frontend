@@ -1,3 +1,5 @@
+enum CourseStatus { inProgress, completed }
+
 class Course {
   final String title;
   final String description;
@@ -7,6 +9,7 @@ class Course {
   final String imageAsset;
   final double rating;
   final String category;
+  final CourseStatus status;
 
 
   const Course({
@@ -18,6 +21,7 @@ class Course {
     required this.imageAsset,
     required this.rating,
     required this.category,
+    required this.status,
   });
 }
 

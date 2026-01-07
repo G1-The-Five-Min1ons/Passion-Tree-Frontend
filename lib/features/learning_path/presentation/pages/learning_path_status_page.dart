@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
@@ -8,19 +9,21 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_overview_page.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_status_page.dart';
 
-class LearningPathOverviewLoginPage extends StatefulWidget {
-  const LearningPathOverviewLoginPage({super.key});
+
+class LearningPathStatusPage extends StatefulWidget {
+  const LearningPathStatusPage({super.key});
 
   @override
-  State<LearningPathOverviewLoginPage> createState() =>
-      _LearningPathOverviewLoginPageState();
+  State<LearningPathStatusPage> createState() => _LearningPathStatusPageState();
 }
 
-class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLoginPage> {
+class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
   final TextEditingController _searchController = TextEditingController();
+  
+  //status
+  int inProgressShown = 2;
+  int completedShown = 2;
 
   // Filter state
   String? _selectedCategory;
@@ -92,6 +95,14 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
     // NEW: Limit the number of cards shown in ALL LIST
     final shownAllCourses = filteredAll.take(_allListShownCount).toList();
 
+    final inProgressCourses = mockCourses
+        .where((c) => c.status == CourseStatus.inProgress)
+        .toList();
+
+    final completedCourses = mockCourses
+        .where((c) => c.status == CourseStatus.completed)
+        .toList();
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -104,7 +115,7 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== HEADER TITLE + NavigationButton =====
+                // ===== HEADER TITLE (removed NavigationButton left/right) =====
                 SizedBox(
                   height: 72,
                   child: Row(
@@ -114,19 +125,16 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'Learning Paths',
-                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                            ),
+                            style: Theme.of(context).textTheme.displayLarge
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
+                                ),
                           ),
                         ),
                       ),
-                      // NavigationButton (left) at right side
-                      NavigationButton(
-                        direction: NavigationDirection.left,
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
+                      // NavigationButton removed
                     ],
                   ),
                 ),
@@ -165,117 +173,40 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                 // Title → Section (40)
                 const SizedBox(height: 40),
 
-                // ===== My Learning Paths Titles + navigation button =====
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'My Learning Paths',
-                      style: AppPixelTypography.title.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 18,
-                      height: 30,
-                      child: NavigationButton(
-                        direction: NavigationDirection.right,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LearningPathStatusPage(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Title → Content (40)
-                const SizedBox(height: 40),
-
-                // ===== MY LEARNING PATHS LIST (fixed 2 cards, grid) =====
-                if (filteredPopular.isEmpty)
-                  Center(
-                    child: Text(
-                      'No popular paths found',
-                      style: AppTypography.subtitleSemiBold.copyWith(
-                        color: colors.onPrimary,
-                      ),
-                    ),
-                  )
-                else
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredPopular.length < 2 ? filteredPopular.length : 2,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 35,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: PixelCourseCard.cardWidth / PixelCourseCard.cardHeight,
-                    ),
-                    itemBuilder: (context, index) {
-                      return PixelCourseCard(course: filteredPopular[index]);
-                    },
-                  ),
-
-                // ===== RECOMMENDED FOR YOU SECTION =====
-                const SizedBox(height: 60),
+                // ===== My Learning Paths Titles in progress  =====
                 Text(
-                  'Recommended for you',
+                  'My Learning Paths',
                   style: AppPixelTypography.title.copyWith(
                     color: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
-                const SizedBox(height: 40),
-                SizedBox(
-                  height: PixelCourseCard.cardHeight,
-                  child: filteredPopular.isEmpty // ใช้ filteredPopular เป็น mock data
-                      ? Center(
-                          child: Text(
-                            'No recommended paths found',
-                            style: AppTypography.subtitleSemiBold.copyWith(
-                              color: colors.onPrimary,
-                            ),
-                          ),
-                        )
-                      : ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 0),
-                          itemCount: filteredPopular.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (context, index) {
-                            return PixelCourseCard(
-                              course: filteredPopular[index],
-                            );
-                          },
+
+                const SizedBox(height: 20),
+
+                // ===== My Learning Paths (In progress) =====
+                RichText(
+                  text: TextSpan(
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                    children: [
+                      const TextSpan(text: 'Status : '),
+                      TextSpan(
+                        text: 'In progress',
+                        style: AppPixelTypography.smallTitle.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
                         ),
-                ),
-                // ===== END RECOMMENDED FOR YOU SECTION =====
-
-                // Section → Section (60)
-                const SizedBox(height: 60),
-
-                // ===== ALL TITLE =====
-                Text(
-                  'All Learning Paths',
-                  style: AppPixelTypography.title.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    ],
                   ),
                 ),
 
-                // Title → Content (40)
                 const SizedBox(height: 40),
 
-                // ===== ALL LIST =====
-                if (shownAllCourses.isEmpty)
+                if (inProgressCourses.isEmpty)
                   Center(
                     child: Text(
-                      'No learning paths found',
+                      'No in-progress paths found',
                       style: AppTypography.subtitleSemiBold.copyWith(
                         color: colors.onPrimary,
                       ),
@@ -285,47 +216,112 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: shownAllCourses.length,
+                    itemCount: inProgressCourses.length < inProgressShown
+                        ? inProgressCourses.length
+                        : inProgressShown,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2, // 2 การ์ดต่อแถว
-                          mainAxisSpacing: 35, // ระยะห่างแนวตั้ง
-                          crossAxisSpacing: 12, // ระยะห่างแนวนอน
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 35,
+                          crossAxisSpacing: 12,
                           childAspectRatio:
                               PixelCourseCard.cardWidth /
                               PixelCourseCard.cardHeight,
                         ),
                     itemBuilder: (context, index) {
-                      return PixelCourseCard(course: shownAllCourses[index]);
+                      return PixelCourseCard(course: inProgressCourses[index]);
                     },
                   ),
 
-                // Content → More button (40)
-                const SizedBox(height: 40),
-
-                // ===== MORE BUTTON (always visible) =====
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'More',
-                        style: AppPixelTypography.smallTitle.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      NavigationButton(
+                if (inProgressShown < inProgressCourses.length)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 40),
+                    child: Center(
+                      child: NavigationButton(
                         direction: NavigationDirection.down,
                         onPressed: () {
                           setState(() {
-                            _allListShownCount += 4;
+                            inProgressShown += 2;
                           });
                         },
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 60),
+                
+                // ===== My Learning Paths Titles Completed=====
+                Text(
+                  'My Learning Paths',
+                  style: AppPixelTypography.title.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // ===== My Learning Paths (Completed) =====
+                RichText(
+                  text: TextSpan(
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                    children: const [
+                      TextSpan(text: 'Status : '),
+                      TextSpan(
+                        text: 'Completed',
+                        style: TextStyle(color: AppColors.status),
                       ),
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 40),
+
+                if (completedCourses.isEmpty)
+                  Center(
+                    child: Text(
+                      'No completed paths found',
+                      style: AppTypography.subtitleSemiBold.copyWith(
+                        color: colors.onPrimary,
+                      ),
+                    ),
+                  )
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: completedCourses.length < completedShown
+                        ? completedCourses.length
+                        : completedShown,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 35,
+                          crossAxisSpacing: 12,
+                          childAspectRatio:
+                              PixelCourseCard.cardWidth /
+                              PixelCourseCard.cardHeight,
+                        ),
+                    itemBuilder: (context, index) {
+                      return PixelCourseCard(course: completedCourses[index]);
+                    },
+                  ),
+
+                if (completedShown < completedCourses.length)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 40),
+                    child: Center(
+                      child: NavigationButton(
+                        direction: NavigationDirection.down,
+                        onPressed: () {
+                          setState(() {
+                            completedShown += 2;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
 
                 // bottom safe spacing
                 const SizedBox(height: 40),
