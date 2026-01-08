@@ -8,7 +8,6 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_overview_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_status_page.dart';
 
 class LearningPathOverviewLoginPage extends StatefulWidget {

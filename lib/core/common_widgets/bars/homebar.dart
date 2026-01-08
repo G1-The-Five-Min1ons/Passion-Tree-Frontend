@@ -3,11 +3,14 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/reflection_tree.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_overview_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_overview_login_page.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class HomeBarWidget extends StatefulWidget {
-  const HomeBarWidget({super.key});
+  final bool isReturningUser;
+  
+  const HomeBarWidget({super.key, this.isReturningUser = false});
 
   @override
   State<HomeBarWidget> createState() => _HomeBarWidgetState();
@@ -23,16 +26,18 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
     'Profile',
   ];
 
-  // ใส่หน้าของตัวเองตรงนี้
-  final List<Widget> _pages = [
-   const Center(child: Text('Home')),   
-    const LearningPathOverviewPage(),   
-    const ReflectionTreePage(),
-    const Center(child: Text('Profile')), 
-  ];
-
   @override
   Widget build(BuildContext context) {
+    // ใส่หน้าของตัวเองตรงนี้
+    final List<Widget> _pages = [
+      const Center(child: Text('Home')),   
+      widget.isReturningUser 
+        ? const LearningPathOverviewLoginPage()
+        : const LearningPathOverviewPage(),   
+      const ReflectionTreePage(),
+      const Center(child: Text('Profile')), 
+    ];
+
     return Scaffold(
       appBar: AppBarWidget(title: _titles[_selectedIndex], showBackButton: false),
 

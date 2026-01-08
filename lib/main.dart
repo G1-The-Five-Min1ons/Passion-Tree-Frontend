@@ -9,9 +9,9 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_but
 import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_overview_page.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/reflection_tree.dart';
-
-import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/pages/dev_home_selector_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: AppTheme.lightTheme,
       themeMode: ThemeMode.light,
-      home: const HomeBarWidget(),
+      home: const DevHomeSelectorPage(), // DEV: Home selector for frontend
     );
   }
 }
