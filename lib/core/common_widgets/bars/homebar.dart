@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/reflection_tree.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_page.dart';
+import 'package:passion_tree_frontend/features/home/presentation/pages/home_page.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 
@@ -25,7 +26,7 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
 
   // ใส่หน้าของตัวเองตรงนี้
   final List<Widget> _pages = [
-   const Center(child: Text('Home')),   
+    const HomePage(),   
     const LearningPathOverviewPage(),   
     const ReflectionTreePage(),
     const Center(child: Text('Profile')), 
