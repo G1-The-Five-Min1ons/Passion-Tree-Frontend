@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'login_event.dart';
-import 'login_state.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_event.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
   LoginBloc() : super(const LoginState()) {
