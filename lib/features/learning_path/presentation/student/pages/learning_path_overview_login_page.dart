@@ -8,18 +8,17 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_overview_login_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
 
-
-class LearningPathOverviewPage extends StatefulWidget {
-  const LearningPathOverviewPage({super.key});
+class LearningPathOverviewLoginPage extends StatefulWidget {
+  const LearningPathOverviewLoginPage({super.key});
 
   @override
-  State<LearningPathOverviewPage> createState() =>
-      _LearningPathOverviewPageState();
+  State<LearningPathOverviewLoginPage> createState() =>
+      _LearningPathOverviewLoginPageState();
 }
 
-class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
+class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLoginPage> {
   final TextEditingController _searchController = TextEditingController();
 
   // Filter state
@@ -104,7 +103,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== HEADER TITLE =====
+                // ===== HEADER TITLE + NavigationButton =====
                 SizedBox(
                   height: 72,
                   child: Row(
@@ -120,16 +119,11 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           ),
                         ),
                       ),
-                      // === NavigationButton (right) ไปหน้า login ===
+                      // NavigationButton (left) at right side
                       NavigationButton(
-                        direction: NavigationDirection.right,
+                        direction: NavigationDirection.left,
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LearningPathOverviewLoginPage(),
-                            ),
-                          );
+                          Navigator.pop(context);
                         },
                       ),
                     ],
@@ -150,7 +144,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           controller: _searchController,
                         ),
                       ),
-                      const SizedBox(width: 12), 
+                      const SizedBox(width: 12),
                       FilterSection(
                         selectedCategory: _selectedCategory,
                         ratingRange: _ratingRange,
@@ -170,24 +164,78 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                 // Title → Section (40)
                 const SizedBox(height: 40),
 
-                // ===== POPULAR TITLE =====
-                Text(
-                  'Popular\nLearning Paths',
-                  style: AppPixelTypography.title.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
+                // ===== My Learning Paths Titles + navigation button =====
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'My Learning Paths',
+                      style: AppPixelTypography.title.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 18,
+                      height: 30,
+                      child: NavigationButton(
+                        direction: NavigationDirection.right,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LearningPathStatusPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
 
                 // Title → Content (40)
                 const SizedBox(height: 40),
 
-                // ===== POPULAR LIST =====
+                // ===== MY LEARNING PATHS LIST (fixed 2 cards, grid) =====
+                if (filteredPopular.isEmpty)
+                  Center(
+                    child: Text(
+                      'No popular paths found',
+                      style: AppTypography.subtitleSemiBold.copyWith(
+                        color: colors.onPrimary,
+                      ),
+                    ),
+                  )
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: filteredPopular.length < 2 ? filteredPopular.length : 2,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 35,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: PixelCourseCard.cardWidth / PixelCourseCard.cardHeight,
+                    ),
+                    itemBuilder: (context, index) {
+                      return PixelCourseCard(course: filteredPopular[index]);
+                    },
+                  ),
+
+                // ===== RECOMMENDED FOR YOU SECTION =====
+                const SizedBox(height: 60),
+                Text(
+                  'Recommended for you',
+                  style: AppPixelTypography.title.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+                const SizedBox(height: 40),
                 SizedBox(
-                  height: PixelCourseCard.cardHeight, // 245
-                  child: filteredPopular.isEmpty
+                  height: PixelCourseCard.cardHeight,
+                  child: filteredPopular.isEmpty // ใช้ filteredPopular เป็น mock data
                       ? Center(
                           child: Text(
-                            'No popular paths found',
+                            'No recommended paths found',
                             style: AppTypography.subtitleSemiBold.copyWith(
                               color: colors.onPrimary,
                             ),
@@ -206,6 +254,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           },
                         ),
                 ),
+                // ===== END RECOMMENDED FOR YOU SECTION =====
 
                 // Section → Section (60)
                 const SizedBox(height: 60),

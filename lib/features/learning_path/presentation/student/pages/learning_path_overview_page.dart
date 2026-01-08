@@ -8,18 +8,21 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_overview_page.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_status_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_login_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/t_learning_path_overview_login_page.dart';
 
-class LearningPathOverviewLoginPage extends StatefulWidget {
-  const LearningPathOverviewLoginPage({super.key});
+
+
+
+class LearningPathOverviewPage extends StatefulWidget {
+  const LearningPathOverviewPage({super.key});
 
   @override
-  State<LearningPathOverviewLoginPage> createState() =>
-      _LearningPathOverviewLoginPageState();
+  State<LearningPathOverviewPage> createState() =>
+      _LearningPathOverviewPageState();
 }
 
-class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLoginPage> {
+class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
   final TextEditingController _searchController = TextEditingController();
 
   // Filter state
@@ -104,7 +107,7 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== HEADER TITLE + NavigationButton =====
+                // ===== HEADER TITLE =====
                 SizedBox(
                   height: 72,
                   child: Row(
@@ -120,11 +123,16 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                           ),
                         ),
                       ),
-                      // NavigationButton (left) at right side
+                      // === NavigationButton (right) ไปหน้า login ===
                       NavigationButton(
-                        direction: NavigationDirection.left,
+                        direction: NavigationDirection.right,
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const TeacherLearningPathOverviewPage(),
+                            ),//LearningPathOverviewLoginPage
+                          );
                         },
                       ),
                     ],
@@ -145,7 +153,7 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                           controller: _searchController,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 12), 
                       FilterSection(
                         selectedCategory: _selectedCategory,
                         ratingRange: _ratingRange,
@@ -165,78 +173,24 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                 // Title → Section (40)
                 const SizedBox(height: 40),
 
-                // ===== My Learning Paths Titles + navigation button =====
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'My Learning Paths',
-                      style: AppPixelTypography.title.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 18,
-                      height: 30,
-                      child: NavigationButton(
-                        direction: NavigationDirection.right,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LearningPathStatusPage(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                // ===== POPULAR TITLE =====
+                Text(
+                  'Popular\nLearning Paths',
+                  style: AppPixelTypography.title.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
                 ),
 
                 // Title → Content (40)
                 const SizedBox(height: 40),
 
-                // ===== MY LEARNING PATHS LIST (fixed 2 cards, grid) =====
-                if (filteredPopular.isEmpty)
-                  Center(
-                    child: Text(
-                      'No popular paths found',
-                      style: AppTypography.subtitleSemiBold.copyWith(
-                        color: colors.onPrimary,
-                      ),
-                    ),
-                  )
-                else
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredPopular.length < 2 ? filteredPopular.length : 2,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 35,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: PixelCourseCard.cardWidth / PixelCourseCard.cardHeight,
-                    ),
-                    itemBuilder: (context, index) {
-                      return PixelCourseCard(course: filteredPopular[index]);
-                    },
-                  ),
-
-                // ===== RECOMMENDED FOR YOU SECTION =====
-                const SizedBox(height: 60),
-                Text(
-                  'Recommended for you',
-                  style: AppPixelTypography.title.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                ),
-                const SizedBox(height: 40),
+                // ===== POPULAR LIST =====
                 SizedBox(
-                  height: PixelCourseCard.cardHeight,
-                  child: filteredPopular.isEmpty // ใช้ filteredPopular เป็น mock data
+                  height: PixelCourseCard.cardHeight, // 245
+                  child: filteredPopular.isEmpty
                       ? Center(
                           child: Text(
-                            'No recommended paths found',
+                            'No popular paths found',
                             style: AppTypography.subtitleSemiBold.copyWith(
                               color: colors.onPrimary,
                             ),
@@ -255,7 +209,6 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                           },
                         ),
                 ),
-                // ===== END RECOMMENDED FOR YOU SECTION =====
 
                 // Section → Section (60)
                 const SizedBox(height: 60),
