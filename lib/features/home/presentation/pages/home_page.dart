@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_login_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/t_learning_path_overview_login_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -56,7 +58,63 @@ class HomePage extends StatelessWidget {
                     child: const Text('Go to Login'),
                   ),
                 ),
+
+                const SizedBox(height: 60),
+              // ไปLP นักเรียน ที่เรียนแล้ว
+              Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const LearningPathOverviewLoginPage(),
+                      ),
+                    );
+                  },
+                  child: const Text('S_LearningPathOverviewLoginPage'),
+                ),
+              ),
+
+                const SizedBox(height: 60),
+              // ไปLPครู ที่เรียนแล้ว
+              Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            const TeacherLearningPathOverviewPage(),
+                      ),
+                    );
+                  },
+                  child: const Text('T_LearningPathOverviewLoginPage'),
+                ),
+              ),
+
             ],
+
+            
             
 
 
