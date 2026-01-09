@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
+import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
+
 
 class TeacherCreateTab extends StatefulWidget {
   final List<Course> inProgressCourses;
@@ -33,10 +35,23 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     final inProgressCourses = widget.inProgressCourses;
     final completedCourses = widget.completedCourses;
   
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ===== Add button (top right) =====
+        Align(
+          alignment: Alignment.centerRight,
+          child: AppButton(
+            variant: AppButtonVariant.iconOnly,
+            icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
+            onPressed: () {
+              // TODO: Create Learning Path(Input Detail) ของครู
+            },
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
         // =====================================================
         // My Learning Paths - Drafts
         // =====================================================

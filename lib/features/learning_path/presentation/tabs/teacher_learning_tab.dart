@@ -86,7 +86,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
               height: 30,
               child: NavigationButton(
                 direction: NavigationDirection.right,
-                onPressed: widget.onOpenStatus, // ✅ ให้ Page จัดการ
+                onPressed: widget.onOpenStatus, // ให้ Page จัดการ
               ),
             ),
           ],

@@ -120,8 +120,6 @@ class _TeacherLearningPathOverviewPageState
                   onChanged: (index) {
                     setState(() {
                       _activeTab = index;
-
-                      
                       if (_activeTab == 0) {
                         _learningView = TeacherLearningView.main;
                       }
@@ -129,7 +127,7 @@ class _TeacherLearningPathOverviewPageState
                   },
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
 
                 // ===== CONTENT =====
                 if (_activeTab == 0) ...[
