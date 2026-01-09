@@ -123,18 +123,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           ),
                         ),
                       ),
-                      // === NavigationButton (right) ไปหน้า login ===
-                      NavigationButton(
-                        direction: NavigationDirection.right,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const TeacherLearningPathOverviewPage(),
-                            ),//LearningPathOverviewLoginPage
-                          );
-                        },
-                      ),
+                      
                     ],
                   ),
                 ),

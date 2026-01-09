@@ -6,7 +6,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/cou
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/t_learning_path_status_page.dart';
+
 
 class TeacherLearningTab extends StatefulWidget {
   final String searchQuery;
@@ -14,12 +14,16 @@ class TeacherLearningTab extends StatefulWidget {
   final RangeValues? ratingRange;
   final int? maxModules;
 
+  /// callback ให้ Page จัดการเปิด Status content
+  final VoidCallback onOpenStatus;
+
   const TeacherLearningTab({
     super.key,
     required this.searchQuery,
     this.selectedCategory,
     this.ratingRange,
     this.maxModules,
+    required this.onOpenStatus,
   });
 
   @override
@@ -69,7 +73,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ===== My Learning Paths =====
+        // ===== TITLE + STATUS BUTTON =====
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -82,14 +86,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
               height: 30,
               child: NavigationButton(
                 direction: NavigationDirection.right,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const TeacherLearningPathStatusPage(),
-                    ),
-                  );
-                },
+                onPressed: widget.onOpenStatus, // ✅ ให้ Page จัดการ
               ),
             ),
           ],
@@ -97,7 +94,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
 
         const SizedBox(height: 40),
 
-        // ===== MY LEARNING PATHS LIST =====
+        // ===== MY LEARNING PATHS =====
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -160,26 +157,15 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
 
         const SizedBox(height: 40),
 
-        // ===== MORE BUTTON =====
+        // ===== MORE =====
         Center(
-          child: Column(
-            children: [
-              Text(
-                'More',
-                style: AppPixelTypography.smallTitle.copyWith(
-                  color: colors.onPrimary,
-                ),
-              ),
-              const SizedBox(height: 5),
-              NavigationButton(
-                direction: NavigationDirection.down,
-                onPressed: () {
-                  setState(() {
-                    _allListShownCount += 4;
-                  });
-                },
-              ),
-            ],
+          child: NavigationButton(
+            direction: NavigationDirection.down,
+            onPressed: () {
+              setState(() {
+                _allListShownCount += 4;
+              });
+            },
           ),
         ),
 
@@ -188,3 +174,4 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
     );
   }
 }
+

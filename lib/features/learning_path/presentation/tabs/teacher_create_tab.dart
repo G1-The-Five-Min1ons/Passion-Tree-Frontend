@@ -38,7 +38,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // =====================================================
-        // My Learning Paths - In progress
+        // My Learning Paths - Drafts
         // =====================================================
         Text(
           'My Learning Paths',

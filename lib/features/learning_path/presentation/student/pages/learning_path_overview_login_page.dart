@@ -119,13 +119,7 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                           ),
                         ),
                       ),
-                      // NavigationButton (left) at right side
-                      NavigationButton(
-                        direction: NavigationDirection.left,
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
+                      
                     ],
                   ),
                 ),
