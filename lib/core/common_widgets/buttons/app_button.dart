@@ -215,3 +215,31 @@ class _PixelBorderPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+//---------------------- วิธีเรียกใช้ ----------------------//
+// ===== Pixel Button =====
+/* มี 3 แบบให้เลือกใช้
+            -text only 
+            AppButton(
+              variant: AppButtonVariant.text,
+              text: 'Text',
+              onPressed: () {
+                debugPrint('Submit pressed');
+              },
+            ),
+
+            -textWithIcon
+            AppButton(
+              variant: AppButtonVariant.textWithIcon,
+              text: 'Like',
+              icon: const PixelIcon('assets/icons/Pixel_heart.png'),
+              onPressed: () {},
+            ),
+
+            -icon only
+            AppButton(
+              variant: AppButtonVariant.iconOnly,
+              icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
+              onPressed: () {},
+            ),
+*/
