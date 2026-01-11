@@ -34,6 +34,10 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  
+  # State management
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
 
 dev_dependencies:
   flutter_test:
@@ -66,8 +70,18 @@ flutter:
     - assets/icons/Learn.png
     - assets/icons/Reflect.png
     - assets/icons/Profile.png
+    - assets/icons/Pixel_plus.png
+    - assets/icons/Pixel_heart.png
+    - assets/icons/Pixel_star.png
+    - assets/icons/search.png
+    - assets/icons/filter_search.png
+    - assets/icons/tree_icon.png
+    - assets/icons/google.png
+    - assets/icons/discord.png
     - assets/buttons/navigation/pixel/
     - assets/buttons/navigation/white/
+    - assets/images/courses/
+
 
     
 
