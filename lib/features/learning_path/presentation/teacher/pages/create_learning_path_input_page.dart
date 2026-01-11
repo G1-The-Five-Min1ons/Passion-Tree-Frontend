@@ -11,139 +11,167 @@ import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_m
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 
-class CreateLearningPathInputPage extends StatelessWidget {
+class CreateLearningPathInputPage extends StatefulWidget {
   const CreateLearningPathInputPage({super.key});
 
+  @override
+  State<CreateLearningPathInputPage> createState() =>
+      _CreateLearningPathInputPageState();
+}
+
+class _CreateLearningPathInputPageState
+    extends State<CreateLearningPathInputPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: const AppBarWidget(
+      appBar: AppBarWidget(
         title: 'Create Learning Path',
         showBackButton: true,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xmargin,
-            vertical: AppSpacing.ymargin,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ===== HEADER =====
-              Container(
-                height: 96,
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                color: colors.primary.withValues(alpha: 0.25),
-                alignment: Alignment.centerLeft,
-                child: const Text('HEADER TITLE + SUBTITLE'),
-              ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: AppSpacing.xmargin,
+              right: AppSpacing.xmargin,
+              top: AppSpacing.ymargin,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ===== HEADER =====
+                SizedBox(
+                  height: 120, // เพิ่มความสูงเพื่อรองรับ subtitle
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Create a New \nLearning Path',
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                      ),
 
-              const SizedBox(height: 32),
+                      const SizedBox(height: 20), // ระยะห่างตามที่ต้องการ
 
-              // ===== PREVIEW CARD =====
-              Center(
-                child: Container(
-                  height: 160,
-                  width: 220,
-                  color: colors.secondary.withValues(alpha: 0.25),
-                  alignment: Alignment.center,
-                  child: const Text('PREVIEW CARD'),
+                      Text(
+                        'Fill in details to start a new path for your students',
+                        style: AppTypography.subtitleSemiBold.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimary.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 40),
+                const SizedBox(height: 32),
 
-              // ===== PATH TITLE : TITLE =====
-              Container(
-                height: 24,
-                width: double.infinity,
-                color: colors.surface.withValues(alpha: 0.6),
-                alignment: Alignment.centerLeft,
-                child: const Text('PATH TITLE'),
-              ),
+                // ===== PREVIEW CARD =====
+                Center(
+                  child: Container(
+                    height: 160,
+                    width: 220,
+                    color: colors.secondary.withValues(alpha: 0.25),
+                    alignment: Alignment.center,
+                    child: const Text('PREVIEW CARD'),
+                  ),
+                ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 40),
 
-              // ===== PATH TITLE : CONTENT =====
-              Container(
-                height: 56,
-                width: double.infinity,
-                color: colors.surface.withValues(alpha: 0.3),
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: const Text('PATH TITLE INPUT'),
-              ),
+                // ===== PATH TITLE : TITLE =====
+               const SizedBox(height: 60),
+                Text(
+                  'Path Title',
+                  style: AppTypography.titleSemiBold.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
 
-              const SizedBox(height: 40),
+                const SizedBox(height: 20),
 
-              // ===== UPLOAD COVER : TITLE =====
-              Container(
-                height: 24,
-                width: double.infinity,
-                color: colors.surface.withValues(alpha: 0.6),
-                alignment: Alignment.centerLeft,
-                child: const Text('UPLOAD COVER IMAGE'),
-              ),
+                // ===== PATH TITLE : CONTENT =====
+                Container(
+                  height: 56,
+                  width: double.infinity,
+                  color: colors.surface.withValues(alpha: 0.3),
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: const Text('PATH TITLE INPUT'),
+                ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 40),
 
-              // ===== UPLOAD COVER : CONTENT =====
-              Container(
-                height: 160,
-                width: double.infinity,
-                color: colors.primary.withValues(alpha: 0.15),
-                alignment: Alignment.center,
-                child: const Text('UPLOAD COVER'),
-              ),
+                // ===== UPLOAD COVER : TITLE =====
+               const SizedBox(height: 60),
+                Text(
+                  'Upload Cover Image',
+                  style: AppTypography.titleSemiBold.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
 
-              const SizedBox(height: 40),
+                const SizedBox(height: 20),
 
-              // ===== OBJECTIVES : TITLE =====
-              Container(
-                height: 24,
-                width: double.infinity,
-                color: colors.surface.withValues(alpha: 0.6),
-                alignment: Alignment.centerLeft,
-                child: const Text('PATH OBJECTIVES'),
-              ),
+                // ===== UPLOAD COVER : CONTENT =====
+                Container(
+                  height: 160,
+                  width: double.infinity,
+                  color: colors.primary.withValues(alpha: 0.15),
+                  alignment: Alignment.center,
+                  child: const Text('UPLOAD COVER'),
+                ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 40),
 
-              // ===== OBJECTIVES : CONTENT =====
-              Container(
-                height: 120,
-                width: double.infinity,
-                color: colors.surface.withValues(alpha: 0.3),
-                padding: const EdgeInsets.all(12),
-                child: const Text('OBJECTIVES INPUT'),
-              ),
+                // ===== OBJECTIVES : TITLE =====
+                const SizedBox(height: 60),
+                Text(
+                  'Path Objectives',
+                  style: AppTypography.titleSemiBold.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
 
-              const SizedBox(height: 40),
+                const SizedBox(height: 20),
 
-              // ===== DESCRIPTION : TITLE =====
-              Container(
-                height: 24,
-                width: double.infinity,
-                color: colors.surface.withValues(alpha: 0.6),
-                alignment: Alignment.centerLeft,
-                child: const Text('PATH DESCRIPTION'),
-              ),
+                // ===== OBJECTIVES : CONTENT =====
+                Container(
+                  height: 140,
+                  width: double.infinity,
+                  color: colors.surface.withValues(alpha: 0.3),
+                  padding: const EdgeInsets.all(12),
+                  child: const Text('OBJECTIVES INPUT'),
+                ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 40),
 
-              // ===== DESCRIPTION : CONTENT =====
-              Container(
-                height: 140,
-                width: double.infinity,
-                color: colors.surface.withValues(alpha: 0.3),
-                padding: const EdgeInsets.all(12),
-                child: const Text('DESCRIPTION INPUT'),
-              ),
-            ],
+                // ===== DESCRIPTION : TITLE =====
+                const SizedBox(height: 60),
+                Text(
+                  'Path Description',
+                  style: AppTypography.titleSemiBold.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // ===== DESCRIPTION : CONTENT =====
+                Container(
+                  height: 140,
+                  width: double.infinity,
+                  color: colors.surface.withValues(alpha: 0.3),
+                  padding: const EdgeInsets.all(12),
+                  child: const Text('DESCRIPTION INPUT'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

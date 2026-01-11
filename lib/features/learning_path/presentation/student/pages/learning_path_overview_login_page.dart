@@ -103,7 +103,7 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== HEADER TITLE + NavigationButton =====
+                // ===== HEADER TITLE  =====
                 SizedBox(
                   height: 72,
                   child: Row(
