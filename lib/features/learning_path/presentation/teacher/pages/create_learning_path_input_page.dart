@@ -10,6 +10,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/cou
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 
 class CreateLearningPathInputPage extends StatefulWidget {
   const CreateLearningPathInputPage({super.key});
@@ -86,13 +87,13 @@ class _CreateLearningPathInputPageState
                 const SizedBox(height: 40),
 
                 // ===== PATH TITLE : TITLE =====
-               const SizedBox(height: 60),
-                Text(
-                  'Path Title',
-                  style: AppTypography.titleSemiBold.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
+                PixelTextField(
+                  label: 'Path Title',
+                  labelColor: Theme.of(context).colorScheme.onPrimary,
+                  hintText: 'Enter learning path title',
+                  height: 46, // single line กำลังพอดี
                 ),
+
 
                 const SizedBox(height: 20),
 
