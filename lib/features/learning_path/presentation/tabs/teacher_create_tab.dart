@@ -8,7 +8,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
-
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/create_learning_path_input_page.dart';
 
 class TeacherCreateTab extends StatefulWidget {
   final List<Course> inProgressCourses;
@@ -45,7 +45,12 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
             variant: AppButtonVariant.iconOnly,
             icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
             onPressed: () {
-              // TODO: Create Learning Path(Input Detail) ของครู
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreateLearningPathInputPage(),
+                ),
+              );
             },
           ),
         ),
