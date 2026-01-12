@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/mockdata/albumdata.dart';
-
-import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album.dart';
 
 class ReflectionTreePage extends StatelessWidget {
