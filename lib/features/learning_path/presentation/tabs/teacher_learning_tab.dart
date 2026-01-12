@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
@@ -104,8 +105,9 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
             mainAxisSpacing: 35,
             crossAxisSpacing: 12,
             childAspectRatio:
-                PixelCourseCard.cardWidth / PixelCourseCard.cardHeight,
+                BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
           ),
+
           itemBuilder: (context, index) {
             return PixelCourseCard(course: filteredPopular[index]);
           },
@@ -120,7 +122,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
         const SizedBox(height: 40),
 
         SizedBox(
-          height: PixelCourseCard.cardHeight,
+           height: BaseCourseCard.defaultHeight,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: filteredPopular.length,
@@ -148,7 +150,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
             mainAxisSpacing: 35,
             crossAxisSpacing: 12,
             childAspectRatio:
-                PixelCourseCard.cardWidth / PixelCourseCard.cardHeight,
+                BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
           ),
           itemBuilder: (context, index) {
             return PixelCourseCard(course: shownAllCourses[index]);
