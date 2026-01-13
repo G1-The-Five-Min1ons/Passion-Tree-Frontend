@@ -204,21 +204,22 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredPopular.length < 2 ? filteredPopular.length : 2,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 35,
-                          crossAxisSpacing: 12,
-                          childAspectRatio:
-                              BaseCourseCard.defaultWidth /
-                              BaseCourseCard.defaultHeight,
-                        ),
-
+                    itemCount: filteredPopular.length < 2
+                        ? filteredPopular.length
+                        : 2,
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 220, // ✅ คุมขนาดการ์ด
+                      mainAxisSpacing: 35,
+                      crossAxisSpacing: 12,
+                      childAspectRatio:
+                          BaseCourseCard.defaultWidth /
+                          BaseCourseCard.defaultHeight,
+                    ),
                     itemBuilder: (context, index) {
                       return PixelCourseCard(course: filteredPopular[index]);
                     },
                   ),
+
 
                 // ===== RECOMMENDED FOR YOU SECTION =====
                 const SizedBox(height: 60),

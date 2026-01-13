@@ -136,7 +136,7 @@ class _PixelCourseClipper extends CustomClipper<Path> {
 
 class BaseCourseCard extends StatelessWidget {
   static const double defaultWidth = 180;
-  static const double defaultHeight = 245;
+  static const double defaultHeight = 248;
 
   final Widget child;
   final double width;

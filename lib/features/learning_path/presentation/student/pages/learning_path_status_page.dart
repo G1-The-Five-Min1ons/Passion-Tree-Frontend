@@ -293,21 +293,20 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: completedCourses.length < completedShown
-                        ? completedCourses.length
-                        : completedShown,
+                    itemCount: filteredPopular.length < 2
+                        ? filteredPopular.length
+                        : 2,
                     gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 220, // ✅ คุมขนาดการ์ด
                           mainAxisSpacing: 35,
                           crossAxisSpacing: 12,
                           childAspectRatio:
                               BaseCourseCard.defaultWidth /
                               BaseCourseCard.defaultHeight,
                         ),
-
                     itemBuilder: (context, index) {
-                      return PixelCourseCard(course: completedCourses[index]);
+                      return PixelCourseCard(course: filteredPopular[index]);
                     },
                   ),
 
