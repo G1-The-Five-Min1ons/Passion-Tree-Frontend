@@ -120,6 +120,7 @@ class PixelCourseCard extends StatelessWidget {
                     '${course.students} learners',
                     style: AppTypography.smallBodyMedium,
                   ),
+                  
                   Text(
                     '${course.modules} modules',
                     style: AppTypography.smallBodyMedium,
