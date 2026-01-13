@@ -6,7 +6,7 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 
 // 2. ตัว Widget หลัก
 class PixelTextField extends StatelessWidget {
-  final String label;
+  final String? label;
   final String hintText;
   final TextEditingController? controller;
   final bool isPassword;
@@ -17,10 +17,12 @@ class PixelTextField extends StatelessWidget {
   final Color? labelColor;
   final Color? textColor;
   final Color? hintColor;
+  final TextStyle? textStyle;
+  final TextStyle? labelTextStyle;
 
   const PixelTextField({
     super.key,
-    required this.label,
+    this.label,
     this.hintText = '',
     this.controller,
     this.isPassword = false,
@@ -31,12 +33,15 @@ class PixelTextField extends StatelessWidget {
     this.labelColor,
     this.textColor,
     this.hintColor,
+    this.textStyle,
+    this.labelTextStyle,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final ScrollController scrollController = ScrollController();
+    final theme = Theme.of(context).textTheme;
 
     //ถ้าตอนเอาไปใช้ไม่ได้กำหนดสีมา ก็จะใช้สีจาก Theme ที่กำหนดไว้แล้วแทน
     final activeBorderColor = borderColor ?? colorScheme.primary;
@@ -47,16 +52,18 @@ class PixelTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (label != null && label!.isNotEmpty) ...[
         Padding(
           padding: const EdgeInsets.only(left: 10),
           child: Text(
-            label,
-            style: AppTypography.subtitleSemiBold.copyWith(
+            label!,
+            style: (labelTextStyle ?? AppTypography.titleSemiBold).copyWith(
               color: activeLabelColor,
             ),
           ),
         ),
         const SizedBox(height: 8),
+      ],
         
         PixelBorderContainer(
           width: width ?? double.infinity, 
@@ -74,12 +81,14 @@ class PixelTextField extends StatelessWidget {
               maxLines: null,
               expands: true, 
               obscureText: isPassword,
-              style: AppTypography.bodyRegular.copyWith(
+              style: (textStyle ?? AppTypography.bodyRegular).copyWith(
                 color: activeTextColor,
               ),
               decoration: InputDecoration(
                 hintText: hintText,
-                hintStyle: TextStyle(color: activeHintColor),
+                hintStyle: (textStyle ?? AppTypography.bodyRegular).copyWith(
+                  color: activeHintColor,
+                ),
                 border: InputBorder.none, 
                 isDense: true,
                 contentPadding: EdgeInsets.zero,

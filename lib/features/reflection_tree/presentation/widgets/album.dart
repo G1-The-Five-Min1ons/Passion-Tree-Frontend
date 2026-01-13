@@ -41,7 +41,7 @@ class PixelAlbumCover extends StatelessWidget {
               Expanded(
                 flex: 68,
                 child: imageUrl != null
-                    ? Image.network(imageUrl!, fit: BoxFit.cover, width: double.infinity)
+                    ? Image.asset(imageUrl!, fit: BoxFit.cover, width: double.infinity) //ถ้าดึงจาก db อาจจะต้องเปลี่ยน asset
                     : Container(color: primaryColor.withOpacity(0.3)),
               ),
               // ส่วนแถบชื่อด้านล่าง
@@ -58,14 +58,16 @@ class PixelAlbumCover extends StatelessWidget {
                       if (title != null)
                         Text(
                           title!,
-                          style: AppPixelTypography.smallTitle.copyWith(color: Colors.white),
+                          style: AppPixelTypography.smallTitle.copyWith(
+                            color: Theme.of(context).colorScheme.onPrimary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       if (subtitle != null)
                         Text(
                           subtitle!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onPrimary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),

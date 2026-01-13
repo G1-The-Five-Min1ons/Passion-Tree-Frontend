@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -8,7 +9,8 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   const AppBarWidget({
     super.key, 
     required this.title, 
-    this.showBackButton = false});
+    this.showBackButton = false
+    });
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -30,14 +32,12 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
-                icon: Text(
-                  "<", // mock ไว้รอปุ่มจริง
-                  style: TextStyle(
-                    color: contentColor,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                    icon: Icon(
+                      Symbols.chevron_left_rounded,
+                      color: contentColor,
+                      size: 35,
+                      weight: 400,
+                    ),
                 onPressed: () {
                     // เช็คว่ากดกลับได้มั้ย ถ้าได้ให้กลับ
                     if (Navigator.canPop(context)) {
@@ -46,12 +46,11 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                   },
               ),
             ),
+
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: contentColor,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
               ),
             ),
           ],
