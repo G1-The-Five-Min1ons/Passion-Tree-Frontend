@@ -17,13 +17,9 @@ class ReflectionTreePage extends StatelessWidget {
 
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.only(
-          left: AppSpacing.xmargin,
-          top: AppSpacing.ymargin,
-          right: AppSpacing.xmargin
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xmargin),
+        child: ListView(
+          padding: const EdgeInsets.only(top: AppSpacing.ymargin),
           children: [
             Text('Reflection Tree',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
@@ -47,10 +43,10 @@ class ReflectionTreePage extends StatelessWidget {
                   }),
               ],),
 
-                Expanded(child: albumList.isEmpty 
+                albumList.isEmpty 
                 ? _buildEmptyState(context)
                 : _buildAlbumList(context, albumList),
-                ),
+              
           ],
         ),
       ),
@@ -81,6 +77,8 @@ Widget _buildEmptyState(BuildContext context) {
 Widget _buildAlbumList(BuildContext context, List<Album> albums) {
   return GridView.builder(
     padding: const EdgeInsets.symmetric(vertical: 20),
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
       crossAxisCount: 2,
       crossAxisSpacing: 16,
