@@ -19,7 +19,7 @@ class PixelCourseCard extends StatelessWidget {
         children: [
           // ================= IMAGE =================
           SizedBox(
-            height: 90,
+            height: 80,
             width: double.infinity,
             child: Stack(
               children: [

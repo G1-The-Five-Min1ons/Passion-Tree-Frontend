@@ -9,10 +9,6 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_login_page.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/t_learning_path_overview_login_page.dart';
-
-
 
 
 class LearningPathOverviewPage extends StatefulWidget {
@@ -228,20 +224,19 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredPopular.length < 2
-                        ? filteredPopular.length
-                        : 2,
+                    itemCount: shownAllCourses.length,
                     gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 220, // ✅ คุมขนาดการ์ด
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
                           mainAxisSpacing: 35,
                           crossAxisSpacing: 12,
                           childAspectRatio:
                               BaseCourseCard.defaultWidth /
                               BaseCourseCard.defaultHeight,
                         ),
+
                     itemBuilder: (context, index) {
-                      return PixelCourseCard(course: filteredPopular[index]);
+                      return PixelCourseCard(course: shownAllCourses[index]);
                     },
                   ),
 

@@ -92,16 +92,7 @@ class CoursePreviewCard extends StatelessWidget {
 
                   const Spacer(),
 
-                  // ===== Continue Learning ===== โน้ตไว้ก่อนเดะมาแก้
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      'Continue Learning >',
-                      style: AppTypography.smallBodyMedium.copyWith(
-                        color: colors.primary,
-                      ),
-                    ),
-                  ),
+                  
                 ],
               ),
             ),

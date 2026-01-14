@@ -3,14 +3,9 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_preview_card.dart';
 
 class CreateLearningPathInputPage extends StatefulWidget {
   const CreateLearningPathInputPage({super.key});
@@ -73,16 +68,9 @@ class _CreateLearningPathInputPageState
 
                 const SizedBox(height: 32),
 
-                // ===== PREVIEW CARD =====
-                Center(
-                  child: Container(
-                    height: 160,
-                    width: 220,
-                    color: colors.secondary.withValues(alpha: 0.25),
-                    alignment: Alignment.center,
-                    child: const Text('PREVIEW CARD'),
-                  ),
-                ),
+                // ===== PREVIEW CARD ===== 
+                Center(child: CoursePreviewCard()),
+
 
                 const SizedBox(height: 40),
 
