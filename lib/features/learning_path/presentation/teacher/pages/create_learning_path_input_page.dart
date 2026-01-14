@@ -8,7 +8,7 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_preview_card.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-
+import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 class CreateLearningPathInputPage extends StatefulWidget {
   const CreateLearningPathInputPage({super.key});
 
@@ -157,6 +157,36 @@ class _CreateLearningPathInputPageState
                   height: 150, // คุมความสูงของ textarea
                 ),
 
+                const SizedBox(height: 30),
+
+              // ===== AI CREATE NODE =====
+                Center(
+                  child: Column(
+                    children: [
+                      AppButton(
+                        variant: AppButtonVariant.text,
+                        text: 'AI Create Node',
+                        subText:
+                            'Use AI powered to auto generate nodes for you',
+                        onPressed: () {},
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      //or
+                      Text('or', style: AppPixelTypography.smallTitle.copyWith(color: Theme.of(context).colorScheme.onPrimary),),
+
+                      //cr
+                      const SizedBox(height: 10),
+                      AppButton(
+                        variant: AppButtonVariant.text,
+                        text: 'Create Plain Path',
+                        subText: 'Create nodes by yourself',
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
