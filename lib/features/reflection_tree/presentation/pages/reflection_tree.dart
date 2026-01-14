@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/mockdata/albumdata.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class ReflectionTreePage extends StatelessWidget {
   const ReflectionTreePage({super.key});
@@ -12,23 +17,36 @@ class ReflectionTreePage extends StatelessWidget {
 
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.only(
-          left: AppSpacing.xmargin,
-          top: AppSpacing.ymargin,
-          right: AppSpacing.xmargin
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xmargin),
+        child: ListView(
+          padding: const EdgeInsets.only(top: AppSpacing.ymargin),
           children: [
             Text('Reflection Tree',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                       color: Theme.of(context).colorScheme.onPrimary,
                     ),
                 ),
-                Expanded(child: albumList.isEmpty 
+                
+              const SizedBox(height: 4),
+
+              Row(
+                children: [
+                  const Spacer(),
+                  AppButton(
+                  variant: AppButtonVariant.iconOnly,
+                  icon: Icon(
+                    Symbols.add_rounded,
+                    weight: 700,
+                    color: Theme.of(context).colorScheme.onPrimary),
+                  onPressed: (){
+                    //รอใส่ logic ทีหลัง
+                  }),
+              ],),
+
+                albumList.isEmpty 
                 ? _buildEmptyState(context)
                 : _buildAlbumList(context, albumList),
-                ),
+              
           ],
         ),
       ),
@@ -43,7 +61,7 @@ Widget _buildEmptyState(BuildContext context) {
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: 100),
+        const SizedBox(height: 50),
         Text(
           'No Album Found',
         textAlign: TextAlign.center,
@@ -56,22 +74,26 @@ Widget _buildEmptyState(BuildContext context) {
   );
 }
 
-//mock แบบดึงข้อมูลมาแสดง แต่ยังไม่ใช่ design จริง
-Widget _buildAlbumList(BuildContext context, List<String> albums) {
-  return ListView.builder(
+Widget _buildAlbumList(BuildContext context, List<Album> albums) {
+  return GridView.builder(
+    padding: const EdgeInsets.symmetric(vertical: 20),
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 1,
+    ),
     itemCount: albums.length,
     itemBuilder: (context, index) {
-      return ListTile(
-        title: Text(
-          albums[index],
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
-        ),
-        leading: Icon(
-          Icons.photo_album,
-          color: Theme.of(context).colorScheme.onPrimary, 
-        ),
+      final album = albums[index];
+
+      return PixelAlbumCover(
+        size: 150,
+        title: album.title,
+        subtitle: album.subtitle,
+        imageUrl: album.image,
       );
     },
   );
