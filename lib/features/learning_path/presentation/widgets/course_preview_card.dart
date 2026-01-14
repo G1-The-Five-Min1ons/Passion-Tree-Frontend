@@ -90,7 +90,7 @@ class CoursePreviewCard extends StatelessWidget {
                     ),
                   ),
 
-                  const Spacer(),
+                 
 
                   
                 ],

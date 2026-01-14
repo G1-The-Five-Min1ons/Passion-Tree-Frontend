@@ -4,6 +4,7 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
+import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 
 class PixelCourseCard extends StatelessWidget {
   final Course course;
@@ -94,7 +95,7 @@ class PixelCourseCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Icon(Icons.more_horiz, size: 16, color: colors.onSurface),
+                      const MoreIcon(),
                     ],
                   ),
 

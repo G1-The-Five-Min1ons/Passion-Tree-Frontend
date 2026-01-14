@@ -4,8 +4,10 @@ import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_preview_card.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class CreateLearningPathInputPage extends StatefulWidget {
   const CreateLearningPathInputPage({super.key});
@@ -33,6 +35,7 @@ class _CreateLearningPathInputPageState
               left: AppSpacing.xmargin,
               right: AppSpacing.xmargin,
               top: AppSpacing.ymargin,
+              bottom: 40,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,15 +69,15 @@ class _CreateLearningPathInputPageState
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
 
                 // ===== PREVIEW CARD ===== 
                 Center(child: CoursePreviewCard()),
 
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
 
-                // ===== PATH TITLE : TITLE =====
+                // ===== PATH TITLE =====
                 PixelTextField(
                   label: 'Path Title',
                   labelColor: Theme.of(context).colorScheme.onPrimary,
@@ -85,20 +88,8 @@ class _CreateLearningPathInputPageState
 
                 const SizedBox(height: 20),
 
-                // ===== PATH TITLE : CONTENT =====
-                Container(
-                  height: 56,
-                  width: double.infinity,
-                  color: colors.surface.withValues(alpha: 0.3),
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: const Text('PATH TITLE INPUT'),
-                ),
-
-                const SizedBox(height: 40),
-
                 // ===== UPLOAD COVER : TITLE =====
-               const SizedBox(height: 60),
+               
                 Text(
                   'Upload Cover Image',
                   style: AppTypography.titleSemiBold.copyWith(
@@ -106,59 +97,66 @@ class _CreateLearningPathInputPageState
                   ),
                 ),
 
-                const SizedBox(height: 20),
 
-                // ===== UPLOAD COVER : CONTENT =====
-                Container(
-                  height: 160,
+                const SizedBox(height: 10),
+
+                PixelBorderContainer(
                   width: double.infinity,
-                  color: colors.primary.withValues(alpha: 0.15),
-                  alignment: Alignment.center,
-                  child: const Text('UPLOAD COVER'),
-                ),
-
-                const SizedBox(height: 40),
-
-                // ===== OBJECTIVES : TITLE =====
-                const SizedBox(height: 60),
-                Text(
-                  'Path Objectives',
-                  style: AppTypography.titleSemiBold.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
+                  height: 150,
+                  padding: EdgeInsets.zero,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_photo_alternate,
+                          size: 48,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Upload Cover Image',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: AppColors.textSecondary.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
 
-                const SizedBox(height: 20),
 
-                // ===== OBJECTIVES : CONTENT =====
-                Container(
-                  height: 140,
-                  width: double.infinity,
-                  color: colors.surface.withValues(alpha: 0.3),
-                  padding: const EdgeInsets.all(12),
-                  child: const Text('OBJECTIVES INPUT'),
+                const SizedBox(height: 20),
+                // ===== OBJECTIVES : TITLE =====
+
+              PixelTextField(
+                  label: 'Path Objectives',
+                  labelColor: Theme.of(context).colorScheme.onPrimary,
+                  hintText: 'Enter learning path objectives',
+                  height: 46, // single line กำลังพอดี
                 ),
 
-                const SizedBox(height: 40),
+
+                const SizedBox(height: 20),
 
                 // ===== DESCRIPTION : TITLE =====
-                const SizedBox(height: 60),
                 Text(
                   'Path Description',
                   style: AppTypography.titleSemiBold.copyWith(
                     color: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
 
                 // ===== DESCRIPTION : CONTENT =====
-                Container(
-                  height: 140,
-                  width: double.infinity,
-                  color: colors.surface.withValues(alpha: 0.3),
-                  padding: const EdgeInsets.all(12),
-                  child: const Text('DESCRIPTION INPUT'),
+                PixelTextField(
+                  hintText: 'Describe this learning path in detail',
+                  height: 150, // คุมความสูงของ textarea
                 ),
+
               ],
             ),
           ),
