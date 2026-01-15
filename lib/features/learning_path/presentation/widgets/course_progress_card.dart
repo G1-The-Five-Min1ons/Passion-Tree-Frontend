@@ -103,7 +103,7 @@ class CourseProgressCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const MoreIcon(),
+                      MoreIcon(color: Theme.of(context).colorScheme.onSurface),
                     ],
                   ),
 
