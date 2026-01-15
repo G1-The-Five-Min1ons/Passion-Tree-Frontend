@@ -1,21 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/mockdata/albumdata.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/album_detail_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-class ReflectionTreePage extends StatelessWidget {
+class ReflectionTreePage extends StatefulWidget {
   const ReflectionTreePage({super.key});
 
   @override
+  State<ReflectionTreePage> createState() => _ReflectionTreePageState();
+}
+  
+  class _ReflectionTreePageState extends State<ReflectionTreePage>{
+    Album? selectedAlbum;
+
+
+  @override
   Widget build(BuildContext context) {
+    if (selectedAlbum != null) {
+      return AlbumDetailPage(
+        album: selectedAlbum!,
+        onBack: () {
+          setState(() {
+            selectedAlbum = null; 
+          });
+        },
+      );
+    }
+
     final albumList = AlbumData.albums;
 
     return Scaffold(
+      appBar: const AppBarWidget(title: 'Reflect', showBackButton: false),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xmargin),
         child: ListView(
@@ -26,7 +48,6 @@ class ReflectionTreePage extends StatelessWidget {
                       color: Theme.of(context).colorScheme.onPrimary,
                     ),
                 ),
-                
               const SizedBox(height: 4),
 
               Row(
@@ -52,7 +73,7 @@ class ReflectionTreePage extends StatelessWidget {
       ),
     );
   }
-}
+
 
 Widget _buildEmptyState(BuildContext context) {
   return SizedBox(
@@ -89,12 +110,21 @@ Widget _buildAlbumList(BuildContext context, List<Album> albums) {
     itemBuilder: (context, index) {
       final album = albums[index];
 
-      return PixelAlbumCover(
-        size: 150,
-        title: album.title,
-        subtitle: album.subtitle,
-        imageUrl: album.image,
-      );
-    },
-  );
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              selectedAlbum = album;
+              },
+            );
+          },
+          child: PixelAlbumCover(
+            size: 150,
+            title: album.title,
+            subtitle: album.subtitle,
+            imageUrl: album.image,
+            ),
+        );
+      },
+    );
+  }
 }

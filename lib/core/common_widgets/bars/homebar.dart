@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/reflection_tree.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_page.dart';
@@ -17,12 +16,6 @@ class HomeBarWidget extends StatefulWidget {
 class _HomeBarWidgetState extends State<HomeBarWidget> {
   int _selectedIndex = 0;
 
-  final List<String> _titles = [
-    'Home',
-    'Learn',
-    'Reflect',
-    'Profile',
-  ];
 
   // ใส่หน้าของตัวเองตรงนี้
   final List<Widget> _pages = [
@@ -35,8 +28,6 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBarWidget(title: _titles[_selectedIndex], showBackButton: false),
-
       body: _pages[_selectedIndex],
       
       bottomNavigationBar: BottomNavigationBar(
