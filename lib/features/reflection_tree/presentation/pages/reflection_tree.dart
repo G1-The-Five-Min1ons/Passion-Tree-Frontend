@@ -37,19 +37,12 @@ class ReflectionTreePage extends StatefulWidget {
     final albumList = AlbumData.albums;
 
     return Scaffold(
-      appBar: const AppBarWidget(title: 'Reflect', showBackButton: false),
+      appBar: const AppBarWidget(title: 'Reflection Tree', showBackButton: false),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xmargin),
         child: ListView(
           padding: const EdgeInsets.only(top: AppSpacing.ymargin),
           children: [
-            Text('Reflection Tree',
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
-                ),
-              const SizedBox(height: 4),
-
               Row(
                 children: [
                   const Spacer(),

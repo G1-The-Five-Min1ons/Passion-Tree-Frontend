@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
-import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
-import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album_base_card.dart';
 
 class PixelAlbumCover extends StatelessWidget {
   final double? size;
@@ -25,113 +24,16 @@ class PixelAlbumCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final primaryColor = color ?? Theme.of(context).colorScheme.primary;
 
-    return PixelBorderContainer(
-      width: size ?? double.infinity,
-      height: size,
+    return PixelBaseCard(
+      size: size,
       pixelSize: pixelSize,
-      borderColor: primaryColor,
-      fillColor: Colors.transparent,
-      padding: EdgeInsets.all(pixelSize),
-      child: ClipPath(
-        clipper: _PixelCoverClipper(pixelSize),
-        child: AspectRatio(
-          aspectRatio: 1 / 1,
-          child: Column(
-            children: [
-              // ส่วนรูปภาพ
-              Expanded(
-                flex: 68,
-                child: imageUrl != null
-                    ? Image.asset(imageUrl!, fit: BoxFit.cover, width: double.infinity) //ถ้าดึงจาก db อาจจะต้องเปลี่ยน asset
-                    : Container(color: primaryColor.withOpacity(0.3)),
-              ),
-              // ส่วนแถบชื่อด้านล่าง
-              Expanded(
-                flex: 32,
-                child: Container(
-                  width: double.infinity,
-                  color: primaryColor,
-                  padding: EdgeInsets.all(pixelSize * 2),
-                  child: Stack(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (title != null)
-                            Text(
-                              title!,
-                              style: AppPixelTypography.smallTitle.copyWith(
-                                color: Theme.of(context).colorScheme.onPrimary),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          if (subtitle != null)
-                            Text(
-                              subtitle!,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onPrimary),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                        ],
-                      ),
-                    
-
-                    Positioned(
-                      top: 2,
-                      right: 0,
-                      child: const MoreIcon(),
-                    ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      color: primaryColor,
+      title: title,
+      subtitle: subtitle,
+      actionIcon: const MoreIcon(),
+      topContent: imageUrl != null
+        ? Image.asset(imageUrl!, fit: BoxFit.cover, width: double.infinity) //ถ้าดึงจาก db อาจจะต้องเปลี่ยน asset
+        : Container(color: primaryColor.withValues(alpha: 0.3)),
     );
   }
-}
-
-class _PixelCoverClipper extends CustomClipper<Path> {
-  final double p; 
-
-  _PixelCoverClipper(this.p);
-
-  @override
-  Path getClip(Size size) {
-    double w = size.width;
-    double h = size.height;
-    Path path = Path();
-
-    // วาด Path ให้เว้าตามรอยหยักพิกเซล 
-    path.moveTo(p * 2, 0);
-    path.lineTo(w - p * 2, 0);
-    path.lineTo(w - p * 2, p);
-    path.lineTo(w - p, p);
-    path.lineTo(w - p, p * 2);
-    path.lineTo(w, p * 2);
-    path.lineTo(w, h - p * 2);
-    path.lineTo(w - p, h - p * 2);
-    path.lineTo(w - p, h - p);
-    path.lineTo(w - p * 2, h - p);
-    path.lineTo(w - p * 2, h);
-    path.lineTo(p * 2, h);
-    path.lineTo(p * 2, h - p);
-    path.lineTo(p, h - p);
-    path.lineTo(p, h - p * 2);
-    path.lineTo(0, h - p * 2);
-    path.lineTo(0, p * 2);
-    path.lineTo(p, p * 2);
-    path.lineTo(p, p);
-    path.lineTo(p * 2, p);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

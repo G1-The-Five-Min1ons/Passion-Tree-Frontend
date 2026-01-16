@@ -5,7 +5,29 @@ class AlbumData {
     Album(
       title: "Science",
       subtitle: "Edited 10 minutes ago",
-      image: 'assets/images/albumcover/science.jpg'
+      image: 'assets/images/albumcover/science.jpg',
+      items: [
+        AlbumItem(
+        subjectName: "Biology101",
+        lastEdited: "Edited 40 minutes ago",
+        status: "Growing",
+        ),
+        AlbumItem(
+        subjectName: "Microbio",
+        lastEdited: "Edited 2 weeks ago",
+        status: "Fading",
+        ),
+        AlbumItem(
+        subjectName: "Genetics",
+        lastEdited: "Edited 3 weeks ago",
+        status: "Dying",
+        ),
+        AlbumItem(
+        subjectName: "DNA",
+        lastEdited: "Edited 1 month ago",
+        status: "Died",
+        ),
+      ]
     ),
     Album(
       title: "Languages",

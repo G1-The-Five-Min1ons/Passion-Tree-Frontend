@@ -4,7 +4,9 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_album.dart';
 
 
 class AlbumDetailPage extends StatelessWidget{
@@ -21,7 +23,7 @@ class AlbumDetailPage extends StatelessWidget{
   Widget build(BuildContext context) {
     return Scaffold(
        appBar: AppBarWidget(
-        title: 'Reflect', 
+        title: 'Reflection Tree', 
         showBackButton: true,
         onBackPressed: onBack, 
       ), 
@@ -51,10 +53,59 @@ class AlbumDetailPage extends StatelessWidget{
                     //รอใส่ logic ทีหลัง
                   }),
                 ],
-              ),                  
+              ),  
+              if (album.items != null && album.items!.isNotEmpty)
+              _buildItemGrid(context, album.items!)
+            else
+              _buildEmptyState(context),                
           ],
         ),
       ),
     );  
   }
 }
+
+  Widget _buildItemGrid(BuildContext context, List<AlbumItem> items) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(), 
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2, 
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1, 
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return TreeAlbumCard(
+          title: item.subjectName,
+          subtitle: item.lastEdited,
+          statusText: item.status, 
+          statusColor: item.statusColor, 
+          dataDisplay: const SizedBox.shrink(),
+        );
+      },
+    );
+  }
+  
+  Widget _buildEmptyState(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 50),
+      child: Center(
+        child: Column(
+          children: [
+            Text(
+              "No Tree Found",
+              style: AppTypography.titleRegular.copyWith(
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+ 
