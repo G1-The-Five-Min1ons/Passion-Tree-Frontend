@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
+
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 
 class AppButton extends StatefulWidget {
   final AppButtonVariant variant;
   final AppButtonSize size;
+  final String? subText;
   final String? text;
   final Widget? icon;
   final VoidCallback onPressed;
@@ -13,6 +16,7 @@ class AppButton extends StatefulWidget {
     super.key,
     required this.variant,
     required this.onPressed,
+    this.subText,
     this.text,
     this.icon,
     this.size = AppButtonSize.small,
@@ -123,7 +127,27 @@ class _AppButtonState extends State<AppButton> {
   Widget _buildContent(TextStyle textStyle) {
     switch (widget.variant) {
       case AppButtonVariant.text:
-        return Text(widget.text ?? '', style: textStyle);
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              widget.text ?? '',
+              style: textStyle,
+              textAlign: TextAlign.center,
+            ),
+            if (widget.subText != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                widget.subText!,
+                style: AppTypography.smallBodyMedium.copyWith(
+                  color: textStyle.color?.withValues(alpha: 0.8),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ],
+        );
+
 
       case AppButtonVariant.textWithIcon:
         return Row(
@@ -143,18 +167,39 @@ class _AppButtonState extends State<AppButton> {
   // ===================================================
   // Size & Width Calculation
   // ===================================================
-  double _height() => 40;
-  double _iconOnlyWidth() => 64;
+  double _height() {
+    if (widget.subText != null) {
+      return 50; // ปุ่ม 2 บรรทัด
+    }
+    return 40; // ปุ่มปกติ
+  }
+
+  double _iconOnlyWidth() => 50;
 
   double _calculateWidthFromText(TextStyle style) {
-    final painter = TextPainter(
+    final mainPainter = TextPainter(
       text: TextSpan(text: widget.text ?? '', style: style),
       textDirection: TextDirection.ltr,
     )..layout();
 
-    final rawWidth = painter.width + _horizontalPadding;
+    double maxWidth = mainPainter.width;
+
+    if (widget.subText != null) {
+      final subPainter = TextPainter(
+        text: TextSpan(
+          text: widget.subText!,
+          style: AppTypography.smallBodyMedium,
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      maxWidth = max(maxWidth, subPainter.width);
+    }
+
+    final rawWidth = maxWidth + _horizontalPadding;
     return (rawWidth / _pixel).ceil() * _pixel;
   }
+
 
   double _calculateWidthFromTextAndIcon(TextStyle style) {
     final painter = TextPainter(
@@ -170,7 +215,7 @@ class _AppButtonState extends State<AppButton> {
 }
 
 // ===================================================
-// Pixel Capsule Border Painter (ไม่ยุ่ง Typography)
+// Pixel Capsule Border Painter 
 // ===================================================
 class _PixelBorderPainter extends CustomPainter {
   final Color color;
@@ -215,3 +260,31 @@ class _PixelBorderPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+//---------------------- วิธีเรียกใช้ ----------------------//
+// ===== Pixel Button =====
+/* มี 3 แบบให้เลือกใช้
+            -text only 
+            AppButton(
+              variant: AppButtonVariant.text,
+              text: 'Text',
+              onPressed: () {
+                debugPrint('Submit pressed');
+              },
+            ),
+
+            -textWithIcon
+            AppButton(
+              variant: AppButtonVariant.textWithIcon,
+              text: 'Like',
+              icon: const PixelIcon('assets/icons/Pixel_heart.png'),
+              onPressed: () {},
+            ),
+
+            -icon only
+            AppButton(
+              variant: AppButtonVariant.iconOnly,
+              icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
+              onPressed: () {},
+            ),
+*/

@@ -10,6 +10,7 @@ class NavigationButtonWhite extends StatelessWidget {
     required this.direction,
     required this.onPressed,
   });
+  
 
   @override
   Widget build(BuildContext context) {
@@ -42,3 +43,14 @@ class NavigationButtonWhite extends StatelessWidget {
     }
   }
 }
+
+
+//---------------------- วิธีเรียกใช้ ----------------------//
+/*เลือกทิศทางที่ต้องการใช้
+ NavigationButtonWhite(
+                  direction: NavigationDirection.left,
+                  onPressed: () {
+                    debugPrint('Left pressed');
+                  },
+                ),
+*/

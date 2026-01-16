@@ -6,21 +6,29 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/cou
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 
-class PixelCourseCard extends StatelessWidget {
+class CourseProgressCard extends StatelessWidget {
   final Course course;
+  final int completedModules; 
 
-  const PixelCourseCard({super.key, required this.course});
+  const CourseProgressCard({          
+    super.key,
+    required this.course,
+    required this.completedModules,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+
+    final progress = (completedModules / course.modules).clamp(0.0, 1.0);
+    final percent = (progress * 100).round();
 
     return BaseCourseCard(
       child: Column(
         children: [
           // ================= IMAGE =================
           SizedBox(
-            height: 80,
+            height: 90,
             width: double.infinity,
             child: Stack(
               children: [
@@ -95,9 +103,7 @@ class PixelCourseCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      
                       MoreIcon(color: Theme.of(context).colorScheme.onSurface),
-
                     ],
                   ),
 
@@ -117,16 +123,51 @@ class PixelCourseCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
 
-                  Text(
-                    '${course.students} learners',
-                    style: AppTypography.smallBodyMedium,
+                  // ================= PROGRESS HEADER =================
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Progress',
+                        style: AppTypography.smallBodyMedium.copyWith(
+                          color: colors.surface,
+                        ),
+                      ),
+                      Text(
+                        '$percent%',
+                        style: AppTypography.smallBodyMedium.copyWith(
+                          color: colors.surface,
+                        ),
+                      ),
+                    ],
                   ),
-                  
+
+                  const SizedBox(height: 6),
+
+                  // ================= PROGRESS BAR =================
+                  Container(
+                    height: 10,
+                    width: double.infinity,
+                    color: colors.secondary, // หลอดสีเหลือง
+                    child: FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: progress,
+                      child: Container(
+                        color: colors.primary, // สีน้ำเงิน progress
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  // ================= MODULE INFO =================
                   Text(
-                    '${course.modules} modules',
-                    style: AppTypography.smallBodyMedium,
+                    '$completedModules / ${course.modules} modules',
+                    style: AppTypography.smallBodyMedium.copyWith(
+                      color: colors.surface,
+                    ),
                   ),
                 ],
               ),
