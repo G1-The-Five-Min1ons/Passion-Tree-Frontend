@@ -10,6 +10,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 
 class LearningPathOverviewLoginPage extends StatefulWidget {
   const LearningPathOverviewLoginPage({super.key});
@@ -93,6 +94,7 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
     final shownAllCourses = filteredAll.take(_allListShownCount).toList();
 
     return Scaffold(
+      appBar: AppBarWidget(title: 'Learning Paths', showBackButton: false),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(

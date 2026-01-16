@@ -4,8 +4,6 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
-
-//mockup ไว้เชยๆไม่มีโลจิก
 class CoursePreviewCard extends StatelessWidget {
   final String title;
   final String instructor;
@@ -15,9 +13,9 @@ class CoursePreviewCard extends StatelessWidget {
 
   const CoursePreviewCard({
     super.key,
-    this.title = 'Path Title',
-    this.instructor = 'อ.อะตอม',
-    this.objectives = 'Path objectives',
+    required this.title,
+    required this.instructor,
+    required this.objectives,
     this.learners,
     this.modules,
   });
@@ -29,7 +27,6 @@ class CoursePreviewCard extends StatelessWidget {
     return BaseCourseCard(
       child: Column(
         children: [
-          // ================= IMAGE =================
           SizedBox(
             height: 90,
             width: double.infinity,
@@ -39,7 +36,6 @@ class CoursePreviewCard extends StatelessWidget {
             ),
           ),
 
-          // ================= INFO =================
           Expanded(
             child: Container(
               width: double.infinity,
@@ -48,9 +44,8 @@ class CoursePreviewCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ===== Path Title =====
                   Text(
-                    title,
+                    title.isEmpty ? 'Path Title' : title,
                     style: AppTypography.subtitleSemiBold,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -58,7 +53,6 @@ class CoursePreviewCard extends StatelessWidget {
 
                   const SizedBox(height: 6),
 
-                  // ===== Instructor =====
                   Text(
                     'สอนโดย $instructor',
                     style: AppTypography.smallBodyMedium,
@@ -66,17 +60,17 @@ class CoursePreviewCard extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  // ===== Objectives (label only) =====
                   Text(
-                    objectives,
+                    objectives.isEmpty ? 'Path objectives' : objectives,
                     style: AppTypography.smallBodyMedium.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
                   const SizedBox(height: 12),
 
-                  // ===== Meta =====
                   Text(
                     learners != null ? '$learners learners' : 'x learners',
                     style: AppTypography.smallBodyMedium.copyWith(
@@ -89,10 +83,6 @@ class CoursePreviewCard extends StatelessWidget {
                       color: colors.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
-
-                 
-
-                  
                 ],
               ),
             ),
@@ -102,5 +92,3 @@ class CoursePreviewCard extends StatelessWidget {
     );
   }
 }
-
-

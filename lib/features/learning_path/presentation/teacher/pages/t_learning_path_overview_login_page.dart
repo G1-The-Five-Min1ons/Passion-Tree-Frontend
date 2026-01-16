@@ -11,6 +11,8 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/tabs/t
 import 'package:passion_tree_frontend/features/learning_path/presentation/tabs/teacher_status_tab.dart';   
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+
 enum TeacherLearningView { main, status }
 
 class TeacherLearningPathOverviewPage extends StatefulWidget {
@@ -61,6 +63,7 @@ class _TeacherLearningPathOverviewPageState
         .toList();
 
     return Scaffold(
+       appBar: AppBarWidget(title: 'Learning Paths', showBackButton: false),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(

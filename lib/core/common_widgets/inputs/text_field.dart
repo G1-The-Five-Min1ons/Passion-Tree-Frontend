@@ -19,6 +19,8 @@ class PixelTextField extends StatelessWidget {
   final Color? hintColor;
   final TextStyle? textStyle;
   final TextStyle? labelTextStyle;
+  final ValueChanged<String>?
+  onChanged; //สำหรับเก็บฟังก์ชัน onChanged ไม่ส่งค่าก้ไม่เป้นไร
 
   const PixelTextField({
     super.key,
@@ -35,6 +37,7 @@ class PixelTextField extends StatelessWidget {
     this.hintColor,
     this.textStyle,
     this.labelTextStyle,
+    this.onChanged,
   });
 
   @override
@@ -42,6 +45,8 @@ class PixelTextField extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final ScrollController scrollController = ScrollController();
     final theme = Theme.of(context).textTheme;
+    
+
 
     //ถ้าตอนเอาไปใช้ไม่ได้กำหนดสีมา ก็จะใช้สีจาก Theme ที่กำหนดไว้แล้วแทน
     final activeBorderColor = borderColor ?? colorScheme.primary;
@@ -81,6 +86,7 @@ class PixelTextField extends StatelessWidget {
               maxLines: null,
               expands: true, 
               obscureText: isPassword,
+              onChanged: onChanged,
               style: (textStyle ?? AppTypography.bodyRegular).copyWith(
                 color: activeTextColor,
               ),
