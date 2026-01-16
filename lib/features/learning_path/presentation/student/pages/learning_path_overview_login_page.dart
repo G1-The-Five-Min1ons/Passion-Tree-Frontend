@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
@@ -103,7 +104,7 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== HEADER TITLE + NavigationButton =====
+                // ===== HEADER TITLE  =====
                 SizedBox(
                   height: 72,
                   child: Row(
@@ -203,17 +204,22 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredPopular.length < 2 ? filteredPopular.length : 2,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                    itemCount: filteredPopular.length < 2
+                        ? filteredPopular.length
+                        : 2,
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 220, // ✅ คุมขนาดการ์ด
                       mainAxisSpacing: 35,
                       crossAxisSpacing: 12,
-                      childAspectRatio: PixelCourseCard.cardWidth / PixelCourseCard.cardHeight,
+                      childAspectRatio:
+                          BaseCourseCard.defaultWidth /
+                          BaseCourseCard.defaultHeight,
                     ),
                     itemBuilder: (context, index) {
                       return PixelCourseCard(course: filteredPopular[index]);
                     },
                   ),
+
 
                 // ===== RECOMMENDED FOR YOU SECTION =====
                 const SizedBox(height: 60),
@@ -225,7 +231,7 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                 ),
                 const SizedBox(height: 40),
                 SizedBox(
-                  height: PixelCourseCard.cardHeight,
+                  height: BaseCourseCard.defaultHeight,
                   child: filteredPopular.isEmpty // ใช้ filteredPopular เป็น mock data
                       ? Center(
                           child: Text(
@@ -281,13 +287,14 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
                     itemCount: shownAllCourses.length,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2, // 2 การ์ดต่อแถว
-                          mainAxisSpacing: 35, // ระยะห่างแนวตั้ง
-                          crossAxisSpacing: 12, // ระยะห่างแนวนอน
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 35,
+                          crossAxisSpacing: 12,
                           childAspectRatio:
-                              PixelCourseCard.cardWidth /
-                              PixelCourseCard.cardHeight,
+                              BaseCourseCard.defaultWidth /
+                              BaseCourseCard.defaultHeight,
                         ),
+
                     itemBuilder: (context, index) {
                       return PixelCourseCard(course: shownAllCourses[index]);
                     },

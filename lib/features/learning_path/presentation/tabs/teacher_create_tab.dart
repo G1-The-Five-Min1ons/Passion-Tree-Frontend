@@ -6,9 +6,10 @@ import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart'
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
-
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/create_learning_path_input_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 
 class TeacherCreateTab extends StatefulWidget {
   final List<Course> inProgressCourses;
@@ -45,7 +46,12 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
             variant: AppButtonVariant.iconOnly,
             icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
             onPressed: () {
-              // TODO: Create Learning Path(Input Detail) ของครู
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreateLearningPathInputPage(),
+                ),
+              );
             },
           ),
         ),
@@ -102,8 +108,9 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
               childAspectRatio:
-                  PixelCourseCard.cardWidth / PixelCourseCard.cardHeight,
+                  BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
             ),
+
             itemBuilder: (context, index) {
               return PixelCourseCard(course: inProgressCourses[index]);
             },
@@ -174,7 +181,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
               childAspectRatio:
-                  PixelCourseCard.cardWidth / PixelCourseCard.cardHeight,
+                  BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
             ),
             itemBuilder: (context, index) {
               return PixelCourseCard(course: completedCourses[index]);

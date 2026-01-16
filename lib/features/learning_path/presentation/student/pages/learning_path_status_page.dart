@@ -4,6 +4,7 @@ import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
@@ -219,15 +220,16 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                     itemCount: inProgressCourses.length < inProgressShown
                         ? inProgressCourses.length
                         : inProgressShown,
-                    gridDelegate:
+                        gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           mainAxisSpacing: 35,
                           crossAxisSpacing: 12,
                           childAspectRatio:
-                              PixelCourseCard.cardWidth /
-                              PixelCourseCard.cardHeight,
+                              BaseCourseCard.defaultWidth /
+                              BaseCourseCard.defaultHeight,
                         ),
+
                     itemBuilder: (context, index) {
                       return PixelCourseCard(course: inProgressCourses[index]);
                     },
@@ -291,20 +293,20 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: completedCourses.length < completedShown
-                        ? completedCourses.length
-                        : completedShown,
+                    itemCount: filteredPopular.length < 2
+                        ? filteredPopular.length
+                        : 2,
                     gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 220, // ✅ คุมขนาดการ์ด
                           mainAxisSpacing: 35,
                           crossAxisSpacing: 12,
                           childAspectRatio:
-                              PixelCourseCard.cardWidth /
-                              PixelCourseCard.cardHeight,
+                              BaseCourseCard.defaultWidth /
+                              BaseCourseCard.defaultHeight,
                         ),
                     itemBuilder: (context, index) {
-                      return PixelCourseCard(course: completedCourses[index]);
+                      return PixelCourseCard(course: filteredPopular[index]);
                     },
                   ),
 

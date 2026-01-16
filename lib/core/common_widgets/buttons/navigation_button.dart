@@ -42,3 +42,13 @@ class NavigationButton extends StatelessWidget {
     }
   }
 }
+
+//---------------------- วิธีเรียกใช้ ----------------------//
+/*เลือกทิศทางที่ต้องการใช้
+            NavigationButton(
+                  direction: NavigationDirection.right,
+                  onPressed: () {
+                    debugPrint('Right pressed');
+                  },
+                ),
+*/
