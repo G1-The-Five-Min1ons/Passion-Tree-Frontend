@@ -19,15 +19,15 @@ class CreateLearningPathInputPage extends StatefulWidget {
 
 class _CreateLearningPathInputPageState
     extends State<CreateLearningPathInputPage> {
+  String _title = '';
+  String _objectives = '';
+  String _description = '';
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBarWidget(
-        title: 'Create Learning Path',
-        showBackButton: true,
-      ),
+      appBar: AppBarWidget(title: 'Learning Paths', showBackButton: true),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -70,19 +70,32 @@ class _CreateLearningPathInputPageState
                 ),
 
                 const SizedBox(height: 20),
-
-                // ===== PREVIEW CARD ===== 
-                Center(child: CoursePreviewCard()),
+                
+                // ===== PREVIEW CARD =====
+                Center(
+                  child: CoursePreviewCard(
+                    title: _title,
+                    instructor: 'อ.อะตอม', // ตอนนี้ยัง fix ได้
+                    objectives: _objectives,
+                    
+                  ),
+                ),
 
 
                 const SizedBox(height: 20),
 
                 // ===== PATH TITLE =====
+              
                 PixelTextField(
                   label: 'Path Title',
                   labelColor: Theme.of(context).colorScheme.onPrimary,
                   hintText: 'Enter learning path title',
-                  height: 46, // single line กำลังพอดี
+                  height: 46,
+                  onChanged: (value) {
+                    setState(() {
+                      _title = value;
+                    });
+                  },
                 ),
 
 
@@ -132,29 +145,33 @@ class _CreateLearningPathInputPageState
                 const SizedBox(height: 20),
                 // ===== OBJECTIVES : TITLE =====
 
-              PixelTextField(
+                PixelTextField(
                   label: 'Path Objectives',
                   labelColor: Theme.of(context).colorScheme.onPrimary,
                   hintText: 'Enter learning path objectives',
-                  height: 46, // single line กำลังพอดี
+                  height: 46,
+                  onChanged: (value) {
+                    setState(() {
+                      _objectives = value;
+                    });
+                  },
                 ),
+
 
 
                 const SizedBox(height: 20),
 
-                // ===== DESCRIPTION : TITLE =====
-                Text(
-                  'Path Description',
-                  style: AppTypography.titleSemiBold.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
                 // ===== DESCRIPTION : CONTENT =====
                 PixelTextField(
+                  label: 'Path Description',
+                  labelColor: Theme.of(context).colorScheme.onPrimary,
                   hintText: 'Describe this learning path in detail',
-                  height: 150, // คุมความสูงของ textarea
+                  height: 150,
+                  onChanged: (value) {
+                    setState(() {
+                      _description = value;
+                    });
+                  },
                 ),
 
                 const SizedBox(height: 30),

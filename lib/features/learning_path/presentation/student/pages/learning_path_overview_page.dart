@@ -7,6 +7,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
 
@@ -93,6 +94,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     final shownAllCourses = filteredAll.take(_allListShownCount).toList();
 
     return Scaffold(
+      appBar: AppBarWidget(title: 'Learning Paths', showBackButton: false),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -104,30 +106,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== HEADER TITLE =====
-                SizedBox(
-                  height: 72,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Learning Paths',
-                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                    ],
-                  ),
-                ),
-
-                // Header → Search (40)
-                const SizedBox(height: 40),
-
+               
                 // ===== SEARCH BAR & FILTER =====
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 1),
