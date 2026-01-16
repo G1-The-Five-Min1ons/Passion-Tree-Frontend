@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/arrow_button.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final bool showBackButton;
+  final VoidCallback? onBackPressed;
 
   const AppBarWidget({
     super.key, 
     required this.title, 
-    this.showBackButton = false
+    this.showBackButton = false,
+    this.onBackPressed,
     });
 
   @override
@@ -31,21 +34,17 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
             if (showBackButton)
             Align(
               alignment: Alignment.centerLeft,
-              child: IconButton(
-                    icon: Icon(
-                      Symbols.chevron_left_rounded,
-                      color: contentColor,
-                      size: 35,
-                      weight: 400,
+              child: ArrowButton(
+                    direction: ArrowDirection.left,
+                    onPressed: () {
+                        if (onBackPressed != null) {
+                          onBackPressed!();
+                        } else if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        }
+                      },
                     ),
-                onPressed: () {
-                    // เช็คว่ากดกลับได้มั้ย ถ้าได้ให้กลับ
-                    if (Navigator.canPop(context)) {
-                      Navigator.pop(context);
-                    }
-                  },
-              ),
-            ),
+                  ),
 
             Text(
               title,
