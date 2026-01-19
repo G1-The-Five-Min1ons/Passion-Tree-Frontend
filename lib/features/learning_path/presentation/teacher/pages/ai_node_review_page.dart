@@ -20,7 +20,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
     'ระบบนิเวศ',
     'ความสัมพันธ์ของสิ่งมีชีวิต',
     'สมดุลของป่า',
-    'มนุษย์กับ',
+    'บทประยุกต์',
   ];
 
   @override
@@ -82,7 +82,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
 
                           // Refresh icon
                           IconButton(
-                            icon: const Icon(Icons.refresh),
+                            icon: const Icon(Icons.autorenew),
                             onPressed: _regenerateNodes,
                           ),
                         ],
@@ -91,20 +91,38 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                       const SizedBox(height: 16),
 
                       // ===== NODE LIST =====
-                      Expanded(
+                     Expanded(
                         child: ListView.builder(
                           itemCount: _nodes.length,
                           itemBuilder: (context, index) {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                'Node${index + 1} : ${_nodes[index]}',
-                                style: AppTypography.bodyRegular,
+                              child: RichText(
+                                text: TextSpan(
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: 'Node${index + 1} : ',
+                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    TextSpan(text: _nodes[index]),
+                                  ],
+                                ),
                               ),
                             );
                           },
                         ),
                       ),
+
                     ],
                   ),
                 ),
@@ -121,7 +139,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                       text: 'Cancel',
                       backgroundColor:
                           AppColors.scale,
-                         textColor: AppColors.textPrimary,
+                           textColor: AppColors.textPrimary,
                       onPressed: () {
                         Navigator.pop(context);
                       },
