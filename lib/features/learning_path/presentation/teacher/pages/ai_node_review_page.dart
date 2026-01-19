@@ -114,15 +114,19 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                 // ===== BOTTOM ACTIONS =====
                 Row(
                   children: [
-                    const Spacer(), // ดันไปฝั่งขวา
+                    const Spacer(), // ดันปฝั่งขวา
 
                     AppButton(
                       variant: AppButtonVariant.text,
                       text: 'Cancel',
+                      backgroundColor:
+                          AppColors.scale,
+                         textColor: AppColors.textPrimary,
                       onPressed: () {
                         Navigator.pop(context);
                       },
                     ),
+
 
                     const SizedBox(width: 12),
 
