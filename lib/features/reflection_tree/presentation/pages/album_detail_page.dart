@@ -6,6 +6,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/heart_status.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_album.dart';
 
 
@@ -42,6 +43,7 @@ class AlbumDetailPage extends StatelessWidget{
 
               Row(
                 children: [
+                  const HeartStatus(),
                   const Spacer(),
                   AppButton(
                   variant: AppButtonVariant.iconOnly,

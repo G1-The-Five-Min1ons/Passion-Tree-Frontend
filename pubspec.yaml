@@ -80,10 +80,12 @@ flutter:
     - assets/icons/tree_icon.png
     - assets/icons/google.png
     - assets/icons/discord.png
+    - assets/icons/
     - assets/buttons/navigation/pixel/
     - assets/buttons/navigation/white/
     - assets/images/courses/
     - assets/images/placeholders/
+    - assets/images/albumcover/
 
 
     
