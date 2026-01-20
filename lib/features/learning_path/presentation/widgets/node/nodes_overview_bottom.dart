@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/node_state.dart';
-import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 
 class BottomBar extends StatelessWidget {
   final VoidCallback onSaveDraft;
@@ -22,28 +17,33 @@ class BottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: AppButton(
-              variant: AppButtonVariant.text,
-              text: 'Save Draft',
-              backgroundColor: AppColors.scale,
-              textColor: AppColors.textPrimary,
-              onPressed: onSaveDraft,
-            ),
+      child: Center(
+       
+        child: SizedBox(
+          width: 320, // 👈 ความกว้างรวมของปุ่ม (ปรับได้)
+          child: Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  variant: AppButtonVariant.text,
+                  text: 'Save Draft',
+                  backgroundColor: AppColors.scale,
+                  textColor: AppColors.textPrimary,
+                  onPressed: onSaveDraft,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: AppButton(
+                  variant: AppButtonVariant.text,
+                  text: 'Publish',
+                  onPressed: onPublish,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: AppButton(
-              variant: AppButtonVariant.text,
-              text: 'Publish',
-              onPressed: onPublish,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
-

@@ -14,38 +14,29 @@ class HeaderBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xmargin,
+        vertical: 16,
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ===== HEADER =====
-          SizedBox(
-            height: 120, // เพิ่มความสูงเพื่อรองรับ subtitle
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Biology 101',
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                ),
-
-              ],
+          // ===== Title =====
+          Text(
+            'Biology 101',
+            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onPrimary,
             ),
           ),
 
-         // ===== Add button (top right) =====
-          Align(
-            alignment: Alignment.centerRight,
-            child: AppButton(
-              variant: AppButtonVariant.iconOnly,
-              icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
-              onPressed: () {
-                // กดแล้วมีให้create nodeเพิ่ม
-              },
-            ),
+          const Spacer(), // 👈 ทำหน้าที่เหมือน PageHeader
+          // ===== Action button =====
+          AppButton(
+            variant: AppButtonVariant.iconOnly,
+            icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
+            onPressed: () {
+              // create node
+            },
           ),
         ],
       ),

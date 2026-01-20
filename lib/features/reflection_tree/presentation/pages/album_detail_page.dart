@@ -6,6 +6,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/tree_information_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/heart_status.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_album.dart';
 
@@ -81,12 +82,19 @@ class AlbumDetailPage extends StatelessWidget{
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        return TreeAlbumCard(
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => TreeDetailPage(item: item),
+          ),);
+        },
+        
+        child: TreeAlbumCard(
           title: item.subjectName,
           subtitle: item.lastEdited,
           statusText: item.status, 
           statusColor: item.statusColor, 
           dataDisplay: const SizedBox.shrink(),
+          ),
         );
       },
     );
