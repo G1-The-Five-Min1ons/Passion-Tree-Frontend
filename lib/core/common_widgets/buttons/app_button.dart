@@ -11,6 +11,9 @@ class AppButton extends StatefulWidget {
   final String? text;
   final Widget? icon;
   final VoidCallback onPressed;
+  final Color? backgroundColor;
+  final Color? borderColor;
+  final Color? textColor;
 
   const AppButton({
     super.key,
@@ -20,6 +23,9 @@ class AppButton extends StatefulWidget {
     this.text,
     this.icon,
     this.size = AppButtonSize.small,
+    this.backgroundColor, //ทำให้กำหนดสีพื้นหลังได้
+    this.borderColor, 
+    this.textColor,
   });
 
   @override
@@ -41,11 +47,16 @@ class _AppButtonState extends State<AppButton> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final offset = _pressed ? 2.0 : 4.0;
+    final bgColor = widget.backgroundColor ?? scheme.primary;
+    final bdColor = widget.borderColor ?? scheme.onSurface;
+    final fgColor = widget.textColor ?? scheme.onPrimary;
+
 
     
-    final TextStyle buttonTextStyle = AppPixelTypography.smallTitle.copyWith(
-      color: scheme.onPrimary,
+   final TextStyle buttonTextStyle = AppPixelTypography.smallTitle.copyWith(
+      color: fgColor,
     );
+
 
     final double buttonWidth = switch (widget.variant) {
       AppButtonVariant.iconOnly => _iconOnlyWidth(),
@@ -77,8 +88,8 @@ class _AppButtonState extends State<AppButton> {
             ),
             _buildPixelLayer(
               width: buttonWidth,
-              color: scheme.primary,
-              borderColor: scheme.onSurface,
+              color: bgColor,
+              borderColor: bdColor,
               child: Center(child: _buildContent(buttonTextStyle)),
             ),
           ],

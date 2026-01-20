@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_preview_card.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/ai_node_review_page.dart';
+
 class CreateLearningPathInputPage extends StatefulWidget {
   const CreateLearningPathInputPage({super.key});
 
@@ -54,6 +55,7 @@ class _CreateLearningPathInputPageState
                               color: Theme.of(context).colorScheme.onPrimary,
                             ),
                       ),
+                
 
                       const SizedBox(height: 20), // ระยะห่างตามที่ต้องการ
 
@@ -176,7 +178,8 @@ class _CreateLearningPathInputPageState
 
                 const SizedBox(height: 30),
 
-              // ===== AI CREATE NODE =====
+              // ===== Buttons =====
+              //AI CREATE NODE
                 Center(
                   child: Column(
                     children: [
@@ -185,7 +188,14 @@ class _CreateLearningPathInputPageState
                         text: 'AI Create Node',
                         subText:
                             'Use AI powered to auto generate nodes for you',
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AINodeReviewPage(),
+                            ),
+                          );
+                        },
                       ),
 
                       const SizedBox(height: 10),
@@ -193,7 +203,7 @@ class _CreateLearningPathInputPageState
                       //or
                       Text('or', style: AppPixelTypography.smallTitle.copyWith(color: Theme.of(context).colorScheme.onPrimary),),
 
-                      //cr
+                      // Plain Path
                       const SizedBox(height: 10),
                       AppButton(
                         variant: AppButtonVariant.text,
