@@ -11,6 +11,18 @@ class AlbumData {
         subjectName: "Biology101",
         lastEdited: "Edited 40 minutes ago",
         status: "Growing",
+        chapters: [
+          Chapter(name: "Cell", isEnrolled: true),
+          Chapter(name: "Cell1", isEnrolled: true),
+          Chapter(name: "Cell2", isEnrolled: false),
+          Chapter(name: "Cell2", isEnrolled: false),
+          Chapter(name: "Cell2", isEnrolled: false),
+          Chapter(name: "Cell2", isEnrolled: false),
+          Chapter(name: "Cell2", isEnrolled: false),
+          Chapter(name: "Cell2", isEnrolled: false),
+          Chapter(name: "Cell2", isEnrolled: false),
+          Chapter(name: "Cell2", isEnrolled: false),
+        ]
         ),
         AlbumItem(
         subjectName: "Microbio",
