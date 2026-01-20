@@ -19,11 +19,13 @@ class AlbumItem {
   final String subjectName;
   final String lastEdited;
   final String status;
+  final List<Chapter> chapters;
 
   AlbumItem({
     required this.subjectName,
     required this.lastEdited,
     required this.status,
+    this.chapters = const [],
   });
 
   Color get statusColor {
@@ -39,4 +41,14 @@ class AlbumItem {
         return AppColors.status;
     }
   }
+}
+
+class Chapter {
+  final String name;
+  final bool isEnrolled;
+
+  Chapter({
+    required this.name,
+    this.isEnrolled = false,
+  });
 }
