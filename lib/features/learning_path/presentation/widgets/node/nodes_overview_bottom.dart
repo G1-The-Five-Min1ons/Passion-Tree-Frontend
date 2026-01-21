@@ -17,7 +17,7 @@ class BottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(
-        bottom: 60, // ระยะลอยจากขอบล่าง
+        bottom: 25, // ระยะลอยจากขอบล่าง
       ),
       child: Center(
         child: SizedBox(
