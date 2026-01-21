@@ -18,6 +18,23 @@ class EditNodeModal extends StatefulWidget {
 class _EditNodeModalState extends State<EditNodeModal> {
   String _title = '';
   String _description = '';
+  String _linkInput = '';
+  final List<String> _links = [];
+
+  void _addLink() {
+    if (_linkInput.trim().isEmpty) return;
+
+    setState(() {
+      _links.add(_linkInput.trim());
+      _linkInput = '';
+    });
+  }
+
+  void _removeLink(int index) {
+    setState(() {
+      _links.removeAt(index);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,21 +64,15 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
                   // ===== INFO + MATERIALS =====
                   NodeInfoSection(
-                    onTitleChanged: (value) {
-                      setState(() {
-                        _title = value;
-                      });
-                    },
-                    onDescriptionChanged: (value) {
-                      setState(() {
-                        _description = value;
-                      });
-                    },
+                    links: _links,
+                    onTitleChanged: (v) => _title = v,
+                    onDescriptionChanged: (v) => _description = v,
+                    onLinkChanged: (v) => setState(() => _linkInput = v),
+                    onAddLink: _addLink,
+                    onRemoveLink: _removeLink,
+                    linkValue: _linkInput,
                   ),
 
-                 
-
-                  
                 ],
               ),
             ),
