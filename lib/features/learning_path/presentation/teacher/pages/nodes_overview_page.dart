@@ -73,9 +73,8 @@ class _NodesOverviewPageState extends State<NodesOverviewPage> {
                                     size: 80,
                                   ),
 
-                                  // ===== CURRENT NODE INDICATOR =====
-                                  
-                                    if (node.isCurrent)
+                                  // ===== เก้บไว้ดูตอนไปเขียนในฝั่งนักเรียนที่ต้องมีตัวอักษรบนตัวโหนด ยังไม่อยากลบ CURRENT NODE INDICATOR =====
+                                    /*if (node.isCurrent)
                                       Positioned(
                                         top: -28,
                                         child: NavigationButton(
@@ -87,7 +86,7 @@ class _NodesOverviewPageState extends State<NodesOverviewPage> {
                                             
                                           },
                                         ),
-                                      ),
+                                    ),*/
 
                                 ],
                               ),
