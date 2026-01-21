@@ -23,57 +23,70 @@ class TreeDetailPage extends StatelessWidget {
         onBackPressed: () => Navigator.pop(context),
       ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            // ===== HEADER (FIXED) =====
-            Padding(
+            // ===== SCROLLABLE CONTENT (ทั้งหน้า) =====
+            SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.xmargin,
-                vertical: AppSpacing.ymargin,
               ),
-              child: PageHeader(
-                title: item.subjectName,
-                actionIcon: Symbols.add_rounded,
-                onActionPressed: () {
-                  // logic ทีหลัง
-                },
+              child: Column(
+                children: [
+                  const SizedBox(height: 120), // 👈 เว้นที่ให้ header ลอย
+
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final double canvasWidth = constraints.maxWidth;
+
+                      return SizedBox(
+                        height: canvasHeight,
+                        child: TreeCanvas(
+                          itemCount: item.chapters.length,
+                          canvasWidth: canvasWidth,
+                          nodeBuilder: (index, pos) {
+                            final chapter = item.chapters[index];
+
+                            return Positioned(
+                              left: pos.dx - 40,
+                              top: pos.dy - 40,
+                              child: NodeItem(
+                                imagePath: chapter.isEnrolled
+                                    ? 'assets/images/trees/node-enrolled.png'
+                                    : 'assets/images/trees/node_notenrolled.png',
+                                size: 80,
+                                onTap: () {
+                                  // logic ทีหลัง
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(
+                    height: 120,
+                  ), // 👈 เว้นล่าง (เผื่อปุ่ม/gesture)
+                ],
               ),
             ),
 
-            // ===== SCROLLABLE CANVAS (เฉพาะตรงกลาง) =====
-            Expanded(
-              child: SingleChildScrollView(
+            // ===== FLOATING HEADER =====
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.xmargin,
+                  vertical: AppSpacing.ymargin,
                 ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final double canvasWidth = constraints.maxWidth;
-
-                    return SizedBox(
-                      height: canvasHeight,
-                      child: TreeCanvas(
-                        itemCount: item.chapters.length,
-                        canvasWidth: canvasWidth,
-                        nodeBuilder: (index, pos) {
-                          final chapter = item.chapters[index];
-
-                          return Positioned(
-                            left: pos.dx - 40,
-                            top: pos.dy - 40,
-                            child: NodeItem(
-                              imagePath: chapter.isEnrolled
-                                  ? 'assets/images/trees/node-enrolled.png'
-                                  : 'assets/images/trees/node_notenrolled.png',
-                              size: 80,
-                              onTap: () {
-                                // logic ทีหลัง
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    );
+                child: PageHeader(
+                  title: item.subjectName,
+                  actionIcon: Symbols.add_rounded,
+                  onActionPressed: () {
+                    // logic ทีหลัง
                   },
                 ),
               ),
@@ -84,3 +97,4 @@ class TreeDetailPage extends StatelessWidget {
     );
   }
 }
+
