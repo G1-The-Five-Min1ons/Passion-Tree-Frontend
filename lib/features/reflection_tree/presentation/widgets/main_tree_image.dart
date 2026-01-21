@@ -11,18 +11,18 @@ class MainTreeImage extends StatelessWidget {
     @override
     Widget build(BuildContext context) {
       final Map<String, String> statusImages = {
-      'growinghappy': 'assets/images/trees/growing-happy.png', //รูปยังใส่ไม่ครบ จะมาใส่ทีหลัง
-      'growingneutral': 'assets/images/trees/growing-happy',
-      'growingdislike': 'assets/images/trees/growing-happy',
-      'fadinghappy': 'assets/images/trees/growing-happy',
-      'fadingneutral': 'assets/images/trees/growing-happy',
-      'fadingdislike': 'assets/images/trees/growing-happy',
-      'dyinghappy': 'assets/images/trees/growing-happy.png',
-      'dyingneutral': 'assets/images/trees/growing-happy',
-      'dyingdislike': 'assets/images/trees/growing-happy',
-      'diedhappy': 'assets/images/trees/growing-happy.png',
-      'diedneutral': 'assets/images/trees/growing-happy',
-      'dieddislike': 'assets/images/trees/growing-happy',
+      'growinghappy': 'assets/images/trees/growing-happy.png',
+      'growingneutral': 'assets/images/trees/growing-neutral.png',
+      'growingdislike': 'assets/images/trees/growing-dislike.png',
+      'fadinghappy': 'assets/images/trees/fading-happy.png',
+      'fadingneutral': 'assets/images/trees/fading-neutral.png',
+      'fadingdislike': 'assets/images/trees/fading-dislike.png',
+      'dyinghappy': 'assets/images/trees/dying-happy.png',
+      'dyingneutral': 'assets/images/trees/dying-neutral.png',
+      'dyingdislike': 'assets/images/trees/dying-dislike.png',
+      'diedhappy': 'assets/images/trees/died-happy.png',
+      'diedneutral': 'assets/images/trees/died-neutral.png',
+      'dieddislike': 'assets/images/trees/died-dislike.png',
       };
 
       final String? imagePath = statusImages[status.toLowerCase()];

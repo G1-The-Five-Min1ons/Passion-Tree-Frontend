@@ -45,7 +45,7 @@ class TreeDetailPage extends StatelessWidget {
             MainTreeImage(status: item.overallStatus),
 
             Transform.translate(
-              offset: const Offset(0, -10), // ลองปรับค่า -30 ถึง -60 ดูครับว่าจุดไหนสวย
+              offset: const Offset(0, -10),
               child: StatusBadge(status: item.status),
             ),
             // ส่วนที่จัดการต้นไม้

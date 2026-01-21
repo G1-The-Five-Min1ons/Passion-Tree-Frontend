@@ -29,19 +29,19 @@ class AlbumData {
         subjectName: "Microbio",
         lastEdited: "Edited 2 weeks ago",
         status: "Fading",
-        overallStatus: 'growinghappy'
+        overallStatus: 'fadingneutral'
         ),
         AlbumItem(
         subjectName: "Genetics",
         lastEdited: "Edited 3 weeks ago",
         status: "Dying",
-        overallStatus: 'growinghappy'
+        overallStatus: 'dyingdislike'
         ),
         AlbumItem(
         subjectName: "DNA",
         lastEdited: "Edited 1 month ago",
         status: "Died",
-        overallStatus: 'growinghappy'
+        overallStatus: 'diedhappy'
         ),
       ]
     ),

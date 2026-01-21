@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
@@ -9,6 +7,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/mock
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/album_detail_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/page_header.dart';
 
 class ReflectionTreePage extends StatefulWidget {
   const ReflectionTreePage({super.key});
@@ -43,19 +42,13 @@ class ReflectionTreePage extends StatefulWidget {
         child: ListView(
           padding: const EdgeInsets.only(top: AppSpacing.ymargin),
           children: [
-              Row(
-                children: [
-                  const Spacer(),
-                  AppButton(
-                  variant: AppButtonVariant.iconOnly,
-                  icon: Icon(
-                    Symbols.add_rounded,
-                    weight: 700,
-                    color: Theme.of(context).colorScheme.onPrimary),
-                  onPressed: (){
-                    //รอใส่ logic ทีหลัง
-                  }),
-              ],),
+              PageHeader(
+              title: "Albums",
+              actionIcon: Symbols.add_rounded,
+              onActionPressed: () {
+                // logic ทีหลัง
+              },
+            ),
 
                 albumList.isEmpty 
                 ? _buildEmptyState(context)

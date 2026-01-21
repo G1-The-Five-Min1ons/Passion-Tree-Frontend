@@ -26,19 +26,19 @@ class StatusBadge extends StatelessWidget{
     return Align(
       alignment: Alignment.center,
       child: PixelBorderContainer(
+      width: 105,
       pixelSize: 3,
       borderColor: effectiveColor,
       fillColor: effectiveColor,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical:8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
+      padding: const EdgeInsets.symmetric(vertical:6),
+      child: Center(
+        child: Text(
             status,
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: Theme.of(context).colorScheme.onPrimary ),
           ),
-        ],),
+        ),
       ),
     );
   }

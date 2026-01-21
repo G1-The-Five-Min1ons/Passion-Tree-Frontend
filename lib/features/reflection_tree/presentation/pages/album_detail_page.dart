@@ -92,7 +92,8 @@ class AlbumDetailPage extends StatelessWidget{
           title: item.subjectName,
           subtitle: item.lastEdited,
           statusText: item.status, 
-          statusColor: item.statusColor, 
+          statusColor: item.statusColor,
+          treeStatus: item.overallStatus,
           dataDisplay: const SizedBox.shrink(),
           ),
         );
