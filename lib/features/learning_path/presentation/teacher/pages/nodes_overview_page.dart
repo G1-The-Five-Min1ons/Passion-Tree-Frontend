@@ -11,6 +11,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_bottom.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/ai_node_review_page.dart';  
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/node_asset.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mocks/learning_nodes_mock.dart';
 
 class NodesOverviewPage extends StatefulWidget {
   const NodesOverviewPage({super.key});
@@ -30,74 +31,76 @@ class _NodesOverviewPageState extends State<NodesOverviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double canvasHeight = 1200; // TODO: คำนวณจากจำนวน node จริง
-    final double availableWidth = screenWidth - (AppSpacing.xmargin * 2);
+    final int nodeCount = mockLearningNodes.length;
+    final double canvasHeight = (nodeCount * 200.0) + 200.0;
 
     return Scaffold(
-      appBar: const AppBarWidget(title: 'Nodes Overview', showBackButton: true),
+      appBar: const AppBarWidget(
+        title: 'Nodes Overview',
+        showBackButton: true,
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // HEADER: ชื่อคอร์ส + ปุ่ม action
+            // ===== HEADER (FIXED) =====
             const HeaderBar(),
 
-            // Scrollable canvas only
+            // ===== SCROLLABLE CANVAS =====
             Expanded(
               child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xmargin,
-                  ),
-                  child: SizedBox(
-                    height: canvasHeight,
-                    child: TreeCanvas(
-                      itemCount: 2,
-                      canvasWidth: availableWidth,
-                      nodeBuilder: (index, pos) {
-                        final LearningNodeState state = index == 0
-                            ? LearningNodeState.active
-                            : LearningNodeState.locked;
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xmargin,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double canvasWidth = constraints.maxWidth;
 
-                        return Positioned(
-                          left: pos.dx - 32,
-                          top: pos.dy - 32,
-                          child: NodeItem(
-                            imagePath: NodeAsset.image(state),
-                            size: 64,
-                            onTap: state == LearningNodeState.active
-                                ? () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            const AINodeReviewPage(),
-                                      ),
-                                    );
-                                  }
-                                : null,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                    return SizedBox(
+                      height: canvasHeight,
+                      child: TreeCanvas(
+                        itemCount: nodeCount,
+                        canvasWidth: canvasWidth, // width จริง
+                        nodeBuilder: (index, pos) {
+                          final node = mockLearningNodes[index];
+
+                          return Positioned(
+                            left: pos.dx - 40,
+                            top: pos.dy - 40,
+                            child: NodeItem(
+                              imagePath: NodeAsset.image(node.state),
+                              size: 80,
+                              onTap: () {
+                                // logic ทีหลัง
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
 
-            // Fixed bottom bar
-            Padding(
-              padding: const EdgeInsets.only(
-                bottom: 24, // ระยะที่ทำให้ดู "ลอย"
+            // ===== FLOATING BOTTOM BUTTONS =====
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 24,
+              child: IgnorePointer(
+                ignoring: false, // ปุ่มยังกดได้
+                child: BottomBar(
+                  onSaveDraft: _saveDraft,
+                  onPublish: _publish,
+                ),
               ),
-              child: BottomBar(onSaveDraft: _saveDraft, onPublish: _publish),
             ),
-
           ],
         ),
       ),
     );
   }
 }
+
 
 

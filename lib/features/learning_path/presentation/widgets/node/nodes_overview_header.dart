@@ -18,28 +18,34 @@ class HeaderBar extends StatelessWidget {
         horizontal: AppSpacing.xmargin,
         vertical: 16,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ===== Title =====
           Text(
             'Biology 101',
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onPrimary,
-            ),
+            style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
           ),
-
-          const Spacer(), // 👈 ทำหน้าที่เหมือน PageHeader
-          // ===== Action button =====
-          AppButton(
-            variant: AppButtonVariant.iconOnly,
-            icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
-            onPressed: () {
-              // create node
-            },
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              const Spacer(),
+              AppButton(
+                variant: AppButtonVariant.iconOnly,
+                icon: const PixelIcon(
+                  'assets/icons/Pixel_plus.png',
+                  size: 16,
+                ),
+                onPressed: () {
+                  // create node
+                },
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 }
+

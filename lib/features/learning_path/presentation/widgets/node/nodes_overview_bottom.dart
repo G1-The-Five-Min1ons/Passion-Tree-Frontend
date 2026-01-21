@@ -16,11 +16,12 @@ class BottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(
+        bottom: 60, // ระยะลอยจากขอบล่าง
+      ),
       child: Center(
-       
         child: SizedBox(
-          width: 320, // 👈 ความกว้างรวมของปุ่ม (ปรับได้)
+          width: 320, // ความกว้างกลุ่มปุ่ม
           child: Row(
             children: [
               Expanded(
@@ -47,3 +48,4 @@ class BottomBar extends StatelessWidget {
     );
   }
 }
+
