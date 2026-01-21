@@ -16,8 +16,8 @@ class ReflectionTreePage extends StatefulWidget {
   State<ReflectionTreePage> createState() => _ReflectionTreePageState();
 }
   
-  class _ReflectionTreePageState extends State<ReflectionTreePage>{
-    Album? selectedAlbum;
+class _ReflectionTreePageState extends State<ReflectionTreePage>{
+  Album? selectedAlbum;
 
 
   @override
