@@ -12,16 +12,11 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 class TreeDetailPage extends StatelessWidget {
   final AlbumItem item;
 
-  const TreeDetailPage({
-    super.key,
-    required this.item,
-  });
+  const TreeDetailPage({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
     final double canvasHeight = (item.chapters.length * 200.0) + 200.0;
-    final double availableWidth = screenWidth - (AppSpacing.xmargin * 2);
 
     return Scaffold(
       appBar: AppBarWidget(
@@ -29,48 +24,78 @@ class TreeDetailPage extends StatelessWidget {
         showBackButton: true,
         onBackPressed: () => Navigator.pop(context),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xmargin),
-        child: ListView(
-          padding: const EdgeInsets.only(top: AppSpacing.ymargin),
+      body: SafeArea(
+        child: Stack(
           children: [
-            PageHeader(
-              title: item.subjectName,
-              actionIcon: Symbols.add_rounded,
-              onActionPressed: () {
-                // logic ทีหลัง
-              },
+            // ===== SCROLLABLE CONTENT (ทั้งหน้า) =====
+            SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xmargin,
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 80), // เว้นที่ให้ header ลอย
+
+                  MainTreeImage(status: item.overallStatus),
+
+                  Transform.translate(
+                    offset: const Offset(0, -10),
+                    child: StatusBadge(status: item.status),
+                  ),
+
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final double canvasWidth = constraints.maxWidth;
+
+                      return SizedBox(
+                        height: canvasHeight,
+                        child: TreeCanvas(
+                          itemCount: item.chapters.length,
+                          canvasWidth: canvasWidth,
+                          nodeBuilder: (index, pos) {
+                            final chapter = item.chapters[index];
+
+                            return Positioned(
+                              left: pos.dx - 40,
+                              top: pos.dy - 40,
+                              child: NodeItem(
+                                imagePath: chapter.isEnrolled
+                                    ? 'assets/images/trees/node-enrolled.png'
+                                    : 'assets/images/trees/node_notenrolled.png',
+                                size: 80,
+                                onTap: () {
+                                  // logic ทีหลัง
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+
+                  
+                ],
+              ),
             ),
 
-            MainTreeImage(status: item.overallStatus),
-
-            Transform.translate(
-              offset: const Offset(0, -10),
-              child: StatusBadge(status: item.status),
-            ),
-            // ส่วนที่จัดการต้นไม้
-            SizedBox(
-              height: canvasHeight,
-              child: TreeCanvas(
-                itemCount: item.chapters.length,
-                canvasWidth: availableWidth,
-                nodeBuilder: (index, pos) {
-                  final chapter = item.chapters[index];
-
-                    return Positioned(
-                      left: pos.dx - 40,
-                      top: pos.dy - 40,
-                      child: NodeItem(
-                        imagePath: chapter.isEnrolled 
-                            ? 'assets/images/trees/node-enrolled.png' 
-                            : 'assets/images/trees/node_notenrolled.png',
-                        size: 80,
-                        onTap: () {
-                          // logic ทีหลัง
-                       },
-                    ),
-                  );
-                },
+            // ===== FLOATING HEADER =====
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xmargin,
+                  vertical: AppSpacing.ymargin,
+                ),
+                child: PageHeader(
+                  title: item.subjectName,
+                  actionIcon: Symbols.add_rounded,
+                  onActionPressed: () {
+                    // logic ทีหลัง
+                  },
+                ),
               ),
             ),
           ],
@@ -79,3 +104,4 @@ class TreeDetailPage extends StatelessWidget {
     );
   }
 }
+

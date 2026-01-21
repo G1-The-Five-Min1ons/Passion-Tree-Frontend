@@ -86,6 +86,7 @@ flutter:
     - assets/images/courses/
     - assets/images/placeholders/
     - assets/images/albumcover/
+    - assets/images/learning_path/node/
     - assets/images/trees/
 
 
