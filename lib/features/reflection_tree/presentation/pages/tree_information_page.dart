@@ -32,7 +32,7 @@ class TreeDetailPage extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const SizedBox(height: 120), // 👈 เว้นที่ให้ header ลอย
+                  const SizedBox(height: 120), // เว้นที่ให้ header ลอย
 
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -65,9 +65,7 @@ class TreeDetailPage extends StatelessWidget {
                     },
                   ),
 
-                  const SizedBox(
-                    height: 120,
-                  ), // 👈 เว้นล่าง (เผื่อปุ่ม/gesture)
+                  
                 ],
               ),
             ),
