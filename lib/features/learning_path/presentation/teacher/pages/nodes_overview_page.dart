@@ -11,6 +11,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/node_asset.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/learning_nodes_mock.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/edit_node_modal.dart';
 
 class NodesOverviewPage extends StatefulWidget {
   const NodesOverviewPage({super.key});
@@ -26,6 +27,16 @@ class _NodesOverviewPageState extends State<NodesOverviewPage> {
 
   void _publish() {
     debugPrint('Publish learning path');
+  }
+
+  // ===== OPEN EDIT NODE MODAL =====
+  void _openEditNodeModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const EditNodeModal(),
+    );
   }
 
   @override
@@ -46,7 +57,7 @@ class _NodesOverviewPageState extends State<NodesOverviewPage> {
               ),
               child: Column(
                 children: [
-                  const SizedBox(height: 140), // เผื่อ header ลอย
+                  const SizedBox(height: 140), // เว้นที่ให้ header ลอย
 
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -67,27 +78,27 @@ class _NodesOverviewPageState extends State<NodesOverviewPage> {
                                 alignment: Alignment.topCenter,
                                 clipBehavior: Clip.none,
                                 children: [
-                                  // ===== NODE =====
+                                  // ===== NODE (TAP TO OPEN MODAL) =====
                                   NodeItem(
                                     imagePath: NodeAsset.image(node.state),
                                     size: 80,
+                                    onTap: () {
+                                      _openEditNodeModal();
+                                    },
                                   ),
 
-                                  // ===== เก้บไว้ดูตอนไปเขียนในฝั่งนักเรียนที่ต้องมีตัวอักษรบนตัวโหนด ยังไม่อยากลบ CURRENT NODE INDICATOR =====
-                                    /*if (node.isCurrent)
-                                      Positioned(
-                                        top: -28,
-                                        child: NavigationButton(
-                                          direction: NavigationDirection.down, 
-                                          onPressed: () {
-                                            debugPrint(
-                                              'Current node indicator pressed',
-                                            );
-                                            
-                                          },
-                                        ),
-                                    ),*/
-
+                                  // ===== CURRENT NODE INDICATOR (เก็บไว้ใช้ทีหลัง) =====
+                                  /*
+                                  if (node.isCurrent)
+                                    Positioned(
+                                      top: -28,
+                                      child: NavigationButton(
+                                        direction:
+                                            NavigationDirection.down,
+                                        onPressed: () {},
+                                      ),
+                                    ),
+                                  */
                                 ],
                               ),
                             );
@@ -108,7 +119,7 @@ class _NodesOverviewPageState extends State<NodesOverviewPage> {
               left: 0,
               right: 0,
               child: Padding(
-                 padding: const EdgeInsets.only(top: 16.0),
+                padding: const EdgeInsets.only(top: 16.0),
                 child: const HeaderBar(),
               ),
             ),
