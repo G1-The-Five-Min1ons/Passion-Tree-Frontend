@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
@@ -93,7 +94,7 @@ class NodeInfoSection extends StatelessWidget {
         ...List.generate(
           links.length,
           (index) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: 8, left: 10),
             child: Row(
               children: [
                 Expanded(
@@ -104,8 +105,42 @@ class NodeInfoSection extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
+                  icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
                   onPressed: () => onRemoveLink(index),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // ===== UPLOAD COVER : FILE =====
+        Text(
+          'Upload File',
+          style: AppTypography.titleSemiBold,
+        ),
+
+        const SizedBox(height: 8),
+
+        PixelBorderContainer(
+          width: double.infinity,
+          height: 150,
+          padding: EdgeInsets.zero,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.attach_file,
+                  size: 48,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Click to upload or drag and drop file Max 200MB',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary.withValues(alpha: 0.5),
+                  ),
                 ),
               ],
             ),
