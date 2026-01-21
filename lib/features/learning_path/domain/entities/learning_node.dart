@@ -3,6 +3,12 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 class LearningNode {
   final String title;
   final LearningNodeState state;
+  final bool isCurrent; // เพิ่มตัวแปร isCurrent เกี่ยวกะปุ่มบนหัวโหนด
 
-  LearningNode({required this.title, required this.state});
+  LearningNode({
+    required this.title,
+    required this.state,
+    this.isCurrent = false,
+  });
 }
+

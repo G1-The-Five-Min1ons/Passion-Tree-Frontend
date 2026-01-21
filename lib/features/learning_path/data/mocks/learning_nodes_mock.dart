@@ -3,7 +3,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 
 final mockLearningNodes = [
   LearningNode(title: 'Cell', state: LearningNodeState.active),
-  LearningNode(title: 'Cell Structure', state: LearningNodeState.active),
+  LearningNode(title: 'Cell Structure', state: LearningNodeState.active, isCurrent: true),
   LearningNode(title: 'DNA', state: LearningNodeState.locked),
   LearningNode(title: 'Protein', state: LearningNodeState.locked),
   LearningNode(title: 'Metabolism', state: LearningNodeState.locked),
