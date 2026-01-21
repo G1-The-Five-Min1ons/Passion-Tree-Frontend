@@ -25,7 +25,7 @@ class PageHeader extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onPrimary,
               ),
         ),
-        Row(
+        /* Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             const Spacer(),
@@ -39,7 +39,7 @@ class PageHeader extends StatelessWidget {
               onPressed: onActionPressed,
             ),
           ],
-        ),
+        ), */
       ],
     );
   }

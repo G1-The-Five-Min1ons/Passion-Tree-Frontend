@@ -22,22 +22,26 @@ class AlbumData {
           Chapter(name: "Cell2", isEnrolled: false),
           Chapter(name: "Cell2", isEnrolled: false),
           Chapter(name: "Cell2", isEnrolled: false),
-        ]
+        ],
+        overallStatus: 'growinghappy'
         ),
         AlbumItem(
         subjectName: "Microbio",
         lastEdited: "Edited 2 weeks ago",
         status: "Fading",
+        overallStatus: 'growinghappy'
         ),
         AlbumItem(
         subjectName: "Genetics",
         lastEdited: "Edited 3 weeks ago",
         status: "Dying",
+        overallStatus: 'growinghappy'
         ),
         AlbumItem(
         subjectName: "DNA",
         lastEdited: "Edited 1 month ago",
         status: "Died",
+        overallStatus: 'growinghappy'
         ),
       ]
     ),

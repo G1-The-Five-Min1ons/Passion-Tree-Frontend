@@ -6,6 +6,8 @@ import 'package:passion_tree_frontend/core/common_widgets/node/tree_canvas.dart'
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/page_header.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/status_badge.dart';
 
 class TreeDetailPage extends StatelessWidget {
   final AlbumItem item;
@@ -40,6 +42,12 @@ class TreeDetailPage extends StatelessWidget {
               },
             ),
 
+            MainTreeImage(status: item.overallStatus),
+
+            Transform.translate(
+              offset: const Offset(0, -10), // ลองปรับค่า -30 ถึง -60 ดูครับว่าจุดไหนสวย
+              child: StatusBadge(status: item.status),
+            ),
             // ส่วนที่จัดการต้นไม้
             SizedBox(
               height: canvasHeight,
