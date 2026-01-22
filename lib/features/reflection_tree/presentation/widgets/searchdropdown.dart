@@ -23,16 +23,35 @@ class SearchDropdown extends StatefulWidget {
 }
 
 class _SearchDropdownState extends State<SearchDropdown> {
+  final OverlayPortalController _overlayController = OverlayPortalController();
+  final LayerLink _layerLink = LayerLink();
   bool _isOpen = false;
 
   @override
   Widget build(BuildContext context) {
-    final allOptions = widget.options;
-
-    return Column(
-      children: [
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child : OverlayPortal(
+        controller: _overlayController,
+        overlayChildBuilder: (context){
+          return CompositedTransformFollower(
+            link: _layerLink,
+            targetAnchor: Alignment.bottomLeft,
+            followerAnchor: Alignment.topLeft,
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: _buildDropdownList(),
+            ),
+          );
+        },
+      child: 
         GestureDetector(
-          onTap: () => setState(() => _isOpen = !_isOpen),
+          onTap: () {
+            setState(() {
+              _isOpen = !_isOpen;
+              _isOpen ? _overlayController.show() : _overlayController.hide();
+            });
+          },
           child: PixelBorderContainer(
             pixelSize: 4,
             borderColor: Theme.of(context).colorScheme.primary,
@@ -54,8 +73,11 @@ class _SearchDropdownState extends State<SearchDropdown> {
                 ArrowButton(
                   direction: _isOpen ? ArrowDirection.up : ArrowDirection.down,
                   onPressed: () {
-                      setState(() => _isOpen = !_isOpen);
-                    },
+                    setState(() {
+                      _isOpen = !_isOpen;
+                      _isOpen ? _overlayController.show() : _overlayController.hide();
+                    });
+                  },
                   color: AppColors.textSecondary,
                   size: 30,
                 ),
@@ -63,37 +85,46 @@ class _SearchDropdownState extends State<SearchDropdown> {
             ),
           ),
         ),
-
-        if (_isOpen && allOptions.isNotEmpty)
-          Container(
-            constraints: const BoxConstraints(maxHeight: 200),
-            margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-            ),
-            child: ListView.builder(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemCount: allOptions.length,
-              itemBuilder: (context, index) {
-                final option = allOptions[index];
-                return ListTile(
-                  title: Text(
-                    option,
-                    style: AppTypography.subtitleSemiBold.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  onTap: () {
-                    widget.onSelected(option);
-                    widget.controller.text = option;
-                    setState(() => _isOpen = false);
-                  },
-                );
+      ),
+    );
+  }
+Widget _buildDropdownList() {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        width: _layerLink.leaderSize?.width, 
+        margin: const EdgeInsets.only(top: 4),
+        constraints: const BoxConstraints(maxHeight: 200),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+        ),
+        child: ListView.builder(
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          itemCount: widget.options.length,
+          itemBuilder: (context, index) {
+            final option = widget.options[index];
+            return ListTile(
+              title: Text(
+                option,
+                style: AppTypography.subtitleSemiBold.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              onTap: () {
+                widget.onSelected(option);
+                widget.controller.text = option;
+                setState(() {
+                  _isOpen = false;
+                  _overlayController.hide();
+                });
               },
-            ),
-          ),
-      ],
+            );
+          },
+        ),
+      ),
     );
   }
 }
+      

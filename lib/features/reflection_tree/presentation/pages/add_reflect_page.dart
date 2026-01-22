@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/searchdropdown.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_level_card.dart';
 
 class AddReflectPage extends StatefulWidget{
   const AddReflectPage ({super.key});
@@ -14,6 +15,7 @@ class AddReflectPage extends StatefulWidget{
 class _AddReflectPageState extends State<AddReflectPage>{
   final SearchController _categoryController = SearchController();
   final List<String> _subjects = ['Biology', 'Physics', 'Chemistry', 'Mathematics', 'Computer Science'];
+  String _selectedDifficulty = 'Easy';
 
   @override
   void dispose() {
@@ -58,6 +60,27 @@ class _AddReflectPageState extends State<AddReflectPage>{
                       color: Theme.of(context).colorScheme.onPrimary,
                     ),
               ),
+
+            Column(
+              children: [
+                const SizedBox(height: 24),
+                  TreeLevelCard.easy(
+                    isSelected: _selectedDifficulty == 'Easy',
+                    onTap: () => setState(() => _selectedDifficulty = 'Easy'),
+                  ),
+
+                const SizedBox(height: 24),
+                TreeLevelCard.medium(
+                    isSelected: _selectedDifficulty == 'Medium',
+                    onTap: () => setState(() => _selectedDifficulty = 'Medium'),
+                  ),
+                const SizedBox(height: 24),
+                TreeLevelCard.hard(
+                    isSelected: _selectedDifficulty == 'Hard',
+                    onTap: () => setState(() => _selectedDifficulty = 'Hard'),
+                  ),
+              ],
+            )
           ],
         ),
       ),
