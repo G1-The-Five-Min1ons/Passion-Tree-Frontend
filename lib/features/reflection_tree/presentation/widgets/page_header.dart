@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
+import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 
 class PageHeader extends StatelessWidget {
   final String title;
@@ -28,14 +29,9 @@ class PageHeader extends StatelessWidget {
          Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const Spacer(),
             AppButton(
               variant: AppButtonVariant.iconOnly,
-              icon: Icon(
-                actionIcon,
-                weight: 700,
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
+              icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
               onPressed: onActionPressed,
             ),
           ],

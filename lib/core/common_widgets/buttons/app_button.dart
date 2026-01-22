@@ -185,7 +185,7 @@ class _AppButtonState extends State<AppButton> {
     return 40; // ปุ่มปกติ
   }
 
-  double _iconOnlyWidth() => 50;
+  double _iconOnlyWidth() => 60;
 
   double _calculateWidthFromText(TextStyle style) {
     final mainPainter = TextPainter(

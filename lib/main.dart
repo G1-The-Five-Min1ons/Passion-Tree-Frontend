@@ -115,26 +115,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
             ),
-            PixelAlbumCover(
-            size: 150,
-            imageUrl: 'https://images.theconversation.com/files/45159/original/rptgtpxd-1396254731.jpg?ixlib=rb-4.1.0&q=45&auto=format&w=1356&h=668&fit=crop',
-            title: 'Science',
-            subtitle: 'Edited 10 minutes ago',
-            ),
+            
 
-            // ===== ปุ่มไปหน้า Learning Path =====
-            AppButton(
-              variant: AppButtonVariant.text,
-              text: 'Go to Learning Path',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const LearningPathOverviewPage(),
-                  ),
-                );
-              },
-            ),
+    
           ],
         ),
       ),

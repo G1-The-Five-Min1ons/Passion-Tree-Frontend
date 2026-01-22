@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
+import 'package:passion_tree_frontend/core/common_widgets/selections/radio.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 
 class TreeLevelCard extends StatelessWidget{
@@ -57,53 +58,65 @@ class TreeLevelCard extends StatelessWidget{
         borderColor: Theme.of(context).colorScheme.primary,
         fillColor: Theme.of(context).colorScheme.surface,
         width: double.infinity,
-        height: 220,
+        height: 250,
         padding: const EdgeInsets.all(12),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Image.asset(
-                imagePath,
-                height: 120,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 8),
-
-              Container(
-                width: 250,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(15),
+        child: Stack(
+          children: [
+            Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Image.asset(
+                  imagePath,
+                  height: 120,
+                  fit: BoxFit.contain,
                 ),
-                child: Column(
-                  children: [
-                    Text(
-                      title,
-                      style: AppPixelTypography.smallTitle.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                const SizedBox(height: 8),
 
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: AppTypography.bodyRegular.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimary,
+                Container(
+                  width: 230,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        title,
+                        style: AppPixelTypography.smallTitle.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
+
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: AppTypography.bodyRegular.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                        textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            Positioned(
+            top: 5,
+            left: 5,
+            child: PixelRadioButton(
+              isSelected: isSelected,
+              index: 0,
+            ),
+          )
+          ],
         ),
       ),
-    );
+    ); 
   }
 }

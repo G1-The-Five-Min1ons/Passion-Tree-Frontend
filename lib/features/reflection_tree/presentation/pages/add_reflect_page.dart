@@ -80,7 +80,24 @@ class _AddReflectPageState extends State<AddReflectPage>{
                     onTap: () => setState(() => _selectedDifficulty = 'Hard'),
                   ),
               ],
-            )
+            ),
+            const SizedBox(height: 40),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                "Create Tree",
+                  style: AppPixelTypography.title.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Image.asset(
+                  'assets/buttons/navigation/pixel/right_small_light.png'
+                )
+              ],
+            ),
+            const SizedBox(height: 80),
           ],
         ),
       ),
