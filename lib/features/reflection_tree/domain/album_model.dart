@@ -20,12 +20,14 @@ class AlbumItem {
   final String lastEdited;
   final String status;
   final List<Chapter> chapters;
+  final String overallStatus;
 
   AlbumItem({
     required this.subjectName,
     required this.lastEdited,
     required this.status,
     this.chapters = const [],
+    required this.overallStatus,
   });
 
   Color get statusColor {
