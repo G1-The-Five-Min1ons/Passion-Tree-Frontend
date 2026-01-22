@@ -97,16 +97,29 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
           Padding(
             padding: const EdgeInsets.only(top: 40),
             child: Center(
-              child: NavigationButton(
-                direction: NavigationDirection.down,
-                onPressed: () {
-                  setState(() {
-                    inProgressShown += 2;
-                  });
-                },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'More',
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  NavigationButton(
+                    direction: NavigationDirection.down,
+                    onPressed: () {
+                      setState(() {
+                        inProgressShown += 2;
+                      });
+                    },
+                  ),
+                ],
               ),
             ),
           ),
+
 
         const SizedBox(height: 60),
 
@@ -169,16 +182,29 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
           Padding(
             padding: const EdgeInsets.only(top: 40),
             child: Center(
-              child: NavigationButton(
-                direction: NavigationDirection.down,
-                onPressed: () {
-                  setState(() {
-                    completedShown += 2;
-                  });
-                },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'More',
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  NavigationButton(
+                    direction: NavigationDirection.down,
+                    onPressed: () {
+                      setState(() {
+                        completedShown += 2;
+                      });
+                    },
+                  ),
+                ],
               ),
             ),
           ),
+
       ],
     );
   }

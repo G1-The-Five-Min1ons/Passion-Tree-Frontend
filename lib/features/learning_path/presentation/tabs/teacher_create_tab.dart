@@ -120,17 +120,28 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
           Padding(
             padding: const EdgeInsets.only(top: 40),
             child: Center(
-              child: NavigationButton(
-                direction: NavigationDirection.down,
-                onPressed: () {
-                  setState(() {
-                    inProgressShown += 2;
-                  });
-                },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'More',
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: colors.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  NavigationButton(
+                    direction: NavigationDirection.down,
+                    onPressed: () {
+                      setState(() {
+                        inProgressShown += 2;
+                      });
+                    },
+                  ),
+                ],
               ),
             ),
           ),
-
         const SizedBox(height: 60),
 
         // =====================================================
@@ -188,20 +199,33 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
             },
           ),
 
-        if (completedShown < completedCourses.length)
+        if (inProgressShown < inProgressCourses.length)
           Padding(
             padding: const EdgeInsets.only(top: 40),
             child: Center(
-              child: NavigationButton(
-                direction: NavigationDirection.down,
-                onPressed: () {
-                  setState(() {
-                    completedShown += 2;
-                  });
-                },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'More',
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: colors.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  NavigationButton(
+                    direction: NavigationDirection.down,
+                    onPressed: () {
+                      setState(() {
+                        inProgressShown += 2;
+                      });
+                    },
+                  ),
+                ],
               ),
             ),
           ),
+
       ],
     );
   }

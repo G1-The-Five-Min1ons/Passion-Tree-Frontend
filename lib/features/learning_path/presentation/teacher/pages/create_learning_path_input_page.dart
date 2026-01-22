@@ -92,7 +92,7 @@ class _CreateLearningPathInputPageState
                   label: 'Path Title',
                   labelColor: Theme.of(context).colorScheme.onPrimary,
                   hintText: 'Enter learning path title',
-                  height: 46,
+                  height: 38,
                   onChanged: (value) {
                     setState(() {
                       _title = value;
@@ -151,7 +151,7 @@ class _CreateLearningPathInputPageState
                   label: 'Path Objectives',
                   labelColor: Theme.of(context).colorScheme.onPrimary,
                   hintText: 'Enter learning path objectives',
-                  height: 46,
+                  height: 38,
                   onChanged: (value) {
                     setState(() {
                       _objectives = value;
