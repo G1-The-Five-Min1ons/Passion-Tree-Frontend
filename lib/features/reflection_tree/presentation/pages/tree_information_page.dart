@@ -6,6 +6,8 @@ import 'package:passion_tree_frontend/core/common_widgets/node/tree_canvas.dart'
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/page_header.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/status_badge.dart';
 
 class TreeDetailPage extends StatelessWidget {
   final AlbumItem item;
@@ -32,7 +34,14 @@ class TreeDetailPage extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const SizedBox(height: 120), // เว้นที่ให้ header ลอย
+                  const SizedBox(height: 80), // เว้นที่ให้ header ลอย
+
+                  MainTreeImage(status: item.overallStatus),
+
+                  Transform.translate(
+                    offset: const Offset(0, -10),
+                    child: StatusBadge(status: item.status),
+                  ),
 
                   LayoutBuilder(
                     builder: (context, constraints) {

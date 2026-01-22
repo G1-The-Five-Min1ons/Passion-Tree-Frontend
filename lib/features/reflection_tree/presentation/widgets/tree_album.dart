@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album_base_card.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
 
 class TreeAlbumCard extends StatelessWidget {
   final String title;
@@ -10,6 +11,7 @@ class TreeAlbumCard extends StatelessWidget {
   final String statusText;
   final Color statusColor;
   final Widget dataDisplay;
+  final String treeStatus;
 
   const TreeAlbumCard({
     super.key,
@@ -18,6 +20,7 @@ class TreeAlbumCard extends StatelessWidget {
     required this.statusText,
     required this.statusColor,
     required this.dataDisplay,
+    required this.treeStatus,
   });
 
   @override
@@ -45,7 +48,13 @@ class TreeAlbumCard extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         color: AppColors.surface,
-        child: Center(child: dataDisplay),
+        child: Stack(
+          children: [
+            Center(
+              child: MainTreeImage(status: treeStatus),
+            )
+          ],
+        ),
       ),
     );
   }

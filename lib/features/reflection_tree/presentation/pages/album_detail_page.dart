@@ -6,6 +6,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/add_reflect_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/tree_information_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/heart_status.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_album.dart';
@@ -53,7 +54,12 @@ class AlbumDetailPage extends StatelessWidget{
                     weight: 700,
                     color: Theme.of(context).colorScheme.onPrimary),
                   onPressed: (){
-                    //รอใส่ logic ทีหลัง
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddReflectPage(),
+                        ),
+                      );
                   }),
                 ],
               ),  
@@ -92,7 +98,8 @@ class AlbumDetailPage extends StatelessWidget{
           title: item.subjectName,
           subtitle: item.lastEdited,
           statusText: item.status, 
-          statusColor: item.statusColor, 
+          statusColor: item.statusColor,
+          treeStatus: item.overallStatus,
           dataDisplay: const SizedBox.shrink(),
           ),
         );
