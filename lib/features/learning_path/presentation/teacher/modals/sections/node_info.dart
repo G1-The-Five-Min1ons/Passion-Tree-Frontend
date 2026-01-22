@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
@@ -176,10 +177,14 @@ class NodeInfoSection extends StatelessWidget {
                         style: AppTypography.subtitleSemiBold,
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(Icons.close, color: colors.error, size: 18),
-                      onPressed: () => onRemoveFile(index),
+                    IconTheme(
+                      data: const IconThemeData(size: 18),
+                      child: CloseIcon(
+                        color: colors.error,
+                        onPressed: () => onRemoveFile(index),
+                      ),
                     ),
+
                   ],
                 ),
               ),

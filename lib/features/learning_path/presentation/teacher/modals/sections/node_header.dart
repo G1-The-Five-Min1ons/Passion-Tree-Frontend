@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
-
+import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart';
 
 class NodeModalHeader extends StatelessWidget {
   const NodeModalHeader({super.key});
@@ -15,13 +15,11 @@ class NodeModalHeader extends StatelessWidget {
         Positioned(
           top: -8, // ดันขึ้นให้ชิดขอบกรอบ
           right: -8, //ชิดขอบขวา
-          child: IconButton(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            iconSize: 30,
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context),
+          child: IconTheme(
+            data: const IconThemeData(size: 30),
+            child: const CloseIcon(),
           ),
+
         ),
 
         // ===== CONTENT =====
