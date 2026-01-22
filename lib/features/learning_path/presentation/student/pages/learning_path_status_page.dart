@@ -214,16 +214,29 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                   Padding(
                     padding: const EdgeInsets.only(top: 40),
                     child: Center(
-                      child: NavigationButton(
-                        direction: NavigationDirection.down,
-                        onPressed: () {
-                          setState(() {
-                            inProgressShown += 2;
-                          });
-                        },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'More',
+                            style: AppPixelTypography.smallTitle.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          NavigationButton(
+                            direction: NavigationDirection.down,
+                            onPressed: () {
+                              setState(() {
+                                inProgressShown += 2;
+                              });
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ),
+
 
                 const SizedBox(height: 60),
                 
@@ -273,7 +286,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                         : 2,
                     gridDelegate:
                         const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 220, // ✅ คุมขนาดการ์ด
+                          maxCrossAxisExtent: 220, // คุมขนาดการ์ด
                           mainAxisSpacing: 35,
                           crossAxisSpacing: 12,
                           childAspectRatio:
@@ -289,16 +302,29 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                   Padding(
                     padding: const EdgeInsets.only(top: 40),
                     child: Center(
-                      child: NavigationButton(
-                        direction: NavigationDirection.down,
-                        onPressed: () {
-                          setState(() {
-                            completedShown += 2;
-                          });
-                        },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'More',
+                            style: AppPixelTypography.smallTitle.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          NavigationButton(
+                            direction: NavigationDirection.down,
+                            onPressed: () {
+                              setState(() {
+                                completedShown += 2;
+                              });
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ),
+
 
                 // bottom safe spacing
                 const SizedBox(height: 40),
