@@ -117,32 +117,6 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== HEADER TITLE (removed NavigationButton left/right) =====
-                SizedBox(
-                  height: 72,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Learning Paths',
-                            style: Theme.of(context).textTheme.displayLarge
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimary,
-                                ),
-                          ),
-                        ),
-                      ),
-                      // NavigationButton removed
-                    ],
-                  ),
-                ),
-
-                // Header → Search (40)
-                const SizedBox(height: 40),
 
                 // ===== SEARCH BAR & FILTER =====
                 Padding(

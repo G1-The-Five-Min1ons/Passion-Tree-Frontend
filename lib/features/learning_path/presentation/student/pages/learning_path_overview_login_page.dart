@@ -106,29 +106,6 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== HEADER TITLE  =====
-                SizedBox(
-                  height: 72,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Learning Paths',
-                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                    ],
-                  ),
-                ),
-
-                // Header → Search (40)
-                const SizedBox(height: 40),
 
                 // ===== SEARCH BAR & FILTER =====
                 Padding(

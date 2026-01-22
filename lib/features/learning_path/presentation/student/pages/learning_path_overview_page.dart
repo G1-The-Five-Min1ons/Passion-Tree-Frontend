@@ -11,7 +11,6 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
 
-
 class LearningPathOverviewPage extends StatefulWidget {
   const LearningPathOverviewPage({super.key});
 

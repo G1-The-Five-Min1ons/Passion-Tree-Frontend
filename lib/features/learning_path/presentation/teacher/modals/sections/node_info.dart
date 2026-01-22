@@ -6,15 +6,23 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/uploaded_file.dart';
 class NodeInfoSection extends StatelessWidget {
 
-  final ValueChanged<String> onTitleChanged;
+   final ValueChanged<String> onTitleChanged;
   final ValueChanged<String> onDescriptionChanged;
+
+  // Links
   final ValueChanged<String> onLinkChanged;
   final VoidCallback onAddLink;
   final List<String> links;
   final String linkValue;
   final Function(int) onRemoveLink;
+
+  // Files
+  final VoidCallback onUploadFile;
+  final List<UploadedFileItem> files;
+  final Function(int) onRemoveFile;
 
   const NodeInfoSection({
     super.key,
@@ -25,6 +33,9 @@ class NodeInfoSection extends StatelessWidget {
     required this.links,
     required this.linkValue,
     required this.onRemoveLink,
+    required this.onUploadFile,
+    required this.files,
+    required this.onRemoveFile,
   });
 
   @override
@@ -114,37 +125,66 @@ class NodeInfoSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // ===== UPLOAD COVER : FILE =====
-        Text(
-          'Upload File',
-          style: AppTypography.titleSemiBold,
-        ),
+        // ===== UPLOAD FILE =====
+        Text('Upload File', style: AppTypography.titleSemiBold),
 
         const SizedBox(height: 8),
 
-        PixelBorderContainer(
-          width: double.infinity,
-          height: 150,
-          padding: EdgeInsets.zero,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.attach_file,
-                  size: 48,
-                  color: AppColors.textSecondary,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Click to upload or drag and drop file Max 200MB',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary.withValues(alpha: 0.5),
+        GestureDetector(
+          onTap: onUploadFile,
+          child: PixelBorderContainer(
+            width: double.infinity,
+            height: 150,
+            padding: EdgeInsets.zero,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.upload, size: 48, color: AppColors.textSecondary),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Click to upload or drag and drop file\nMax 200MB',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary.withValues(alpha: 0.5),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // ===== FILE LIST =====
+        Column(
+          children: List.generate(files.length, (index) {
+            final file = files[index];
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8, left: 10),
+              child: PixelBorderContainer(
+                height: 40,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        file.name,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.subtitleSemiBold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: colors.error, size: 18),
+                      onPressed: () => onRemoveFile(index),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
         ),
       ],
     );
