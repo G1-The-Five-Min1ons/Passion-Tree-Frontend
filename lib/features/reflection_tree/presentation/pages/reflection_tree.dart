@@ -8,6 +8,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/page
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/page_header.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/create_popup.dart';
 
 class ReflectionTreePage extends StatefulWidget {
   const ReflectionTreePage({super.key});
@@ -46,7 +47,15 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
               title: "Albums",
               actionIcon: Symbols.add_rounded,
               onActionPressed: () {
-                // logic ทีหลัง
+                showDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  builder: (BuildContext context){
+                    return const CreatePopUp(
+                      title: "Create Album",
+                      hint: "Album Name",
+                    );
+                  });
               },
             ),
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'dart:math';
 
 import 'package:passion_tree_frontend/core/theme/typography.dart';
@@ -80,18 +81,23 @@ class _AppButtonState extends State<AppButton> {
           children: [
             Positioned(
               top: offset,
-              child: _buildPixelLayer(
-                width: buttonWidth,
-                color: scheme.onSurface,
-                child: const SizedBox(),
+              child: PixelBorderContainer(
+                padding: EdgeInsets.zero,
+                fillColor: bdColor, 
+                borderColor: bdColor,
+                child: SizedBox(width: buttonWidth, height: _height()),
               ),
             ),
-            _buildPixelLayer(
-              width: buttonWidth,
-              color: bgColor,
-              borderColor: bdColor,
-              child: Center(child: _buildContent(buttonTextStyle)),
-            ),
+            PixelBorderContainer(
+                padding: EdgeInsets.zero,
+                fillColor: bgColor,
+                borderColor: bdColor,
+                child: SizedBox(
+                  width: buttonWidth,
+                  height: _height(),
+                  child: Center(child: _buildContent(buttonTextStyle)),
+                ),
+              ),
           ],
         ),
       ),
@@ -185,7 +191,7 @@ class _AppButtonState extends State<AppButton> {
     return 40; // ปุ่มปกติ
   }
 
-  double _iconOnlyWidth() => 50;
+  double _iconOnlyWidth() => 60;
 
   double _calculateWidthFromText(TextStyle style) {
     final mainPainter = TextPainter(

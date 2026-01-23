@@ -43,22 +43,7 @@ class _RadioButtonPainter extends CustomPainter {
 
       canvas.drawCircle(center, w / 3.3, selectedPaint);
     } else {
-      final textPainter = TextPainter(
-          text : TextSpan(
-            text: index.toString(),
-            style: textStyle,
-            ),
-          textDirection : TextDirection.ltr,
-        );
-
-      textPainter.layout();
-      textPainter.paint(
-        canvas, 
-        Offset(
-          center.dx - textPainter.width / 2,
-          center.dy - textPainter.height / 2,
-        ),
-      );
+      
     }
   }
 

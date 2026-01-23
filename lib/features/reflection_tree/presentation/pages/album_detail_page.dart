@@ -3,6 +3,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
+import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
@@ -43,16 +44,14 @@ class AlbumDetailPage extends StatelessWidget{
               ),
               const SizedBox(height: 4),
 
+        
               Row(
                 children: [
                   const HeartStatus(),
                   const Spacer(),
                   AppButton(
                   variant: AppButtonVariant.iconOnly,
-                  icon: Icon(
-                    Symbols.add_rounded,
-                    weight: 700,
-                    color: Theme.of(context).colorScheme.onPrimary),
+                  icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
                   onPressed: (){
                     Navigator.push(
                       context,

@@ -16,19 +16,40 @@ class HomeBarWidget extends StatefulWidget {
 class _HomeBarWidgetState extends State<HomeBarWidget> {
   int _selectedIndex = 0;
 
+  final List<GlobalKey<NavigatorState>> _navigatorKeys = [
+  GlobalKey<NavigatorState>(),
+  GlobalKey<NavigatorState>(),
+  GlobalKey<NavigatorState>(),
+  GlobalKey<NavigatorState>(),
+];
 
   // ใส่หน้าของตัวเองตรงนี้
-  final List<Widget> _pages = [
-    const HomePage(),   
-    const LearningPathOverviewPage(),   
-    const ReflectionTreePage(),
-    const Center(child: Text('Profile')), 
+  late final List<Widget> _pages = [
+    _buildTabNavigator(0, const HomePage()),
+    _buildTabNavigator(1, const LearningPathOverviewPage()),
+    _buildTabNavigator(2, const ReflectionTreePage()),
+    _buildTabNavigator(3, const Center(child: Text('Profile'))),
   ];
+
+  Widget _buildTabNavigator(int index, Widget rootPage) {
+    return Navigator(
+      key: _navigatorKeys[index],
+      onGenerateRoute: (routeSettings) {
+        return MaterialPageRoute(
+          builder: (context) => rootPage,
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: IndexedStack(
+      index: _selectedIndex,
+      children: _pages,
+    ),
       
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
