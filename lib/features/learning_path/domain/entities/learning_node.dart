@@ -3,6 +3,23 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 class LearningNode {
   final String title;
   final LearningNodeState state;
+  final bool isCurrent;
 
-  LearningNode({required this.title, required this.state});
+  const LearningNode({
+    required this.title,
+    required this.state,
+    this.isCurrent = false,
+  });
+
+  LearningNode copyWith({
+    String? title,
+    LearningNodeState? state,
+    bool? isCurrent,
+  }) {
+    return LearningNode(
+      title: title ?? this.title,
+      state: state ?? this.state,
+      isCurrent: isCurrent ?? this.isCurrent,
+    );
+  }
 }

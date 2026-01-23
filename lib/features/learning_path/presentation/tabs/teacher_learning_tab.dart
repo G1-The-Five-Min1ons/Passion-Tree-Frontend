@@ -161,15 +161,28 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
 
         // ===== MORE =====
         Center(
-          child: NavigationButton(
-            direction: NavigationDirection.down,
-            onPressed: () {
-              setState(() {
-                _allListShownCount += 4;
-              });
-            },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'More',
+                style: AppPixelTypography.smallTitle.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+              const SizedBox(height: 5),
+              NavigationButton(
+                direction: NavigationDirection.down,
+                onPressed: () {
+                  setState(() {
+                    _allListShownCount += 4;
+                  });
+                },
+              ),
+            ],
           ),
         ),
+
 
         const SizedBox(height: 40),
       ],

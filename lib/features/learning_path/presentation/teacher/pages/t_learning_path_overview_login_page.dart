@@ -75,22 +75,6 @@ class _TeacherLearningPathOverviewPageState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== HEADER =====
-                SizedBox(
-                  height: 72,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Learning Paths',
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        color: colors.onPrimary,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-
                 // ===== SEARCH + FILTER =====
                 Row(
                   children: [

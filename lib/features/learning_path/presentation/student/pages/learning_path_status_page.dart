@@ -117,32 +117,6 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== HEADER TITLE (removed NavigationButton left/right) =====
-                SizedBox(
-                  height: 72,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Learning Paths',
-                            style: Theme.of(context).textTheme.displayLarge
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimary,
-                                ),
-                          ),
-                        ),
-                      ),
-                      // NavigationButton removed
-                    ],
-                  ),
-                ),
-
-                // Header → Search (40)
-                const SizedBox(height: 40),
 
                 // ===== SEARCH BAR & FILTER =====
                 Padding(
@@ -240,16 +214,29 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                   Padding(
                     padding: const EdgeInsets.only(top: 40),
                     child: Center(
-                      child: NavigationButton(
-                        direction: NavigationDirection.down,
-                        onPressed: () {
-                          setState(() {
-                            inProgressShown += 2;
-                          });
-                        },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'More',
+                            style: AppPixelTypography.smallTitle.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          NavigationButton(
+                            direction: NavigationDirection.down,
+                            onPressed: () {
+                              setState(() {
+                                inProgressShown += 2;
+                              });
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ),
+
 
                 const SizedBox(height: 60),
                 
@@ -299,7 +286,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                         : 2,
                     gridDelegate:
                         const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 220, // ✅ คุมขนาดการ์ด
+                          maxCrossAxisExtent: 220, // คุมขนาดการ์ด
                           mainAxisSpacing: 35,
                           crossAxisSpacing: 12,
                           childAspectRatio:
@@ -315,16 +302,29 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                   Padding(
                     padding: const EdgeInsets.only(top: 40),
                     child: Center(
-                      child: NavigationButton(
-                        direction: NavigationDirection.down,
-                        onPressed: () {
-                          setState(() {
-                            completedShown += 2;
-                          });
-                        },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'More',
+                            style: AppPixelTypography.smallTitle.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          NavigationButton(
+                            direction: NavigationDirection.down,
+                            onPressed: () {
+                              setState(() {
+                                completedShown += 2;
+                              });
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ),
+
 
                 // bottom safe spacing
                 const SizedBox(height: 40),
