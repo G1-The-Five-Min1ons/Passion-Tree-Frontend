@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/delete_popup.dart';
 
 class ActionPopUp extends StatelessWidget {
   final VoidCallback onEdit;
@@ -53,7 +54,13 @@ class ActionPopUp extends StatelessWidget {
                 iconPath: 'assets/icons/Delete.png',
                 onTap: () {
                   Navigator.pop(context);
-                  onDelete();
+                  
+                  DeletePopUp.show(
+                    context,
+                    onDelete: () {
+                      //รอใส่ logic
+                    },
+                  );
                 },
               ),
             ],
