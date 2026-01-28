@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album_base_card.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/action_popup.dart';
 
 class PixelAlbumCover extends StatelessWidget {
   final double? size;
@@ -30,7 +31,23 @@ class PixelAlbumCover extends StatelessWidget {
       color: primaryColor,
       title: title,
       subtitle: subtitle,
-      actionIcon: const MoreIcon(),
+      actionIcon: IconButton(
+      constraints: const BoxConstraints(),
+      padding: EdgeInsets.zero,
+      splashRadius: 20,
+      icon: const MoreIcon(),
+      onPressed: () {
+        ActionPopUp.show(
+          context,
+          onEdit: () {
+            debugPrint("Edit Album: $title");
+          },
+          onDelete: () {
+            debugPrint("Delete Album: $title");
+          },
+        );
+      },
+    ),
       topContent: imageUrl != null
         ? Image.asset(imageUrl!, fit: BoxFit.cover, width: double.infinity) //ถ้าดึงจาก db อาจจะต้องเปลี่ยน asset
         : Container(color: primaryColor.withValues(alpha: 0.3)),
