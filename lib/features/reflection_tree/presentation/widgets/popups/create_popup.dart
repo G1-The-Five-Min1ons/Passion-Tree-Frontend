@@ -93,4 +93,17 @@ class CreatePopUp extends StatelessWidget {
       ),
     );
   }
+  static void show(
+    BuildContext context, {
+    String title = 'Create New Album',
+    String hint = 'Album Name',
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => CreatePopUp(
+        title: title,
+        hint: hint,
+      ),
+    );
+  }
 }

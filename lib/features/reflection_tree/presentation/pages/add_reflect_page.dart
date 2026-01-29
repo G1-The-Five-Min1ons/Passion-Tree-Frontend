@@ -4,6 +4,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/create_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/searchdropdown.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_level_card.dart';
 
@@ -94,7 +95,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
                   variant: AppButtonVariant.text,
                   text: 'Add',
                   onPressed: (){
-                    //รอใส่ logic
+                    CreatePopUp.show(context);
                   }
                 ),
               ],
