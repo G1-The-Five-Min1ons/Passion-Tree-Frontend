@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album_base_card.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/action_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/edit_album_popup.dart';
 
 class PixelAlbumCover extends StatelessWidget {
   final double? size;
@@ -40,7 +41,9 @@ class PixelAlbumCover extends StatelessWidget {
         ActionPopUp.show(
           context,
           onEdit: () {
-            debugPrint("Edit Album: $title");
+            EditAlbumPopup.show(
+              context,
+              initialValue: title ?? '');
           },
           onDelete: () {
             debugPrint("Delete Album: $title");

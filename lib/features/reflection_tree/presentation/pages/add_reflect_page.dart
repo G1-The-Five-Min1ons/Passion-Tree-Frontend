@@ -76,13 +76,21 @@ class _AddReflectPageState extends State<AddReflectPage>{
             ),
 
             const SizedBox(height: 30),
+            Padding(
+              padding: const EdgeInsets.only(left: 8, bottom: 8),
+              child: Text(
+                "Album",
+                style: AppTypography.titleSemiBold.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+            ),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(child: 
                   SearchDropdown(
                     options: _albums,
-                    header: "Album",
                     label: "Select Album",
                     controller: _albumController,
                     onSelected: (selectedItem) {

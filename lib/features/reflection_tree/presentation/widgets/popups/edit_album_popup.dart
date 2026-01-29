@@ -4,16 +4,48 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/save_cancel.dart';
 
-class CreatePopUp extends StatelessWidget {
+class EditAlbumPopup extends StatefulWidget {
   final String title;
-  final String hint;
+  final String initialValue;
 
-  const CreatePopUp({
+  const EditAlbumPopup({
     super.key,
     required this.title,
-    required this.hint,
+    required this.initialValue,
   });
 
+  @override
+  State<EditAlbumPopup> createState() => _EditAlbumPopupState();
+
+  static void show(
+    BuildContext context, {
+    String title = 'Edit Album',
+    required String initialValue,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => EditAlbumPopup(
+        title: title,
+        initialValue: initialValue,
+      ),
+    );
+  }
+}
+
+class _EditAlbumPopupState extends State<EditAlbumPopup> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -26,7 +58,7 @@ class CreatePopUp extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              title,
+              widget.title,
               style: Theme.of(context).textTheme.displaySmall!.copyWith(
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -55,15 +87,6 @@ class CreatePopUp extends StatelessWidget {
                           color: AppColors.textSecondary,
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'Upload Cover Image',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: AppColors.textSecondary.withValues(
-                                  alpha: 0.5,
-                                ),
-                              ),
-                        ),
                       ],
                     ),
                   ),
@@ -72,8 +95,8 @@ class CreatePopUp extends StatelessWidget {
 
             const SizedBox(height: 18),
 
-            const PixelTextField(
-              hintText: 'Album Name',
+            PixelTextField(
+              controller: _controller,
               height: 38,
             ),
 
@@ -84,25 +107,12 @@ class CreatePopUp extends StatelessWidget {
                 Navigator.pop(context);
               },
               onSave: () {
-                //รอใส่ logic
+                Navigator.pop(context);
               },
             ),
 
           ],
         ),
-      ),
-    );
-  }
-  static void show(
-    BuildContext context, {
-    String title = 'Create Album',
-    String hint = 'Album Name',
-  }) {
-    showDialog(
-      context: context,
-      builder: (context) => CreatePopUp(
-        title: title,
-        hint: hint,
       ),
     );
   }
