@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:material_symbols_icons/symbols.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
@@ -63,7 +62,7 @@ class AlbumDetailPage extends StatelessWidget{
                 ],
               ),  
               if (album.items != null && album.items!.isNotEmpty)
-              _buildItemGrid(context, album.items!)
+              _buildItemGrid(context, album, album.items!)
             else
               _buildEmptyState(context),                
           ],
@@ -73,7 +72,7 @@ class AlbumDetailPage extends StatelessWidget{
   }
 }
 
-  Widget _buildItemGrid(BuildContext context, List<AlbumItem> items) {
+  Widget _buildItemGrid(BuildContext context,Album album, List<AlbumItem> items) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(), 
@@ -99,6 +98,7 @@ class AlbumDetailPage extends StatelessWidget{
           statusText: item.status, 
           statusColor: item.statusColor,
           treeStatus: item.overallStatus,
+          currentAlbumname: album.title,
           dataDisplay: const SizedBox.shrink(),
           ),
         );

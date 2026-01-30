@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/reflection_tree.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_page.dart';
 import 'package:passion_tree_frontend/features/home/presentation/pages/home_page.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
