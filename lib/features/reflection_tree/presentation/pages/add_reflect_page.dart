@@ -4,6 +4,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/create_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/searchdropdown.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_level_card.dart';
 
@@ -75,13 +76,21 @@ class _AddReflectPageState extends State<AddReflectPage>{
             ),
 
             const SizedBox(height: 30),
+            Padding(
+              padding: const EdgeInsets.only(left: 8, bottom: 8),
+              child: Text(
+                "Album",
+                style: AppTypography.titleSemiBold.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+            ),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(child: 
                   SearchDropdown(
                     options: _albums,
-                    header: "Album",
                     label: "Select Album",
                     controller: _albumController,
                     onSelected: (selectedItem) {
@@ -94,7 +103,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
                   variant: AppButtonVariant.text,
                   text: 'Add',
                   onPressed: (){
-                    //รอใส่ logic
+                    CreatePopUp.show(context);
                   }
                 ),
               ],

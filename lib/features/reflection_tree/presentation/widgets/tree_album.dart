@@ -4,6 +4,8 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album_base_card.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/action_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/edit_tree_popup.dart';
 
 class TreeAlbumCard extends StatelessWidget {
   final String title;
@@ -12,6 +14,7 @@ class TreeAlbumCard extends StatelessWidget {
   final Color statusColor;
   final Widget dataDisplay;
   final String treeStatus;
+  final String currentAlbumname;
 
   const TreeAlbumCard({
     super.key,
@@ -21,6 +24,7 @@ class TreeAlbumCard extends StatelessWidget {
     required this.statusColor,
     required this.dataDisplay,
     required this.treeStatus,
+    required this.currentAlbumname,
   });
 
   @override
@@ -28,7 +32,33 @@ class TreeAlbumCard extends StatelessWidget {
     return PixelBaseCard(
       title: title,
       subtitle: subtitle,
-      actionIcon: const MoreIcon(),
+      actionIcon: IconButton(
+      constraints: const BoxConstraints(),
+      padding: EdgeInsets.zero,
+      splashRadius: 20,
+      icon: const MoreIcon(),
+      onPressed: () {
+        ActionPopUp.show(
+          context,
+          onEdit: () {
+            EditTreePopUp.show(
+              context,
+              initialName: title,
+              initialPath: currentAlbumname,
+              pathOptions: [
+                'Biology 101', //เดี๋ยวค่อยถึงมาจาก db จริง
+                'Genetics',
+                'Microbiology',
+                'Criminal Law',
+              ],
+            );
+          },
+          onDelete: () {
+            debugPrint("Delete Album: $title");
+          },
+        );
+      },
+    ),
       overlay: Container(
         width: 70,
         padding: const EdgeInsets.symmetric(vertical: 4),

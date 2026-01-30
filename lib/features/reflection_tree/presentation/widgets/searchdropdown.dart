@@ -72,10 +72,11 @@ class _SearchDropdownState extends State<SearchDropdown> {
               });
             },
             child: PixelBorderContainer(
-              pixelSize: 4,
+              pixelSize: 3,
+              height: 38,
               borderColor: Theme.of(context).colorScheme.primary,
               fillColor: Theme.of(context).colorScheme.surface,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+              padding: const EdgeInsets.only(left: 18, right: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -98,7 +99,7 @@ class _SearchDropdownState extends State<SearchDropdown> {
                       });
                     },
                     color: AppColors.textSecondary,
-                    size: 30,
+                    size: 25,
                   ),
                 ],
               ),

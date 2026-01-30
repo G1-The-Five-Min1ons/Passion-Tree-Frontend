@@ -47,15 +47,7 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
               title: "Albums",
               actionIcon: Symbols.add_rounded,
               onActionPressed: () {
-                showDialog(
-                  context: context,
-                  barrierDismissible: true,
-                  builder: (BuildContext context){
-                    return const CreatePopUp(
-                      title: "Create Album",
-                      hint: "Album Name",
-                    );
-                  });
+                CreatePopUp.show(context);
               },
             ),
 
