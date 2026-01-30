@@ -9,6 +9,7 @@ class SearchDropdown extends StatefulWidget {
   final String label;
   final Function(String) onSelected;
   final SearchController controller;
+  final String? header;
 
   const SearchDropdown ({
     super.key,
@@ -16,6 +17,7 @@ class SearchDropdown extends StatefulWidget {
     required this.label,
     required this.onSelected,
     required this.controller,
+    this.header,
   });
 
   @override
@@ -23,77 +25,129 @@ class SearchDropdown extends StatefulWidget {
 }
 
 class _SearchDropdownState extends State<SearchDropdown> {
+  final OverlayPortalController _overlayController = OverlayPortalController();
+  final LayerLink _layerLink = LayerLink();
   bool _isOpen = false;
 
   @override
   Widget build(BuildContext context) {
-    final allOptions = widget.options;
-
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: () => setState(() => _isOpen = !_isOpen),
-          child: PixelBorderContainer(
-            pixelSize: 4,
-            borderColor: Theme.of(context).colorScheme.primary,
-            fillColor: Theme.of(context).colorScheme.surface,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.controller.text.isEmpty ? widget.label : widget.controller.text,
-                    style: AppTypography.subtitleSemiBold.copyWith(
-                      color: widget.controller.text.isEmpty 
-                          ? AppColors.textSecondary 
-                          : Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-                ArrowButton(
-                  direction: _isOpen ? ArrowDirection.up : ArrowDirection.down,
-                  onPressed: () {
-                      setState(() => _isOpen = !_isOpen);
-                    },
-                  color: AppColors.textSecondary,
-                  size: 30,
-                ),
-              ],
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (widget.header != null) ...[
+        Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: Text(
+            widget.header!,
+            style: AppTypography.titleSemiBold.copyWith(
+              color: Theme.of(context).colorScheme.onPrimary,
             ),
           ),
         ),
-
-        if (_isOpen && allOptions.isNotEmpty)
-          Container(
-            constraints: const BoxConstraints(maxHeight: 200),
-            margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-            ),
-            child: ListView.builder(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemCount: allOptions.length,
-              itemBuilder: (context, index) {
-                final option = allOptions[index];
-                return ListTile(
-                  title: Text(
-                    option,
-                    style: AppTypography.subtitleSemiBold.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
+      const SizedBox(height: 8),
+      ],
+      
+      CompositedTransformTarget(
+        link: _layerLink,
+        child : OverlayPortal(
+          controller: _overlayController,
+          overlayChildBuilder: (context){
+            return CompositedTransformFollower(
+              link: _layerLink,
+              targetAnchor: Alignment.bottomLeft,
+              followerAnchor: Alignment.topLeft,
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: _buildDropdownList(),
+              ),
+            );
+          },
+        child: 
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isOpen = !_isOpen;
+                _isOpen ? _overlayController.show() : _overlayController.hide();
+              });
+            },
+            child: PixelBorderContainer(
+              pixelSize: 4,
+              borderColor: Theme.of(context).colorScheme.primary,
+              fillColor: Theme.of(context).colorScheme.surface,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.controller.text.isEmpty ? widget.label : widget.controller.text,
+                      style: AppTypography.subtitleSemiBold.copyWith(
+                        color: widget.controller.text.isEmpty 
+                            ? AppColors.textSecondary 
+                            : Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                   ),
-                  onTap: () {
-                    widget.onSelected(option);
-                    widget.controller.text = option;
-                    setState(() => _isOpen = false);
-                  },
-                );
-              },
+                  ArrowButton(
+                    direction: _isOpen ? ArrowDirection.up : ArrowDirection.down,
+                    onPressed: () {
+                      setState(() {
+                        _isOpen = !_isOpen;
+                        _isOpen ? _overlayController.show() : _overlayController.hide();
+                      });
+                    },
+                    color: AppColors.textSecondary,
+                    size: 30,
+                  ),
+                ],
+              ),
             ),
           ),
-      ],
+        ),
+      ),
+    ],
+  );
+}
+Widget _buildDropdownList() {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        width: _layerLink.leaderSize?.width, 
+        margin: const EdgeInsets.only(top: 3),
+        constraints: const BoxConstraints(maxHeight: 190),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: ListView.builder(
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          itemCount: widget.options.length,
+          itemBuilder: (context, index) {
+            final option = widget.options[index];
+            return ListTile(
+              dense: true,
+              visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
+              title: Text(
+                option,
+                style: AppTypography.subtitleSemiBold.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              onTap: () {
+                widget.onSelected(option);
+                widget.controller.text = option;
+                setState(() {
+                  _isOpen = false;
+                  _overlayController.hide();
+                });
+              },
+            );
+          },
+        ),
+      ),
     );
   }
 }
+      

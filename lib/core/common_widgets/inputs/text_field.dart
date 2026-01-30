@@ -138,7 +138,7 @@ class _PixelTextFieldState extends State<PixelTextField> {
             const PixelTextField(
               label: 'เทส', -- ชื่อหัวข้อข้างบน
               hintText: 'Summary', --ตัวอักษรข้างใน
-              height: 46, -- จัดการความสูง บรรทัดเดียว 46 กำลังสวย
+              height: 38, -- จัดการความสูง บรรทัดเดียว 38 กำลังสวย
               //borderColor: Theme.of(context).colorScheme.error, -- ใส่เมื่อต้องการเปลี่ยนสีขอบ
             ),
 */
