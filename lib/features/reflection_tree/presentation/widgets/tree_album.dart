@@ -4,7 +4,7 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album_base_card.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/action_popup.dart';
+import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/edit_tree_popup.dart';
 
 class TreeAlbumCard extends StatelessWidget {
