@@ -3,12 +3,14 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/add_reflect_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/tree_information_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/heart_status.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/recommend_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_album.dart';
 
 
@@ -64,7 +66,19 @@ class AlbumDetailPage extends StatelessWidget{
               if (album.items != null && album.items!.isNotEmpty)
               _buildItemGrid(context, album, album.items!)
             else
-              _buildEmptyState(context),                
+              _buildEmptyState(context),   
+
+              GestureDetector(
+                onTap: () {
+                  RecommendPopup.show(context);
+                },
+                child: Text(
+                  "recommend (mock ไว้ดู)",
+                  style: AppTypography.bodyRegular.copyWith(
+                    color: AppColors.warning,
+                  ),
+                ),
+              ),             
           ],
         ),
       ),
