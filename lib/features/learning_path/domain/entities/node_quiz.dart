@@ -6,7 +6,7 @@ class NodeQuiz {
 
   const NodeQuiz({
     this.question = '',
-     this.choices = const [''],
+     this.choices = const ['', ''],//default 2 choices
     this.selectedIndex = 0,
     this.reasons = const {},
   });
