@@ -11,6 +11,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/page
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/tree_information_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/heart_status.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/recommend_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/tree_status_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_album.dart';
 
 
@@ -100,13 +101,8 @@ class AlbumDetailPage extends StatelessWidget{
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => TreeDetailPage(item: item),
-          ),);
-        },
         
-        child: TreeAlbumCard(
+        return TreeAlbumCard(
           title: item.subjectName,
           subtitle: item.lastEdited,
           statusText: item.status, 
@@ -114,9 +110,23 @@ class AlbumDetailPage extends StatelessWidget{
           treeStatus: item.overallStatus,
           currentAlbumname: album.title,
           dataDisplay: const SizedBox.shrink(),
-          ),
+
+          onCardTap: () {
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => TreeDetailPage(item: item)),
+            );
+          },
+
+          //TODO: ดึงจาก status จริง
+          onStatusTap: () {
+            final status = item.status.toLowerCase().trim();
+            if (['growing', 'fading', 'dying'].contains(status)) {
+              TreeStatusPopup.show(context, status);
+            }
+          },
         );
-      },
+      }
     );
   }
   

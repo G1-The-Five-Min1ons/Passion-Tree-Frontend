@@ -15,6 +15,8 @@ class TreeAlbumCard extends StatelessWidget {
   final Widget dataDisplay;
   final String treeStatus;
   final String currentAlbumname;
+  final VoidCallback? onStatusTap;
+  final VoidCallback? onCardTap;
 
   const TreeAlbumCard({
     super.key,
@@ -25,67 +27,89 @@ class TreeAlbumCard extends StatelessWidget {
     required this.dataDisplay,
     required this.treeStatus,
     required this.currentAlbumname,
+    this.onStatusTap,
+    this.onCardTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return PixelBaseCard(
-      title: title,
-      subtitle: subtitle,
-      actionIcon: IconButton(
-      constraints: const BoxConstraints(),
-      padding: EdgeInsets.zero,
-      splashRadius: 20,
-      icon: const MoreIcon(),
-      onPressed: () {
-        ActionPopUp.show(
-          context,
-          onEdit: () {
-            EditTreePopUp.show(
-              context,
-              initialName: title,
-              initialPath: currentAlbumname,
-              pathOptions: [
-                'Biology 101', //เดี๋ยวค่อยถึงมาจาก db จริง
-                'Genetics',
-                'Microbiology',
-                'Criminal Law',
-              ],
-            );
-          },
-          onDelete: () {
-            debugPrint("Delete Album: $title");
-          },
-        );
-      },
-    ),
-      overlay: Container(
-        width: 70,
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        decoration: BoxDecoration(
-          color: statusColor,
-          borderRadius: BorderRadius.circular(4)
-        ),
-        child: Text(
-          statusText,
-          textAlign: TextAlign.center,
-          style: AppPixelTypography.littleSmall.copyWith(
-            color: Theme.of(context).colorScheme.onPrimary,
+    return Stack(
+      children: [
+      GestureDetector(
+      onTap: onCardTap,
+      child: PixelBaseCard(
+        title: title,
+        subtitle: subtitle,
+        actionIcon: IconButton(
+        constraints: const BoxConstraints(),
+        padding: EdgeInsets.zero,
+        splashRadius: 20,
+        icon: const MoreIcon(),
+        onPressed: () {
+          ActionPopUp.show(
+            context,
+            onEdit: () {
+              EditTreePopUp.show(
+                context,
+                initialName: title,
+                initialPath: currentAlbumname,
+                pathOptions: [
+                  'Biology 101', //เดี๋ยวค่อยถึงมาจาก db จริง
+                  'Genetics',
+                  'Microbiology',
+                  'Criminal Law',
+                ],
+              );
+            },
+            onDelete: () {
+              debugPrint("Delete Album: $title");
+            },
+          );
+        },
+      ),
+        topContent: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: AppColors.surface,
+          child: Stack(
+            children: [
+              Center(
+                child: MainTreeImage(status: treeStatus),
+              )
+            ],
           ),
         ),
       ),
-      topContent: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: AppColors.surface,
-        child: Stack(
-          children: [
-            Center(
-              child: MainTreeImage(status: treeStatus),
-            )
-          ],
-        ),
-      ),
+    ),
+
+      Positioned(
+        top: 0,
+        right: 0,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            onStatusTap?.call();
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Container(
+              width: 70,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                statusText,
+                textAlign: TextAlign.center,
+                style: AppPixelTypography.littleSmall.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),),
+              ),
+            ),
+          ),
+        )
+      ],
     );
   }
 }

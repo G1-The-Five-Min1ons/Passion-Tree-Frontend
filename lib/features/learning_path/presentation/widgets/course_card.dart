@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';

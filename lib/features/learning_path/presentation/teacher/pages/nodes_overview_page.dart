@@ -5,8 +5,6 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/node_item.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/tree_canvas.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_header.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_bottom.dart';
 
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/node_asset.dart';

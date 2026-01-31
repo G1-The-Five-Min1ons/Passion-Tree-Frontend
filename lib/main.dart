@@ -6,12 +6,10 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button_white.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_page.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree.dart';
 
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album.dart';
 
 void main() {
   runApp(const MyApp());
