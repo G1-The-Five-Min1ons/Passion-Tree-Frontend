@@ -109,6 +109,7 @@ class AlbumDetailPage extends StatelessWidget{
           statusColor: item.statusColor,
           treeStatus: item.overallStatus,
           currentAlbumname: album.title,
+          resumeOn: item.resumeOn,
           dataDisplay: const SizedBox.shrink(),
 
           onCardTap: () {

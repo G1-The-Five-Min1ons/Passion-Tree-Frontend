@@ -35,7 +35,8 @@ class AlbumData {
         subjectName: "Genetics",
         lastEdited: "Edited 3 weeks ago",
         status: "Dying",
-        overallStatus: 'dyingdislike'
+        overallStatus: 'dyingdislike',
+        resumeOn: '26/02/2026',
         ),
         AlbumItem(
         subjectName: "DNA",

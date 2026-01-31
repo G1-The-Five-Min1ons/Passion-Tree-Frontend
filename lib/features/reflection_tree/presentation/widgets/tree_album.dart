@@ -7,6 +7,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/edit_tree_popup.dart';
 
+
 class TreeAlbumCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -17,6 +18,7 @@ class TreeAlbumCard extends StatelessWidget {
   final String currentAlbumname;
   final VoidCallback? onStatusTap;
   final VoidCallback? onCardTap;
+  final String? resumeOn;
 
   const TreeAlbumCard({
     super.key,
@@ -29,86 +31,113 @@ class TreeAlbumCard extends StatelessWidget {
     required this.currentAlbumname,
     this.onStatusTap,
     this.onCardTap,
+    this.resumeOn,
   });
 
   @override
   Widget build(BuildContext context) {
+    bool isPaused = resumeOn != null;
     return Stack(
       children: [
-      GestureDetector(
-      onTap: onCardTap,
-      child: PixelBaseCard(
-        title: title,
-        subtitle: subtitle,
-        actionIcon: IconButton(
-        constraints: const BoxConstraints(),
-        padding: EdgeInsets.zero,
-        splashRadius: 20,
-        icon: const MoreIcon(),
-        onPressed: () {
-          ActionPopUp.show(
-            context,
-            onEdit: () {
-              EditTreePopUp.show(
-                context,
-                initialName: title,
-                initialPath: currentAlbumname,
-                pathOptions: [
-                  'Biology 101', //เดี๋ยวค่อยถึงมาจาก db จริง
-                  'Genetics',
-                  'Microbiology',
-                  'Criminal Law',
-                ],
+        GestureDetector(
+        onTap: isPaused ? null : onCardTap,
+        child: PixelBaseCard(
+          title: title,
+          subtitle: subtitle,
+          actionIcon: IconButton(
+          constraints: const BoxConstraints(),
+          padding: EdgeInsets.zero,
+          splashRadius: 20,
+          icon: const MoreIcon(),
+          onPressed: () {
+            ActionPopUp.show(
+              context,
+              onEdit: () {
+                EditTreePopUp.show(
+                  context,
+                  initialName: title,
+                  initialPath: currentAlbumname,
+                  pathOptions: [
+                    'Biology 101', //เดี๋ยวค่อยถึงมาจาก db จริง
+                    'Genetics',
+                    'Microbiology',
+                    'Criminal Law',
+                  ],
+                );
+              },
+              onDelete: () {
+                debugPrint("Delete Album: $title");
+                },
               );
             },
-            onDelete: () {
-              debugPrint("Delete Album: $title");
-            },
-          );
-        },
-      ),
-        topContent: Container(
-          width: double.infinity,
-          height: double.infinity,
-          color: AppColors.surface,
-          child: Stack(
-            children: [
-              Center(
-                child: MainTreeImage(status: treeStatus),
-              )
-            ],
           ),
-        ),
-      ),
-    ),
-
-      Positioned(
-        top: 0,
-        right: 0,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            onStatusTap?.call();
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Container(
-              width: 70,
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              decoration: BoxDecoration(
-                color: statusColor,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                statusText,
-                textAlign: TextAlign.center,
-                style: AppPixelTypography.littleSmall.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),),
+          topContent: Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: AppColors.surface,
+            child: Stack(
+              children: [
+                  Center(
+                    child: MainTreeImage(status: treeStatus),
+                  )
+                ],
               ),
             ),
           ),
-        )
+        ),
+
+        Positioned(
+          top: 0,
+          right: 0,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              onStatusTap?.call();
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Container(
+                width: 70,
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  statusText,
+                  textAlign: TextAlign.center,
+                  style: AppPixelTypography.littleSmall.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        if (resumeOn != null)
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.textDisabled.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Paused",
+                  style: AppPixelTypography.smallTitle.copyWith(color: AppColors.surface),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "Resume on : $resumeOn",
+                  style: AppTypography.smallBodyRegular.copyWith(color: AppColors.surface),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
