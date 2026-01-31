@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class TeacherTabBar extends StatelessWidget {
   final int activeIndex;
