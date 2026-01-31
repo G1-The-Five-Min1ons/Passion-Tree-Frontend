@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/arrow_button.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final String title;

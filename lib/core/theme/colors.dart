@@ -15,5 +15,6 @@ class AppColors{
   static const Color warning = Color(0xFFFFCD29);
   static const Color bar = Color(0XFF00327C);
   static const Color iconbar = Color(0XFF8ABCFF);
+  static const Color title = Color(0xFF0088FF);
 }
 

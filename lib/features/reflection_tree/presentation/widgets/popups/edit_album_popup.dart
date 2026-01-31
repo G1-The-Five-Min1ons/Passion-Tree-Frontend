@@ -68,7 +68,7 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
 
             GestureDetector(
               onTap: () {
-                // รอใส่ logic
+                //TODO: รอใส่ logic
               },
               child: PixelBorderContainer(
                   pixelSize: 2,

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_header.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_info.dart';
