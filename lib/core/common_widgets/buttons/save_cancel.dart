@@ -9,6 +9,7 @@ class SaveCancel extends StatelessWidget{
   final VoidCallback onCancel;
   final String saveText;
   final String cancelText;
+  final Widget? saveIcon;
 
   const SaveCancel({
     super.key,
@@ -17,6 +18,7 @@ class SaveCancel extends StatelessWidget{
     required this.onCancel,
     this.saveText = 'Save',
     this.cancelText = 'Cancel',
+    this.saveIcon,
   });
 
   @override
@@ -35,8 +37,11 @@ class SaveCancel extends StatelessWidget{
         const SizedBox(width: 8),
 
         AppButton(
-          variant: AppButtonVariant.text,
+          variant: saveIcon != null 
+              ? AppButtonVariant.textWithIcon
+              : AppButtonVariant.text,
           text: saveText,
+          icon: saveIcon,
           onPressed: onSave,
           backgroundColor: saveButtonColor ?? Theme.of(context).colorScheme.primary,
           textColor: saveButtonColor != null 
