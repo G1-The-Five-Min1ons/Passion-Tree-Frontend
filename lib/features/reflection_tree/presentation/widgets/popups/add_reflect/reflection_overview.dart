@@ -28,43 +28,46 @@ class ReflectionOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 10),
-        if (level > 0)
-          Center(
-            child: Column(
-              children: [
-                const SizedBox(height: 10),
-                Image.asset(_levelImages[level - 1], height: 120),
-              ],
+        children: [
+          const SizedBox(height: 10),
+          if (level > 0)
+            Center(
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  Image.asset(_levelImages[level - 1], height: 120),
+                ],
+              ),
             ),
+          
+          const SizedBox(height: 20),
+          
+          Text("What you have learned :", style: AppTypography.titleSemiBold),
+          const SizedBox(height: 8),
+          Text(
+            learn, 
+            style: AppTypography.subtitleRegular,
           ),
-        
-        const SizedBox(height: 20),
-        
-        Text("What you have learned :", style: AppTypography.titleSemiBold),
-        const SizedBox(height: 8),
-        Text(
-          learn, 
-          style: AppTypography.subtitleRegular,
-        ),
 
-        const SizedBox(height: 20),
-        Text("How you feel about this :", style: AppTypography.titleSemiBold),
+          const SizedBox(height: 20),
+          Text("How you feel about this :", style: AppTypography.titleSemiBold),
+          const SizedBox(height: 8),
+          Text(
+            feel, 
+            style: AppTypography.subtitleRegular,
+          ),
 
-        const SizedBox(height: 8),
-        Text(
-          feel, 
-          style: AppTypography.subtitleRegular,
-        ),
+          const SizedBox(height: 20),
+          _buildScoreRow("Learning Progress", progress),
+          const SizedBox(height: 12),
+          _buildScoreRow("Challenging Level", challenge),
 
-        _buildScoreRow("Learning Progress", progress),
-        const SizedBox(height: 12),
-        _buildScoreRow("Challenging Level", challenge),
-
-      ],
+        ],
+      )
     );
   }
   Widget _buildScoreRow(String title, int score) {
