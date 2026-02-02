@@ -6,6 +6,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
 import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/edit_tree_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/resume_popup.dart';
 
 
 class TreeAlbumCard extends StatelessWidget {
@@ -117,7 +118,11 @@ class TreeAlbumCard extends StatelessWidget {
 
         if (resumeOn != null)
         Positioned.fill(
-          child: Container(
+          child: GestureDetector(
+            onTap: () {
+              ResumePopup.show(context);
+            },
+            child: Container(
             decoration: BoxDecoration(
               color: AppColors.textDisabled.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(4),
@@ -136,6 +141,7 @@ class TreeAlbumCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ],
