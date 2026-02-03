@@ -7,7 +7,7 @@ import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/page_header.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/add_reflect_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/detail_reflect_after/reflect_detail_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/status_badge.dart';
 
 class TreeDetailPage extends StatelessWidget {
@@ -95,7 +95,7 @@ class TreeDetailPage extends StatelessWidget {
                   title: item.subjectName,
                   actionIcon: Symbols.add_rounded,
                   onActionPressed: () {
-                    AddReflectPopup.show(context);
+                    ReflectDetailPopup.show(context);
                   },
                 ),
               ),
