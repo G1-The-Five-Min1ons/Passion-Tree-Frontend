@@ -79,7 +79,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
 
                       const SizedBox(height: 24),
 
-                      // ===== QUESTIONS (ขยับเข้ามาจากกรอบ) =====
+                      // ===== QUESTIONS =====
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Column(

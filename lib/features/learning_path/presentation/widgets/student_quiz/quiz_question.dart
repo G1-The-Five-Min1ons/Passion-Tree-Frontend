@@ -17,7 +17,7 @@ class QuizQuestionWidget extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.only(left: 16),
+      padding: const EdgeInsets.only(bottom: 16),// ระยะห่างระหว่างคำถาม
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -29,35 +29,42 @@ class QuizQuestionWidget extends StatelessWidget {
             ).textTheme.titleLarge?.copyWith(color: colors.onSurface),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 18),// ระยะห่างระหว่างคำถามกับตัวเลือก
 
           // ===== CHOICES =====
-          ...List.generate(
-            question.choices.length,
-            (cIndex) => InkWell(
-              onTap: () => onSelect(cIndex),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
-                  children: [
-                    PixelRadioButton(
-                      index: cIndex + 1,
-                      isSelected: question.selectedIndex == cIndex,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        question.choices[cIndex],
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: colors.onSurface,
-                        ),
+          Column(
+            children: List.generate(
+              question.choices.length,
+              (cIndex) => Column(
+                children: [
+                  InkWell(
+                    onTap: () => onSelect(cIndex),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: Row(
+                        children: [
+                          PixelRadioButton(
+                            index: cIndex + 1,
+                            isSelected: question.selectedIndex == cIndex,
+                          ),
+                          const SizedBox(width: 26),// ระยะห่างระหว่างปุ่มเลือกกับข้อความ
+                          Expanded(
+                            child: Text(
+                              question.choices[cIndex],
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(color: colors.onSurface),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 6),// ระยะห่างระหว่างตัวเลือกแต่ละข้อ
+                ],
               ),
             ),
           ),
+
         ],
       ),
     );
