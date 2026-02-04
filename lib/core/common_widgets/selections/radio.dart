@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/core/theme/typography.dart';
 
 class _RadioButtonPainter extends CustomPainter {
   final Color borderColor;
@@ -8,6 +9,7 @@ class _RadioButtonPainter extends CustomPainter {
   final bool isSelected;
   final int index;
   final TextStyle textStyle;
+  final bool showIndex;
 
   _RadioButtonPainter({
     required this.borderColor,
@@ -16,6 +18,7 @@ class _RadioButtonPainter extends CustomPainter {
     required this.isSelected,
     required this.index,
     required this.textStyle,
+    this.showIndex = false,
     }); 
 
   @override
@@ -42,20 +45,36 @@ class _RadioButtonPainter extends CustomPainter {
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(center, w / 3.3, selectedPaint);
-    } else {
+    }
+    if (showIndex) {
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: '$index',
+          style: textStyle,
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
       
+      final textOffset = Offset(
+        center.dx - (textPainter.width / 2),
+        center.dy - (textPainter.height / 2),
+      );
+      textPainter.paint(canvas, textOffset);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _RadioButtonPainter oldDelegate) => 
-      oldDelegate.isSelected != isSelected || oldDelegate.index != index;
+  bool shouldRepaint(covariant _RadioButtonPainter oldDelegate) =>
+      oldDelegate.isSelected != isSelected || 
+      oldDelegate.index != index ||
+      oldDelegate.showIndex != showIndex;
 }
 
 class PixelRadioButton extends StatelessWidget {
   final bool isSelected;
   final Color? borderColor;
   final int index;
+  final bool showIndex;
 
   static const double fixedSize = 32.0;
 
@@ -64,14 +83,12 @@ class PixelRadioButton extends StatelessWidget {
     required this.isSelected,
     this.borderColor,
     required this.index,
+    this.showIndex = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final TextStyle radioTextStyle = Theme.of(context).textTheme.bodyMedium ?? const TextStyle();
-
     final Color themeSurface = Theme.of(context).colorScheme.surface;
-    final Color themeOnSurface = Theme.of(context).colorScheme.onSurface;
     final Color themePrimary = Theme.of(context).colorScheme.primary;
 
 
@@ -83,7 +100,10 @@ class PixelRadioButton extends StatelessWidget {
         surfaceColor: themeSurface,
         isSelected: isSelected,
         index: index,
-        textStyle: radioTextStyle.copyWith(color: themeOnSurface,),
+        showIndex: showIndex,
+        textStyle: AppTypography.smallBodyRegular.copyWith(
+          color: themePrimary, 
+        ),
       ),
     );
   }
@@ -93,12 +113,14 @@ class PixelRadioGroup extends StatefulWidget {
   final int count;
   final int initialValue;
   final ValueChanged<int> onSelected;
+  final bool showIndex;
 
   const PixelRadioGroup({
     super.key,
     this.count = 5,
     this.initialValue = 0,
     required this.onSelected,
+    this.showIndex = false,
   });
 
   @override
@@ -132,6 +154,7 @@ class _PixelRadioGroupState extends State<PixelRadioGroup> {
               child: PixelRadioButton(
                 index: radioValue,
                 isSelected: _currentValue == radioValue,
+                showIndex: widget.showIndex,
               ),
             ),
             if (index < widget.count - 1)

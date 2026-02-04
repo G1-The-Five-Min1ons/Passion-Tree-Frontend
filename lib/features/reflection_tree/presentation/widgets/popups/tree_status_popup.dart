@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/save_cancel.da
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/select_pause_period.dart';
 
 class TreeStatusPopup extends StatelessWidget {
   final String status;
@@ -77,7 +78,7 @@ class TreeStatusPopup extends StatelessWidget {
                   onCancel: () => Navigator.pop(context),
                   onSave: () {
                     Navigator.pop(context);
-                    //TODO: save ลง db
+                    SelectPausePeriodPopup.show(context);
                   },
                 ),
                   

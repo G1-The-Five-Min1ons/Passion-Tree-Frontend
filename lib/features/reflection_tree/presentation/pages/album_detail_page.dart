@@ -11,6 +11,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/page
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/tree_information_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/heart_status.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/recommend_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/retrieve_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/tree_status_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_album.dart';
 
@@ -122,9 +123,11 @@ class AlbumDetailPage extends StatelessWidget{
           //TODO: ดึงจาก status จริง
           onStatusTap: () {
             final status = item.status.toLowerCase().trim();
-            if (['growing', 'fading', 'dying'].contains(status)) {
-              TreeStatusPopup.show(context, status);
-            }
+            if (status == 'died') {
+            RetrievePopup.show(context); 
+          } else if (['growing', 'fading', 'dying'].contains(status)) {
+            TreeStatusPopup.show(context, status);
+          }
           },
         );
       }
