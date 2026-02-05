@@ -30,7 +30,7 @@ class NodeCommentsSection extends StatelessWidget {
 
           // ===== PLACEHOLDER CONTENT =====
           Text(
-            'Comment list will be displayed here.',
+            'Comment list will be displayed here in sprint 3.',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: colors.onSurface),

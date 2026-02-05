@@ -5,6 +5,7 @@ import 'package:passion_tree_frontend/features/authentication/presentation/pages
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/t_learning_path_overview_login_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_quiz.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_node.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -95,8 +96,9 @@ class HomePage extends StatelessWidget {
                 ),
               ),
 
-                const SizedBox(height: 60),
-              // เรียน node นักเรียน
+
+              
+              // หน้าlearning ของนักเรียน
               Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -113,19 +115,14 @@ class HomePage extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const LearningNodePage(),
+                        builder: (context) => const LearningCoursePage(),
                       ),
                     );
                   },
-                  child: const Text('S_LearningNodePage'),
+                  child: const Text('S_LearningCoursePage'),
                 ),
               ),
             ],
-
-            
-            
-
-
           ),
         ),
       ),
