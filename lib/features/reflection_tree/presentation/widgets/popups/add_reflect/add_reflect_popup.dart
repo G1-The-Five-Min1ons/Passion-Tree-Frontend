@@ -105,6 +105,7 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 10),
                   _buildStepBar(),
                 ],
               ),
@@ -140,7 +141,7 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
               variant: AppButtonVariant.text,
               text: 'Submit',
               onPressed: () {
-                //TODO
+                //TODO save to db
               },
             ),
         ],
