@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/selections/radio.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/student_quiz.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class QuizQuestionWidget extends StatelessWidget {
   final QuizQuestionStudent question;
