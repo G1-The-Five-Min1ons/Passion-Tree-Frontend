@@ -21,24 +21,7 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome Section
-              Text(
-                'Welcome Back!',
-                style: AppPixelTypography.title.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
-              ),
-              const SizedBox(height: 20),
               
-              // Subtitle
-              Text(
-                'Ready to continue\nyour learning journey?',
-                style: AppPixelTypography.smallTitle.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
-              ),
-              
-              const SizedBox(height: 60),
                 // Login Button
                 Center(
                   child: ElevatedButton(

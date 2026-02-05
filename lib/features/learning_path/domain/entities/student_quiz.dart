@@ -15,10 +15,13 @@ class QuizQuestionStudent {
   /// index ของคำตอบที่ถูก (ใช้ตอนเฉลย)
   final int correctIndex;
 
+  final String reason;
+
   QuizQuestionStudent({
     required this.question,
     required this.choices,
     required this.correctIndex,
+    required this.reason,
     this.selectedIndex,
   });
 

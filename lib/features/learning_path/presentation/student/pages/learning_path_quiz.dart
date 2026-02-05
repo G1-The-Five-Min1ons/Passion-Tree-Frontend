@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
-import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/student_quiz.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_question.dart'; 
-import 'package:passion_tree_frontend/features/learning_path/data/mocks/student_quiz_mock.dart ';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_result.dart'; 
+import 'package:passion_tree_frontend/features/learning_path/data/mocks/student_quiz_mock.dart';
+
+enum QuizViewState { answering, result }
 
 class LearningPathQuizPage extends StatefulWidget {
   const LearningPathQuizPage({super.key});
@@ -19,6 +20,7 @@ class LearningPathQuizPage extends StatefulWidget {
 
 class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
   late List<QuizQuestionStudent> _questions;
+  QuizViewState _viewState = QuizViewState.answering;
 
   @override
   void initState() {
@@ -79,42 +81,35 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
 
                       const SizedBox(height: 24),
 
-                      // ===== QUESTIONS =====
+                      // ===== QUESTIONS / RESULT =====
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Column(
-                          children: List.generate(
-                            _questions.length,
-                            (index) => QuizQuestionWidget(
-                              question: _questions[index],
-                              onSelect: (choiceIndex) {
-                                setState(() {
-                                  _questions[index].selectedIndex = choiceIndex;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
+                        child: _buildQuizContent(),
                       ),
 
                       const SizedBox(height: 32),
 
-                      // ===== SUBMIT BUTTON (ขยับเข้ามา) =====
+                      // ===== ACTION BUTTON =====
                       Padding(
                         padding: const EdgeInsets.only(right: 12),
                         child: Align(
                           alignment: Alignment.centerRight,
-                          child: AppButton(
-                            variant: AppButtonVariant.text,
-                            text: 'Submit',
-                            onPressed: _submitQuiz,
-                          ),
+                          child: _viewState == QuizViewState.answering
+                              ? AppButton(
+                                  variant: AppButtonVariant.text,
+                                  text: 'Submit',
+                                  onPressed: _submitQuiz,
+                                )
+                              : AppButton(
+                                  variant: AppButtonVariant.text,
+                                  text: 'Finish',
+                                  onPressed: _finishQuiz,
+                                ),
                         ),
                       ),
                     ],
                   ),
                 ),
-
               ],
             ),
           ),
@@ -123,8 +118,41 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
     );
   }
 
+  // ===== BUILD CONTENT =====
+  Widget _buildQuizContent() {
+    if (_viewState == QuizViewState.answering) {
+      return Column(
+        children: List.generate(
+          _questions.length,
+          (index) => QuizQuestionWidget(
+            question: _questions[index],
+            onSelect: (choiceIndex) {
+              setState(() {
+                _questions[index].selectedIndex = choiceIndex;
+              });
+            },
+          ),
+        ),
+      );
+    }
+
+    // ===== RESULT VIEW =====
+    return Column(
+      children: List.generate(
+        _questions.length,
+        (index) => QuizResultQuestionWidget(question: _questions[index]),
+      ),
+    );
+  }
+
+  // ===== ACTIONS =====
   void _submitQuiz() {
-    debugPrint('Submit quiz');
-    // step ถัดไป: เปลี่ยนเป็น result view
+    setState(() {
+      _viewState = QuizViewState.result;
+    });
+  }
+
+  void _finishQuiz() {
+    Navigator.pop(context);
   }
 }
