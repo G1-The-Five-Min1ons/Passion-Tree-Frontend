@@ -7,6 +7,7 @@ import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/page_header.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_node_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/status_badge.dart';
 
 class TreeDetailPage extends StatelessWidget {
@@ -64,7 +65,8 @@ class TreeDetailPage extends StatelessWidget {
                                     : 'assets/images/trees/node_notenrolled.png',
                                 size: 80,
                                 onTap: () {
-                                  // logic ทีหลัง
+                                  //
+                                  //TODO: logic ทีหลัง
                                 },
                               ),
                             );
@@ -93,7 +95,7 @@ class TreeDetailPage extends StatelessWidget {
                   title: item.subjectName,
                   actionIcon: Symbols.add_rounded,
                   onActionPressed: () {
-                    // logic ทีหลัง
+                    AddNodePopup.show(context);
                   },
                 ),
               ),

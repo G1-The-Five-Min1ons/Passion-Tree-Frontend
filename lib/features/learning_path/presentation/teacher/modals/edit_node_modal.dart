@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_header.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_info.dart';
@@ -8,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/uploaded_file.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_quiz.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_footer.dart';
+import 'package:passion_tree_frontend/core/common_widgets/popups/delete_popup.dart';
 
 
 class EditNodeModal extends StatefulWidget {
@@ -118,8 +117,19 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
                   NodeFooter(
                     onDelete: () {
-                      // TODO: delete node
-                      Navigator.pop(context);
+                      DeletePopUp.show(
+                        context,
+                        title: 'Delete?',
+                        body:
+                            'Are you sure you want to delete?\nThis Process cannot be undone.',
+                        onDelete: () {
+                          // logic ลบ node จริง (ตอนนี้ mock ไว้ก่อน)
+                          debugPrint('Node deleted');
+
+                          // ปิด EditNodeModal
+                          Navigator.pop(context);
+                        },
+                      );
                     },
                     onSave: () {
                       // TODO: save node

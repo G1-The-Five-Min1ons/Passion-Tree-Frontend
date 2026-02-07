@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart';
 
 class NodeModalHeader extends StatelessWidget {

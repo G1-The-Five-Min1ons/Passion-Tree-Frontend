@@ -3,12 +3,16 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/add_reflect_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/tree_information_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/heart_status.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/recommend_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/retrieve_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/tree_status_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_album.dart';
 
 
@@ -64,7 +68,19 @@ class AlbumDetailPage extends StatelessWidget{
               if (album.items != null && album.items!.isNotEmpty)
               _buildItemGrid(context, album, album.items!)
             else
-              _buildEmptyState(context),                
+              _buildEmptyState(context),   
+
+              GestureDetector(
+                onTap: () {
+                  RecommendPopup.show(context);
+                },
+                child: Text(
+                  "recommend (mock ไว้ดู)",
+                  style: AppTypography.bodyRegular.copyWith(
+                    color: AppColors.warning,
+                  ),
+                ),
+              ),             
           ],
         ),
       ),
@@ -86,23 +102,35 @@ class AlbumDetailPage extends StatelessWidget{
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => TreeDetailPage(item: item),
-          ),);
-        },
         
-        child: TreeAlbumCard(
+        return TreeAlbumCard(
           title: item.subjectName,
           subtitle: item.lastEdited,
           statusText: item.status, 
           statusColor: item.statusColor,
           treeStatus: item.overallStatus,
           currentAlbumname: album.title,
+          resumeOn: item.resumeOn,
           dataDisplay: const SizedBox.shrink(),
-          ),
+
+          onCardTap: () {
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => TreeDetailPage(item: item)),
+            );
+          },
+
+          //TODO: ดึงจาก status จริง
+          onStatusTap: () {
+            final status = item.status.toLowerCase().trim();
+            if (status == 'died') {
+            RetrievePopup.show(context); 
+          } else if (['growing', 'fading', 'dying'].contains(status)) {
+            TreeStatusPopup.show(context, status);
+          }
+          },
         );
-      },
+      }
     );
   }
   

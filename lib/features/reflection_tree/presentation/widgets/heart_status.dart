@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/how_to_use_popup.dart';
 
 class HeartStatus extends StatelessWidget{
     final int count;
@@ -35,7 +36,9 @@ class HeartStatus extends StatelessWidget{
                 );
               }),
                 GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  HowToUsePopup.show(context);
+                },
                   child: Transform.translate(
                     offset: const Offset(0, 5),
                     child: Image.asset(

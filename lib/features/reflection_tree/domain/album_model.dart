@@ -21,6 +21,7 @@ class AlbumItem {
   final String status;
   final List<Chapter> chapters;
   final String overallStatus;
+  final String? resumeOn;
 
   AlbumItem({
     required this.subjectName,
@@ -28,6 +29,7 @@ class AlbumItem {
     required this.status,
     this.chapters = const [],
     required this.overallStatus,
+    this.resumeOn,
   });
 
   Color get statusColor {
