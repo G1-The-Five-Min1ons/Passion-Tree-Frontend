@@ -65,6 +65,7 @@ class _AppButtonState extends State<AppButton> {
         buttonTextStyle,
       ),
       AppButtonVariant.text => _calculateWidthFromText(buttonTextStyle),
+      AppButtonVariant.leadingIconWithText => _calculateWidthFromTextAndIcon(buttonTextStyle),
     };
 
     return GestureDetector(
@@ -105,40 +106,6 @@ class _AppButtonState extends State<AppButton> {
   }
 
   // ===================================================
-  // Pixel Layer
-  // ===================================================
-  Widget _buildPixelLayer({
-    required double width,
-    required Color color,
-    Color? borderColor,
-    required Widget child,
-  }) {
-    return SizedBox(
-      width: width,
-      height: _height(),
-      child: Stack(
-        children: [
-          Positioned(
-            left: 4,
-            top: 4,
-            right: 4,
-            bottom: 4,
-            child: Container(color: color),
-          ),
-          if (borderColor != null)
-            IgnorePointer(
-              child: CustomPaint(
-                size: Size(width, _height()),
-                painter: _PixelBorderPainter(color: borderColor, p: 4),
-              ),
-            ),
-          child,
-        ],
-      ),
-    );
-  }
-
-  // ===================================================
   // Content
   // ===================================================
   Widget _buildContent(TextStyle textStyle) {
@@ -162,6 +129,17 @@ class _AppButtonState extends State<AppButton> {
                 textAlign: TextAlign.center,
               ),
             ],
+          ],
+        );
+
+        case AppButtonVariant.leadingIconWithText:
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            widget.icon ?? const SizedBox(),
+            SizedBox(width: _getSpacing()),
+            Text(widget.text ?? '', style: textStyle),
           ],
         );
 
@@ -229,53 +207,9 @@ class _AppButtonState extends State<AppButton> {
 
     return (rawWidth / _pixel).ceil() * _pixel;
   }
+  double _getSpacing() {
+  return widget.variant == AppButtonVariant.leadingIconWithText ? 8 : _iconSpacing;
 }
-
-// ===================================================
-// Pixel Capsule Border Painter 
-// ===================================================
-class _PixelBorderPainter extends CustomPainter {
-  final Color color;
-  final double p;
-
-  _PixelBorderPainter({required this.color, this.p = 2});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color;
-    final w = size.width;
-    final h = size.height;
-
-    for (double x = p * 3; x <= w - p * 4; x += p) {
-      canvas.drawRect(Rect.fromLTWH(x, 0, p, p), paint);
-      canvas.drawRect(Rect.fromLTWH(x, h - p, p, p), paint);
-    }
-
-    for (double y = p * 3; y <= h - p * 4; y += p) {
-      canvas.drawRect(Rect.fromLTWH(0, y, p, p), paint);
-      canvas.drawRect(Rect.fromLTWH(w - p, y, p, p), paint);
-    }
-
-    // corners
-    canvas.drawRect(Rect.fromLTWH(p, p, p, p), paint);
-    canvas.drawRect(Rect.fromLTWH(p * 2, p, p, p), paint);
-    canvas.drawRect(Rect.fromLTWH(p, p * 2, p, p), paint);
-
-    canvas.drawRect(Rect.fromLTWH(w - p * 2, p, p, p), paint);
-    canvas.drawRect(Rect.fromLTWH(w - p * 3, p, p, p), paint);
-    canvas.drawRect(Rect.fromLTWH(w - p * 2, p * 2, p, p), paint);
-
-    canvas.drawRect(Rect.fromLTWH(p, h - p * 2, p, p), paint);
-    canvas.drawRect(Rect.fromLTWH(p * 2, h - p * 2, p, p), paint);
-    canvas.drawRect(Rect.fromLTWH(p, h - p * 3, p, p), paint);
-
-    canvas.drawRect(Rect.fromLTWH(w - p * 2, h - p * 2, p, p), paint);
-    canvas.drawRect(Rect.fromLTWH(w - p * 3, h - p * 2, p, p), paint);
-    canvas.drawRect(Rect.fromLTWH(w - p * 2, h - p * 3, p, p), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 //---------------------- วิธีเรียกใช้ ----------------------//
