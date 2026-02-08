@@ -21,6 +21,8 @@ class PixelTextField extends StatefulWidget {
   final TextStyle? textStyle;
   final TextStyle? labelTextStyle;
   final ValueChanged<String>? onChanged;
+  final bool obscureText;
+  final int? maxLines;
 
   const PixelTextField({
     super.key,
@@ -39,6 +41,8 @@ class PixelTextField extends StatefulWidget {
     this.textStyle,
     this.labelTextStyle,
     this.onChanged, //สำหรับเก็บฟังก์ชัน onChanged ไม่ส่งค่าก้ไม่เป้นไร
+    this.obscureText = false,
+    this.maxLines,
   });
 
   @override
@@ -88,10 +92,20 @@ class _PixelTextFieldState extends State<PixelTextField> {
         if (widget.label != null && widget.label!.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsets.only(left: 10),
-            child: Text(
-              widget.label!,
-              style: (widget.labelTextStyle ?? AppTypography.titleSemiBold)
-                  .copyWith(color: activeLabelColor),
+            child: RichText(
+              text: TextSpan(
+                style: (widget.labelTextStyle ?? AppTypography.titleSemiBold).copyWith(color: activeLabelColor),
+                children: [
+                  TextSpan(text: widget.label!.replaceFirst('*', '').trim()),
+                  if (widget.label!.contains('*'))
+                    const TextSpan(
+                      text: ' *',
+                      style: TextStyle(
+                        color: AppColors.cancel,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -109,9 +123,9 @@ class _PixelTextFieldState extends State<PixelTextField> {
             child: TextField(
               controller: _controller,
               scrollController: scrollController,
-              maxLines: null,
-              expands: true,
-              obscureText: widget.isPassword,
+              maxLines: widget.obscureText ? 1 : widget.maxLines,
+              expands: widget.obscureText ? false : (widget.maxLines == null),
+              obscureText: widget.obscureText,
               onChanged: widget.onChanged,
               style: (widget.textStyle ?? AppTypography.bodyRegular).copyWith(
                 color: activeTextColor,
