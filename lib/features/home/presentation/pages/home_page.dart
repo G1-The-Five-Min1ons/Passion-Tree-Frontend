@@ -3,9 +3,7 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/t_learning_path_overview_login_page.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_quiz.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_node.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_login_page.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -61,11 +59,11 @@ class HomePage extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const LearningPathQuizPage(),
+                        builder: (context) => const LearningPathOverviewLoginPage(),
                       ),
                     );
                   },
-                  child: const Text('S_LearningPathQuizPage'),
+                  child: const Text('S_LearningPathOverviewLoginPage'),
                 ),
               ),
 
@@ -96,32 +94,6 @@ class HomePage extends StatelessWidget {
                 ),
               ),
 
-
-              
-              // หน้าlearning ของนักเรียน
-              Center(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const LearningCoursePage(),
-                      ),
-                    );
-                  },
-                  child: const Text('S_LearningCoursePage'),
-                ),
-              ),
             ],
           ),
         ),

@@ -6,7 +6,9 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/studen
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/node_comments_section.dart';
 
 class LearningNodePage extends StatelessWidget {
-  const LearningNodePage({super.key});
+  final String courseId; 
+
+  const LearningNodePage({super.key, required this.courseId});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +32,6 @@ class LearningNodePage extends StatelessWidget {
                   description:
                       'หลักสูตรนี้มุ่งเน้นให้ผู้เรียนเข้าใจความสัมพันธ์ระหว่างสิ่งมีชีวิตกับสิ่งแวดล้อมในระบบนิเวศ เรียนรู้โครงสร้าง การทำงาน และความสมดุลของระบบนิเวศ รวมถึงผลกระทบจากกิจกรรมของมนุษย์และแนวทางการอนุรักษ์อย่างยั่งยืน',
                   materials: const ['Ecology.pdf', 'Ecosystem_summary.pdf'],
-
                   onTakeQuiz: () {
                     Navigator.push(
                       context,
