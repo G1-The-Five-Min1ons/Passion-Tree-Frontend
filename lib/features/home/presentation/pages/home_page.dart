@@ -96,32 +96,6 @@ class HomePage extends StatelessWidget {
                 ),
               ),
 
-
-              
-              // หน้าlearning ของนักเรียน
-              Center(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const LearningCoursePage(),
-                      ),
-                    );
-                  },
-                  child: const Text('S_LearningCoursePage'),
-                ),
-              ),
             ],
           ),
         ),

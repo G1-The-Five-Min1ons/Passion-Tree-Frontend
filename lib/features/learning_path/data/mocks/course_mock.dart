@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/cou
 
 final mockCourses = [
   Course(
+    id: 'bio101',
     title: 'Biology 101',
     description: 'มุ่งเน้นให้ผู้เรียนเข้าใจความสัมพันธ์ของสิ่งมีชีวิต...',
     instructor: 'ดร.บีเค ',
@@ -14,6 +15,7 @@ final mockCourses = [
     status: CourseStatus.inProgress,
   ),
   Course(
+    id: 'microbio',
     title: 'Microbiology',
     description: 'เรียนเกี่ยวกับสิ่งมีชีวิตขนาดเล็กที่มองไม่เห็นด้วยตาเปล่า...',
     instructor: 'อ.อะตอม',
@@ -25,6 +27,7 @@ final mockCourses = [
     status: CourseStatus.inProgress,
   ),
   Course(
+    id: 'genetics',
     title: 'Genetics',
     description: 'ศึกษาพันธุศาสตร์และการถ่ายทอดลักษณะทางพันธุกรรม...',
     instructor: 'ดร.จีโนม',
@@ -36,6 +39,7 @@ final mockCourses = [
     status: CourseStatus.completed,
   ),
   Course(
+    id: 'criminal_law',
     title: 'Criminal Law',
     description: 'มุ่งเน้นให้ผู้เรียนเข้าใจหลักกฎหมายอาญาและองค์ประกอบความผิด...',
     instructor: 'อ.เอิร์ธ',
@@ -47,6 +51,7 @@ final mockCourses = [
     status: CourseStatus.inProgress,
   ),
   Course(
+    id: 'cybersecurity',
     title: 'Cybersecurity',
     description: 'เน้นให้ผู้เรียนเข้าใจหลักการรักษาความปลอดภัยไซเบอร์และภัยคุกคามดิจิทัล...',
     instructor: 'ดร.แอนนาโตมี่',
@@ -58,6 +63,7 @@ final mockCourses = [
     status: CourseStatus.completed,
   ),
   Course(
+    id: 'cpp_programming',
     title: 'C++',
     description: 'เน้นให้ผู้เรียนเข้าใจโครงสร้างภาษาและแนวคิดการเขียนโปรแกรมใน C++..',
     instructor: 'อ.ฟลอร่า',
@@ -69,6 +75,7 @@ final mockCourses = [
     status: CourseStatus.inProgress,
   ),
   Course(
+    id: 'cell_biology',
     title: 'Cell Biology',
     description:'เรียนเกี่ยวกับสิ่งมีชีวิตขนาดเล็กที่มองไม่เห็นด้วยตาเปล่า เช่น แบคทีเรีย...',
     instructor: 'ดร.ดีพ',
@@ -80,6 +87,7 @@ final mockCourses = [
     status: CourseStatus.inProgress,
   ),
   Course(
+    id: 'chemistry',
     title: 'Chemistry',
     description: 'มุ่งเน้นให้ผู้เรียนเข้าใจองค์ประกอบและปฏิกิริยาต่างๆทางเคมี...',
     instructor: 'อ.ลอว์เรนซ์',
