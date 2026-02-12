@@ -6,6 +6,7 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 class SaveCancel extends StatelessWidget{
   final VoidCallback? onSave;
   final Color? saveButtonColor;
+  final Color? cancelButtonColor;
   final VoidCallback onCancel;
   final String saveText;
   final String cancelText;
@@ -15,6 +16,7 @@ class SaveCancel extends StatelessWidget{
     super.key,
     this.onSave,
     this.saveButtonColor,
+    this.cancelButtonColor,
     required this.onCancel,
     this.saveText = 'Save',
     this.cancelText = 'Cancel', 
@@ -24,7 +26,8 @@ class SaveCancel extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     final bool isDisable = onSave == null;
-    
+    final colors = Theme.of(context).colorScheme;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -32,8 +35,11 @@ class SaveCancel extends StatelessWidget{
             variant: AppButtonVariant.text,
             text: cancelText,
             onPressed: onCancel,
-            backgroundColor: AppColors.scale,
-            textColor: Theme.of(context).colorScheme.onSurface
+            backgroundColor:
+              cancelButtonColor ?? AppColors.scale, 
+          textColor: cancelButtonColor != null
+              ? colors.onError
+              : colors.onSurface,
           ),
         
         const SizedBox(width: 8),

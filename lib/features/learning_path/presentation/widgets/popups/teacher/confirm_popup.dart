@@ -34,7 +34,7 @@ class ConfirmPopup extends StatelessWidget {
               // ===== TITLE =====
               Text(
                 title,
-                style: AppPixelTypography.h3,
+                style: AppPixelTypography.title,
                 textAlign: TextAlign.center,
               ),
 

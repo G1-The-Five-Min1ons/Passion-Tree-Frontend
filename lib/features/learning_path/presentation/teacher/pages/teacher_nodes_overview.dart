@@ -1,18 +1,11 @@
 
 import 'package:flutter/material.dart';
-import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
-import 'package:passion_tree_frontend/core/common_widgets/node/node_item.dart';
-import 'package:passion_tree_frontend/core/common_widgets/node/tree_canvas.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_header.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_bottom.dart';
-
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/node_asset.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/mocks/learning_nodes_mock.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/edit_node_modal.dart';
-import 'package:passion_tree_frontend/core/common_widgets/popups/confirm_popup.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_core.dart';
-
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/teacher/confirm_popup.dart';
 class TeacherNodesOverviewPage extends StatelessWidget {
   final String title;
 
@@ -24,6 +17,29 @@ class TeacherNodesOverviewPage extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const EditNodeModal(),
+    );
+  }
+  void _confirmSaveDraft(BuildContext context) {
+    ConfirmPopup.show(
+      context,
+      title: 'Save Draft\n Confirmation',
+      body: 'Are you sure to save draft',
+      confirmText: 'Save',
+      onConfirm: () {
+        debugPrint('Save draft nodes');
+      },
+    );
+  }
+
+  void _confirmPublish(BuildContext context) {
+    ConfirmPopup.show(
+      context,
+      title: 'Publish\n Confirmation',
+      body: 'Are you sure to publish Learning Path',
+      confirmText: 'Publish',
+      onConfirm: () {
+        debugPrint('Publish learning path');
+      },
     );
   }
 
@@ -61,7 +77,12 @@ class TeacherNodesOverviewPage extends StatelessWidget {
               top: screenHeight * 0.65,
               left: 0,
               right: 0,
-              child: BottomBar(onSaveDraft: () {}, onPublish: () {}),
+              child: Builder(
+                builder: (bottomContext) => BottomBar(
+                  onSaveDraft: () => _confirmSaveDraft(bottomContext),
+                  onPublish: () => _confirmPublish(bottomContext),
+                ),
+              ),
             ),
           ],
         ),

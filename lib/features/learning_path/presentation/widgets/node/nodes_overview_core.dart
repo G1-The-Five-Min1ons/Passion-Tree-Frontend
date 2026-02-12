@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/node_item.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/tree_canvas.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_header.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_bottom.dart';
 
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/node_asset.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/learning_nodes_mock.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/edit_node_modal.dart';
-import 'package:passion_tree_frontend/core/common_widgets/popups/confirm_popup.dart';
 
 class NodesOverviewCore extends StatelessWidget {
   final bool isEditable;

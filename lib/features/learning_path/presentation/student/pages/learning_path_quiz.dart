@@ -8,6 +8,8 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/stu
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_question.dart'; 
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_result.dart'; 
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/student_quiz_mock.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/congrats_popups.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/rating_popup.dart';
 
 enum QuizViewState { answering, result }
 
@@ -153,6 +155,28 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
   }
 
   void _finishQuiz() {
-    Navigator.pop(context);
+    // Show congratulation popup
+    showDialog(
+      context: context,
+      builder: (_) => CompletionPopup(
+        onYes: () {
+          Navigator.pop(context); // Close congrat popup
+          // Show rating popup
+          showDialog(
+            context: context,
+            builder: (_) => RatingPopup(
+              pathName: mockStudentQuiz.title,
+              onSubmit: () {
+                Navigator.pop(context); // Close rating popup
+                // You can add more actions here after rating
+              },
+            ),
+          );
+        },
+        onNo: () {
+          Navigator.pop(context); // Close congrat popup
+        },
+      ),
+    );
   }
 }
