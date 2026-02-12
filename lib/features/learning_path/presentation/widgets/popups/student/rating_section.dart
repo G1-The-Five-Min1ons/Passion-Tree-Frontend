@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/common_widgets/selections/radio.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 
 class RatingSection extends StatelessWidget {
@@ -22,7 +23,16 @@ class RatingSection extends StatelessWidget {
         Text(subtitle, style: AppTypography.subtitleRegular),
         const SizedBox(height: 12),
 
-        // 🔹 ตรงนี้เว้นไว้ก่อน ยังไม่ใส่วงกลม
+        // Add PixelRadioGroup with numbers inside the circles
+        PixelRadioGroup(
+          count: 5,
+          initialValue: 0,
+          showIndex: true,
+          onSelected: (value) {
+            // Handle the selected value
+            print('Selected value: $value');
+          },
+        ),
         const SizedBox(height: 40),
       ],
     );
