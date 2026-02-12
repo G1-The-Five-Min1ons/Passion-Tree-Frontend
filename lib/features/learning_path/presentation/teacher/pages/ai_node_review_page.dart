@@ -6,7 +6,7 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/nodes_overview_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/teacher_nodes_overview.dart';
 
 class AINodeReviewPage extends StatefulWidget {
   const AINodeReviewPage({super.key});
@@ -155,7 +155,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const NodesOverviewPage(),
+                            builder: (_) => const TeacherNodesOverviewPage(title: 'Nodes Overview'),
                           ),
                         );
                       },

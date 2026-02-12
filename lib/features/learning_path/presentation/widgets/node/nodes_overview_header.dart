@@ -4,11 +4,22 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 
+
 class HeaderBar extends StatelessWidget {
-  const HeaderBar({super.key});
+  final String title;
+  final bool showAddButton;
+  final VoidCallback? onPressed; 
+  const HeaderBar({
+    super.key,
+    required this.title,
+    this.showAddButton = false,
+    this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xmargin,
@@ -17,28 +28,29 @@ class HeaderBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          /// ===== TITLE =====
           Text(
-            'Biology 101',
-            style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.displayMedium?.copyWith(color: colors.onPrimary),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              const Spacer(),
-              AppButton(
-                variant: AppButtonVariant.iconOnly,
-                icon: const PixelIcon(
-                  'assets/icons/Pixel_plus.png',
-                  size: 16,
+
+          /// ===== ADD BUTTON =====
+          if (showAddButton)
+            Row(
+              children: [
+                const Spacer(),
+                AppButton(
+                  variant: AppButtonVariant.iconOnly,
+                  icon: const PixelIcon(
+                    'assets/icons/Pixel_plus.png',
+                    size: 16,
+                  ),
+                  onPressed: onPressed ?? () {}, // 👈 กัน null
                 ),
-                onPressed: () {
-                  // create node
-                },
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );
