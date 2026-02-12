@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/learning_course_content.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_node.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/node_comments_section.dart';
 
 class LearningCoursePage extends StatelessWidget {
-  const LearningCoursePage({super.key});
+  final Course course; 
+
+  const LearningCoursePage({super.key, required this.course});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const AppBarWidget(title: 'Learning Paths', showBackButton: false),
+      appBar: const AppBarWidget(title: 'Learning Paths', showBackButton: true),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -26,14 +29,15 @@ class LearningCoursePage extends StatelessWidget {
               children: [
                 /// ===== COURSE CONTENT =====
                 LearningCourseContent(
-                  title: 'Biology101',
-                  description:
-                      'หลักสูตรนี้มุ่งเน้นให้ผู้เรียนเข้าใจความสัมพันธ์ระหว่างสิ่งมีชีวิตกับสิ่งแวดล้อมในระบบนิเวศ เรียนรู้โครงสร้าง การทำงาน และความสมดุลของระบบนิเวศ รวมถึงผลกระทบจากกิจกรรมของมนุษย์และแนวทางการอนุรักษ์อย่างยั่งยืน',
+                  title: course.title,
+                  description: course.description,
                   onStartJourney: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const LearningNodePage(),
+                        builder: (_) => LearningNodePage(
+                          courseId: course.id, // 👈 ใช้ตรงนี้
+                        ),
                       ),
                     );
                   },
