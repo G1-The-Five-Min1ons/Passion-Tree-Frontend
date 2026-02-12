@@ -51,9 +51,53 @@ class PixelAlbumCover extends StatelessWidget {
         );
       },
     ),
-      topContent: imageUrl != null
-        ? Image.asset(imageUrl!, fit: BoxFit.cover, width: double.infinity) //ถ้าดึงจาก db อาจจะต้องเปลี่ยน asset
-        : Container(color: primaryColor.withValues(alpha: 0.3)),
+      topContent: _buildImageWidget(imageUrl, primaryColor),
+    );
+  }
+
+  Widget _buildImageWidget(String? imageUrl, Color primaryColor) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return Container(color: primaryColor.withValues(alpha: 0.3));
+    }
+
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: primaryColor.withValues(alpha: 0.3),
+            child: const Icon(Icons.broken_image, size: 40),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: primaryColor.withValues(alpha: 0.3),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        },
+      );
+    }
+
+    if (imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: primaryColor.withValues(alpha: 0.3),
+            child: const Icon(Icons.broken_image, size: 40),
+          );
+        },
+      );
+    }
+
+    return Container(
+      color: primaryColor.withValues(alpha: 0.3),
+      child: const Icon(Icons.image_not_supported, size: 40),
     );
   }
 }
