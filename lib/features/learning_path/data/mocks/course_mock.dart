@@ -1,4 +1,5 @@
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
+/* เดี๋ยวค่อยลบหลังเชื่อมเสร็จ
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 
 
 final mockCourses = [
@@ -107,3 +108,4 @@ final popularCourses = mockCourses.take(3).toList();
 
 /// คอร์สทั้งหมด
 final allCourses = mockCourses;
+*/

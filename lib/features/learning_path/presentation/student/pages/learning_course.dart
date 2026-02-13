@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/learning_course_content.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/student_nodes_overview.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/node_comments_section.dart';

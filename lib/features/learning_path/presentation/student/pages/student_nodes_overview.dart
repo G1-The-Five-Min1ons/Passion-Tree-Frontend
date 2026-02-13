@@ -3,7 +3,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_core.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_node.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 
 
 class StudentNodesOverviewPage extends StatelessWidget {

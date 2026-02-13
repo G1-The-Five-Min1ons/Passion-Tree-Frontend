@@ -6,7 +6,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/tabs/teacher_create_tab.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/tabs/teacher_learning_tab.dart';   
 import 'package:passion_tree_frontend/features/learning_path/presentation/tabs/teacher_status_tab.dart';   
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 

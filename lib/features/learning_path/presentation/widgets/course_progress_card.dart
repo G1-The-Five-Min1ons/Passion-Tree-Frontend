@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 
 class CourseProgressCard extends StatelessWidget {
-  final Course course;
+  final LearningPath course;
   final int completedModules; 
 
   const CourseProgressCard({          
@@ -32,8 +32,8 @@ class CourseProgressCard extends StatelessWidget {
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: Image.asset(
-                    course.imageAsset,
+                  child: Image.network(
+                    course.coverImageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) {
                       return Container(

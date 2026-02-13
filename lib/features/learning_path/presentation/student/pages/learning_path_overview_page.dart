@@ -8,7 +8,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
 
 class LearningPathOverviewPage extends StatefulWidget {
@@ -43,7 +43,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     _searchController.dispose();
     super.dispose();
   }
-
+ 
   List<Course> _filterCourses(List<Course> courses) {
     return courses.where((Course c) {
       // Search query filter

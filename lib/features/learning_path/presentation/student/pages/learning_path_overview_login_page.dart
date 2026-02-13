@@ -7,7 +7,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
@@ -45,8 +45,8 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
     super.dispose();
   }
 
-  List<Course> _filterCourses(List<Course> courses) {
-    return courses.where((Course c) {
+  List<LearningPath> _filterCourses(List<LearningPath> courses) {
+    return courses.where((LearningPath c) {
       // Search query filter
       final query = _searchController.text.trim().toLowerCase();
       final matchesSearch =
