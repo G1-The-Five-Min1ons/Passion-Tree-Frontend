@@ -3,7 +3,7 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/learning_course_content.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_node.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/student_nodes_overview.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/node_comments_section.dart';
 
 class LearningCoursePage extends StatelessWidget {
@@ -35,9 +35,9 @@ class LearningCoursePage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => LearningNodePage(
-                          courseId: course.id, // 👈 ใช้ตรงนี้
-                        ),
+                        builder: (_) =>
+                            StudentNodesOverviewPage(course: course),
+
                       ),
                     );
                   },
