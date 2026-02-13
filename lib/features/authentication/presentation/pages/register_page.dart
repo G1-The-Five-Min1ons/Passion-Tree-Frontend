@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
@@ -6,18 +7,36 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart
 import 'package:passion_tree_frontend/core/common_widgets/selections/checkbox.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/bottom_buttons.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/pixel_password_field.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_login_page.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_bloc.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_event.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_state.dart';
+import 'package:passion_tree_frontend/features/authentication/data/services/auth_api_service.dart';
 
-class RegisterPage extends StatefulWidget {
+class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
 
   @override
-  State<RegisterPage> createState() => _RegisterPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => RegisterBloc(
+        authApiService: AuthApiService(),
+      ),
+      child: const _RegisterPageContent(),
+    );
+  }
 }
 
-class _RegisterPageState extends State<RegisterPage> {
+class _RegisterPageContent extends StatefulWidget {
+  const _RegisterPageContent();
+
+  @override
+  State<_RegisterPageContent> createState() => _RegisterPageContentState();
+}
+
+class _RegisterPageContentState extends State<_RegisterPageContent> {
   final _usernameController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -41,7 +60,37 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Dialog(
+    
+    return BlocConsumer<RegisterBloc, RegisterState>(
+      listener: (context, state) {
+        if (state is RegisterSuccess) {
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.status,
+            ),
+          );
+        
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const LoginPage(),
+            ),
+          );
+        } else if (state is RegisterFailure) {
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.error),
+              backgroundColor: AppColors.cancel,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state is RegisterLoading;
+        
+        return Dialog(
       backgroundColor: AppColors.background,
       insetPadding: const EdgeInsets.symmetric(horizontal: 25),
       child: SafeArea(
@@ -165,54 +214,55 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 24),
                     AppButton(
                       variant: AppButtonVariant.text,
-                      text: 'Create account',
-                      onPressed: () {
-                        // TODO: Implement actual registration logic with backend
-                        // For now, validate and navigate if basic checks pass
-                        if (_usernameController.text.isNotEmpty &&
-                            _firstNameController.text.isNotEmpty &&
-                            _lastNameController.text.isNotEmpty &&
-                            _emailController.text.isNotEmpty &&
-                            _passwordController.text.isNotEmpty &&
-                            _confirmPasswordController.text.isNotEmpty) {
-                          
-                          // Check if passwords match
-                          if (_passwordController.text != _confirmPasswordController.text) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Passwords do not match'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            return;
-                          }
-
-                          // Check if terms are accepted
-                          if (!_acceptTerms) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Please accept Terms and Privacy Policy'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            return;
-                          }
-
-                          // Navigate to logged-in page (registration successful)
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => const LearningPathOverviewLoginPage(),
-                            ),
-                          );
-                        } else {
-                          // Show error
+                      text: isLoading ? 'Create account' : 'Create account',
+                      onPressed:  (){
+                        if (_usernameController.text.isEmpty ||
+                            _firstNameController.text.isEmpty ||
+                            _lastNameController.text.isEmpty ||
+                            _emailController.text.isEmpty ||
+                            _passwordController.text.isEmpty ||
+                            _confirmPasswordController.text.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Please fill in all required fields'),
-                              backgroundColor: Colors.red,
+                              backgroundColor: AppColors.cancel,
                             ),
                           );
+                          return;
                         }
+                        
+                        // Check if passwords match
+                        if (_passwordController.text != _confirmPasswordController.text) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Passwords do not match'),
+                              backgroundColor: AppColors.cancel,
+                            ),
+                          );
+                          return;
+                        }
+
+                        // Check if terms are accepted
+                        if (!_acceptTerms) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please accept Terms and Privacy Policy'),
+                              backgroundColor: AppColors.cancel,
+                            ),
+                          );
+                          return;
+                        }
+
+                        // Trigger registration via Bloc
+                        context.read<RegisterBloc>().add(
+                          RegisterSubmitted(
+                            username: _usernameController.text.trim(),
+                            email: _emailController.text.trim(),
+                            password: _passwordController.text,
+                            firstName: _firstNameController.text.trim(),
+                            lastName: _lastNameController.text.trim(),
+                          ),
+                        );
                       },
                     ),
                     const SizedBox(height: 24),
@@ -265,6 +315,7 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         ),
       ),
+    );},
     );
   }
 }

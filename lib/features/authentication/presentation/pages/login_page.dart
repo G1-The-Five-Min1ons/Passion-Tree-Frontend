@@ -157,7 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Please enter username and password'),
-                              backgroundColor: Colors.red,
+                              backgroundColor: AppColors.cancel,
                             ),
                           );
                         }
