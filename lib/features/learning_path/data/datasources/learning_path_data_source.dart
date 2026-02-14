@@ -40,7 +40,7 @@ class LearningPathDataSource {
   ) async {
     final response = await client.get(
       Uri.parse(
-        '${ApiConfig.baseUrl}/api/v1/user/learningpaths/$pathId/progress?user_id=$userId',
+        '${ApiConfig.apiBaseUrl}/user/learningpaths/$pathId/progress?user_id=$userId',
       ),
       headers: {'Content-Type': 'application/json'},
     );
@@ -57,7 +57,7 @@ class LearningPathDataSource {
   ) async {
     final response = await client.get(
       Uri.parse(
-        '${ApiConfig.baseUrl}/api/v1/learningpaths/user/enroll?user_id=$userId',
+        '${ApiConfig.apiBaseUrl}/learningpaths/user/enroll?user_id=$userId',
       ),
       headers: {'Content-Type': 'application/json'},
     );

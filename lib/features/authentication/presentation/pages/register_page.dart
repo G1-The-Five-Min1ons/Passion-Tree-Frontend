@@ -199,11 +199,13 @@ class _RegisterPageState extends State<RegisterPage> {
                           }
 
                           // Navigate to logged-in page (registration successful)
+                          /*
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
                               builder: (context) => const LearningPathOverviewLoginPage(),
                             ),
                           );
+                          */
                         } else {
                           // Show error
                           ScaffoldMessenger.of(context).showSnackBar(

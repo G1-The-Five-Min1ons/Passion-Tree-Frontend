@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
@@ -207,3 +208,4 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
     );
   }
 }
+*/

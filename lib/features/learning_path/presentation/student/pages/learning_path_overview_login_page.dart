@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
@@ -316,3 +317,4 @@ class _LearningPathOverviewLoginPageState extends State<LearningPathOverviewLogi
     );
   }
 }
+*/

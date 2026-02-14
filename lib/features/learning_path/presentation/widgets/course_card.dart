@@ -17,12 +17,12 @@ class PixelCourseCard extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(8), // ให้ ripple สวยตามการ์ด
-      onTap: () {
+      /*onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => LearningCoursePage(course: course)),
         );
-      },
+      },*/
       child: BaseCourseCard(
         child: Column(
           children: [

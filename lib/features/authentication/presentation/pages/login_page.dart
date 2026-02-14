@@ -147,11 +147,13 @@ class _LoginPageState extends State<LoginPage> {
                         if (_usernameController.text.isNotEmpty && 
                             _passwordController.text.isNotEmpty) {
                           // Navigate to logged-in page (full access)
+                          /*
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
                               builder: (context) => const LearningPathOverviewLoginPage(),
                             ),
                           );
+                          */
                         } else {
                           // Show error
                           ScaffoldMessenger.of(context).showSnackBar(

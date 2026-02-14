@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
@@ -55,3 +56,4 @@ class LearningCoursePage extends StatelessWidget {
     );
   }
 }
+*/

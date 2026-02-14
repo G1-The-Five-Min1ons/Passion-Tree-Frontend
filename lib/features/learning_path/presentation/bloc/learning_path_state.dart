@@ -19,6 +19,15 @@ class LearningPathStatusLoaded extends LearningPathState {
   LearningPathStatusLoaded(this.paths);
 }
 
+class LearningPathOverviewLoaded extends LearningPathState {
+  final List<LearningPath> allPaths;
+  final List<EnrolledLearningPath> enrolledPaths;
+
+  LearningPathOverviewLoaded({
+    required this.allPaths,
+    required this.enrolledPaths,
+  });
+}
 
 class LearningPathError extends LearningPathState {
   final String message;

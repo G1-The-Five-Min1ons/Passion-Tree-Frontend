@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_status.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 
 class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GetAllLearningPaths getAllLearningPaths;
@@ -34,6 +35,27 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         final result = await getLearningPathStatus(event.userId);
 
         emit(LearningPathStatusLoaded(result));
+      } catch (e) {
+        emit(LearningPathError(e.toString()));
+      }
+    });
+
+    /// FETCH OVERVIEW (ALL PATHS + ENROLLED PATHS)
+    
+    on<FetchLearningPathOverview>((event, emit) async {
+      emit(LearningPathLoading());
+
+      try {
+        final allPaths = await getAllLearningPaths();
+        
+        final enrolledPaths = event.userId != null
+            ? await getLearningPathStatus.repository.getEnrolledPaths(event.userId!)
+            : <EnrolledLearningPath>[];
+
+        emit(LearningPathOverviewLoaded(
+          allPaths: allPaths,
+          enrolledPaths: enrolledPaths,
+        ));
       } catch (e) {
         emit(LearningPathError(e.toString()));
       }
