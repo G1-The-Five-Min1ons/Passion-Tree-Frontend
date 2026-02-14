@@ -22,7 +22,7 @@ class AuthApiService {
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         throw AuthException(
-          message: errorData['message'] ?? 'Registration failed',
+          message: errorData['error'] ?? errorData['message'] ?? 'Registration failed',
           statusCode: response.statusCode,
         );
       }
@@ -49,7 +49,7 @@ class AuthApiService {
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         throw AuthException(
-          message: errorData['message'] ?? 'Login failed',
+          message: errorData['error'] ?? errorData['message'] ?? 'Login failed',
           statusCode: response.statusCode,
         );
       }
@@ -75,7 +75,7 @@ class AuthApiService {
       if (response.statusCode != 200) {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         throw AuthException(
-          message: errorData['message'] ?? 'Email verification failed',
+          message: errorData['error'] ?? errorData['message'] ?? 'Email verification failed',
           statusCode: response.statusCode,
         );
       }
@@ -101,7 +101,7 @@ class AuthApiService {
       if (response.statusCode != 200) {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         throw AuthException(
-          message: errorData['message'] ?? 'Failed to resend verification email',
+          message: errorData['error'] ?? errorData['message'] ?? 'Failed to resend verification email',
           statusCode: response.statusCode,
         );
       }
@@ -127,7 +127,7 @@ class AuthApiService {
       if (response.statusCode != 200) {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         throw AuthException(
-          message: errorData['message'] ?? 'Failed to process password reset request',
+          message: errorData['error'] ?? errorData['message'] ?? 'Failed to process password reset request',
           statusCode: response.statusCode,
         );
       }
@@ -156,7 +156,7 @@ class AuthApiService {
       if (response.statusCode != 200) {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         throw AuthException(
-          message: errorData['message'] ?? 'Password reset failed',
+          message: errorData['error'] ?? errorData['message'] ?? 'Password reset failed',
           statusCode: response.statusCode,
         );
       }
@@ -182,7 +182,7 @@ class AuthApiService {
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         throw AuthException(
-          message: errorData['message'] ?? 'Failed to fetch profile',
+          message: errorData['error'] ?? errorData['message'] ?? 'Failed to fetch profile',
           statusCode: response.statusCode,
         );
       }
@@ -215,7 +215,7 @@ class AuthApiService {
       if (response.statusCode != 200) {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         throw AuthException(
-          message: errorData['message'] ?? 'Password change failed',
+          message: errorData['error'] ?? errorData['message'] ?? 'Password change failed',
           statusCode: response.statusCode,
         );
       }
@@ -239,7 +239,7 @@ class AuthApiService {
       if (response.statusCode != 200) {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         throw AuthException(
-          message: errorData['message'] ?? 'Failed to delete account',
+          message: errorData['error'] ?? errorData['message'] ?? 'Failed to delete account',
           statusCode: response.statusCode,
         );
       }

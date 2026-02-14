@@ -46,6 +46,13 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
   final bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
 
+  String? _usernameError;
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmPasswordError;
+  String? _firstNameError;
+  String? _lastNameError;
+
   @override
   void dispose() {
     _usernameController.dispose();
@@ -57,6 +64,81 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
     super.dispose();
   }
 
+
+  String? _validateUsername(String value) {
+    if (value.isEmpty) {
+      return 'Username is required';
+    }
+    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
+      return 'Username can only contain letters, numbers, and underscores';
+    }
+    return null;
+  }
+
+  String? _validateEmail(String value) {
+    if (value.isEmpty) {
+      return 'Email is required';
+    }
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+      return 'Please enter a valid email address';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String value) {
+    if (value.isEmpty) {
+      return 'Password is required';
+    }
+    if (value.length < 8) {
+      return 'Password must be at least 8 characters';
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(value)) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    if (!RegExp(r'[a-z]').hasMatch(value)) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    if (!RegExp(r'[0-9]').hasMatch(value)) {
+      return 'Password must contain at least one number';
+    }
+    return null;
+  }
+
+  String? _validateConfirmPassword(String value) {
+    if (value.isEmpty) {
+      return 'Please confirm your password';
+    }
+    if (value != _passwordController.text) {
+      return 'Passwords do not match';
+    }
+    return null;
+  }
+
+  String? _validateName(String value, String fieldName) {
+    if (value.isEmpty) {
+      return '$fieldName is required';
+    }
+    return null;
+  }
+
+  bool _validateAllFields() {
+    setState(() {
+      _usernameError = _validateUsername(_usernameController.text.trim());
+      _firstNameError = _validateName(_firstNameController.text.trim(), 'First name');
+      _lastNameError = _validateName(_lastNameController.text.trim(), 'Last name');
+      _emailError = _validateEmail(_emailController.text.trim());
+      _passwordError = _validatePassword(_passwordController.text);
+      _confirmPasswordError = _validateConfirmPassword(_confirmPasswordController.text);
+    });
+
+    return _usernameError == null &&
+        _firstNameError == null &&
+        _lastNameError == null &&
+        _emailError == null &&
+        _passwordError == null &&
+        _confirmPasswordError == null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -64,7 +146,6 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
     return BlocConsumer<RegisterBloc, RegisterState>(
       listener: (context, state) {
         if (state is RegisterSuccess) {
-          // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -78,13 +159,31 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
             ),
           );
         } else if (state is RegisterFailure) {
-          // Show error message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.error),
-              backgroundColor: AppColors.cancel,
-            ),
-          );
+          final errorMessage = state.error.toLowerCase();
+          
+          bool isFieldError = false;
+          
+          if (errorMessage.contains('username')) {
+            setState(() {
+              _usernameError = 'Username is already taken';
+            });
+            isFieldError = true;
+          } else if (errorMessage.contains('email')) {
+            setState(() {
+              _emailError = 'Email is already registered';
+            });
+            isFieldError = true;
+          }
+          
+          // Show SnackBar for non-field errors
+          if (!isFieldError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.error),
+                backgroundColor: AppColors.cancel,
+              ),
+            );
+          }
         }
       },
       builder: (context, state) {
@@ -122,48 +221,173 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
-                    PixelTextField(
-                      label: 'Username *',
-                      hintText: 'Enter a unique username',
-                      controller: _usernameController,
-                      height: 38,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        PixelTextField(
+                          label: 'Username *',
+                          hintText: 'Enter a unique username',
+                          controller: _usernameController,
+                          height: 38,
+                          onChanged: (value) {
+                            setState(() {
+                              _usernameError = _validateUsername(value.trim());
+                            });
+                          },
+                        ),
+                        if (_usernameError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12, top: 4),
+                            child: Text(
+                              _usernameError!,
+                              style: AppTypography.bodyRegular.copyWith(
+                                color: AppColors.cancel,
+                              ),
+                            ),
+                          )
+                      ],
                     ),
                     const SizedBox(height: 16),
-                    PixelTextField(
-                      label: 'First name *',
-                      hintText: 'Enter your first name',
-                      controller: _firstNameController,
-                      height: 38,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        PixelTextField(
+                          label: 'First name *',
+                          hintText: 'Enter your first name',
+                          controller: _firstNameController,
+                          height: 38,
+                          onChanged: (value) {
+                            setState(() {
+                              _firstNameError = _validateName(value.trim(), 'First name');
+                            });
+                          },
+                        ),
+                        if (_firstNameError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12, top: 4),
+                            child: Text(
+                              _firstNameError!,
+                              style: AppTypography.bodyRegular.copyWith(
+                                color: AppColors.cancel,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 16),
-                    PixelTextField(
-                      label: 'Last name *',
-                      hintText: 'Enter your last name',
-                      controller: _lastNameController,
-                      height: 38,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        PixelTextField(
+                          label: 'Last name *',
+                          hintText: 'Enter your last name',
+                          controller: _lastNameController,
+                          height: 38,
+                          onChanged: (value) {
+                            setState(() {
+                              _lastNameError = _validateName(value.trim(), 'Last name');
+                            });
+                          },
+                        ),
+                        if (_lastNameError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12, top: 4),
+                            child: Text(
+                              _lastNameError!,
+                              style: AppTypography.bodyRegular.copyWith(
+                                color: AppColors.cancel,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 16),
-                    PixelTextField(
-                      label: 'Email *',
-                      hintText: 'Enter your email',
-                      controller: _emailController,
-                      height: 38,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        PixelTextField(
+                          label: 'Email *',
+                          hintText: 'Enter your email',
+                          controller: _emailController,
+                          height: 38,
+                          onChanged: (value) {
+                            setState(() {
+                              _emailError = _validateEmail(value.trim());
+                            });
+                          },
+                        ),
+                        if (_emailError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12, top: 4),
+                            child: Text(
+                              _emailError!,
+                              style: AppTypography.bodyRegular.copyWith(
+                                color: AppColors.cancel,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 16),
-                    PixelPasswordField(
-                      label: 'Password *',
-                      hintText: 'Enter Password',
-                      controller: _passwordController,
-                      height: 38,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        PixelPasswordField(
+                          label: 'Password *',
+                          hintText: 'Enter Password',
+                          controller: _passwordController,
+                          height: 38,
+                          onChanged: (value) {
+                            setState(() {
+                              _passwordError = _validatePassword(value);
+                              if (_confirmPasswordController.text.isNotEmpty) {
+                                _confirmPasswordError = _validateConfirmPassword(
+                                  _confirmPasswordController.text,
+                                );
+                              }
+                            });
+                          },
+                        ),
+                        if (_passwordError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12, top: 4),
+                            child: Text(
+                              _passwordError!,
+                              style: AppTypography.bodyRegular.copyWith(
+                                color: AppColors.cancel,
+                              ),
+                            ),
+                          )
+                      ],
                     ),
                     const SizedBox(height: 16),
-                    PixelPasswordField(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        PixelPasswordField(
                           label: 'Confirm password *',
                           hintText: 'Confirm your password',
                           controller: _confirmPasswordController,
                           obscureText: _obscureConfirmPassword,
                           height: 38,
+                          onChanged: (value) {
+                            setState(() {
+                              _confirmPasswordError = _validateConfirmPassword(value);
+                            });
+                          },
                         ),
+                        if (_confirmPasswordError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12, top: 4),
+                            child: Text(
+                              _confirmPasswordError!,
+                              style: AppTypography.bodyRegular.copyWith(
+                                color: AppColors.cancel,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
@@ -215,27 +439,11 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                     AppButton(
                       variant: AppButtonVariant.text,
                       text: isLoading ? 'Create account' : 'Create account',
-                      onPressed:  (){
-                        if (_usernameController.text.isEmpty ||
-                            _firstNameController.text.isEmpty ||
-                            _lastNameController.text.isEmpty ||
-                            _emailController.text.isEmpty ||
-                            _passwordController.text.isEmpty ||
-                            _confirmPasswordController.text.isEmpty) {
+                      onPressed: () {
+                        if (!_validateAllFields()) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Please fill in all required fields'),
-                              backgroundColor: AppColors.cancel,
-                            ),
-                          );
-                          return;
-                        }
-                        
-                        // Check if passwords match
-                        if (_passwordController.text != _confirmPasswordController.text) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Passwords do not match'),
+                              content: Text('Please fix the errors above'),
                               backgroundColor: AppColors.cancel,
                             ),
                           );
