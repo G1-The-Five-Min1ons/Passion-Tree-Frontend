@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path_with_progress.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 
 class CourseProgressCard extends StatelessWidget {
-  final LearningPathWithProgress data;
+  final EnrolledLearningPath data;
 
   const CourseProgressCard({super.key, required this.data});
 
@@ -14,11 +14,9 @@ class CourseProgressCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    final course = data.path;
-    final progressData = data.progress;
-
-    final progress = (progressData.progressPercentage / 100).clamp(0.0, 1.0);
-    final percent = progressData.progressPercentage.round();
+    
+    final progress = (data.progressPercent / 100).clamp(0.0, 1.0);
+    final percent = data.progressPercent.round();
 
     return BaseCourseCard(
       child: Column(
@@ -31,7 +29,7 @@ class CourseProgressCard extends StatelessWidget {
               children: [
                 Positioned.fill(
                   child: Image.network(
-                    course.coverImageUrl,
+                    data.coverImgUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) {
                       return Container(
@@ -66,7 +64,7 @@ class CourseProgressCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            course.rating.toStringAsFixed(1),
+                            data.rating.toStringAsFixed(1),
                             style: AppTypography.bodySemiBold.copyWith(
                               color: colors.secondary,
                             ),
@@ -94,7 +92,7 @@ class CourseProgressCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          course.title,
+                          data.title,
                           style: AppTypography.subtitleSemiBold,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -107,14 +105,14 @@ class CourseProgressCard extends StatelessWidget {
                   const SizedBox(height: 5),
 
                   Text(
-                    'สอนโดย ${course.instructor}',
+                    'สอนโดย ${data.instructor}',
                     style: AppTypography.smallBodyMedium,
                   ),
 
                   const SizedBox(height: 10),
 
                   Text(
-                    course.description,
+                    data.description,
                     style: AppTypography.smallBodyMedium,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -159,7 +157,7 @@ class CourseProgressCard extends StatelessWidget {
 
                   // ================= MODULE INFO =================
                   Text(
-                    '${progressData.completedNodes} / ${progressData.totalNodes} modules',
+                    '${data.completedNodes} / ${data.modules} modules',
                     style: AppTypography.smallBodyMedium.copyWith(
                       color: colors.onSurface,
                     ),

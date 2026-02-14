@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:passion_tree_frontend/core/config/api_config.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_progress_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/enrolled_learning_path_api_model.dart';
 
 class LearningPathDataSource {
   final http.Client client;
@@ -51,5 +52,25 @@ class LearningPathDataSource {
       throw Exception('Failed to load progress');
     }
   }
+  Future<List<EnrolledLearningPathApiModel>> getEnrolledPaths(
+    String userId,
+  ) async {
+    final response = await client.get(
+      Uri.parse(
+        '${ApiConfig.baseUrl}/api/v1/learningpaths/user/enroll?user_id=$userId',
+      ),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final list = data['data'] as List;
+
+      return list.map((e) => EnrolledLearningPathApiModel.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load enrolled paths');
+    }
+  }
+
 
 }

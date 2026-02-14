@@ -7,7 +7,7 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_progress_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path_with_progress.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
@@ -46,18 +46,14 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
     super.dispose();
   }
 
-  List<LearningPathWithProgress> _filterPaths(
-    List<LearningPathWithProgress> paths,
-  ) {
+   List<EnrolledLearningPath> _filterPaths(List<EnrolledLearningPath> paths) {
     final query = _searchController.text.trim().toLowerCase();
 
     return paths.where((p) {
-      final c = p.path;
-
       return query.isEmpty ||
-          c.title.toLowerCase().contains(query) ||
-          c.description.toLowerCase().contains(query) ||
-          c.instructor.toLowerCase().contains(query);
+          p.title.toLowerCase().contains(query) ||
+          p.description.toLowerCase().contains(query) ||
+          p.instructor.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -70,19 +66,21 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            if (state is LearningPathLoading || state is LearningPathInitial) {
+             if (state is LearningPathLoading || state is LearningPathInitial) {
               return const Center(child: CircularProgressIndicator());
             }
 
             if (state is LearningPathStatusLoaded) {
               final filtered = _filterPaths(state.paths);
 
+              // คอร์สที่กำลังเรียนอยู่ (In Progress)
               final inProgress = filtered
-                  .where((p) => p.progress.status != "Completed")
+                  .where((p) => p.progressStatus != "Completed")
                   .toList();
-
+                  
+              // คอร์สที่เรียนจบแล้ว (Completed)
               final completed = filtered
-                  .where((p) => p.progress.status == "Completed")
+                  .where((p) => p.progressStatus == "Completed")
                   .toList();
 
               return SingleChildScrollView(
@@ -154,10 +152,8 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                                     BaseCourseCard.defaultHeight,
                               ),
                           itemBuilder: (context, index) {
-                            final item = inProgress[index];
-
                             return CourseProgressCard(
-                              data: item,
+                              data: inProgress[index],
                             );
                           },
                         ),
@@ -217,11 +213,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                                     BaseCourseCard.defaultHeight,
                               ),
                           itemBuilder: (context, index) {
-                            final item = completed[index];
-
-                            return CourseProgressCard(
-                              data: item,
-                            );
+                            return CourseProgressCard(data: completed[index]);
                           },
                         ),
 
