@@ -9,7 +9,6 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
 
 class LearningPathOverviewPage extends StatefulWidget {
   const LearningPathOverviewPage({super.key});
@@ -44,32 +43,23 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     super.dispose();
   }
  
-  List<Course> _filterCourses(List<Course> courses) {
-    return courses.where((Course c) {
-      // Search query filter
+  List<LearningPath> _filterCourses(List<LearningPath> courses) {
+    return courses.where((c) {
       final query = _searchController.text.trim().toLowerCase();
+
       final matchesSearch =
           query.isEmpty ||
           c.title.toLowerCase().contains(query) ||
           c.description.toLowerCase().contains(query) ||
           c.instructor.toLowerCase().contains(query);
 
-      // Category filter
-      final matchesCategory =
-          _selectedCategory == null || c.category == _selectedCategory;
-
-      // Rating filter (range)
       final matchesRating =
           _ratingRange == null ||
           (c.rating >= _ratingRange!.start && c.rating <= _ratingRange!.end);
 
-      // Modules filter
       final matchesModules = _maxModules == null || c.modules <= _maxModules!;
 
-      return matchesSearch &&
-          matchesCategory &&
-          matchesRating &&
-          matchesModules;
+      return matchesSearch && matchesRating && matchesModules;
     }).toList();
   }
 

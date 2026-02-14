@@ -1,26 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path_with_progress.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 
 class CourseProgressCard extends StatelessWidget {
-  final LearningPath course;
-  final int completedModules; 
+  final LearningPathWithProgress data;
 
-  const CourseProgressCard({          
-    super.key,
-    required this.course,
-    required this.completedModules,
-  });
+  const CourseProgressCard({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    final progress = (completedModules / course.modules).clamp(0.0, 1.0);
-    final percent = (progress * 100).round();
+    final course = data.path;
+    final progressData = data.progress;
+
+    final progress = (progressData.progressPercentage / 100).clamp(0.0, 1.0);
+    final percent = progressData.progressPercentage.round();
 
     return BaseCourseCard(
       child: Column(
@@ -102,7 +100,7 @@ class CourseProgressCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      MoreIcon(color: Theme.of(context).colorScheme.onSurface),
+                      MoreIcon(color: colors.onSurface),
                     ],
                   ),
 
@@ -131,13 +129,13 @@ class CourseProgressCard extends StatelessWidget {
                       Text(
                         'Progress',
                         style: AppTypography.smallBodyMedium.copyWith(
-                          color: colors.surface,
+                          color: colors.onSurface,
                         ),
                       ),
                       Text(
                         '$percent%',
                         style: AppTypography.smallBodyMedium.copyWith(
-                          color: colors.surface,
+                          color: colors.onSurface,
                         ),
                       ),
                     ],
@@ -149,13 +147,11 @@ class CourseProgressCard extends StatelessWidget {
                   Container(
                     height: 10,
                     width: double.infinity,
-                    color: colors.secondary, // หลอดสีเหลือง
+                    color: colors.secondary,
                     child: FractionallySizedBox(
                       alignment: Alignment.centerLeft,
                       widthFactor: progress,
-                      child: Container(
-                        color: colors.primary, // สีน้ำเงิน progress
-                      ),
+                      child: Container(color: colors.primary),
                     ),
                   ),
 
@@ -163,9 +159,9 @@ class CourseProgressCard extends StatelessWidget {
 
                   // ================= MODULE INFO =================
                   Text(
-                    '$completedModules / ${course.modules} modules',
+                    '${progressData.completedNodes} / ${progressData.totalNodes} modules',
                     style: AppTypography.smallBodyMedium.copyWith(
-                      color: colors.surface,
+                      color: colors.onSurface,
                     ),
                   ),
                 ],

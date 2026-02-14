@@ -1,4 +1,5 @@
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path_with_progress.dart';
 
 abstract class LearningPathState {}
 
@@ -10,6 +11,11 @@ class LearningPathLoaded extends LearningPathState {
   final List<LearningPath> paths;
 
   LearningPathLoaded(this.paths);
+}
+
+class LearningPathStatusLoaded extends LearningPathState {
+  final List<LearningPathWithProgress> paths;
+  LearningPathStatusLoaded(this.paths);
 }
 
 class LearningPathError extends LearningPathState {
