@@ -21,8 +21,11 @@ class AuthApiService {
         return RegisterResponse.fromJson(jsonData);
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        final backendError = errorData['error'] ?? errorData['message'] ?? '';
+        final userMessage = _getUserFriendlyMessage(backendError.toString(), 'register');
+        
         throw AuthException(
-          message: errorData['error'] ?? errorData['message'] ?? 'Registration failed',
+          message: userMessage,
           statusCode: response.statusCode,
         );
       }
@@ -36,25 +39,40 @@ class AuthApiService {
   }
 
   Future<LoginResponse> login(LoginRequest request) async {
+    print('================================');
+    print('[API] POST ${ApiConfig.authLogin}');
+    print('[API] Request body: ${jsonEncode(request.toJson())}');
+    
     try {
       final response = await _client.post(
         Uri.parse(ApiConfig.authLogin),
         headers: ApiConfig.defaultHeaders,
         body: jsonEncode(request.toJson()),
       ).timeout(ApiConfig.connectionTimeout);
+      
+      print('[API] Response status: ${response.statusCode}');
+      print('[API] Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        return LoginResponse.fromJson(jsonData);
+        final loginResponse = LoginResponse.fromJson(jsonData);
+        print('[LOGIN] Login successful');
+        print('[LOGIN] Token received: ${loginResponse.token.substring(0, 20)}...');
+        return loginResponse;
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        final backendError = errorData['error'] ?? errorData['message'] ?? '';
+        final userMessage = _getUserFriendlyMessage(backendError.toString(), 'login');
+        
         throw AuthException(
-          message: errorData['error'] ?? errorData['message'] ?? 'Login failed',
+          message: userMessage,
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is AuthException) rethrow;
+      print('[API] Network error: $e');
+      print('[API] Error type: ${e.runtimeType}');
       throw AuthException(
         message: 'Network error: Unable to connect to server',
         statusCode: 0,
@@ -251,6 +269,24 @@ class AuthApiService {
       );
     }
   }
+  
+  String _getUserFriendlyMessage(String backendError, String context) {
+    final errorLower = backendError.toLowerCase();
+    
+    if (context == 'login') {
+      if (errorLower.contains('invalid') || 
+          errorLower.contains('password') || 
+          errorLower.contains('incorrect') ||
+          errorLower.contains('username') ||
+          errorLower.contains('email')) {
+        return 'Invalid username/email or password';
+      }
+      return 'Login failed';
+    }
+    
+    return backendError.isNotEmpty ? backendError : 'Something went wrong';
+  }
+  
   void dispose() {
     _client.close();
   }

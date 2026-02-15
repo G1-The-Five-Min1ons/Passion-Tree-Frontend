@@ -8,6 +8,9 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/bottom_buttons.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/pixel_password_field.dart';
+import 'package:passion_tree_frontend/features/authentication/data/services/auth_api_service.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/auth_models.dart';
+import 'package:passion_tree_frontend/features/authentication/data/services/token_storage_service.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_login_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/register_page.dart';
 
@@ -22,12 +25,40 @@ class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
+  
+  String? _usernameError;
+  String? _passwordError;
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+  
+  // Validation methods
+  String? _validateUsername(String value) {
+    if (value.isEmpty) {
+      return 'Username or email is required';
+    }
+    return null;
+  }
+  
+  String? _validatePassword(String value) {
+    if (value.isEmpty) {
+      return 'Password is required';
+    }
+    return null;
+  }
+  
+  bool _validateAllFields() {
+    setState(() {
+      _usernameError = _validateUsername(_usernameController.text.trim());
+      _passwordError = _validatePassword(_passwordController.text);
+    });
+    
+    return _usernameError == null && _passwordError == null;
   }
 
   @override
@@ -85,20 +116,60 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 32),
 
                     // Username field
-                    PixelTextField(
-                      label: 'Username or Email',
-                      hintText: 'Enter your username or email',
-                      controller: _usernameController,
-                      height: 38,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        PixelTextField(
+                          label: 'Username or Email',
+                          hintText: 'Enter your username or email',
+                          controller: _usernameController,
+                          height: 38,
+                          onChanged: (value) {
+                            setState(() {
+                              _usernameError = _validateUsername(value.trim());
+                            });
+                          },
+                        ),
+                        if (_usernameError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12, top: 4),
+                            child: Text(
+                              _usernameError!,
+                              style: AppTypography.bodyRegular.copyWith(
+                                color: AppColors.cancel,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 20),
 
                     // Password field with visibility toggle
-                    PixelPasswordField(
-                      label: 'Password',
-                      hintText: 'Enter Password',
-                      controller: _passwordController,
-                      height: 38,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        PixelPasswordField(
+                          label: 'Password',
+                          hintText: 'Enter Password',
+                          controller: _passwordController,
+                          height: 38,
+                          onChanged: (value) {
+                            setState(() {
+                              _passwordError = _validatePassword(value);
+                            });
+                          },
+                        ),
+                        if (_passwordError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12, top: 4),
+                            child: Text(
+                              _passwordError!,
+                              style: AppTypography.bodyRegular.copyWith(
+                                color: AppColors.cancel,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 16),
 
@@ -140,23 +211,77 @@ class _LoginPageState extends State<LoginPage> {
                     // Sign in button
                     AppButton(
                       variant: AppButtonVariant.text,
-                      text: 'Sign-in',
-                      onPressed: () {
-                        // TODO: Implement actual authentication logic
-                        // For now, simulate successful login
-                        if (_usernameController.text.isNotEmpty && 
-                            _passwordController.text.isNotEmpty) {
-                          // Navigate to logged-in page (full access)
+                      text: _isLoading ? 'Sign in' : 'Sign in',
+                      onPressed: () async {
+                        // Validate fields
+                        if (!_validateAllFields()) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please fix the errors above'),
+                              backgroundColor: AppColors.cancel,
+                            ),
+                          );
+                          return;
+                        }
+
+                        setState(() {
+                          _isLoading = true;
+                        });
+
+                        try {
+                          final authService = AuthApiService();
+                          final request = LoginRequest(
+                            identifier: _usernameController.text.trim(),
+                            password: _passwordController.text,
+                          );
+
+                          final response = await authService.login(request);
+
+                          // Save token if remember me is checked
+                          if (_rememberMe && response.token != null) {
+                            await TokenStorageService().saveToken(response.token);
+                          }
+
+                          if (!mounted) return;
+
+                          // Show success message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Login successful!'),
+                              backgroundColor: AppColors.status,
+                            ),
+                          );
+
+                          // Navigate to main page
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
                               builder: (context) => const LearningPathOverviewLoginPage(),
                             ),
                           );
-                        } else {
-                          // Show error
+                        } on AuthException catch (e) {
+                          if (!mounted) return;
+
+                          setState(() {
+                            _isLoading = false;
+                          });
+
+                          // Show error in snackbar
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please enter username and password'),
+                            SnackBar(
+                              content: Text(e.message),
+                              backgroundColor: AppColors.cancel,
+                            ),
+                          );
+                        } catch (e) {
+                          if (!mounted) return;
+
+                          setState(() {
+                            _isLoading = false;
+                          });
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('An error occurred: ${e.toString()}'),
                               backgroundColor: AppColors.cancel,
                             ),
                           );
