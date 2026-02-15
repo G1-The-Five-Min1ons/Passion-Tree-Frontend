@@ -40,6 +40,9 @@ dependencies:
   # State management
   flutter_bloc: ^8.1.6
   equatable: ^2.0.5
+  http: ^1.6.0
+  path: ^1.9.1
+  image_picker: ^1.2.1
 
 dev_dependencies:
   flutter_test:

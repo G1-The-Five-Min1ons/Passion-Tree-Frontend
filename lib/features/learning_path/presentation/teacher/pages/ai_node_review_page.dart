@@ -7,21 +7,78 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/teacher_nodes_overview.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/ai_generate_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/services/learning_path_api_service.dart';
 
 class AINodeReviewPage extends StatefulWidget {
-  const AINodeReviewPage({super.key});
+  // [แก้ไข] รับแค่ pathId ก็พอ
+  final String pathId;
+
+  const AINodeReviewPage({
+    super.key,
+    required this.pathId,
+  });
 
   @override
   State<AINodeReviewPage> createState() => _AINodeReviewPageState();
 }
 
 class _AINodeReviewPageState extends State<AINodeReviewPage> {
-  final List<String> _nodes = [
-    'ระบบนิเวศ',
-    'ความสัมพันธ์ของสิ่งมีชีวิต',
-    'สมดุลของป่า',
-    'บทประยุกต์',
-  ];
+  List<GeneratedNode> _nodes = [];
+  bool _isLoading = true; // สถานะโหลด
+  String _objective = ''; // เก็บ objective ไว้ใช้ตอน regenerate
+
+  @override
+  void initState() {
+    super.initState();
+    // เริ่มต้นมา ให้โหลดข้อมูลทันที
+    _fetchAndGenerate();
+  }
+
+  // ฟังก์ชันหลัก: ดึงข้อมูล -> สร้าง AI
+  Future<void> _fetchAndGenerate() async {
+    try {
+      // 1. ดึงข้อมูล Path เพื่อเอา Objective
+      // final pathData = await getLearningPathById(widget.pathId);
+      final objectiveFromApi = pathData['objective'] ?? ''; // ดึง field objective
+      
+      setState(() {
+        _objective = objectiveFromApi;
+      });
+
+      // 2. เรียก AI Generate โดยใช้ objective ที่ได้มา
+      await _generateNodesFromAI();
+
+    } catch (e) {
+      debugPrint('Error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading data: $e')),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // ฟังก์ชันแยกสำหรับเรียก AI (ใช้ซ้ำตอนกดปุ่ม Reload)
+  Future<void> _generateNodesFromAI() async {
+    if (_objective.isEmpty) return;
+
+    setState(() => _isLoading = true); // หมุนติ้วๆ
+
+    try {
+      // เรียก service generatePathWithAI (อันเดิมที่มีอยู่แล้ว)
+      final aiResponse = await generatePathWithAI(_objective);
+      
+      setState(() {
+        _nodes = aiResponse.nodes;
+        _isLoading = false; // หยุดหมุน
+      });
+    } catch (e) {
+      debugPrint('AI Error: $e');
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +140,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                           // Refresh icon
                           IconButton(
                             icon: const Icon(Icons.autorenew),
-                            onPressed: _regenerateNodes,
+                            onPressed: _isLoading ? null : _generateNodesFromAI,
                           ),
                         ],
                       ),
@@ -92,35 +149,48 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
 
                       // ===== NODE LIST =====
                      Expanded(
-                        child: ListView.builder(
-                          itemCount: _nodes.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: RichText(
-                                text: TextSpan(
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: 'Node${index + 1} : ',
-                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                        fontWeight: FontWeight.w600,
+                        child: _isLoading
+                            ? const Center(
+                                child: CircularProgressIndicator(),
+                              ) // หมุนๆ
+                            : _nodes.isEmpty
+                            ? const Center(child: Text("No nodes generated"))
+                            : ListView.builder(
+                                itemCount: _nodes.length,
+                                itemBuilder: (context, index) {
+                                  final node = _nodes[index];
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: RichText(
+                                      text: TextSpan(
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface,
+                                            ),
+                                        children: [
+                                          TextSpan(
+                                            text: 'Node${node.sequence} : ',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                          ),
+                                          TextSpan(text: node.title),
+                                        ],
                                       ),
                                     ),
-                                    TextSpan(text: _nodes[index]),
-                                  ],
-                                ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
                       ),
 
                     ],
@@ -151,14 +221,18 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                     AppButton(
                       variant: AppButtonVariant.text,
                       text: 'Save',
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const TeacherNodesOverviewPage(title: 'Nodes Overview'),
-                          ),
-                        );
-                      },
+                      // ปิดปุ่ม Save ถ้ากำลังโหลดอยู่
+                      onPressed: _isLoading 
+                        ? () {} 
+                        : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const TeacherNodesOverviewPage(
+                                    title: 'Nodes Overview'),
+                              ),
+                            );
+                          },
                     ),
                   ],
                 ),
@@ -172,14 +246,14 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
   }
 
   // ===== ACTIONS =====
-  void _regenerateNodes() {
-    setState(() {
-      _nodes.shuffle(); // mock regenerate
-    });
-  }
+  // void _regenerateNodes() {
+  //   setState(() {
+  //     _nodes.shuffle(); // mock regenerate
+  //   });
+  // }
 
-  void _saveNodes() {
-    debugPrint('Saved nodes: $_nodes');
-    // TODO: ไป step ถัดไป
-  }
+  // void _saveNodes() {
+  //   debugPrint('Saved nodes: $_nodes');
+  //   // TODO: ไป step ถัดไป
+  // }
 }
