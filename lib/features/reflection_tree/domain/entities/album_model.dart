@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class Album {
+  final String id;
   final String title;
   final String subtitle;
   final String image;
   final List<AlbumItem>? items;
 
   Album({
+    required this.id,
     required this.title,
     required this.subtitle,
     required this.image,

@@ -1,10 +1,11 @@
 import 'package:passion_tree_frontend/features/reflection_tree/data/models/album_api_model.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 
 class AlbumMapper {
   /// Convert AlbumApiModel to Album (Domain Model)
   static Album toAlbum(AlbumApiModel apiModel, {List<AlbumItem>? items}) {
     return Album(
+      id: apiModel.albumId,
       title: apiModel.albumName,
       subtitle: _formatSubtitle(apiModel.treeCount, apiModel.lastEdit),
       image: apiModel.coverImageUrl,
@@ -53,11 +54,6 @@ class AlbumMapper {
     AlbumApiModel apiModel,
     List<AlbumItem> items,
   ) {
-    return Album(
-      title: apiModel.albumName,
-      subtitle: _formatSubtitle(apiModel.treeCount, apiModel.lastEdit),
-      image: apiModel.coverImageUrl,
-      items: items,
-    );
+    return toAlbum(apiModel, items: items);
   }
 }

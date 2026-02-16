@@ -8,10 +8,16 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_but
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button_white.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize all dependencies (GetIt)
+  await initializeDependencies();
+  
   runApp(const MyApp());
 }
 

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/save_cancel.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/data/repositories/album_repository.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'dart:io';
 
 class CreatePopUp extends StatefulWidget {
@@ -44,7 +46,6 @@ class CreatePopUp extends StatefulWidget {
 
 class _CreatePopUpState extends State<CreatePopUp> {
   final TextEditingController _albumNameController = TextEditingController();
-  final AlbumRepository _repository = AlbumRepository();
   
   File? _selectedImage;
   String? _selectedImagePath;
@@ -79,7 +80,7 @@ class _CreatePopUpState extends State<CreatePopUp> {
     }
   }
 
-  Future<void> _createAlbum() async {
+  void _createAlbum() {
     if (_albumNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter album name')),
@@ -87,39 +88,18 @@ class _CreatePopUpState extends State<CreatePopUp> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      // TODO: Upload image to storage and get URL
-      final coverImageUrl = _selectedImagePath ?? '';
-      
-      await _repository.createAlbum(
+    // TODO: Upload image to storage and get URL (โอมทำ)
+    final coverImageUrl = _selectedImagePath ?? '';
+    
+    context.read<AlbumBloc>().add(
+      CreateAlbumEvent(
         userId: widget.userId,
         albumName: _albumNameController.text.trim(),
         coverImageUrl: coverImageUrl,
-      );
+      ),
+    );
 
-      if (mounted) {
-        Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Album created successfully')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create album : $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    Navigator.pop(context, true);
   }
 
   @override

@@ -1,9 +1,9 @@
-import 'package:passion_tree_frontend/features/reflection_tree/data/repositories/album_repository.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/repositories/i_album_repository.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 
 /// Use case for creating a new album
 class CreateAlbumUseCase {
-  final AlbumRepository repository;
+  final IAlbumRepository repository;
 
   CreateAlbumUseCase(this.repository);
 
@@ -22,7 +22,7 @@ class CreateAlbumUseCase {
 
 /// Use case for getting albums by user ID
 class GetAlbumsByUserIdUseCase {
-  final AlbumRepository repository;
+  final IAlbumRepository repository;
 
   GetAlbumsByUserIdUseCase(this.repository);
 
@@ -33,7 +33,7 @@ class GetAlbumsByUserIdUseCase {
 
 /// Use case for getting album by ID
 class GetAlbumByIdUseCase {
-  final AlbumRepository repository;
+  final IAlbumRepository repository;
 
   GetAlbumByIdUseCase(this.repository);
 
@@ -44,7 +44,7 @@ class GetAlbumByIdUseCase {
 
 /// Use case for updating an album
 class UpdateAlbumUseCase {
-  final AlbumRepository repository;
+  final IAlbumRepository repository;
 
   UpdateAlbumUseCase(this.repository);
 
@@ -63,7 +63,7 @@ class UpdateAlbumUseCase {
 
 /// Use case for deleting an album
 class DeleteAlbumUseCase {
-  final AlbumRepository repository;
+  final IAlbumRepository repository;
 
   DeleteAlbumUseCase(this.repository);
 

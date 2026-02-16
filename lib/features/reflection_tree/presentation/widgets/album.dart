@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album_base_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/edit_album_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 
 class PixelAlbumCover extends StatelessWidget {
+  final String id;
   final double? size;
   final double pixelSize;
   final Color? color;
@@ -14,6 +18,7 @@ class PixelAlbumCover extends StatelessWidget {
 
   const PixelAlbumCover({
     super.key,
+    required this.id,
     this.size,
     this.pixelSize = 3.0,
     this.color,
@@ -46,7 +51,7 @@ class PixelAlbumCover extends StatelessWidget {
               initialValue: title ?? '');
           },
           onDelete: () {
-            debugPrint("Delete Album: $title");
+            context.read<AlbumBloc>().add(DeleteAlbumEvent(id));
           },
         );
       },

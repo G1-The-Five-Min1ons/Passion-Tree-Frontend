@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 
 abstract class AlbumState extends Equatable {
   const AlbumState();
@@ -15,11 +15,14 @@ class AlbumLoading extends AlbumState {}
 /// State when albums are loaded successfully
 class AlbumsLoaded extends AlbumState {
   final List<Album> albums;
+  final String? message;
 
-  const AlbumsLoaded(this.albums);
+  const AlbumsLoaded(
+    this.albums,
+    {this.message});
 
   @override
-  List<Object?> get props => [albums];
+  List<Object?> get props => [albums, message];
 }
 
 /// State when a single album is loaded
@@ -31,20 +34,6 @@ class AlbumDetailLoaded extends AlbumState {
   @override
   List<Object?> get props => [album];
 }
-
-/// State when album is created successfully
-class AlbumCreated extends AlbumState {
-  final Album album;
-
-  const AlbumCreated(this.album);
-
-  @override
-  List<Object?> get props => [album];
-}
-
-class AlbumUpdated extends AlbumState {}
-
-class AlbumDeleted extends AlbumState {}
 
 /// Error state
 class AlbumError extends AlbumState {

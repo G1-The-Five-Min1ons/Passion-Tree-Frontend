@@ -9,13 +9,11 @@ class AlbumDataSource {
   AlbumDataSource({http.Client? client}) : client = client ?? http.Client();
 
   /// Create a new album
-  Future<AlbumApiModel> createAlbum(CreateAlbumRequest request) async {
+  Future<AlbumApiModel> createAlbum(CreateAlbumRequest request, String token) async {
     try {
       final response = await client.post(
-        Uri.parse('${ApiConfig.apiBaseUrl}/albums'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        Uri.parse(ApiConfig.albums),
+        headers: ApiConfig.getAuthHeaders(token),
         body: jsonEncode(request.toJson()),
       );
 
@@ -32,13 +30,11 @@ class AlbumDataSource {
   }
 
   /// Get album by ID
-  Future<AlbumApiModel> getAlbumById(String albumId) async {
+  Future<AlbumApiModel> getAlbumById(String albumId, String token) async {
     try {
       final response = await client.get(
-        Uri.parse('${ApiConfig.apiBaseUrl}/albums/$albumId'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        Uri.parse(ApiConfig.albumById(albumId)),
+        headers: ApiConfig.getAuthHeaders(token),
       );
 
       if (response.statusCode == 200) {
@@ -54,13 +50,11 @@ class AlbumDataSource {
   }
 
   /// Get all albums by user ID
-  Future<List<AlbumApiModel>> getAlbumsByUserId(String userId) async {
+  Future<List<AlbumApiModel>> getAlbumsByUserId(String userId, String token) async {
     try {
       final response = await client.get(
-        Uri.parse('${ApiConfig.apiBaseUrl}/albums?user_id=$userId'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        Uri.parse(ApiConfig.albumsByUserId(userId)),
+        headers: ApiConfig.getAuthHeaders(token),
       );
 
       if (response.statusCode == 200) {
@@ -77,13 +71,11 @@ class AlbumDataSource {
   }
 
   /// Update album
-  Future<void> updateAlbum(String albumId, UpdateAlbumRequest request) async {
+  Future<void> updateAlbum(String albumId, UpdateAlbumRequest request, String token) async {
     try {
       final response = await client.put(
-        Uri.parse('${ApiConfig.apiBaseUrl}/albums/$albumId'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        Uri.parse(ApiConfig.albumById(albumId)),
+        headers: ApiConfig.getAuthHeaders(token),
         body: jsonEncode(request.toJson()),
       );
 
@@ -97,13 +89,11 @@ class AlbumDataSource {
   }
 
   /// Delete album
-  Future<void> deleteAlbum(String albumId) async {
+  Future<void> deleteAlbum(String albumId, String token) async {
     try {
       final response = await client.delete(
-        Uri.parse('${ApiConfig.apiBaseUrl}/albums/$albumId'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        Uri.parse(ApiConfig.albumById(albumId)),
+        headers: ApiConfig.getAuthHeaders(token),
       );
 
       if (response.statusCode != 200) {

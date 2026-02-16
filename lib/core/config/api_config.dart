@@ -30,9 +30,30 @@ class ApiConfig {
   static String get authChangePassword => '$apiBackendUrl/auth/change-password';
   static String get authDeleteUser => '$apiBackendUrl/auth/user';
   
+  // Learning Path endpoints
   static String get learningPaths => '$apiBackendUrl/learningpaths';
-  static String get reflection => '$apiBackendUrl/reflection';
   
+  // Reflection endpoints
+  static String get reflections => '$apiBackendUrl/reflections';
+  static String reflectionById(String reflectId) => '$apiBackendUrl/reflections/$reflectId';
+  
+  // Album endpoints
+  static String get albums => '$apiBackendUrl/albums';
+  static String albumById(String albumId) => '$apiBackendUrl/albums/$albumId';
+  static String albumsByUserId(String userId) => '$apiBackendUrl/albums?user_id=$userId';
+  
+  // Tree endpoints
+  static String get trees => '$apiBackendUrl/trees';
+  static String treeById(String treeId) => '$apiBackendUrl/trees/$treeId';
+  static String treesByAlbumId(String albumId) => '$apiBackendUrl/trees?album_id=$albumId';
+  static String pauseTree(String treeId) => '$apiBackendUrl/trees/$treeId/pause';
+  
+  // Tree Node endpoints
+  static String get treeNodes => '$apiBackendUrl/tree-nodes';
+  static String treeNodeById(String treeNodeId) => '$apiBackendUrl/tree-nodes/$treeNodeId';
+  static String treeNodesByTreeId(String treeId) => '$apiBackendUrl/tree-nodes?tree_id=$treeId';
+  
+  // AI endpoints
   static String get aiSearch => '$apiAIUrl/learningpaths/search';
   static String get aiRecommendation => '$apiAIUrl/recommendation';
   

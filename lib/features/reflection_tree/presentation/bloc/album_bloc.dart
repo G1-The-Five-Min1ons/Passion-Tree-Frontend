@@ -1,7 +1,18 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/usecases/album_usecases.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
+
+enum AlbumOperationType { created, updated, deleted }
+
+class AlbumOperationResult {
+  final AlbumOperationType type;
+  final Album? album;
+
+  AlbumOperationResult(this.type, {this.album});
+}
 
 class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
   final GetAlbumsByUserIdUseCase getAlbumsByUserId;
@@ -9,6 +20,9 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
   final CreateAlbumUseCase createAlbum;
   final UpdateAlbumUseCase updateAlbum;
   final DeleteAlbumUseCase deleteAlbum;
+
+  final _albumOperationController = StreamController<AlbumOperationResult>.broadcast();
+  Stream<AlbumOperationResult> get albumOperationStream => _albumOperationController.stream;
 
   AlbumBloc({
     required this.getAlbumsByUserId,
@@ -34,7 +48,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
       final albums = await getAlbumsByUserId(event.userId);
       emit(AlbumsLoaded(albums));
     } catch (e) {
-      emit(AlbumsLoaded([]));
+      emit(AlbumError('Failed to load albums: ${e.toString()}'));
     }
   }
 
@@ -68,7 +82,10 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         albumName: event.albumName,
         coverImageUrl: event.coverImageUrl,
       );
-      emit(AlbumCreated(album));
+      
+      _albumOperationController.add(
+        AlbumOperationResult(AlbumOperationType.created, album: album),
+      );
       
       final albums = await getAlbumsByUserId(event.userId);
       emit(AlbumsLoaded(albums));
@@ -94,7 +111,13 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         albumName: event.albumName,
         coverImageUrl: event.coverImageUrl,
       );
-      emit(AlbumUpdated());
+      
+      _albumOperationController.add(
+        AlbumOperationResult(AlbumOperationType.updated),
+      );
+      
+      final album = await getAlbumById(event.albumId);
+      emit(AlbumDetailLoaded(album));
     } catch (e) {
       emit(AlbumError('Failed to update album: ${e.toString()}'));
     }
@@ -113,7 +136,18 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
 
     try {
       await deleteAlbum(event.albumId);
-      emit(AlbumDeleted());
+      
+      _albumOperationController.add(
+        AlbumOperationResult(AlbumOperationType.deleted),
+      );
+      
+      if (state is AlbumsLoaded) {
+        final currentState = state as AlbumsLoaded;
+        final updatedAlbums = currentState.albums
+            .where((album) => album.id != event.albumId)
+            .toList();
+        emit(AlbumsLoaded(updatedAlbums));
+      }
     } catch (e) {
       emit(AlbumError('Failed to delete album: ${e.toString()}'));
     }
@@ -127,7 +161,13 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
       final albums = await getAlbumsByUserId(event.userId);
       emit(AlbumsLoaded(albums));
     } catch (e) {
-      emit(AlbumsLoaded([]));
+      emit(AlbumError('Failed to refresh albums: ${e.toString()}'));
     }
+  }
+
+  @override
+  Future<void> close() {
+    _albumOperationController.close();
+    return super.close();
   }
 }

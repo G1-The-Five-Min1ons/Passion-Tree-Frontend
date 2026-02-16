@@ -23,8 +23,12 @@ class AlbumApiModel {
       albumName: json['album_name'] ?? '',
       treeCount: json['tree_count'] ?? 0,
       coverImageUrl: json['cover_image_url'] ?? '',
-      createdAt: DateTime.parse(json['create_at'] ?? DateTime.now().toIso8601String()),
-      lastEdit: DateTime.parse(json['last_edit'] ?? DateTime.now().toIso8601String()),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      lastEdit: json['last_edit'] != null
+          ? DateTime.parse(json['last_edit'])
+          : DateTime.now(),
       userId: json['user_id'] ?? '',
     );
   }
@@ -35,7 +39,7 @@ class AlbumApiModel {
       'album_name': albumName,
       'tree_count': treeCount,
       'cover_image_url': coverImageUrl,
-      'create_at': createdAt.toIso8601String(),
+      'created_at': createdAt.toIso8601String(),
       'last_edit': lastEdit.toIso8601String(),
       'user_id': userId,
     };
