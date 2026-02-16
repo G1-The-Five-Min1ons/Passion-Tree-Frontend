@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:passion_tree_frontend/core/config/api_config.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/auth_models.dart';
@@ -39,9 +40,9 @@ class AuthApiService {
   }
 
   Future<LoginResponse> login(LoginRequest request) async {
-    print('================================');
-    print('[API] POST ${ApiConfig.authLogin}');
-    print('[API] Request body: ${jsonEncode(request.toJson())}');
+    debugPrint('================================');
+    debugPrint('[API] POST ${ApiConfig.authLogin}');
+    debugPrint('[API] Request body: ${jsonEncode(request.toJson())}');
     
     try {
       final response = await _client.post(
@@ -50,14 +51,14 @@ class AuthApiService {
         body: jsonEncode(request.toJson()),
       ).timeout(ApiConfig.connectionTimeout);
       
-      print('[API] Response status: ${response.statusCode}');
-      print('[API] Response body: ${response.body}');
+      debugPrint('[API] Response status: ${response.statusCode}');
+      debugPrint('[API] Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         final loginResponse = LoginResponse.fromJson(jsonData);
-        print('[LOGIN] Login successful');
-        print('[LOGIN] Token received: ${loginResponse.token.substring(0, 20)}...');
+        debugPrint('[LOGIN] Login successful');
+        debugPrint('[LOGIN] Token received: ${loginResponse.token.substring(0, 20)}...');
         return loginResponse;
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -71,8 +72,8 @@ class AuthApiService {
       }
     } catch (e) {
       if (e is AuthException) rethrow;
-      print('[API] Network error: $e');
-      print('[API] Error type: ${e.runtimeType}');
+      debugPrint('[API] Network error: $e');
+      debugPrint('[API] Error type: ${e.runtimeType}');
       throw AuthException(
         message: 'Network error: Unable to connect to server',
         statusCode: 0,

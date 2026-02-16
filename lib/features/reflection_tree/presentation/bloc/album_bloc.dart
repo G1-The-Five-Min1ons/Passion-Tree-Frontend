@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
@@ -83,6 +84,10 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         coverImageUrl: event.coverImageUrl,
       );
       
+      debugPrint('[AlbumBloc] Album created successfully!');
+      debugPrint(' Album ID: ${album.id}');
+      debugPrint('Album Title: ${album.title}');
+      
       _albumOperationController.add(
         AlbumOperationResult(AlbumOperationType.created, album: album),
       );
@@ -90,6 +95,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
       final albums = await getAlbumsByUserId(event.userId);
       emit(AlbumsLoaded(albums));
     } catch (e) {
+      debugPrint('[AlbumBloc] Failed to create album: $e');
       emit(AlbumError('Failed to create album: ${e.toString()}'));
     }
   }

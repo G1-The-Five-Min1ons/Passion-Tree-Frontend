@@ -11,20 +11,29 @@ class AlbumDataSource {
   /// Create a new album
   Future<AlbumApiModel> createAlbum(CreateAlbumRequest request, String token) async {
     try {
+      final url = Uri.parse(ApiConfig.albums);
+      print('[AlbumDataSource] POST $url');
+      print('Request body: ${jsonEncode(request.toJson())}');
+      
       final response = await client.post(
-        Uri.parse(ApiConfig.albums),
+        url,
         headers: ApiConfig.getAuthHeaders(token),
         body: jsonEncode(request.toJson()),
       );
 
+      print('[AlbumDataSource] Response status: ${response.statusCode}');
+      
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
+        print('[AlbumDataSource] Album created successfully (Status: 201)');
         return AlbumApiModel.fromJson(data['data']['album']);
       } else {
         final error = jsonDecode(response.body);
+        print('[AlbumDataSource] Error: ${error['message']}');
         throw Exception(error['message'] ?? 'Failed to create album');
       }
     } catch (e) {
+      print('[AlbumDataSource] Exception: $e');
       throw Exception('Failed to create album: $e');
     }
   }

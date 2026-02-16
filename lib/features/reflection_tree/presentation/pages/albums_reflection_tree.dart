@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
@@ -39,17 +40,26 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
         switch (result.type) {
           case AlbumOperationType.created:
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Album created successfully!')),
+              SnackBar(
+                content: const Text('Album created successfully'),
+                backgroundColor: AppColors.status,
+              ),
             );
             break;
           case AlbumOperationType.updated:
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Album updated successfully!')),
+              SnackBar(
+                content: const Text('Album updated successfully'),
+                backgroundColor: AppColors.status,
+              ),
             );
             break;
           case AlbumOperationType.deleted:
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Album deleted successfully!')),
+              SnackBar(
+                content: const Text('Album deleted successfully'),
+                backgroundColor: AppColors.status,
+              ),
             );
             break;
         }
@@ -69,17 +79,9 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
       appBar: const AppBarWidget(title: 'Reflection Tree', showBackButton: false),
       body: BlocConsumer<AlbumBloc, AlbumState>(
         listener: (context, state) {
-          if (state is AlbumsLoaded && state.message != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              //ดูดีไซน์
-              SnackBar(content: Text(state.message!)),
-            );
-          }
-          
           if (state is AlbumError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                //เดี่ยวมาแก้ design
                 content: Text(state.message),
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/save_cancel.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
@@ -31,12 +32,16 @@ class CreatePopUp extends StatefulWidget {
     String hint = 'Album Name',
     }
   ) {
+    final albumBloc = BlocProvider.of<AlbumBloc>(context);
     return showDialog<bool>(
       context: context,
-      builder: (context) => CreatePopUp(
-        title: title,
-        hint: hint,
-        userId: userId,
+      builder: (dialogContext) => BlocProvider.value(
+        value: albumBloc,
+        child: CreatePopUp(
+          title: title,
+          hint: hint,
+          userId: userId,
+        ),
       ),
     );
   }
@@ -49,12 +54,20 @@ class _CreatePopUpState extends State<CreatePopUp> {
   
   File? _selectedImage;
   String? _selectedImagePath;
-  bool _isLoading = false;
+  final  bool _isLoading = false;
+  String? _albumNameError;
   
   @override
   void dispose() {
     _albumNameController.dispose();
     super.dispose();
+  }
+
+  String? _validateAlbumName(String value) {
+    if (value.isEmpty) {
+      return 'Album name is required';
+    }
+    return null;
   }
 
   Future<void> _pickImage() async {
@@ -81,10 +94,14 @@ class _CreatePopUpState extends State<CreatePopUp> {
   }
 
   void _createAlbum() {
-    if (_albumNameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter album name')),
-      );
+    final albumName = _albumNameController.text.trim();
+    final error = _validateAlbumName(albumName);
+    
+    setState(() {
+      _albumNameError = error;
+    });
+    
+    if (error != null) {
       return;
     }
 
@@ -94,7 +111,7 @@ class _CreatePopUpState extends State<CreatePopUp> {
     context.read<AlbumBloc>().add(
       CreateAlbumEvent(
         userId: widget.userId,
-        albumName: _albumNameController.text.trim(),
+        albumName: albumName,
         coverImageUrl: coverImageUrl,
       ),
     );
@@ -169,10 +186,30 @@ class _CreatePopUpState extends State<CreatePopUp> {
 
             const SizedBox(height: 18),
 
-            PixelTextField(
-              controller: _albumNameController,
-              hintText: widget.hint,
-              height: 38,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                PixelTextField(
+                  controller: _albumNameController,
+                  hintText: widget.hint,
+                  height: 38,
+                  onChanged: (value) {
+                    setState(() {
+                      _albumNameError = _validateAlbumName(value.trim());
+                    });
+                  },
+                ),
+                if (_albumNameError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12, top: 4),
+                    child: Text(
+                      _albumNameError!,
+                      style: AppTypography.bodyRegular.copyWith(
+                        color: AppColors.cancel,
+                      ),
+                    ),
+                  ),
+              ],
             ),
 
             const SizedBox(height: 24),
