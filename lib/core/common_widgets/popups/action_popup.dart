@@ -57,9 +57,7 @@ class ActionPopUp extends StatelessWidget {
                   
                   DeletePopUp.show(
                     context,
-                    onDelete: () {
-                      //รอใส่ logic
-                    },
+                    onDelete: onDelete,
                   );
                 },
               ),

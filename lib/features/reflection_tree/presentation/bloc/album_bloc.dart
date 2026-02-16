@@ -133,8 +133,10 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     DeleteAlbumEvent event,
     Emitter<AlbumState> emit,
   ) async {
+    List<Album>? currentAlbums;
+    
     if (state is AlbumsLoaded) {
-      final currentAlbums = (state as AlbumsLoaded).albums;
+      currentAlbums = (state as AlbumsLoaded).albums;
       emit(AlbumOperationLoading(currentAlbums: currentAlbums));
     } else {
       emit(AlbumLoading());
@@ -147,9 +149,8 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         AlbumOperationResult(AlbumOperationType.deleted),
       );
       
-      if (state is AlbumsLoaded) {
-        final currentState = state as AlbumsLoaded;
-        final updatedAlbums = currentState.albums
+      if (currentAlbums != null) {
+        final updatedAlbums = currentAlbums
             .where((album) => album.id != event.albumId)
             .toList();
         emit(AlbumsLoaded(updatedAlbums));

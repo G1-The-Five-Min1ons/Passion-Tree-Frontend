@@ -7,7 +7,7 @@ class AlbumMapper {
     return Album(
       id: apiModel.albumId,
       title: apiModel.albumName,
-      subtitle: _formatSubtitle(apiModel.treeCount, apiModel.lastEdit),
+      subtitle: _formatSubtitle(apiModel.lastEdit),
       image: apiModel.coverImageUrl,
       items: items,
     );
@@ -19,7 +19,7 @@ class AlbumMapper {
   }
 
   /// Format subtitle with tree count and last edit date
-  static String _formatSubtitle(int treeCount, DateTime lastEdit) {
+  static String _formatSubtitle(DateTime lastEdit) {
     final relativeTime = _getRelativeTime(lastEdit);
     return 'Edited $relativeTime';
   }
