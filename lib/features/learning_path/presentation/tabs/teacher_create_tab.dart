@@ -1,4 +1,5 @@
-/*import 'package:flutter/material.dart';
+
+import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
@@ -11,13 +12,11 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 
 class TeacherCreateTab extends StatefulWidget {
-  final List<Course> inProgressCourses;
-  final List<Course> completedCourses;
+  final List<LearningPath> allPaths;
 
   const TeacherCreateTab({
     super.key,
-    required this.inProgressCourses,
-    required this.completedCourses,
+    required this.allPaths,
   });
 
   @override
@@ -32,8 +31,14 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
   Widget build(BuildContext context) {
 
     final colors = Theme.of(context).colorScheme;
-    final inProgressCourses = widget.inProgressCourses;
-    final completedCourses = widget.completedCourses;
+    
+    // Filter paths by publishStatus
+    final inProgressCourses = widget.allPaths
+        .where((path) => path.publishStatus == "Draft")
+        .toList();
+    final completedCourses = widget.allPaths
+        .where((path) => path.publishStatus == "Published")
+        .toList();
   
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +203,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
             },
           ),
 
-        if (inProgressShown < inProgressCourses.length)
+        if (completedShown < completedCourses.length)
           Padding(
             padding: const EdgeInsets.only(top: 40),
             child: Center(
@@ -216,7 +221,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                     direction: NavigationDirection.down,
                     onPressed: () {
                       setState(() {
-                        inProgressShown += 2;
+                        completedShown += 2;
                       });
                     },
                   ),
@@ -229,4 +234,3 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     );
   }
 }
-*/

@@ -1,15 +1,18 @@
-/*
+
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_progress_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 
 
 class TeacherLearningTab extends StatefulWidget {
+  final List<LearningPath> allPaths;
+  final List<EnrolledLearningPath> enrolledPaths;
   final String searchQuery;
   final String? selectedCategory;
   final RangeValues? ratingRange;
@@ -20,6 +23,8 @@ class TeacherLearningTab extends StatefulWidget {
 
   const TeacherLearningTab({
     super.key,
+    required this.allPaths,
+    required this.enrolledPaths,
     required this.searchQuery,
     this.selectedCategory,
     this.ratingRange,
@@ -34,7 +39,7 @@ class TeacherLearningTab extends StatefulWidget {
 class _TeacherLearningTabState extends State<TeacherLearningTab> {
   int _allListShownCount = 4;
 
-  List<Course> _filterCourses(List<Course> courses) {
+  List<LearningPath> _filterCourses(List<LearningPath> courses) {
     return courses.where((c) {
       final query = widget.searchQuery.trim().toLowerCase();
 
@@ -44,9 +49,27 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
           c.description.toLowerCase().contains(query) ||
           c.instructor.toLowerCase().contains(query);
 
-      final matchesCategory =
-          widget.selectedCategory == null ||
-          c.category == widget.selectedCategory;
+      final matchesRating =
+          widget.ratingRange == null ||
+          (c.rating >= widget.ratingRange!.start &&
+              c.rating <= widget.ratingRange!.end);
+
+      final matchesModules =
+          widget.maxModules == null || c.modules <= widget.maxModules!;
+
+      return matchesSearch && matchesRating && matchesModules;
+    }).toList();
+  }
+
+  List<EnrolledLearningPath> _filterEnrolledCourses(List<EnrolledLearningPath> courses) {
+    return courses.where((c) {
+      final query = widget.searchQuery.trim().toLowerCase();
+
+      final matchesSearch =
+          query.isEmpty ||
+          c.title.toLowerCase().contains(query) ||
+          c.description.toLowerCase().contains(query) ||
+          c.instructor.toLowerCase().contains(query);
 
       final matchesRating =
           widget.ratingRange == null ||
@@ -56,10 +79,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
       final matchesModules =
           widget.maxModules == null || c.modules <= widget.maxModules!;
 
-      return matchesSearch &&
-          matchesCategory &&
-          matchesRating &&
-          matchesModules;
+      return matchesSearch && matchesRating && matchesModules;
     }).toList();
   }
 
@@ -67,8 +87,8 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    final filteredPopular = _filterCourses(popularCourses);
-    final filteredAll = _filterCourses(allCourses);
+    final filteredAll = _filterCourses(widget.allPaths);
+    final filteredEnrolled = _filterEnrolledCourses(widget.enrolledPaths);
     final shownAllCourses = filteredAll.take(_allListShownCount).toList();
 
     return Column(
@@ -96,22 +116,31 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
         const SizedBox(height: 40),
 
         // ===== MY LEARNING PATHS =====
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: filteredPopular.length < 2 ? filteredPopular.length : 2,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 35,
-            crossAxisSpacing: 12,
-            childAspectRatio:
-                BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
+        if (filteredEnrolled.isEmpty)
+          Center(
+            child: Text(
+              'No enrolled paths found',
+              style: AppTypography.subtitleSemiBold.copyWith(
+                color: colors.onPrimary,
+              ),
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: filteredEnrolled.length < 2 ? filteredEnrolled.length : 2,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 35,
+              crossAxisSpacing: 12,
+              childAspectRatio:
+                  BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
+            ),
+            itemBuilder: (context, index) {
+              return CourseProgressCard(data: filteredEnrolled[index]);
+            },
           ),
-
-          itemBuilder: (context, index) {
-            return PixelCourseCard(course: filteredPopular[index]);
-          },
-        ),
 
         // ===== RECOMMENDED =====
         const SizedBox(height: 60),
@@ -122,15 +151,24 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
         const SizedBox(height: 40),
 
         SizedBox(
-           height: BaseCourseCard.defaultHeight,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: filteredPopular.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              return PixelCourseCard(course: filteredPopular[index]);
-            },
-          ),
+          height: BaseCourseCard.defaultHeight,
+          child: filteredAll.isEmpty
+              ? Center(
+                  child: Text(
+                    'No recommended paths found',
+                    style: AppTypography.subtitleSemiBold.copyWith(
+                      color: colors.onPrimary,
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: filteredAll.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    return PixelCourseCard(course: filteredAll[index]);
+                  },
+                ),
         ),
 
         // ===== ALL LEARNING PATHS =====
@@ -141,21 +179,31 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
         ),
         const SizedBox(height: 40),
 
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: shownAllCourses.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 35,
-            crossAxisSpacing: 12,
-            childAspectRatio:
-                BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
+        if (shownAllCourses.isEmpty)
+          Center(
+            child: Text(
+              'No learning paths found',
+              style: AppTypography.subtitleSemiBold.copyWith(
+                color: colors.onPrimary,
+              ),
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: shownAllCourses.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 35,
+              crossAxisSpacing: 12,
+              childAspectRatio:
+                  BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
+            ),
+            itemBuilder: (context, index) {
+              return PixelCourseCard(course: shownAllCourses[index]);
+            },
           ),
-          itemBuilder: (context, index) {
-            return PixelCourseCard(course: shownAllCourses[index]);
-          },
-        ),
 
         const SizedBox(height: 40),
 
@@ -183,10 +231,9 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
           ),
         ),
 
-
         const SizedBox(height: 40),
       ],
     );
   }
 }
-*/
+

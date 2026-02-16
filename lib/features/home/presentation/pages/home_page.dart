@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/t_learning_path_overview_login_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_login_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/t_learning_path_wrapper.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -70,7 +70,7 @@ class HomePage extends StatelessWidget {
               */
                 const SizedBox(height: 60),
               // ไปLPครู ที่เรียนแล้ว
-              /*
+              
               Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -88,14 +88,14 @@ class HomePage extends StatelessWidget {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) =>
-                            const TeacherLearningPathOverviewPage(),
+                            const TeacherLearningPathWrapper(),
                       ),
                     );
                   },
                   child: const Text('T_LearningPathOverviewPage'),
                 ),
               ),
-            */
+            
             ],
           ),
         ),

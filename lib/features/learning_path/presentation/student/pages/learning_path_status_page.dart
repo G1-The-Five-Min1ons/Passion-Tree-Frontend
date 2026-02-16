@@ -9,7 +9,6 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 
 class LearningPathStatusPage extends StatefulWidget {
@@ -25,15 +24,9 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
   int inProgressShown = 2;
   int completedShown = 2;
 
-  static const String mockUserId = "3f9b2c6d-8288-4647-8d33-33d96e1a82b3";
-
   @override
   void initState() {
     super.initState();
-
-    context.read<LearningPathBloc>().add(
-      FetchLearningPathStatus(userId: mockUserId),
-    );
 
     _searchController.addListener(() {
       setState(() {});
@@ -70,8 +63,12 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is LearningPathStatusLoaded) {
-              final filtered = _filterPaths(state.paths);
+            // Accept both states: from overview page or direct fetch
+            if (state is LearningPathOverviewLoaded || state is LearningPathStatusLoaded) {
+              final enrolledPaths = state is LearningPathOverviewLoaded 
+                  ? state.enrolledPaths 
+                  : (state as LearningPathStatusLoaded).paths;
+              final filtered = _filterPaths(enrolledPaths);
 
               // คอร์สที่กำลังเรียนอยู่ (In Progress)
               final inProgress = filtered
