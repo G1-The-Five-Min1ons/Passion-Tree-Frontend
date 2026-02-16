@@ -89,7 +89,7 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
               crossAxisCount: 2,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
-              childAspectRatio: 0.643, // 180/280 สำหรับ progress card
+              childAspectRatio: 0.692, // 180/260 สำหรับ progress card
             ),
             itemBuilder: (context, index) {
               return CourseProgressCard(data: inProgressCourses[index]);
@@ -173,7 +173,7 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
               crossAxisCount: 2,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
-              childAspectRatio: 0.643, // 180/280 สำหรับ progress card
+              childAspectRatio: 0.692, // 180/260 สำหรับ progress card
             ),
             itemBuilder: (context, index) {
               return CourseProgressCard(data: completedCourses[index]);

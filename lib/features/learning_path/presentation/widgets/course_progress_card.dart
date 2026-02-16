@@ -19,12 +19,12 @@ class CourseProgressCard extends StatelessWidget {
     final percent = data.progressPercent.round();
 
     return BaseCourseCard(
-      height: 280, // เพิ่มความสูงสำหรับ progress card (จาก default 240)
+      height: 260, // เพิ่มความสูงสำหรับ progress card (จาก default 240)
       child: Column(
         children: [
           // ================= IMAGE =================
           SizedBox(
-            height: 75, // ลดจาก 90 เพื่อให้มีพื้นที่สำหรับเนื้อหาข้างล่างมากขึ้น
+            height: 90,
             width: double.infinity,
             child: Stack(
               children: [
