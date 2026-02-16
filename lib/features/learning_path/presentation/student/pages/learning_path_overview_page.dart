@@ -16,7 +16,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc_provider.dart';
+
 class LearningPathOverviewPage extends StatefulWidget {
   const LearningPathOverviewPage({super.key});
 

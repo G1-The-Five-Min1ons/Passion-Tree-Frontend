@@ -1,16 +1,22 @@
-/*
+
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/learning_course_content.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/student_nodes_overview.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/node_comments_section.dart';
 
 class LearningCoursePage extends StatelessWidget {
-  final Course course; 
+  final LearningPath course;
+  final EnrolledLearningPath? enrolledPath;
 
-  const LearningCoursePage({super.key, required this.course});
+  const LearningCoursePage({
+    super.key,
+    required this.course,
+    this.enrolledPath,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +36,8 @@ class LearningCoursePage extends StatelessWidget {
               children: [
                 /// ===== COURSE CONTENT =====
                 LearningCourseContent(
-                  title: course.title,
-                  description: course.description,
+                  title: enrolledPath?.title ?? course.title,
+                  description: enrolledPath?.description ?? course.description,
                   onStartJourney: () {
                     Navigator.push(
                       context,
@@ -56,4 +62,3 @@ class LearningCoursePage extends StatelessWidget {
     );
   }
 }
-*/

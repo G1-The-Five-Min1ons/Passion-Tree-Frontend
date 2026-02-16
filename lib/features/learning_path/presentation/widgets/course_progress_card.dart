@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
 
 class CourseProgressCard extends StatelessWidget {
   final EnrolledLearningPath data;
@@ -18,7 +20,33 @@ class CourseProgressCard extends StatelessWidget {
     final progress = (data.progressPercent / 100).clamp(0.0, 1.0);
     final percent = data.progressPercent.round();
 
-    return BaseCourseCard(
+    // Convert EnrolledLearningPath to LearningPath for navigation
+    final course = LearningPath(
+      id: data.pathId,
+      title: data.title,
+      description: data.description,
+      coverImageUrl: data.coverImgUrl,
+      rating: data.rating,
+      publishStatus: 'Published',
+      instructor: data.instructor,
+      students: 0, // Not available in EnrolledLearningPath
+      modules: data.modules,
+    );
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LearningCoursePage(
+              course: course,
+              enrolledPath: data,
+            ),
+          ),
+        );
+      },
+      child: BaseCourseCard(
       height: 260, // เพิ่มความสูงสำหรับ progress card (จาก default 240)
       child: Column(
         children: [
@@ -180,6 +208,7 @@ class CourseProgressCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

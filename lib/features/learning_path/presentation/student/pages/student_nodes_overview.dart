@@ -1,14 +1,13 @@
-/*
-import 'package:flutter/material.dart';import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_header.dart';
 
+import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_header.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_core.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_node.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 
-
 class StudentNodesOverviewPage extends StatelessWidget {
-  final Course course;
+  final LearningPath course;
 
   const StudentNodesOverviewPage({
     super.key,
@@ -57,4 +56,3 @@ class StudentNodesOverviewPage extends StatelessWidget {
     );
   }
 }
-*/
