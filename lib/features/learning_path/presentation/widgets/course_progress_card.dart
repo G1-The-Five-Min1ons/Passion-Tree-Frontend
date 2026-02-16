@@ -19,11 +19,12 @@ class CourseProgressCard extends StatelessWidget {
     final percent = data.progressPercent.round();
 
     return BaseCourseCard(
+      height: 280, // เพิ่มความสูงสำหรับ progress card (จาก default 240)
       child: Column(
         children: [
           // ================= IMAGE =================
           SizedBox(
-            height: 90,
+            height: 75, // ลดจาก 90 เพื่อให้มีพื้นที่สำหรับเนื้อหาข้างล่างมากขึ้น
             width: double.infinity,
             child: Stack(
               children: [
@@ -114,14 +115,14 @@ class CourseProgressCard extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 3), // ลด spacing
 
                   Text(
                     'สอนโดย ${data.instructor}',
                     style: AppTypography.smallBodyMedium,
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6), // ลด spacing
 
                   Text(
                     data.description,
@@ -130,7 +131,7 @@ class CourseProgressCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8), // ลด spacing
 
                   // ================= PROGRESS HEADER =================
                   Row(
@@ -165,7 +166,7 @@ class CourseProgressCard extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4), // ลด spacing
 
                   // ================= MODULE INFO =================
                   Text(

@@ -144,9 +144,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                                 crossAxisCount: 2,
                                 mainAxisSpacing: 35,
                                 crossAxisSpacing: 12,
-                                childAspectRatio:
-                                    BaseCourseCard.defaultWidth /
-                                    BaseCourseCard.defaultHeight,
+                                childAspectRatio: 0.643, // 180/280 สำหรับ progress card
                               ),
                           itemBuilder: (context, index) {
                             return CourseProgressCard(
@@ -205,9 +203,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                                 maxCrossAxisExtent: 220,
                                 mainAxisSpacing: 35,
                                 crossAxisSpacing: 12,
-                                childAspectRatio:
-                                    BaseCourseCard.defaultWidth /
-                                    BaseCourseCard.defaultHeight,
+                                childAspectRatio: 0.643, // 180/280 สำหรับ progress card
                               ),
                           itemBuilder: (context, index) {
                             return CourseProgressCard(data: completed[index]);
