@@ -36,13 +36,25 @@ class PixelCourseCard extends StatelessWidget {
                     child: Image.network(
                       course.coverImageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) {
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
                         return Container(
                           color: colors.primary.withValues(alpha: 0.15),
                           alignment: Alignment.center,
-                          child: Text(
-                            'NO IMAGE',
-                            style: AppPixelTypography.smallTitle,
+                          child: Icon(
+                            Icons.broken_image,
+                            size: 50,
+                            color: colors.onPrimary.withValues(alpha: 0.5),
                           ),
                         );
                       },
