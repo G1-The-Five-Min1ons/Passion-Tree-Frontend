@@ -94,7 +94,6 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
             itemBuilder: (context, index) {
               return CourseProgressCard(
                 data: inProgressCourses[index],
-                isTeacher: true,
               );
             },
           ),
@@ -181,7 +180,6 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
             itemBuilder: (context, index) {
               return CourseProgressCard(
                 data: completedCourses[index],
-                isTeacher: true,
               );
             },
           ),

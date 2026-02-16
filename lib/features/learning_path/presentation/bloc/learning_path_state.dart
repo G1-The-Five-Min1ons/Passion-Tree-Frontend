@@ -36,6 +36,12 @@ class NodesLoaded extends LearningPathState {
   NodesLoaded(this.nodes);
 }
 
+class NodeDetailLoaded extends LearningPathState {
+  final NodeDetail nodeDetail;
+
+  NodeDetailLoaded(this.nodeDetail);
+}
+
 class LearningPathError extends LearningPathState {
   final String message;
 

@@ -16,3 +16,8 @@ class FetchNodesForPath extends LearningPathEvent {
   final String pathId;
   FetchNodesForPath({required this.pathId});
 }
+
+class FetchNodeDetail extends LearningPathEvent {
+  final String nodeId;
+  FetchNodeDetail({required this.nodeId});
+}

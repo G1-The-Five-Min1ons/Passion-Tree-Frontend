@@ -4,11 +4,12 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/material.dart' as lp;
 
 class LearningNodeContent extends StatelessWidget {
   final String title;
   final String description;
-  final List<String> materials;
+  final List<lp.Material> materials;
   final VoidCallback onTakeQuiz;
 
   const LearningNodeContent({
@@ -98,13 +99,25 @@ class LearningNodeContent extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               ...materials.map(
-                (file) => Padding(
+                (material) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    file,
-                    style: AppTypography.subtitleSemiBold.copyWith(
-                      color: colors.onSurface,
-                    ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.attach_file,
+                        size: 16,
+                        color: colors.onSurface,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${material.type}: ${material.url}',
+                          style: AppTypography.subtitleSemiBold.copyWith(
+                            color: colors.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

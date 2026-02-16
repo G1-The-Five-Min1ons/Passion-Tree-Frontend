@@ -28,12 +28,15 @@ class StudentNodesOverviewPage extends StatelessWidget {
             NodesOverviewCore(
               isEditable: false,
               onNodeTap: (index) {
+                
+                // For now using mock nodeId - replace with actual node data
+                final mockNodeId = 'BC0FD57E-E300-468D-9393-016C40C871E1';
+                
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => LearningNodePage(
-                      courseId: course.id,
-                      
+                      nodeId: mockNodeId,
                     ),
                   ),
                 );

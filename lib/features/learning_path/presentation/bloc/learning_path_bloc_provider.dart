@@ -5,6 +5,7 @@ import 'package:passion_tree_frontend/features/learning_path/data/repositories/l
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_status.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/nodes_for_path_usecases.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_node_detail.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 
 class LearningPathBlocProvider extends StatelessWidget {
@@ -20,12 +21,14 @@ class LearningPathBlocProvider extends StatelessWidget {
     final getAllLearningPaths = GetAllLearningPaths(repository);
     final getLearningPathStatus = GetLearningPathStatus(repository);
     final getNodesForPath = GetNodesForPath(repository);
+    final getNodeDetail = GetNodeDetail(repository);
 
     return BlocProvider(
       create: (_) => LearningPathBloc(
         getAllLearningPaths,
         getLearningPathStatus,
         getNodesForPath,
+        getNodeDetail,
       ),
       child: child,
     );

@@ -10,13 +10,11 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 
 class LearningNodePage extends StatefulWidget {
-  final String courseId;
-  final String? nodeId;
+  final String nodeId;
 
   const LearningNodePage({
     super.key,
-    required this.courseId,
-    this.nodeId,
+    required this.nodeId,
   });
 
   @override
@@ -27,9 +25,9 @@ class _LearningNodePageState extends State<LearningNodePage> {
   @override
   void initState() {
     super.initState();
-    // Fetch nodes when page loads
+    // Fetch node detail when page loads
     context.read<LearningPathBloc>().add(
-          FetchNodesForPath(pathId: widget.courseId),
+          FetchNodeDetail(nodeId: widget.nodeId),
         );
   }
 
@@ -50,22 +48,8 @@ class _LearningNodePageState extends State<LearningNodePage> {
               );
             }
 
-            if (state is NodesLoaded) {
-              final nodes = state.nodes;
-              
-              if (nodes.isEmpty) {
-                return const Center(
-                  child: Text('No nodes found for this learning path'),
-                );
-              }
-
-              // Get first node or specific node by nodeId
-              final currentNode = widget.nodeId != null
-                  ? nodes.firstWhere(
-                      (n) => n.nodeId == widget.nodeId,
-                      orElse: () => nodes.first,
-                    )
-                  : nodes.first;
+            if (state is NodeDetailLoaded) {
+              final nodeDetail = state.nodeDetail;
 
               return SingleChildScrollView(
                 child: Padding(
@@ -80,9 +64,9 @@ class _LearningNodePageState extends State<LearningNodePage> {
                     children: [
                       /// ===== NODE CONTENT =====
                       LearningNodeContent(
-                        title: currentNode.title,
-                        description: currentNode.description,
-                        materials: const [], // TODO: Add materials from backend
+                        title: nodeDetail.title,
+                        description: nodeDetail.description,
+                        materials: nodeDetail.materials,
                         onTakeQuiz: () {
                           Navigator.push(
                             context,

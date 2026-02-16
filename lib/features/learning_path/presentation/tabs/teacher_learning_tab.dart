@@ -139,7 +139,6 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
             itemBuilder: (context, index) {
               return CourseProgressCard(
                 data: filteredEnrolled[index],
-                isTeacher: true,
               );
             },
           ),
@@ -170,7 +169,6 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
                   itemBuilder: (context, index) {
                     return PixelCourseCard(
                       course: filteredAll[index],
-                      isTeacher: true,
                     );
                   },
                 ),
@@ -208,7 +206,6 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
             itemBuilder: (context, index) {
               return PixelCourseCard(
                 course: shownAllCourses[index],
-                isTeacher: true,
               );
             },
           ),

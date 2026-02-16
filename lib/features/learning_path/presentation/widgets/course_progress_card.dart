@@ -9,12 +9,10 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/studen
 
 class CourseProgressCard extends StatelessWidget {
   final EnrolledLearningPath data;
-  final bool isTeacher;
 
   const CourseProgressCard({
     super.key,
     required this.data,
-    this.isTeacher = false,
   });
 
   @override
@@ -47,7 +45,6 @@ class CourseProgressCard extends StatelessWidget {
             builder: (_) => LearningCoursePage(
               course: course,
               enrolledPath: data,
-              isTeacher: isTeacher,
             ),
           ),
         );

@@ -5,6 +5,7 @@ import 'package:passion_tree_frontend/features/learning_path/data/models/learnin
 import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_progress_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/enrolled_learning_path_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/learning_node_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/node_detail_api_model.dart';
 
 class LearningPathDataSource {
   final http.Client client;
@@ -96,5 +97,22 @@ class LearningPathDataSource {
     }
   }
 
+  Future<NodeDetailApiModel> getNodeDetail(String nodeId) async {
+    try {
+      final response = await client.get(
+        Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/nodes/$nodeId'),
+        headers: {'Content-Type': 'application/json'},
+      );
 
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return NodeDetailApiModel.fromJson(data['data']);
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception(error['message'] ?? 'Failed to get node detail');
+      }
+    } catch (e) {
+      throw Exception('Failed to fetch node detail: $e');
+    }
+  }
 }

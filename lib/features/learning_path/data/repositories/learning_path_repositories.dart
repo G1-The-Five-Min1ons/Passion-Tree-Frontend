@@ -8,6 +8,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/enr
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/enrolled_learning_path_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/learning_node_mapper.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/node_detail_mapper.dart';
 
 class LearningPathRepositoryImpl implements LearningPathRepository {
   final LearningPathDataSource dataSource;
@@ -42,5 +43,10 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
     return models.map((e) => e.toEntity()).toList();
   }
 
+  @override
+  Future<NodeDetail> getNodeDetail(String nodeId) async {
+    final model = await dataSource.getNodeDetail(nodeId);
+    return model.toEntity();
+  }
 }
 
