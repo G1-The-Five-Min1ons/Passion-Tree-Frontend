@@ -10,7 +10,12 @@ import 'package:passion_tree_frontend/core/common_widgets/popups/delete_popup.da
 
 
 class EditNodeModal extends StatefulWidget {
-  const EditNodeModal({super.key});
+  final String? initialTitle;
+
+  const EditNodeModal({
+    super.key,
+    this.initialTitle,
+  });
 
   @override
   State<EditNodeModal> createState() => _EditNodeModalState();
@@ -18,11 +23,25 @@ class EditNodeModal extends StatefulWidget {
 
 class _EditNodeModalState extends State<EditNodeModal> {
   // ===== STATE =====
-  String _title = '';
+  late TextEditingController _titleController;
   String _description = '';
   String _linkInput = '';
   final List<String> _links = []; //ส่วนเพิ่มlink
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
+
+  @override
+  void initState() {
+    super.initState();
+    // [เพิ่ม] กำหนดค่าเริ่มต้นให้ Controller
+    _titleController = TextEditingController(text: widget.initialTitle ?? '');
+  }
+
+  @override
+  void dispose() {
+    // [เพิ่ม] อย่าลืม dispose
+    _titleController.dispose();
+    super.dispose();
+  }
 
   // ===== LINK FUNCTIONS =====
   void _addLink() {
@@ -94,7 +113,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                   // ===== INFO + MATERIALS =====
                  NodeInfoSection(
                     // ===== NODE INFO =====
-                    onTitleChanged: (v) => _title = v,
+                    titleController: _titleController,
                     onDescriptionChanged: (v) => _description = v,
 
                     // ===== LINKS =====

@@ -278,7 +278,7 @@ class _CreateLearningPathInputPageState
                             debugPrint("✅ Path Created! ID: $pathId");
 
                             if (context.mounted) {
-                              Navigator.pop(context); // ปิด Loading
+                              Navigator.of(context, rootNavigator: true).pop(); // ปิด Loading
 
                               // --- STEP D: Go to Review Page (พาไปดูของ) ---
                               debugPrint("➡️ Navigating to Review Page...");
@@ -286,7 +286,8 @@ class _CreateLearningPathInputPageState
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => AINodeReviewPage(
-                                    pathId: pathId, // ส่ง ID บ้านไป
+                                    pathId: pathId,
+                                    objective: _objectives,
                                   ),
                                 ),
                               );

@@ -11,12 +11,13 @@ import 'package:passion_tree_frontend/features/learning_path/data/models/ai_gene
 import 'package:passion_tree_frontend/features/learning_path/data/services/learning_path_api_service.dart';
 
 class AINodeReviewPage extends StatefulWidget {
-  // [แก้ไข] รับแค่ pathId ก็พอ
   final String pathId;
+  final String objective;
 
   const AINodeReviewPage({
     super.key,
     required this.pathId,
+    required this.objective,
   });
 
   @override
@@ -26,49 +27,26 @@ class AINodeReviewPage extends StatefulWidget {
 class _AINodeReviewPageState extends State<AINodeReviewPage> {
   List<GeneratedNode> _nodes = [];
   bool _isLoading = true; // สถานะโหลด
-  String _objective = ''; // เก็บ objective ไว้ใช้ตอน regenerate
 
   @override
   void initState() {
     super.initState();
     // เริ่มต้นมา ให้โหลดข้อมูลทันที
-    _fetchAndGenerate();
-  }
-
-  // ฟังก์ชันหลัก: ดึงข้อมูล -> สร้าง AI
-  Future<void> _fetchAndGenerate() async {
-    try {
-      // 1. ดึงข้อมูล Path เพื่อเอา Objective
-      final pathData = await getLearningPathById(widget.pathId);
-      final objectiveFromApi = pathData['objective'] ?? ''; // ดึง field objective
-      
-      setState(() {
-        _objective = objectiveFromApi;
-      });
-
-      // 2. เรียก AI Generate โดยใช้ objective ที่ได้มา
-      await _generateNodesFromAI();
-
-    } catch (e) {
-      debugPrint('Error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading data: $e')),
-        );
-        setState(() => _isLoading = false);
-      }
-    }
+    _generateNodesFromAI();
   }
 
   // ฟังก์ชันแยกสำหรับเรียก AI (ใช้ซ้ำตอนกดปุ่ม Reload)
   Future<void> _generateNodesFromAI() async {
-    if (_objective.isEmpty) return;
+    if (widget.objective.isEmpty) {
+        setState(() => _isLoading = false); // [สำคัญ] ต้องสั่งหยุดหมุนด้วยถ้าไม่มีข้อมูล
+        return;
+    }
 
     setState(() => _isLoading = true); // หมุนติ้วๆ
 
     try {
       // เรียก service generatePathWithAI (อันเดิมที่มีอยู่แล้ว)
-      final aiResponse = await generatePathWithAI(_objective);
+      final aiResponse = await generatePathWithAI(widget.objective);
       
       setState(() {
         _nodes = aiResponse.nodes;
@@ -228,8 +206,10 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const TeacherNodesOverviewPage(
-                                    title: 'Nodes Overview'),
+                                builder: (_) => TeacherNodesOverviewPage(
+                                    title: 'Nodes Overview',
+                                    aiNodes: _nodes,
+                                  ),
                               ),
                             );
                           },

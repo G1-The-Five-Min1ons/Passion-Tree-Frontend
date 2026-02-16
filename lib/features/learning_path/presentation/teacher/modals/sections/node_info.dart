@@ -9,7 +9,9 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/uploaded_file.dart';
 class NodeInfoSection extends StatelessWidget {
 
-   final ValueChanged<String> onTitleChanged;
+  final TextEditingController? titleController;
+
+  final ValueChanged<String>? onTitleChanged;
   final ValueChanged<String> onDescriptionChanged;
 
   // Links
@@ -26,7 +28,8 @@ class NodeInfoSection extends StatelessWidget {
 
   const NodeInfoSection({
     super.key,
-    required this.onTitleChanged,
+    this.titleController,
+    this.onTitleChanged,
     required this.onDescriptionChanged,
     required this.onLinkChanged,
     required this.onAddLink,
@@ -51,6 +54,7 @@ class NodeInfoSection extends StatelessWidget {
           label: 'Node Title',
           hintText: 'Enter node title',
           height: 38,
+          controller: titleController,
           onChanged: onTitleChanged,
         ),
 

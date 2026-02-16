@@ -64,6 +64,14 @@ class _PixelTextFieldState extends State<PixelTextField> {
   }
 
   @override
+  void dispose() {
+    if (!_useExternalController) {
+      _controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   void didUpdateWidget(covariant PixelTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
 

@@ -8,18 +8,19 @@ import 'package:passion_tree_frontend/features/learning_path/data/mocks/learning
 
 class NodesOverviewCore extends StatelessWidget {
   final bool isEditable;
+  final int nodeCount;
   final Function(int index)? onNodeTap;
 
 
   const NodesOverviewCore({
     super.key,
     required this.isEditable,
+    this.nodeCount = 0,
     this.onNodeTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final nodeCount = mockLearningNodes.length;
     final canvasHeight = (nodeCount * 200.0) + 200.0;
 
     return Stack(
@@ -39,13 +40,13 @@ class NodesOverviewCore extends StatelessWidget {
                       itemCount: nodeCount,
                       canvasWidth: canvasWidth,
                       nodeBuilder: (index, pos) {
-                        final node = mockLearningNodes[index];
+
 
                         return Positioned(
                           left: pos.dx - 40,
                           top: pos.dy - 40,
                           child: NodeItem(
-                            imagePath: NodeAsset.image(node.state),
+                            imagePath: NodeAsset.image(.locked),
                             size: 80,
                             onTap: () {
                               if (onNodeTap != null) {
