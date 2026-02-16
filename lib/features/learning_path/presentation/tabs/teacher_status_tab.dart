@@ -92,7 +92,10 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
               childAspectRatio: 0.692, // 180/260 สำหรับ progress card
             ),
             itemBuilder: (context, index) {
-              return CourseProgressCard(data: inProgressCourses[index]);
+              return CourseProgressCard(
+                data: inProgressCourses[index],
+                isTeacher: true,
+              );
             },
           ),
 
@@ -176,7 +179,10 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
               childAspectRatio: 0.692, // 180/260 สำหรับ progress card
             ),
             itemBuilder: (context, index) {
-              return CourseProgressCard(data: completedCourses[index]);
+              return CourseProgressCard(
+                data: completedCourses[index],
+                isTeacher: true,
+              );
             },
           ),
 

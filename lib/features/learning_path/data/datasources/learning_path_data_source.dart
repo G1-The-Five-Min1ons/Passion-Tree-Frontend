@@ -4,6 +4,7 @@ import 'package:passion_tree_frontend/core/config/api_config.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_progress_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/enrolled_learning_path_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/learning_node_api_model.dart';
 
 class LearningPathDataSource {
   final http.Client client;
@@ -69,6 +70,29 @@ class LearningPathDataSource {
       return list.map((e) => EnrolledLearningPathApiModel.fromJson(e)).toList();
     } else {
       throw Exception('Failed to load enrolled paths');
+    }
+  }
+
+  Future<List<LearningNodeApiModel>> getNodesForPath(String pathId) async {
+    try {
+      final response = await client.get(
+        Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/$pathId/nodes'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final nodes = data['data'] as List;
+
+        return nodes
+            .map((node) => LearningNodeApiModel.fromJson(node))
+            .toList();
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception(error['message'] ?? 'Failed to get nodes');
+      }
+    } catch (e) {
+      throw Exception('Failed to fetch nodes: $e');
     }
   }
 

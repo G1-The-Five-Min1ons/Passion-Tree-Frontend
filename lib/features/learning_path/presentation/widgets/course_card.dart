@@ -8,8 +8,13 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/studen
 
 class PixelCourseCard extends StatelessWidget {
   final LearningPath course;
+  final bool isTeacher;
 
-  const PixelCourseCard({super.key, required this.course});
+  const PixelCourseCard({
+    super.key,
+    required this.course,
+    this.isTeacher = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +25,12 @@ class PixelCourseCard extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => LearningCoursePage(course: course)),
+          MaterialPageRoute(
+            builder: (_) => LearningCoursePage(
+              course: course,
+              isTeacher: isTeacher,
+            ),
+          ),
         );
       },
       child: BaseCourseCard(

@@ -3,14 +3,19 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_status.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/nodes_for_path_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 
 class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GetAllLearningPaths getAllLearningPaths;
   final GetLearningPathStatus getLearningPathStatus;
+  final GetNodesForPath getNodesForPath;
 
-  LearningPathBloc(this.getAllLearningPaths, this.getLearningPathStatus)
-    : super(LearningPathInitial()) {
+  LearningPathBloc(
+    this.getAllLearningPaths,
+    this.getLearningPathStatus,
+    this.getNodesForPath,
+  ) : super(LearningPathInitial()) {
     
     ///  FETCH ALL LEARNING PATHS
     
@@ -56,6 +61,19 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           allPaths: allPaths,
           enrolledPaths: enrolledPaths,
         ));
+      } catch (e) {
+        emit(LearningPathError(e.toString()));
+      }
+    });
+
+    /// FETCH NODES FOR PATH
+    
+    on<FetchNodesForPath>((event, emit) async {
+      emit(LearningPathLoading());
+
+      try {
+        final nodes = await getNodesForPath(event.pathId);
+        emit(NodesLoaded(nodes));
       } catch (e) {
         emit(LearningPathError(e.toString()));
       }

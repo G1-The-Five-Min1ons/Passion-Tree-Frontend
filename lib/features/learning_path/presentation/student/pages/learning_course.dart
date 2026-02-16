@@ -6,16 +6,19 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/lea
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/learning_course_content.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/student_nodes_overview.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/teacher_nodes_overview.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/node_comments_section.dart';
 
 class LearningCoursePage extends StatelessWidget {
   final LearningPath course;
   final EnrolledLearningPath? enrolledPath;
+  final bool isTeacher;
 
   const LearningCoursePage({
     super.key,
     required this.course,
     this.enrolledPath,
+    this.isTeacher = false,
   });
 
   @override
@@ -43,9 +46,9 @@ class LearningCoursePage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            StudentNodesOverviewPage(course: course),
-
+                        builder: (_) => isTeacher
+                            ? TeacherNodesOverviewPage(title: course.title)
+                            : StudentNodesOverviewPage(course: course),
                       ),
                     );
                   },

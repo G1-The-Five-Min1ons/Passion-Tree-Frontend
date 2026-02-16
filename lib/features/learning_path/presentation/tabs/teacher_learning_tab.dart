@@ -137,7 +137,10 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
               childAspectRatio: 0.692, // 180/260 สำหรับ progress card
             ),
             itemBuilder: (context, index) {
-              return CourseProgressCard(data: filteredEnrolled[index]);
+              return CourseProgressCard(
+                data: filteredEnrolled[index],
+                isTeacher: true,
+              );
             },
           ),
 
@@ -165,7 +168,10 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
                   itemCount: filteredAll.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
-                    return PixelCourseCard(course: filteredAll[index]);
+                    return PixelCourseCard(
+                      course: filteredAll[index],
+                      isTeacher: true,
+                    );
                   },
                 ),
         ),
@@ -200,7 +206,10 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
                   BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
             ),
             itemBuilder: (context, index) {
-              return PixelCourseCard(course: shownAllCourses[index]);
+              return PixelCourseCard(
+                course: shownAllCourses[index],
+                isTeacher: true,
+              );
             },
           ),
 
