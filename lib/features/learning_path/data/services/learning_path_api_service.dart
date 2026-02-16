@@ -31,8 +31,6 @@ Future createLearningPath(CreatePathRequest request) async {
 }
 
 Future<AIGenerateResponse> generatePathWithAI(String topic) async {
-  // เดาว่า endpoint คือ /learningpaths/generate หรือ /ai/generate
-  // (เช็คกับ Backend อีกทีนะครับว่า route จริงๆ ชื่ออะไร)
   final url = Uri.parse('${ApiConfig.baseUrl}/learningpaths/generate');
 
   try {
@@ -40,12 +38,11 @@ Future<AIGenerateResponse> generatePathWithAI(String topic) async {
       url,
       // headers: ApiConfig.defaultHeaders, // ใส่ token ถ้าต้องใช้
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'topic': topic}), // ส่งหัวข้อไปให้ AI คิด
+      body: jsonEncode({'topic': topic}),
     );
 
     if (response.statusCode == 200) {
       final jsonResponse = jsonDecode(response.body);
-      // เข้าถึง path: data -> (topic, nodes) ตามรูป json
       return AIGenerateResponse.fromJson(jsonResponse['data']);
     } else {
       throw Exception('Failed to generate path: ${response.body}');
@@ -62,7 +59,6 @@ Future<Map<String, dynamic>> getLearningPathById(String pathId) async {
 
   if (response.statusCode == 200) {
     final jsonResponse = jsonDecode(response.body);
-    // return ข้อมูลใน data กลับไป (ตามโครงสร้าง json ในรูปที่คุณส่งมา)
     return jsonResponse['data'];
   } else {
     throw Exception(

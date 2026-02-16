@@ -39,7 +39,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
   Future<void> _fetchAndGenerate() async {
     try {
       // 1. ดึงข้อมูล Path เพื่อเอา Objective
-      // final pathData = await getLearningPathById(widget.pathId);
+      final pathData = await getLearningPathById(widget.pathId);
       final objectiveFromApi = pathData['objective'] ?? ''; // ดึง field objective
       
       setState(() {
