@@ -38,6 +38,7 @@ class LearningCoursePage extends StatelessWidget {
                 LearningCourseContent(
                   title: enrolledPath?.title ?? course.title,
                   description: enrolledPath?.description ?? course.description,
+                  isEnrolled: enrolledPath != null,
                   onStartJourney: () {
                     Navigator.push(
                       context,

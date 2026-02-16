@@ -9,12 +9,14 @@ class LearningCourseContent extends StatelessWidget {
   final String title;
   final String description;
   final VoidCallback onStartJourney;
+  final bool isEnrolled;
 
   const LearningCourseContent({
     super.key,
     required this.title,
     required this.description,
     required this.onStartJourney,
+    this.isEnrolled = false,
   });
 
   @override
@@ -99,7 +101,7 @@ class LearningCourseContent extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity, 
                 child: Text(
-                  'Ready To Explore?',
+                  isEnrolled ? 'Continue Your Journey' : 'Ready To Explore?',
                   textAlign: TextAlign.center,
                   style: Theme.of(context)
                       .textTheme
@@ -126,7 +128,7 @@ class LearningCourseContent extends StatelessWidget {
             Center(
               child: AppButton(
                 variant: AppButtonVariant.text,
-                text: 'Start Journey',
+                text: isEnrolled ? 'Continue Journey' : 'Start Journey',
                 onPressed: onStartJourney,
               ),
             ),
