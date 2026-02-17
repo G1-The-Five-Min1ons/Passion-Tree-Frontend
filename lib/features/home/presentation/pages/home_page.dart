@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/widgets/select_role_popup.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/t_learning_path_overview_login_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_login_page.dart';
 class HomePage extends StatelessWidget {
@@ -92,6 +93,34 @@ class HomePage extends StatelessWidget {
                   child: const Text('T_LearningPathOverviewPage'),
                 ),
               ),
+
+              const SizedBox(height: 60),
+              Center(
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => SelectRolePopup(
+                      onRoleSelected: (role) {
+                        Navigator.pop(context); 
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Test Select Role Popup'),
+              ),
+            ),
 
             ],
           ),
