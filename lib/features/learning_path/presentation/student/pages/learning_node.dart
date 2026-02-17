@@ -25,10 +25,17 @@ class _LearningNodePageState extends State<LearningNodePage> {
   @override
   void initState() {
     super.initState();
+    
+    debugPrint('[UI] LearningNodePage - initState');
+    debugPrint('Node ID: ${widget.nodeId}');
+    
     // TODO: Get userId from authentication service
     const userId = '3f9b2c6d-8288-4647-8d33-33d96e1a82b3'; // Hardcoded for testing
     
+    debugPrint('User ID: $userId');
+    
     // Start node when page loads
+    debugPrint('Dispatching StartNodeEvent...');
     context.read<LearningPathBloc>().add(
           StartNodeEvent(
             nodeId: widget.nodeId,
@@ -37,6 +44,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
         );
     
     // Fetch node detail when page loads
+    debugPrint('Dispatching FetchNodeDetail...');
     context.read<LearningPathBloc>().add(
           FetchNodeDetail(
             nodeId: widget.nodeId,
@@ -52,11 +60,15 @@ class _LearningNodePageState extends State<LearningNodePage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
+            debugPrint('[UI] LearningNodePage - BlocBuilder state: ${state.runtimeType}');
+            
             if (state is LearningPathLoading || state is LearningPathInitial) {
+              debugPrint('Loading node detail...');
               return const Center(child: CircularProgressIndicator());
             }
 
             if (state is LearningPathError) {
+              debugPrint('Error loading node: ${state.message}');
               return Center(
                 child: Text('Error: ${state.message}'),
               );
@@ -64,6 +76,8 @@ class _LearningNodePageState extends State<LearningNodePage> {
 
             if (state is NodeDetailLoaded) {
               final nodeDetail = state.nodeDetail;
+              debugPrint('Node detail loaded: ${nodeDetail.title}');
+              debugPrint('Progress: ${nodeDetail.status}');
 
               return SingleChildScrollView(
                 child: Padding(

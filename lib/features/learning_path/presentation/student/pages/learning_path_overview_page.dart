@@ -42,6 +42,9 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
   void initState() {
     super.initState();
     
+    debugPrint('[UI] LearningPathOverviewPage - initState');
+    debugPrint('Mock User ID: $mockUserId');
+    
     // Fetch overview data from backend
     context.read<LearningPathBloc>().add(
       FetchLearningPathOverview(userId: mockUserId),
@@ -117,15 +120,20 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
+            debugPrint('[UI] LearningPathOverviewPage - BlocBuilder state: ${state.runtimeType}');
+            
             if (state is LearningPathLoading || state is LearningPathInitial) {
+              debugPrint('Showing loading indicator...');
               return const Center(child: CircularProgressIndicator());
             }
 
             if (state is LearningPathError) {
+              debugPrint('Error state: ${state.message}');
               return Center(child: Text(state.message));
             }
 
             if (state is LearningPathOverviewLoaded) {
+              debugPrint('Overview loaded - All paths: ${state.allPaths.length}, Enrolled: ${state.enrolledPaths.length}');
               final filteredAll = _filterCourses(state.allPaths);
               
               // Filter and deduplicate enrolled paths

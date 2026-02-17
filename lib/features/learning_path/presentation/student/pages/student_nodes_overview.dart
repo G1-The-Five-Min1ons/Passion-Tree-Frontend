@@ -28,9 +28,34 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
 
   @override
   void initState() {
-    super.initState();
+    void initState() {
+      super.initState();
+      _cachedNodes = null; // Clear cache on each page load
+      debugPrint('[UI] StudentNodesOverviewPage - initState');
+      debugPrint('Course ID: ${widget.course.id}');
+      debugPrint('Course Title: ${widget.course.title}');
+      
+      // TODO: Get userId from authentication service
+      const userId = '3f9b2c6d-8288-4647-8d33-33d96e1a82b3'; // Hardcoded for testing
+      
+      debugPrint('User ID: $userId');
+      
+      // Always fetch fresh nodes to ensure up-to-date status
+      context.read<LearningPathBloc>().add(
+        FetchNodesForPath(
+          pathId: widget.course.id,
+          userId: userId,
+        ),
+      );
+    }  
+    debugPrint('[UI] StudentNodesOverviewPage - initState');
+    debugPrint('Course ID: ${widget.course.id}');
+    debugPrint('Course Title: ${widget.course.title}');
+    
     // TODO: Get userId from authentication service
     const userId = '3f9b2c6d-8288-4647-8d33-33d96e1a82b3'; // Hardcoded for testing
+    
+    debugPrint('User ID: $userId');
     
     // Always fetch fresh nodes to ensure up-to-date status
     context.read<LearningPathBloc>().add(
@@ -51,17 +76,22 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
+            debugPrint('[UI] StudentNodesOverviewPage - BlocBuilder state: ${state.runtimeType}');
+            
             // Update cached nodes when new nodes loaded
             if (state is NodesLoaded && state.pathId == widget.course.id) {
+              debugPrint('Nodes loaded for path ${widget.course.id}: ${state.nodes.length} nodes');
               _cachedNodes = state.nodes;
             }
 
             // Show loading only if no cached nodes
             if (state is LearningPathLoading && _cachedNodes == null) {
+              debugPrint('Loading nodes (no cache)...');
               return const Center(child: CircularProgressIndicator());
             }
 
             if (state is LearningPathError && _cachedNodes == null) {
+              debugPrint('Error loading nodes: ${state.message}');
               return Center(child: Text('Error: ${state.message}'));
             }
 
@@ -79,6 +109,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                     onNodeTap: (index) {
                       if (index < nodes.length) {
                         final nodeId = nodes[index].nodeId;
+                        debugPrint('[UI] Node tapped: $nodeId (${nodes[index].title})');
                         
                         Navigator.push(
                           context,

@@ -28,6 +28,8 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
   void initState() {
     super.initState();
 
+    debugPrint('[UI] LearningPathStatusPage - initState');
+    
     _searchController.addListener(() {
       setState(() {});
     });
@@ -59,7 +61,10 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
+            debugPrint('[UI] LearningPathStatusPage - BlocBuilder state: ${state.runtimeType}');
+            
              if (state is LearningPathLoading || state is LearningPathInitial) {
+              debugPrint('Showing loading indicator...');
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -68,6 +73,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
               final enrolledPaths = state is LearningPathOverviewLoaded 
                   ? state.enrolledPaths 
                   : (state as LearningPathStatusLoaded).paths;
+              debugPrint('Enrolled paths loaded: ${enrolledPaths.length}');
               final filtered = _filterPaths(enrolledPaths);
 
               // คอร์สที่กำลังเรียนอยู่ (In Progress)
