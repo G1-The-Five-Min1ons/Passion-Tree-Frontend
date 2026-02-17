@@ -130,27 +130,58 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     UpdateAlbumEvent event,
     Emitter<AlbumState> emit,
   ) async {
+    List<Album>? currentAlbums;
     if (state is AlbumsLoaded) {
-      final currentAlbums = (state as AlbumsLoaded).albums;
+      currentAlbums = (state as AlbumsLoaded).albums;
       emit(AlbumOperationLoading(currentAlbums: currentAlbums));
     } else {
       emit(AlbumLoading());
     }
 
     try {
+      String coverImageUrl = event.existingImageUrl ?? '';
+
+      // Upload new image if provided
+      if (event.coverImage != null) {
+        emit(ImageUploading(currentAlbums: currentAlbums));
+        
+        debugPrint('[AlbumBloc] Uploading new image...');
+        final uploadService = UploadApiService();
+        final fileName = path.basename(event.coverImage!.path);
+        
+        final urls = await uploadService.getPresignedUrl(
+          fileName,
+          'reflect',
+        );
+        
+        await uploadService.uploadFileToBlob(
+          urls['upload_url']!,
+          event.coverImage!,
+        );
+        
+        coverImageUrl = urls['public_url']!;
+        debugPrint('[AlbumBloc] Image uploaded successfully');
+        
+        emit(AlbumOperationLoading(currentAlbums: currentAlbums));
+      }
+
       await updateAlbum(
         albumId: event.albumId,
         albumName: event.albumName,
-        coverImageUrl: event.coverImageUrl,
+        coverImageUrl: coverImageUrl,
       );
+      
+      debugPrint('[AlbumBloc] Album updated successfully!');
       
       _albumOperationController.add(
         AlbumOperationResult(AlbumOperationType.updated),
       );
       
-      final album = await getAlbumById(event.albumId);
-      emit(AlbumDetailLoaded(album));
+      // Reload albums for the user
+      final albums = await getAlbumsByUserId(event.userId);
+      emit(AlbumsLoaded(albums));
     } catch (e) {
+      debugPrint('[AlbumBloc] Failed to update album: $e');
       emit(AlbumError('Failed to update album: ${e.toString()}'));
     }
   }

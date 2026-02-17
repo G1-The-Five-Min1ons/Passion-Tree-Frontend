@@ -143,8 +143,32 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
       return _buildErrorState(context, state.message);
     }
 
-    if (state is AlbumOperationLoading && state.currentAlbums != null) {
-      return _buildAlbumList(context, state.currentAlbums!);
+    if (state is ImageUploading) {
+      if (state.currentAlbums != null && state.currentAlbums!.isNotEmpty) {
+        return _buildAlbumList(context, state.currentAlbums!);
+      }
+      return SliverFillRemaining(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(50.0),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
+    if (state is AlbumOperationLoading) {
+      if (state.currentAlbums != null && state.currentAlbums!.isNotEmpty) {
+        return _buildAlbumList(context, state.currentAlbums!);
+      }
+      return SliverFillRemaining(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(50.0),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
     }
 
     return _buildEmptyState(context);
@@ -236,6 +260,7 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
               },
               child: PixelAlbumCover(
                 albumId: album.albumId,
+                userId: userId,
                 size: 150,
                 title: album.title,
                 subtitle: album.subtitle,

@@ -37,17 +37,21 @@ class CreateAlbumEvent extends AlbumEvent {
 /// Event to update an existing album
 class UpdateAlbumEvent extends AlbumEvent {
   final String albumId;
+  final String userId;
   final String albumName;
-  final String coverImageUrl;
+  final File? coverImage;
+  final String? existingImageUrl;
 
   const UpdateAlbumEvent({
     required this.albumId,
+    required this.userId,
     required this.albumName,
-    required this.coverImageUrl,
+    this.coverImage,
+    this.existingImageUrl,
   });
 
   @override
-  List<Object?> get props => [albumId, albumName, coverImageUrl];
+  List<Object?> get props => [albumId, userId, albumName, coverImage?.path, existingImageUrl];
 }
 
 /// Event to delete an album

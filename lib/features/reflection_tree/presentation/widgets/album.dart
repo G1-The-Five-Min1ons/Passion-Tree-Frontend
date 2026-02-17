@@ -9,6 +9,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc
 
 class PixelAlbumCover extends StatelessWidget {
   final String albumId;
+  final String userId;
   final double? size;
   final double pixelSize;
   final Color? color;
@@ -19,6 +20,7 @@ class PixelAlbumCover extends StatelessWidget {
   const PixelAlbumCover({
     super.key,
     required this.albumId,
+    required this.userId,
     this.size,
     this.pixelSize = 3.0,
     this.color,
@@ -48,7 +50,11 @@ class PixelAlbumCover extends StatelessWidget {
           onEdit: () {
             EditAlbumPopup.show(
               context,
-              initialValue: title ?? '');
+              albumId: albumId,
+              userId: userId,
+              initialValue: title ?? '',
+              imageUrl: imageUrl,
+            );
           },
           onDelete: () {
             context.read<AlbumBloc>().add(DeleteAlbumEvent(albumId));
