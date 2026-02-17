@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/how_to_use_popup.dart';
-import 'package:passion_tree_frontend/features/authentication/data/services/token_storage_service.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 class HeartStatus extends StatefulWidget {
     final int count;
@@ -18,7 +19,6 @@ class HeartStatus extends StatefulWidget {
 
 class _HeartStatusState extends State<HeartStatus> {
     int _currentCount = 5;
-    final _tokenStorage = TokenStorageService();
 
     @override
     void initState() {
@@ -27,7 +27,7 @@ class _HeartStatusState extends State<HeartStatus> {
     }
 
     Future<void> _loadHeartCount() async {
-        final heartCount = await _tokenStorage.getHeartCount();
+        final heartCount = await getIt<IAuthRepository>().getHeartCount();
         if (mounted) {
             setState(() {
                 _currentCount = heartCount;

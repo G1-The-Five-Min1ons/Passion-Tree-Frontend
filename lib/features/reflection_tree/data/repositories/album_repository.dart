@@ -3,17 +3,17 @@ import 'package:passion_tree_frontend/features/reflection_tree/data/models/album
 import 'package:passion_tree_frontend/features/reflection_tree/data/mappers/album_mapper.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/repositories/i_album_repository.dart';
-import 'package:passion_tree_frontend/features/authentication/data/services/token_storage_service.dart';
+import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 
 class AlbumRepository implements IAlbumRepository {
   final AlbumDataSource dataSource;
-  final TokenStorageService tokenStorage;
+  final AuthLocalDataSource authLocalDataSource;
 
   AlbumRepository({
-    AlbumDataSource? dataSource,
-    TokenStorageService? tokenStorage,
-  })  : dataSource = dataSource ?? AlbumDataSource(),
-        tokenStorage = tokenStorage ?? TokenStorageService();
+    required this.dataSource,
+    required this.authLocalDataSource,
+  });
 
   @override
   Future<Album> createAlbum({
@@ -22,8 +22,11 @@ class AlbumRepository implements IAlbumRepository {
     required String coverImageUrl,
   }) async {
     try {
-      final token = await tokenStorage.getToken();
-      if (token == null) throw Exception('No authentication token found');
+      final token = await authLocalDataSource.getToken();
+      if (token == null) {
+        LogHandler.error('No authentication token found');
+        throw Exception('No authentication token found');
+      }
       
       final request = CreateAlbumRequest(
         userId: userId,
@@ -33,6 +36,7 @@ class AlbumRepository implements IAlbumRepository {
       final apiModel = await dataSource.createAlbum(request, token);
       return AlbumMapper.toAlbum(apiModel);
     } catch (e) {
+      LogHandler.error('Repository: create album failed', error: e);
       throw Exception('Failed to create album: $e');
     }
   }
@@ -40,12 +44,13 @@ class AlbumRepository implements IAlbumRepository {
   @override
   Future<Album> getAlbumById(String albumId) async {
     try {
-      final token = await tokenStorage.getToken();
+      final token = await authLocalDataSource.getToken();
       if (token == null) throw Exception('No authentication token found');
       
       final apiModel = await dataSource.getAlbumById(albumId, token);
       return AlbumMapper.toAlbum(apiModel);
     } catch (e) {
+      LogHandler.error('Repository: get album failed', error: e);
       throw Exception('Failed to get album: $e');
     }
   }
@@ -53,12 +58,16 @@ class AlbumRepository implements IAlbumRepository {
   @override
   Future<List<Album>> getAlbumsByUserId(String userId) async {
     try {
-      final token = await tokenStorage.getToken();
-      if (token == null) throw Exception('No authentication token found');
+      final token = await authLocalDataSource.getToken();
+      if (token == null) {
+        LogHandler.error('No authentication token found');
+        throw Exception('No authentication token found');
+      }
       
       final apiModels = await dataSource.getAlbumsByUserId(userId, token);
       return AlbumMapper.toAlbumList(apiModels);
     } catch (e) {
+      LogHandler.error('Repository: get albums failed', error: e);
       throw Exception('Failed to get albums: $e');
     }
   }
@@ -70,7 +79,7 @@ class AlbumRepository implements IAlbumRepository {
     required String coverImageUrl,
   }) async {
     try {
-      final token = await tokenStorage.getToken();
+      final token = await authLocalDataSource.getToken();
       if (token == null) throw Exception('No authentication token found');
       
       final request = UpdateAlbumRequest(
@@ -79,6 +88,7 @@ class AlbumRepository implements IAlbumRepository {
       );
       await dataSource.updateAlbum(albumId, request, token);
     } catch (e) {
+      LogHandler.error('Repository: update album failed', error: e);
       throw Exception('Failed to update album: $e');
     }
   }
@@ -86,11 +96,12 @@ class AlbumRepository implements IAlbumRepository {
   @override
   Future<void> deleteAlbum(String albumId) async {
     try {
-      final token = await tokenStorage.getToken();
+      final token = await authLocalDataSource.getToken();
       if (token == null) throw Exception('No authentication token found');
       
       await dataSource.deleteAlbum(albumId, token);
     } catch (e) {
+      LogHandler.error('Repository: delete album failed', error: e);
       throw Exception('Failed to delete album: $e');
     }
   }

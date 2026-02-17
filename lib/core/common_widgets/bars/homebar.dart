@@ -5,6 +5,7 @@ import 'package:passion_tree_frontend/features/home/presentation/pages/home_page
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree_wrapper.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/pages/profile_page.dart';
 
 class HomeBarWidget extends StatefulWidget {
   const HomeBarWidget({super.key});
@@ -28,7 +29,7 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
     _buildTabNavigator(0, const HomePage()),
     _buildTabNavigator(1, const LearningPathOverviewPage()),
     _buildTabNavigator(2, const AlbumsReflectionTreeWrapper()),
-    _buildTabNavigator(3, const Center(child: Text('Profile'))),
+    _buildTabNavigator(3, const ProfilePage()),
   ];
 
   Widget _buildTabNavigator(int index, Widget rootPage) {

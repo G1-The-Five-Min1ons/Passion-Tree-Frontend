@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
@@ -8,10 +9,12 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/bottom_buttons.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/pixel_password_field.dart';
-import 'package:passion_tree_frontend/features/authentication/data/services/auth_api_service.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/widgets/select_role_popup.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/core/error/exceptions.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/auth_models.dart';
-import 'package:passion_tree_frontend/features/authentication/data/services/token_storage_service.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_login_page.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -61,19 +64,211 @@ class _LoginPageState extends State<LoginPage> {
     return _usernameError == null && _passwordError == null;
   }
 
+  /// Show OTP input dialog and return the entered code
+  Future<String?> _showOtpDialog(String message) async {
+    final otpController = TextEditingController();
+    
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 25),
+          child: PixelBorderContainer(
+            pixelSize: 4,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Email Verification',
+                  style: AppPixelTypography.h3.copyWith(
+                    color: Theme.of(dialogContext).colorScheme.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  message,
+                  style: AppTypography.bodySemiBold.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                PixelTextField(
+                  label: 'Verification Code',
+                  hintText: 'Enter 6-digit code',
+                  controller: otpController,
+                  height: 38,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        variant: AppButtonVariant.text,
+                        text: 'Cancel',
+                        backgroundColor: AppColors.cancel,
+                        onPressed: () => Navigator.of(dialogContext).pop(null),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppButton(
+                        variant: AppButtonVariant.text,
+                        text: 'Verify',
+                        onPressed: () {
+                          final code = otpController.text.trim();
+                          if (code.isNotEmpty) {
+                            Navigator.of(dialogContext).pop(code);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Show role selection popup and return the selected role
+  Future<String?> _showRoleSelection() async {
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return SelectRolePopup(
+          onRoleSelected: (role) {
+            Navigator.of(dialogContext).pop(role);
+          },
+        );
+      },
+    );
+  }
+
+  /// Handle the post-authentication flow: save data, check role, navigate
+  Future<void> _handlePostAuth() async {
+    final authRepo = getIt<IAuthRepository>();
+    // Tokens are already saved by verifyEmail or nativeGoogleSignIn in the repository
+
+    // Fetch user profile (Repository logic should cache user data)
+    try {
+      final profileData = await authRepo.getProfile();
+      // If repository handles caching, we just need to verify success.
+      // profileData is dynamic/map, waiting for typed entity in future refactor.
+      
+      // Check if role has been selected
+      final roleSelected = await authRepo.hasSelectedRole();
+      if (!roleSelected) {
+        if (!mounted) return;
+        final selectedRole = await _showRoleSelection();
+        if (selectedRole != null) {
+          await authRepo.saveUserRole(selectedRole);
+          await authRepo.markRoleSelected();
+          LogHandler.success('Role selected: $selectedRole');
+        }
+      }
+    } catch (profileError) {
+      LogHandler.error('Failed to fetch profile', error: profileError);
+      // Still allow navigation even if profile fetch fails
+    }
+
+    if (!mounted) return;
+
+    LogHandler.success('Login successful — navigating to home');
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => const HomeBarWidget(),
+      ),
+    );
+  }
+
+  /// Full login flow: login → OTP → verify → role selection → navigate
+  Future<void> _handleLogin() async {
+    if (!_validateAllFields()) {
+      LogHandler.warning('Login validation failed');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fix the errors above'),
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final authRepo = getIt<IAuthRepository>();
+
+      // Step 1: Login → triggers OTP email
+      final message = await authRepo.login(
+        identifier: _usernameController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      // Step 2: Show OTP dialog
+      final otpCode = await _showOtpDialog(message);
+      if (otpCode == null) {
+        // User cancelled
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Step 3: Verify email with OTP → get tokens (saved by repo)
+      await authRepo.verifyEmail(otpCode);
+
+      // Step 4+5+6: Post-auth flow (save, role check, navigate)
+      await _handlePostAuth();
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      LogHandler.error('Auth error: ${e.message}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      LogHandler.error('Unexpected error', error: e);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('An error occurred: ${e.toString()}'),
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 25),
-        child: Center(
-          child: SingleChildScrollView(
-            child: SizedBox(
-              width: 400,
-              child: PixelBorderContainer(
-                pixelSize: 4,
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 25),
+          child: Center(
+            child: SingleChildScrollView(
+              child: SizedBox(
+                width: 400,
+                child: PixelBorderContainer(
+                  pixelSize: 4,
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -211,100 +406,8 @@ class _LoginPageState extends State<LoginPage> {
                     // Sign in button
                     AppButton(
                       variant: AppButtonVariant.text,
-                      text: _isLoading ? 'Sign in' : 'Sign in',
-                      onPressed: () async {
-                        // Validate fields
-                        if (!_validateAllFields()) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please fix the errors above'),
-                              backgroundColor: AppColors.cancel,
-                            ),
-                          );
-                          return;
-                        }
-
-                        setState(() {
-                          _isLoading = true;
-                        });
-
-                        try {
-                          final authService = AuthApiService();
-                          final request = LoginRequest(
-                            identifier: _usernameController.text.trim(),
-                            password: _passwordController.text,
-                          );
-
-                          final response = await authService.login(request);
-
-                          // Save token if remember me is checked
-                          if (_rememberMe && response.token != null) {
-                            await TokenStorageService().saveToken(response.token);
-                            
-                            // Fetch user profile to get heart_count and other user data
-                            try {
-                              final profileResponse = await authService.getProfile(response.token);
-                              final userData = profileResponse['data']['user'];
-                              
-                              // Save user data to local storage
-                              await TokenStorageService().saveUserId(userData['user_id']);
-                              await TokenStorageService().saveUsername(userData['username']);
-                              await TokenStorageService().saveHeartCount(userData['heart_count'] ?? 5);
-                              
-                              debugPrint('[LOGIN] User data saved:');
-                              debugPrint('  User ID: ${userData['user_id']}');
-                              debugPrint('  Username: ${userData['username']}');
-                              debugPrint('  Heart Count: ${userData['heart_count']}');
-                            } catch (profileError) {
-                              debugPrint('[LOGIN] Failed to fetch profile: $profileError');
-                            }
-                          }
-
-                          if (!mounted) return;
-
-                          // Show success message
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Login successful!'),
-                              backgroundColor: AppColors.status,
-                            ),
-                          );
-
-                          // Navigate to main page
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => const LearningPathOverviewLoginPage(),
-                            ),
-                          );
-                        } on AuthException catch (e) {
-                          if (!mounted) return;
-
-                          setState(() {
-                            _isLoading = false;
-                          });
-
-                          // Show error in snackbar
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(e.message),
-                              backgroundColor: AppColors.cancel,
-                            ),
-                          );
-                        } catch (e) {
-                          if (!mounted) return;
-
-                          setState(() {
-                            _isLoading = false;
-                          });
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('An error occurred: ${e.toString()}'),
-                              backgroundColor: AppColors.cancel,
-                            ),
-                          );
-                        }
-                      },
+                      text: _isLoading ? 'Signing in...' : 'Sign in',
+                      onPressed: _isLoading ? () {} : _handleLogin,
                     ),
                     const SizedBox(height: 24),
 
@@ -350,10 +453,10 @@ class _LoginPageState extends State<LoginPage> {
                     // OAuth buttons
                     BottomButtons(
                       onGoogleTap: () {
-                        //TODO: Logic
+                        //TODO: Integrate with google_sign_in package
                       },
                       onDiscordTap: () {
-                        //TODO: Logic
+                        //TODO: Integrate with Discord OAuth
                       },
                     )
                   ],
@@ -362,6 +465,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ),
+      ),
     );
   }
 }

@@ -29,6 +29,8 @@ class ApiConfig {
   static String get authUpdateUser => '$apiBackendUrl/auth/user';
   static String get authChangePassword => '$apiBackendUrl/auth/change-password';
   static String get authDeleteUser => '$apiBackendUrl/auth/user';
+  static String get authNativeGoogleSignIn => '$apiBackendUrl/auth/native/google';
+  static String get authRefreshToken => '$apiBackendUrl/auth/refresh';
   
   // Learning Path endpoints
   static String get learningPaths => '$apiBackendUrl/learningpaths';

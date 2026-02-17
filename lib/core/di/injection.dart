@@ -3,16 +3,31 @@ import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/
 import 'package:passion_tree_frontend/features/reflection_tree/data/repositories/album_repository.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/repositories/i_album_repository.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/usecases/album_usecases.dart';
+import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
+import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_remote_data_source.dart';
+import 'package:passion_tree_frontend/features/authentication/data/repositories/auth_repository_impl.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/features/authentication/data/services/token_storage_service.dart';
 
 final getIt = GetIt.instance;
 
 Future<void> initializeDependencies() async {
-  
-  getIt.registerLazySingleton<TokenStorageService>(
-    () => TokenStorageService(),
+
+  // Auth Data Sources
+  getIt.registerLazySingleton<AuthLocalDataSource>(
+    () => AuthLocalDataSourceImpl(),
+  );
+  getIt.registerLazySingleton<AuthRemoteDataSource>(
+    () => AuthRemoteDataSourceImpl(),
   );
 
+  // Auth Repository
+  getIt.registerLazySingleton<IAuthRepository>(
+    () => AuthRepositoryImpl(
+      remoteDataSource: getIt<AuthRemoteDataSource>(),
+      localDataSource: getIt<AuthLocalDataSource>(),
+    ),
+  );
 
   getIt.registerLazySingleton<AlbumDataSource>(
     () => AlbumDataSource(),
@@ -20,7 +35,7 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton<IAlbumRepository>(
     () => AlbumRepository(
       dataSource: getIt<AlbumDataSource>(),
-      tokenStorage: getIt<TokenStorageService>(),
+      authLocalDataSource: getIt<AuthLocalDataSource>(),
     ),
   );
 

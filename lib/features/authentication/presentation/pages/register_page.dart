@@ -7,13 +7,15 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart
 import 'package:passion_tree_frontend/core/common_widgets/selections/checkbox.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
-import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/bottom_buttons.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/pixel_password_field.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_bloc.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_event.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_state.dart';
-import 'package:passion_tree_frontend/features/authentication/data/services/auth_api_service.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/widgets/select_role_popup.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
@@ -22,7 +24,7 @@ class RegisterPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => RegisterBloc(
-        authApiService: AuthApiService(),
+        authRepository: getIt<IAuthRepository>(),
       ),
       child: const _RegisterPageContent(),
     );
@@ -144,7 +146,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
     final colorScheme = Theme.of(context).colorScheme;
     
     return BlocConsumer<RegisterBloc, RegisterState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is RegisterSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -152,10 +154,30 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
               backgroundColor: AppColors.status,
             ),
           );
-        
+
+          // Show role selection popup after successful registration
+          final selectedRole = await showDialog<String>(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) {
+              return SelectRolePopup(
+                onRoleSelected: (role) {
+                  Navigator.of(dialogContext).pop(role);
+                },
+              );
+            },
+          );
+
+          if (selectedRole != null && state.userId.isNotEmpty) {
+            final authRepo = getIt<IAuthRepository>();
+            await authRepo.saveUserRole(selectedRole);
+            await authRepo.markRoleSelected();
+          }
+
+          if (!context.mounted) return;
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) => const LoginPage(),
+              builder: (context) => const HomeBarWidget(),
             ),
           );
         } else if (state is RegisterFailure) {

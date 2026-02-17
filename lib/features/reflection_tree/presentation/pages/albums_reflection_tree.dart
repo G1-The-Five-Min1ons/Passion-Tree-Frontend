@@ -5,6 +5,9 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/album_detail_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album.dart';
@@ -25,13 +28,12 @@ class ReflectionTreePage extends StatefulWidget {
 class _ReflectionTreePageState extends State<ReflectionTreePage>{
   StreamSubscription<AlbumOperationResult>? _operationSubscription;
   
-  // TODO: ลบออกตอนเชื่อม authen
-  final String userId = 'feee25bd-db4e-4850-bd2c-5788ce090032';
+  String userId = '';
 
   @override
   void initState() {
     super.initState();
-    context.read<AlbumBloc>().add(LoadAlbumsEvent(userId));
+    _loadUserAndAlbums();
     
     _operationSubscription = context.read<AlbumBloc>().albumOperationStream.listen(
       (result) {
@@ -65,6 +67,18 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
         }
       },
     );
+  }
+
+  Future<void> _loadUserAndAlbums() async {
+    final storedUserId = await getIt<IAuthRepository>().getUserId();
+    if (storedUserId == null || storedUserId.isEmpty) {
+      LogHandler.error('No user ID found — cannot load albums');
+      return;
+    }
+    if (!mounted) return;
+    setState(() => userId = storedUserId);
+    LogHandler.info('Loading albums for user: $userId');
+    context.read<AlbumBloc>().add(LoadAlbumsEvent(userId));
   }
 
   @override

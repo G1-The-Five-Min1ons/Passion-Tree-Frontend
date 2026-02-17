@@ -48,7 +48,7 @@ class SelectRolePopup extends StatelessWidget {
               text: ' Student ',
               backgroundColor: colorScheme.primary,
               textColor: colorScheme.onPrimary,
-              onPressed: () => onRoleSelected('Student'),
+              onPressed: () => onRoleSelected('student'),
             ),
 
             Padding(
@@ -64,10 +64,10 @@ class SelectRolePopup extends StatelessWidget {
 
             AppButton(
               variant: AppButtonVariant.text,
-              text: ' Educator ',
+              text: ' Teacher ',
               backgroundColor: colorScheme.primary,
               textColor: colorScheme.onPrimary,
-              onPressed: () => onRoleSelected('Educator'),
+              onPressed: () => onRoleSelected('teacher'),
             ),
             const SizedBox(height: 15),
           ],

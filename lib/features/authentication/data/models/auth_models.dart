@@ -4,6 +4,7 @@ class RegisterRequest {
   final String password;
   final String firstName;
   final String lastName;
+  final String role;
   final String? bio;
   final String? location;
   final String? avatarUrl;
@@ -14,6 +15,7 @@ class RegisterRequest {
     required this.password,
     required this.firstName,
     required this.lastName,
+    required this.role,
     this.bio,
     this.location,
     this.avatarUrl,
@@ -25,6 +27,7 @@ class RegisterRequest {
     'password': password,
     'first_name': firstName,
     'last_name': lastName,
+    'role': role,
     if (bio != null) 'bio': bio,
     if (location != null) 'location': location,
     if (avatarUrl != null) 'avatar_url': avatarUrl,
@@ -178,22 +181,103 @@ class RegisterResponse {
   }
 }
 
-class LoginResponse {
+/// Response from POST /auth/login
+/// Backend sends OTP email and returns { success: true, message: "verification_required: ..." }
+/// No tokens are returned at this stage.
+class LoginOtpResponse {
   final bool success;
-  final String token;
+  final String message;
 
-  LoginResponse({
+  LoginOtpResponse({
     required this.success,
-    required this.token,
+    required this.message,
   });
 
-  factory LoginResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>;
-    return LoginResponse(
+  factory LoginOtpResponse.fromJson(Map<String, dynamic> json) {
+    return LoginOtpResponse(
       success: json['success'] as bool,
-      token: data['token'] as String,
+      message: json['message'] as String? ?? '',
     );
   }
+}
+
+/// Response from POST /auth/verify-email
+/// Returns access_token + refresh_token after OTP verification.
+class VerifyEmailResponse {
+  final bool success;
+  final String message;
+  final String accessToken;
+  final String refreshToken;
+
+  VerifyEmailResponse({
+    required this.success,
+    required this.message,
+    required this.accessToken,
+    required this.refreshToken,
+  });
+
+  factory VerifyEmailResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>;
+    return VerifyEmailResponse(
+      success: json['success'] as bool,
+      message: json['message'] as String? ?? '',
+      accessToken: data['access_token'] as String,
+      refreshToken: data['refresh_token'] as String,
+    );
+  }
+}
+
+/// Response from POST /auth/native/google
+class NativeGoogleSignInResponse {
+  final bool success;
+  final String token;
+  final String userId;
+  final String username;
+  final String email;
+  final String firstName;
+  final String lastName;
+  final String role;
+
+  NativeGoogleSignInResponse({
+    required this.success,
+    required this.token,
+    required this.userId,
+    required this.username,
+    required this.email,
+    required this.firstName,
+    required this.lastName,
+    required this.role,
+  });
+
+  factory NativeGoogleSignInResponse.fromJson(Map<String, dynamic> json) {
+    final user = json['user'] as Map<String, dynamic>;
+    return NativeGoogleSignInResponse(
+      success: json['success'] as bool? ?? true,
+      token: json['token'] as String,
+      userId: user['user_id'] as String,
+      username: user['username'] as String,
+      email: user['email'] as String,
+      firstName: user['first_name'] as String,
+      lastName: user['last_name'] as String,
+      role: user['role'] as String,
+    );
+  }
+}
+
+/// Request for PUT /auth/user
+class UpdateUserRequest {
+  final String firstName;
+  final String lastName;
+
+  UpdateUserRequest({
+    required this.firstName,
+    required this.lastName,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'first_name': firstName,
+    'last_name': lastName,
+  };
 }
 
 class VerifyEmailRequest {

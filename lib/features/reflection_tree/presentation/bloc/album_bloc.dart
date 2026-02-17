@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/usecases/album_usecases.dart';
@@ -84,7 +84,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
       if (event.coverImage != null) {
         emit(ImageUploading(currentAlbums: currentAlbums));
         
-        debugPrint('[AlbumBloc] Uploading image...');
+        LogHandler.info('Uploading album cover image...');
         final uploadService = UploadApiService();
         final fileName = path.basename(event.coverImage!.path);
         
@@ -99,7 +99,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         );
         
         coverImageUrl = urls['public_url']!;
-        debugPrint('[AlbumBloc] Image uploaded successfully');
+        LogHandler.success('Album cover uploaded');
       }
 
       emit(AlbumOperationLoading(currentAlbums: currentAlbums));
@@ -110,9 +110,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         coverImageUrl: coverImageUrl,
       );
       
-      debugPrint('[AlbumBloc] Album created successfully!');
-      debugPrint(' Album ID: ${album.albumId}');
-      debugPrint('Album Title: ${album.title}');
+      LogHandler.success('Album created: ${album.albumId} — ${album.title}');
       
       _albumOperationController.add(
         AlbumOperationResult(AlbumOperationType.created, album: album),
@@ -121,7 +119,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
       final albums = await getAlbumsByUserId(event.userId);
       emit(AlbumsLoaded(albums));
     } catch (e) {
-      debugPrint('[AlbumBloc] Failed to create album: $e');
+      LogHandler.error('Failed to create album', error: e);
       emit(AlbumError('Failed to create album: ${e.toString()}'));
     }
   }
@@ -145,7 +143,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
       if (event.coverImage != null) {
         emit(ImageUploading(currentAlbums: currentAlbums));
         
-        debugPrint('[AlbumBloc] Uploading new image...');
+        LogHandler.info('Uploading new album cover image...');
         final uploadService = UploadApiService();
         final fileName = path.basename(event.coverImage!.path);
         
@@ -160,7 +158,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         );
         
         coverImageUrl = urls['public_url']!;
-        debugPrint('[AlbumBloc] Image uploaded successfully');
+        LogHandler.success('New album cover uploaded');
         
         emit(AlbumOperationLoading(currentAlbums: currentAlbums));
       }
@@ -171,7 +169,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         coverImageUrl: coverImageUrl,
       );
       
-      debugPrint('[AlbumBloc] Album updated successfully!');
+      LogHandler.success('Album updated: ${event.albumId}');
       
       _albumOperationController.add(
         AlbumOperationResult(AlbumOperationType.updated),
@@ -181,7 +179,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
       final albums = await getAlbumsByUserId(event.userId);
       emit(AlbumsLoaded(albums));
     } catch (e) {
-      debugPrint('[AlbumBloc] Failed to update album: $e');
+      LogHandler.error('Failed to update album', error: e);
       emit(AlbumError('Failed to update album: ${e.toString()}'));
     }
   }
