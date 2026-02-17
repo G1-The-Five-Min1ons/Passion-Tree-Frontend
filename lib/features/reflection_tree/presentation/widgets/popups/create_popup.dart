@@ -8,9 +8,8 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/save_cancel.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
-import 'package:passion_tree_frontend/core/services/upload_service.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
 import 'dart:io';
-import 'package:path/path.dart' as path;
 
 class CreatePopUp extends StatefulWidget {
   final String title;
@@ -32,8 +31,7 @@ class CreatePopUp extends StatefulWidget {
     required String userId,
     String title = 'Create Album',
     String hint = 'Album Name',
-    }
-  ) {
+  }) {
     final albumBloc = BlocProvider.of<AlbumBloc>(context);
     return showDialog<bool>(
       context: context,
@@ -49,14 +47,10 @@ class CreatePopUp extends StatefulWidget {
   }
 }
 
-
-
 class _CreatePopUpState extends State<CreatePopUp> {
   final TextEditingController _albumNameController = TextEditingController();
   
   File? _selectedImage;
-  String? _selectedImagePath;
-  bool _isLoading = false;
   String? _albumNameError;
   
   @override
@@ -82,7 +76,6 @@ class _CreatePopUpState extends State<CreatePopUp> {
 
       if (result != null) {
         setState(() {
-          _selectedImagePath = result.path;
           _selectedImage = File(result.path);
         });
       }
@@ -95,7 +88,7 @@ class _CreatePopUpState extends State<CreatePopUp> {
     }
   }
 
-  void _createAlbum() async {
+  void _createAlbum() {
     final albumName = _albumNameController.text.trim();
     final error = _validateAlbumName(albumName);
     
@@ -107,187 +100,130 @@ class _CreatePopUpState extends State<CreatePopUp> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    context.read<AlbumBloc>().add(
+      CreateAlbumEvent(
+        userId: widget.userId,
+        albumName: albumName,
+        coverImage: _selectedImage,
+      ),
+    );
 
-    try {
-      debugPrint("\n🚀 START ALBUM CREATION PROCESS...");
-      final uploadService = UploadApiService();
-      String coverImgUrl = '';
-
-      // --- STEP A: Upload Image (if selected) ---
-      if (_selectedImage != null) {
-        debugPrint("📸 Found Image, Requesting Presigned URL...");
-        final fileName = path.basename(_selectedImage!.path);
-        debugPrint("   File name: $fileName");
-        
-        final urls = await uploadService.getPresignedUrl(
-          fileName,
-          'reflect',
-        );
-        
-        debugPrint("✅ Got URL: ${urls['upload_url']}");
-        debugPrint("⬆️  Uploading to Blob...");
-        
-        await uploadService.uploadFileToBlob(
-          urls['upload_url']!,
-          _selectedImage!,
-        );
-        
-        debugPrint("✅ Upload Finished!");
-        coverImgUrl = urls['public_url']!;
-      } else {
-        debugPrint("⚠️  No image selected, skipping upload.");
-      }
-
-      // --- STEP B: Create Album ---
-      debugPrint("\n📝 [CreatePopup] Creating album in backend...");
-      debugPrint("   Cover Image URL: ${coverImgUrl.isEmpty ? '(empty)' : coverImgUrl}");
-      
-      if (!mounted) return;
-      
-      context.read<AlbumBloc>().add(
-        CreateAlbumEvent(
-          userId: widget.userId,
-          albumName: albumName,
-          coverImageUrl: coverImgUrl,
-        ),
-      );
-
-      debugPrint("✅ Album Creation Event Dispatched!");
-      debugPrint("===================================\n");
-      
-      if (!mounted) return;
-      Navigator.pop(context, true);
-      
-    } catch (e) {
-      debugPrint("💥 Error creating album: $e");
-      
-      if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to create album: $e'),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: PixelBorderContainer(
-        pixelSize: 4,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              widget.title,
-              style: Theme.of(context).textTheme.displaySmall!.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            
-            const SizedBox(height: 18),
+    return BlocBuilder<AlbumBloc, AlbumState>(
+      builder: (context, state) {
+        final isLoading = state is ImageUploading || state is AlbumOperationLoading;
 
-            GestureDetector(
-              onTap: _isLoading ? null : _pickImage,
-              child: PixelBorderContainer(
-                  pixelSize: 2,
-                  width: double.infinity,
-                  height: 150,
-                  padding: EdgeInsets.zero,
-                  borderColor: AppColors.scale,
-                  fillColor: AppColors.scale,
-                  child: _selectedImage != null
-                      ? SizedBox(
-                          width: double.infinity,
-                          height: 150,
-                          child: ClipRRect(
-                            child: Image.file(
-                              _selectedImage!,
-                              fit: BoxFit.cover,
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: PixelBorderContainer(
+            pixelSize: 4,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  widget.title,
+                  style: Theme.of(context).textTheme.displaySmall!.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                
+                const SizedBox(height: 18),
+
+                GestureDetector(
+                  onTap: isLoading ? null : _pickImage,
+                  child: PixelBorderContainer(
+                      pixelSize: 2,
+                      width: double.infinity,
+                      height: 150,
+                      padding: EdgeInsets.zero,
+                      borderColor: AppColors.scale,
+                      fillColor: AppColors.scale,
+                      child: _selectedImage != null
+                          ? SizedBox(
+                              width: double.infinity,
+                              height: 150,
+                              child: ClipRRect(
+                                child: Image.file(
+                                  _selectedImage!,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_photo_alternate,
+                                    size: 48,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Upload Cover Image',
+                                    style: Theme.of(context).textTheme.bodyMedium
+                                        ?.copyWith(
+                                          color: AppColors.textSecondary.withValues(
+                                            alpha: 0.5,
+                                          ),
+                                        ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        )
-                      : Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.add_photo_alternate,
-                                size: 48,
-                                color: AppColors.textSecondary,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Upload Cover Image',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: AppColors.textSecondary.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                    ),
-                              ),
-                            ],
+                    ),
+                ),
+
+                const SizedBox(height: 18),
+
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    PixelTextField(
+                      controller: _albumNameController,
+                      hintText: widget.hint,
+                      height: 38,
+                      onChanged: (value) {
+                        setState(() {
+                          _albumNameError = _validateAlbumName(value.trim());
+                        });
+                      },
+                    ),
+                    if (_albumNameError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12, top: 4),
+                        child: Text(
+                          _albumNameError!,
+                          style: AppTypography.bodyRegular.copyWith(
+                            color: AppColors.cancel,
                           ),
                         ),
-                ),
-            ),
-
-            const SizedBox(height: 18),
-
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                PixelTextField(
-                  controller: _albumNameController,
-                  hintText: widget.hint,
-                  height: 38,
-                  onChanged: (value) {
-                    setState(() {
-                      _albumNameError = _validateAlbumName(value.trim());
-                    });
-                  },
-                ),
-                if (_albumNameError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12, top: 4),
-                    child: Text(
-                      _albumNameError!,
-                      style: AppTypography.bodyRegular.copyWith(
-                        color: AppColors.cancel,
                       ),
-                    ),
-                  ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                isLoading
+                    ? const CircularProgressIndicator()
+                    : SaveCancel(
+                        onCancel: () {
+                          Navigator.pop(context);
+                        },
+                        onSave: _createAlbum,
+                      ),
+
               ],
             ),
-
-            const SizedBox(height: 24),
-
-            _isLoading
-                ? const CircularProgressIndicator()
-                : SaveCancel(
-                    onCancel: () {
-                      Navigator.pop(context);
-                    },
-                    onSave: _createAlbum,
-                  ),
-
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

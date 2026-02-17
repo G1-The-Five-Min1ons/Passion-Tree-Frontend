@@ -26,7 +26,7 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
   StreamSubscription<AlbumOperationResult>? _operationSubscription;
   
   // TODO: ลบออกตอนเชื่อม authen
-  final String userId = 'c2f58ec8-7611-d748-8bce-dd4768669769';
+  final String userId = 'feee25bd-db4e-4850-bd2c-5788ce090032';
 
   @override
   void initState() {
@@ -230,7 +230,7 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
                 );
               },
               child: PixelAlbumCover(
-                id: album.id,
+                albumId: album.albumId,
                 size: 150,
                 title: album.title,
                 subtitle: album.subtitle,

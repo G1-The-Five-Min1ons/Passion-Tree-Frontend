@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:equatable/equatable.dart';
 
 abstract class AlbumEvent extends Equatable {
@@ -21,16 +22,16 @@ class LoadAlbumsEvent extends AlbumEvent {
 class CreateAlbumEvent extends AlbumEvent {
   final String userId;
   final String albumName;
-  final String coverImageUrl;
+  final File? coverImage;
 
   const CreateAlbumEvent({
     required this.userId,
     required this.albumName,
-    required this.coverImageUrl,
+    this.coverImage,
   });
 
   @override
-  List<Object?> get props => [userId, albumName, coverImageUrl];
+  List<Object?> get props => [userId, albumName, coverImage?.path];
 }
 
 /// Event to update an existing album

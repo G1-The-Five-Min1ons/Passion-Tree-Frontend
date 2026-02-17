@@ -8,7 +8,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 
 class PixelAlbumCover extends StatelessWidget {
-  final String id;
+  final String albumId;
   final double? size;
   final double pixelSize;
   final Color? color;
@@ -18,7 +18,7 @@ class PixelAlbumCover extends StatelessWidget {
 
   const PixelAlbumCover({
     super.key,
-    required this.id,
+    required this.albumId,
     this.size,
     this.pixelSize = 3.0,
     this.color,
@@ -51,7 +51,7 @@ class PixelAlbumCover extends StatelessWidget {
               initialValue: title ?? '');
           },
           onDelete: () {
-            context.read<AlbumBloc>().add(DeleteAlbumEvent(id));
+            context.read<AlbumBloc>().add(DeleteAlbumEvent(albumId));
           },
         );
       },

@@ -5,6 +5,8 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/usecases/album_usecases.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
+import 'package:passion_tree_frontend/core/services/upload_service.dart';
+import 'package:path/path.dart' as path;
 
 enum AlbumOperationType { created, updated, deleted }
 
@@ -70,22 +72,46 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     CreateAlbumEvent event,
     Emitter<AlbumState> emit,
   ) async {
+    List<Album>? currentAlbums;
     if (state is AlbumsLoaded) {
-      final currentAlbums = (state as AlbumsLoaded).albums;
-      emit(AlbumOperationLoading(currentAlbums: currentAlbums));
-    } else {
-      emit(AlbumLoading());
+      currentAlbums = (state as AlbumsLoaded).albums;
     }
 
     try {
+      String coverImageUrl = '';
+
+      // Upload image if provided
+      if (event.coverImage != null) {
+        emit(ImageUploading(currentAlbums: currentAlbums));
+        
+        debugPrint('[AlbumBloc] Uploading image...');
+        final uploadService = UploadApiService();
+        final fileName = path.basename(event.coverImage!.path);
+        
+        final urls = await uploadService.getPresignedUrl(
+          fileName,
+          'reflect',
+        );
+        
+        await uploadService.uploadFileToBlob(
+          urls['upload_url']!,
+          event.coverImage!,
+        );
+        
+        coverImageUrl = urls['public_url']!;
+        debugPrint('[AlbumBloc] Image uploaded successfully');
+      }
+
+      emit(AlbumOperationLoading(currentAlbums: currentAlbums));
+
       final album = await createAlbum(
         userId: event.userId,
         albumName: event.albumName,
-        coverImageUrl: event.coverImageUrl,
+        coverImageUrl: coverImageUrl,
       );
       
       debugPrint('[AlbumBloc] Album created successfully!');
-      debugPrint(' Album ID: ${album.id}');
+      debugPrint(' Album ID: ${album.albumId}');
       debugPrint('Album Title: ${album.title}');
       
       _albumOperationController.add(
@@ -151,7 +177,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
       
       if (currentAlbums != null) {
         final updatedAlbums = currentAlbums
-            .where((album) => album.id != event.albumId)
+            .where((album) => album.albumId != event.albumId)
             .toList();
         emit(AlbumsLoaded(updatedAlbums));
       }

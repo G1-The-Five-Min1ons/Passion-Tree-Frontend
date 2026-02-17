@@ -54,3 +54,13 @@ class AlbumOperationLoading extends AlbumState {
   @override
   List<Object?> get props => [currentAlbums];
 }
+
+/// State when uploading image
+class ImageUploading extends AlbumState {
+  final List<Album>? currentAlbums;
+
+  const ImageUploading({this.currentAlbums});
+
+  @override
+  List<Object?> get props => [currentAlbums];
+}

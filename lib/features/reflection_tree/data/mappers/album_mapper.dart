@@ -5,7 +5,7 @@ class AlbumMapper {
   /// Convert AlbumApiModel to Album (Domain Model)
   static Album toAlbum(AlbumApiModel apiModel, {List<AlbumItem>? items}) {
     return Album(
-      id: apiModel.albumId,
+      albumId: apiModel.albumId,
       title: apiModel.albumName,
       subtitle: _formatSubtitle(apiModel.lastEdit),
       image: apiModel.coverImageUrl,
