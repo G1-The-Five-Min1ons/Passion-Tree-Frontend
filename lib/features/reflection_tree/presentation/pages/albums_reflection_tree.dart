@@ -217,14 +217,19 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
 
             return GestureDetector(
               onTap: () {
+                final albumBloc = BlocProvider.of<AlbumBloc>(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AlbumDetailPage(
-                      album: album,
-                      onBack: () {
-                        Navigator.pop(context);
-                      },
+                    builder: (context) => BlocProvider.value(
+                      value: albumBloc,
+                      child: AlbumDetailPage(
+                        album: album,
+                        userId: userId,
+                        onBack: () {
+                          Navigator.pop(context);
+                        },
+                      ),
                     ),
                   ),
                 );

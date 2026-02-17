@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
@@ -13,15 +14,18 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/retrieve_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/tree_status_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_album.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 
 
 class AlbumDetailPage extends StatelessWidget{
   final Album album;
+  final String userId;
   final VoidCallback onBack;
 
   const AlbumDetailPage({
     super.key, 
-    required this.album, 
+    required this.album,
+    required this.userId,
     required this.onBack, 
   });
 
@@ -55,12 +59,16 @@ class AlbumDetailPage extends StatelessWidget{
                   variant: AppButtonVariant.iconOnly,
                   icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
                   onPressed: (){
+                    final albumBloc = BlocProvider.of<AlbumBloc>(context);
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const AddReflectPage(),
+                        builder: (context) => BlocProvider.value(
+                          value: albumBloc,
+                          child: AddReflectPage(userId: userId),
                         ),
-                      );
+                      ),
+                    );
                   }),
                 ],
               ),  
@@ -73,12 +81,12 @@ class AlbumDetailPage extends StatelessWidget{
                 onTap: () {
                   RecommendPopup.show(context);
                 },
-                child: Text(
+                /* child: Text(
                   "recommend (mock ไว้ดู)",
                   style: AppTypography.bodyRegular.copyWith(
                     color: Theme.of(context).colorScheme.secondary,
                   ),
-                ),
+                ), */
               ),             
           ],
         ),

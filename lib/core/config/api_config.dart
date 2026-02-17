@@ -32,6 +32,7 @@ class ApiConfig {
   
   // Learning Path endpoints
   static String get learningPaths => '$apiBackendUrl/learningpaths';
+  static String userEnrolledPaths(String userId) => '$apiBackendUrl/learningpaths/user/enroll?user_id=$userId';
   
   // Reflection endpoints
   static String get reflections => '$apiBackendUrl/reflections';
