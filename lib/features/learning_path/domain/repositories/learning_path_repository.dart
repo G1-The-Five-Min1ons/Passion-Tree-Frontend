@@ -2,6 +2,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/lea
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path_progress.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
 
 abstract class LearningPathRepository {
   Future<List<LearningPath>> getAllLearningPaths();
@@ -12,4 +13,5 @@ abstract class LearningPathRepository {
   Future<List<EnrolledLearningPath>> getEnrolledPaths(String userId);
   Future<List<NodeDetail>> getNodesForPath(String pathId);
   Future<NodeDetail> getNodeDetail(String nodeId);
+  Future<List<QuizQuestion>> getNodeQuestions(String nodeId);
 }

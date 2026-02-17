@@ -4,7 +4,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_status.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/nodes_for_path_usecases.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_node_detail.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_detail_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 
 class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {

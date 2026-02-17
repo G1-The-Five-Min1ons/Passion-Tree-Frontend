@@ -71,7 +71,10 @@ class _LearningNodePageState extends State<LearningNodePage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const LearningPathQuizPage(),
+                              builder: (_) => LearningPathQuizPage(
+                                nodeId: widget.nodeId,
+                                title: nodeDetail.title,
+                              ),
                             ),
                           );
                         },
