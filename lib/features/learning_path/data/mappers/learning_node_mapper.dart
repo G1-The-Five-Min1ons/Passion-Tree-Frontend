@@ -9,7 +9,7 @@ extension LearningNodeMapper on LearningNodeApiModel {
       description: description,
       sequence: sequence,
       pathId: pathId,
-      materials: const [], // Old API doesn't have materials, use getNodeDetail for full data
+      materials: const [], 
     );
   }
 }

@@ -76,7 +76,10 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
       try {
         final nodes = await getNodesForPath(event.pathId);
-        emit(NodesLoaded(nodes));
+        emit(NodesLoaded(
+          pathId: event.pathId,
+          nodes: nodes,
+        ));
       } catch (e) {
         emit(LearningPathError(e.toString()));
       }

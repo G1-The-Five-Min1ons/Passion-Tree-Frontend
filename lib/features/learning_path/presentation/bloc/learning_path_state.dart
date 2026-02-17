@@ -31,9 +31,13 @@ class LearningPathOverviewLoaded extends LearningPathState {
 }
 
 class NodesLoaded extends LearningPathState {
+  final String pathId;
   final List<NodeDetail> nodes;
 
-  NodesLoaded(this.nodes);
+  NodesLoaded({
+    required this.pathId,
+    required this.nodes,
+  });
 }
 
 class NodeDetailLoaded extends LearningPathState {
