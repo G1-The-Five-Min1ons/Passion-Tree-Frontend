@@ -127,7 +127,24 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
 
             if (state is LearningPathOverviewLoaded) {
               final filteredAll = _filterCourses(state.allPaths);
-              final filteredEnrolled = _filterEnrolledCourses(state.enrolledPaths);
+              
+              // Filter and deduplicate enrolled paths
+              final filteredEnrolledWithDuplicates = _filterEnrolledCourses(state.enrolledPaths);
+              final seenPathIds = <String>{};
+              final filteredEnrolled = filteredEnrolledWithDuplicates.where((path) {
+                if (seenPathIds.contains(path.pathId)) {
+                  return false;
+                }
+                seenPathIds.add(path.pathId);
+                return true;
+              }).toList();
+              
+              // Filter out enrolled paths from recommended section
+              final enrolledPathIds = filteredEnrolled.map((e) => e.pathId).toSet();
+              final filteredRecommended = filteredAll
+                  .where((path) => !enrolledPathIds.contains(path.id))
+                  .toList();
+              
               final shownAllCourses = filteredAll.take(_allListShownCount).toList();
 
               // Check if user has enrolled paths (logged in)
@@ -244,7 +261,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                         const SizedBox(height: 40),
                         SizedBox(
                           height: BaseCourseCard.defaultHeight,
-                          child: filteredAll.isEmpty
+                          child: filteredRecommended.isEmpty
                               ? Center(
                                   child: Text(
                                     'No recommended paths found',
@@ -256,10 +273,10 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                               : ListView.separated(
                                   scrollDirection: Axis.horizontal,
                                   padding: const EdgeInsets.symmetric(horizontal: 0),
-                                  itemCount: filteredAll.length,
+                                  itemCount: filteredRecommended.length,
                                   separatorBuilder: (_, __) => const SizedBox(width: 12),
                                   itemBuilder: (context, index) {
-                                    return PixelCourseCard(course: filteredAll[index]);
+                                    return PixelCourseCard(course: filteredRecommended[index]);
                                   },
                                 ),
                         ),
