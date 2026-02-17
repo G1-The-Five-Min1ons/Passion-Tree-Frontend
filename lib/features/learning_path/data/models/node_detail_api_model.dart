@@ -7,6 +7,8 @@ class NodeDetailApiModel {
   final int sequence;
   final String pathId;
   final List<MaterialApiModel> materials;
+  final String status;
+  final String complete;
 
   const NodeDetailApiModel({
     required this.nodeId,
@@ -15,6 +17,8 @@ class NodeDetailApiModel {
     required this.sequence,
     required this.pathId,
     required this.materials,
+    required this.status,
+    required this.complete,
   });
 
   factory NodeDetailApiModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +32,8 @@ class NodeDetailApiModel {
               ?.map((m) => MaterialApiModel.fromJson(m as Map<String, dynamic>))
               .toList() ??
           [],
+      status: json['status'] ?? 'locked',
+      complete: json['complete'] ?? 'false',
     );
   }
 
@@ -39,6 +45,8 @@ class NodeDetailApiModel {
       'sequence': sequence,
       'path_id': pathId,
       'materials': materials.map((m) => m.toJson()).toList(),
+      'status': status,
+      'complete': complete,
     };
   }
 }

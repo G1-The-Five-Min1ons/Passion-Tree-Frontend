@@ -25,9 +25,23 @@ class _LearningNodePageState extends State<LearningNodePage> {
   @override
   void initState() {
     super.initState();
+    // TODO: Get userId from authentication service
+    const userId = '3f9b2c6d-8288-4647-8d33-33d96e1a82b3'; // Hardcoded for testing
+    
+    // Start node when page loads
+    context.read<LearningPathBloc>().add(
+          StartNodeEvent(
+            nodeId: widget.nodeId,
+            userId: userId,
+          ),
+        );
+    
     // Fetch node detail when page loads
     context.read<LearningPathBloc>().add(
-          FetchNodeDetail(nodeId: widget.nodeId),
+          FetchNodeDetail(
+            nodeId: widget.nodeId,
+            userId: userId,
+          ),
         );
   }
 

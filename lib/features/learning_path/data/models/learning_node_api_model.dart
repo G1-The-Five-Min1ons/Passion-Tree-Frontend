@@ -4,6 +4,8 @@ class LearningNodeApiModel {
   final String description;
   final int sequence;
   final String pathId;
+  final String status;
+  final String complete;
 
   LearningNodeApiModel({
     required this.nodeId,
@@ -11,6 +13,8 @@ class LearningNodeApiModel {
     required this.description,
     required this.sequence,
     required this.pathId,
+    required this.status,
+    required this.complete,
   });
 
   factory LearningNodeApiModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +24,8 @@ class LearningNodeApiModel {
       description: json['description'],
       sequence: json['sequence'],
       pathId: json['path_id'],
+      status: json['status'] ?? 'locked',
+      complete: json['complete'] ?? 'false',
     );
   }
 }

@@ -29,17 +29,16 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
   @override
   void initState() {
     super.initState();
-    // Fetch nodes only if not already loaded for this path
-    final currentState = context.read<LearningPathBloc>().state;
-    if (currentState is NodesLoaded && currentState.pathId == widget.course.id) {
-      // Use cached nodes from state
-      _cachedNodes = currentState.nodes;
-    } else {
-      // Fetch new nodes
-      context.read<LearningPathBloc>().add(
-        FetchNodesForPath(pathId: widget.course.id),
-      );
-    }
+    // TODO: Get userId from authentication service
+    const userId = '3f9b2c6d-8288-4647-8d33-33d96e1a82b3'; // Hardcoded for testing
+    
+    // Always fetch fresh nodes to ensure up-to-date status
+    context.read<LearningPathBloc>().add(
+      FetchNodesForPath(
+        pathId: widget.course.id,
+        userId: userId,
+      ),
+    );
   }
 
   @override

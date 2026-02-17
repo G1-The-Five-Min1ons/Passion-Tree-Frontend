@@ -11,4 +11,15 @@ class NodeAsset {
       
     }
   }
+
+  /// Convert API status string to LearningNodeState enum
+  static LearningNodeState statusToState(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return LearningNodeState.active;
+      case 'locked':
+      default:
+        return LearningNodeState.locked;
+    }
+  }
 }

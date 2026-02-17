@@ -6,7 +6,7 @@ class GetNodesForPath {
 
   GetNodesForPath(this.repository);
 
-  Future<List<NodeDetail>> call(String pathId) {
-    return repository.getNodesForPath(pathId);
+  Future<List<NodeDetail>> call(String pathId, String userId) {
+    return repository.getNodesForPath(pathId, userId);
   }
 }

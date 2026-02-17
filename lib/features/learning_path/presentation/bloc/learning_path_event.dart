@@ -14,10 +14,25 @@ class FetchLearningPathOverview extends LearningPathEvent {
 
 class FetchNodesForPath extends LearningPathEvent {
   final String pathId;
-  FetchNodesForPath({required this.pathId});
+  final String userId;
+  FetchNodesForPath({required this.pathId, required this.userId});
 }
 
 class FetchNodeDetail extends LearningPathEvent {
   final String nodeId;
-  FetchNodeDetail({required this.nodeId});
+  final String userId;
+  FetchNodeDetail({required this.nodeId, required this.userId});
 }
+
+class StartNodeEvent extends LearningPathEvent {
+  final String nodeId;
+  final String userId;
+  StartNodeEvent({required this.nodeId, required this.userId});
+}
+
+class CompleteNodeEvent extends LearningPathEvent {
+  final String nodeId;
+  final String userId;
+  CompleteNodeEvent({required this.nodeId, required this.userId});
+}
+

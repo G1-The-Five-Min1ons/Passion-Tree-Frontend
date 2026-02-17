@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
@@ -12,6 +13,8 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/data/datasources/learning_path_data_source.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/repositories/learning_path_repositories.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 
 enum QuizViewState { loading, answering, result, error }
 
@@ -250,6 +253,17 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
   }
 
   void _finishQuiz() {
+    // TODO: Get userId from authentication service
+    const userId = '3f9b2c6d-8288-4647-8d33-33d96e1a82b3'; // Hardcoded for testing
+    
+    // Mark node as completed
+    context.read<LearningPathBloc>().add(
+      CompleteNodeEvent(
+        nodeId: widget.nodeId,
+        userId: userId,
+      ),
+    );
+    
     // Show congratulation popup
     showDialog(
       context: context,

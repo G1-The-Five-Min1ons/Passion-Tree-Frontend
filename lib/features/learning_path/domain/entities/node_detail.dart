@@ -7,6 +7,8 @@ class NodeDetail {
   final int sequence;
   final String pathId;
   final List<Material> materials;
+  final String status;
+  final String complete;
 
   const NodeDetail({
     required this.nodeId,
@@ -15,5 +17,7 @@ class NodeDetail {
     required this.sequence,
     required this.pathId,
     required this.materials,
+    required this.status,
+    required this.complete,
   });
 }

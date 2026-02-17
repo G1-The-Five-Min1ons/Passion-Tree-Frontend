@@ -75,10 +75,10 @@ class LearningPathDataSource {
     }
   }
 
-  Future<List<LearningNodeApiModel>> getNodesForPath(String pathId) async {
+  Future<List<LearningNodeApiModel>> getNodesForPath(String pathId, String userId) async {
     try {
       final response = await client.get(
-        Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/$pathId/nodes'),
+        Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/$pathId/nodes?user_id=$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -98,10 +98,10 @@ class LearningPathDataSource {
     }
   }
 
-  Future<NodeDetailApiModel> getNodeDetail(String nodeId) async {
+  Future<NodeDetailApiModel> getNodeDetail(String nodeId, String userId) async {
     try {
       final response = await client.get(
-        Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/nodes/$nodeId'),
+        Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/nodes/$nodeId?user_id=$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -137,6 +137,42 @@ class LearningPathDataSource {
       }
     } catch (e) {
       throw Exception('Failed to fetch questions: $e');
+    }
+  }
+
+  Future<void> startNode(String nodeId, String userId) async {
+    try {
+      final response = await client.put(
+        Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/nodes/$nodeId/start?user_id=$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception(error['message'] ?? 'Failed to start node');
+      }
+    } catch (e) {
+      throw Exception('Failed to start node: $e');
+    }
+  }
+
+  Future<void> completeNode(String nodeId, String userId) async {
+    try {
+      final response = await client.put(
+        Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/nodes/$nodeId/complete?user_id=$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception(error['message'] ?? 'Failed to complete node');
+      }
+    } catch (e) {
+      throw Exception('Failed to complete node: $e');
     }
   }
 }

@@ -29,6 +29,8 @@ class NodesOverviewCore extends StatelessWidget {
       sequence: mockLearningNodes.indexOf(mockNode),
       pathId: '',
       materials: const [],
+      status: 'locked',
+      complete: 'false',
     )).toList();
     
     final nodeCount = displayNodes.length;
@@ -52,15 +54,14 @@ class NodesOverviewCore extends StatelessWidget {
                       canvasWidth: canvasWidth,
                       nodeBuilder: (index, pos) {
                         final node = displayNodes[index];
-                        final mockNode = index < mockLearningNodes.length 
-                            ? mockLearningNodes[index] 
-                            : mockLearningNodes.first;
-
+                        // Convert API status to LearningNodeState
+                        final nodeState = NodeAsset.statusToState(node.status);
+                      
                         return Positioned(
                           left: pos.dx - 40,
                           top: pos.dy - 40,
                           child: NodeItem(
-                            imagePath: NodeAsset.image(mockNode.state),
+                            imagePath: NodeAsset.image(nodeState),
                             size: 80,
                             onTap: () {
                               if (onNodeTap != null) {

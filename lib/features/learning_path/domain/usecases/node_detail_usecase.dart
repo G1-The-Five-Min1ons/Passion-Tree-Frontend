@@ -6,7 +6,7 @@ class GetNodeDetail {
 
   GetNodeDetail(this.repository);
 
-  Future<NodeDetail> call(String nodeId) async {
-    return await repository.getNodeDetail(nodeId);
+  Future<NodeDetail> call(String nodeId, String userId) async {
+    return await repository.getNodeDetail(nodeId, userId);
   }
 }

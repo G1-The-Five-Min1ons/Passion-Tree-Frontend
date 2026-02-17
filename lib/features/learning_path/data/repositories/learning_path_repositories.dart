@@ -39,14 +39,14 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   }
 
   @override
-  Future<List<NodeDetail>> getNodesForPath(String pathId) async {
-    final models = await dataSource.getNodesForPath(pathId);
+  Future<List<NodeDetail>> getNodesForPath(String pathId, String userId) async {
+    final models = await dataSource.getNodesForPath(pathId, userId);
     return models.map((e) => e.toEntity()).toList();
   }
 
   @override
-  Future<NodeDetail> getNodeDetail(String nodeId) async {
-    final model = await dataSource.getNodeDetail(nodeId);
+  Future<NodeDetail> getNodeDetail(String nodeId, String userId) async {
+    final model = await dataSource.getNodeDetail(nodeId, userId);
     return model.toEntity();
   }
 
@@ -54,6 +54,16 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   Future<List<QuizQuestion>> getNodeQuestions(String nodeId) async {
     final models = await dataSource.getNodeQuestions(nodeId);
     return models.map((e) => e.toEntity()).toList();
+  }
+
+  @override
+  Future<void> startNode(String nodeId, String userId) async {
+    return await dataSource.startNode(nodeId, userId);
+  }
+
+  @override
+  Future<void> completeNode(String nodeId, String userId) async {
+    return await dataSource.completeNode(nodeId, userId);
   }
 }
 

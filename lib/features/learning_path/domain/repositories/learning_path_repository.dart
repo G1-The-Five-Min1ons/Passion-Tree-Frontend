@@ -11,7 +11,9 @@ abstract class LearningPathRepository {
     String userId,
   );
   Future<List<EnrolledLearningPath>> getEnrolledPaths(String userId);
-  Future<List<NodeDetail>> getNodesForPath(String pathId);
-  Future<NodeDetail> getNodeDetail(String nodeId);
+  Future<List<NodeDetail>> getNodesForPath(String pathId, String userId);
+  Future<NodeDetail> getNodeDetail(String nodeId, String userId);
   Future<List<QuizQuestion>> getNodeQuestions(String nodeId);
+  Future<void> startNode(String nodeId, String userId);
+  Future<void> completeNode(String nodeId, String userId);
 }

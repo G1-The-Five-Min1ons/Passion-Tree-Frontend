@@ -11,6 +11,8 @@ extension NodeDetailMapper on NodeDetailApiModel {
       sequence: sequence,
       pathId: pathId,
       materials: materials.map((m) => m.toEntity()).toList(),
+      status: status,
+      complete: complete,
     );
   }
 }
