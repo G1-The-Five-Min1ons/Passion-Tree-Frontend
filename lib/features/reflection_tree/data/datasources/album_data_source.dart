@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:passion_tree_frontend/core/config/api_config.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/models/album_api_model.dart';
@@ -12,8 +13,8 @@ class AlbumDataSource {
   Future<AlbumApiModel> createAlbum(CreateAlbumRequest request, String token) async {
     try {
       final url = Uri.parse(ApiConfig.albums);
-      print('[AlbumDataSource] POST $url');
-      print('Request body: ${jsonEncode(request.toJson())}');
+      debugPrint('[AlbumDataSource] POST $url');
+      debugPrint('Request body: ${jsonEncode(request.toJson())}');
       
       final response = await client.post(
         url,
@@ -21,19 +22,19 @@ class AlbumDataSource {
         body: jsonEncode(request.toJson()),
       );
 
-      print('[AlbumDataSource] Response status: ${response.statusCode}');
+      debugPrint('[AlbumDataSource] Response status: ${response.statusCode}');
       
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        print('[AlbumDataSource] Album created successfully (Status: 201)');
+        debugPrint('[AlbumDataSource] Album created successfully (Status: 201)');
         return AlbumApiModel.fromJson(data['data']['album']);
       } else {
         final error = jsonDecode(response.body);
-        print('[AlbumDataSource] Error: ${error['message']}');
+        debugPrint('[AlbumDataSource] Error: ${error['message']}');
         throw Exception(error['message'] ?? 'Failed to create album');
       }
     } catch (e) {
-      print('[AlbumDataSource] Exception: $e');
+      debugPrint('[AlbumDataSource] Exception: $e');
       throw Exception('Failed to create album: $e');
     }
   }

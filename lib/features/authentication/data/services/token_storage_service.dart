@@ -4,6 +4,7 @@ class TokenStorageService {
   static const String _tokenKey = 'auth_token';
   static const String _userIdKey = 'user_id';
   static const String _usernameKey = 'username';
+  static const String _heartCountKey = 'heart_count';
 
   Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
@@ -35,6 +36,16 @@ class TokenStorageService {
     return prefs.getString(_usernameKey);
   }
 
+  Future<void> saveHeartCount(int heartCount) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_heartCountKey, heartCount);
+  }
+
+  Future<int> getHeartCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_heartCountKey) ?? 5;
+  }
+
   Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null && token.isNotEmpty;
@@ -45,6 +56,7 @@ class TokenStorageService {
     await prefs.remove(_tokenKey);
     await prefs.remove(_userIdKey);
     await prefs.remove(_usernameKey);
+    await prefs.remove(_heartCountKey);
   }
 
   Future<void> clearAll() async {

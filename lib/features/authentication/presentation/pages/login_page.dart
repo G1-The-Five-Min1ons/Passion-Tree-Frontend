@@ -240,6 +240,24 @@ class _LoginPageState extends State<LoginPage> {
                           // Save token if remember me is checked
                           if (_rememberMe && response.token != null) {
                             await TokenStorageService().saveToken(response.token);
+                            
+                            // Fetch user profile to get heart_count and other user data
+                            try {
+                              final profileResponse = await authService.getProfile(response.token);
+                              final userData = profileResponse['data']['user'];
+                              
+                              // Save user data to local storage
+                              await TokenStorageService().saveUserId(userData['user_id']);
+                              await TokenStorageService().saveUsername(userData['username']);
+                              await TokenStorageService().saveHeartCount(userData['heart_count'] ?? 5);
+                              
+                              debugPrint('[LOGIN] User data saved:');
+                              debugPrint('  User ID: ${userData['user_id']}');
+                              debugPrint('  Username: ${userData['username']}');
+                              debugPrint('  Heart Count: ${userData['heart_count']}');
+                            } catch (profileError) {
+                              debugPrint('[LOGIN] Failed to fetch profile: $profileError');
+                            }
                           }
 
                           if (!mounted) return;
