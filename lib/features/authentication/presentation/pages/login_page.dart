@@ -16,6 +16,7 @@ import 'package:passion_tree_frontend/core/error/exceptions.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/auth_models.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/register_page.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/pages/forgot_password_page.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app_links/app_links.dart';
@@ -526,7 +527,11 @@ class _LoginPageState extends State<LoginPage> {
                         const Spacer(),
                         GestureDetector(
                           onTap: () {
-                            // TODO: Navigate to forgot password page
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const ForgotPasswordPage(),
+                              ),
+                            );
                           },
                           child: Text(
                             'Forgot password',
