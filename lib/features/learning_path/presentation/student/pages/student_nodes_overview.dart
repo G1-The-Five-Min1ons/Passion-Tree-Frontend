@@ -25,20 +25,20 @@ class StudentNodesOverviewPage extends StatelessWidget {
         child: Stack(
           children: [
             /// ===== CORE =====
-            NodesOverviewCore(
-              isEditable: false,
-              onNodeTap: (index) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => LearningNodePage(
-                      courseId: course.id,
+            // NodesOverviewCore(
+            //   isEditable: false,
+            //   onNodeTap: (index) {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (_) => LearningNodePage(
+            //           courseId: course.id,
                       
-                    ),
-                  ),
-                );
-              },
-            ),
+            //         ),
+            //       ),
+            //     );
+            //   },
+            // ),
 
             /// ===== HEADER (Dynamic Title) =====
             Positioned(

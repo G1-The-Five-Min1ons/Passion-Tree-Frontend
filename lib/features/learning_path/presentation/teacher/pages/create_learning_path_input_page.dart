@@ -248,7 +248,7 @@ class _CreateLearningPathInputPageState
                               );
                               final urls = await uploadService.getPresignedUrl(
                                 fileName,
-                                'learning-paths',
+                                'reflect',
                               );
                               debugPrint("✅ Got URL: ${urls['upload_url']}");
                               debugPrint("⬆️ Uploading to Blob...");
@@ -269,7 +269,7 @@ class _CreateLearningPathInputPageState
                               title: _title,
                               objective: _objectives,
                               description: _description,
-                              creatorId: '3f9b2c6d-8288-4647-8d33-33d96e1a82b3', //พี่ขอ mock
+                              creatorId: 'feee25bd-db4e-4850-bd2c-5788ce090032', //พี่ขอ mock
                               coverImgUrl: coverImgUrl,
                             );
 

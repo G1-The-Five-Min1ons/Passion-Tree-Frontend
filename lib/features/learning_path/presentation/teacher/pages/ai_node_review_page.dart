@@ -38,19 +38,18 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
   // ฟังก์ชันแยกสำหรับเรียก AI (ใช้ซ้ำตอนกดปุ่ม Reload)
   Future<void> _generateNodesFromAI() async {
     if (widget.objective.isEmpty) {
-        setState(() => _isLoading = false); // [สำคัญ] ต้องสั่งหยุดหมุนด้วยถ้าไม่มีข้อมูล
+        setState(() => _isLoading = false);
         return;
     }
 
-    setState(() => _isLoading = true); // หมุนติ้วๆ
+    setState(() => _isLoading = true);
 
     try {
-      // เรียก service generatePathWithAI (อันเดิมที่มีอยู่แล้ว)
-      final aiResponse = await generatePathWithAI(widget.objective);
+      final aiResponse = await generateNodeWithAI(widget.objective);
       
       setState(() {
         _nodes = aiResponse.nodes;
-        _isLoading = false; // หยุดหมุน
+        _isLoading = false;
       });
     } catch (e) {
       debugPrint('AI Error: $e');
@@ -199,7 +198,6 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                     AppButton(
                       variant: AppButtonVariant.text,
                       text: 'Save',
-                      // ปิดปุ่ม Save ถ้ากำลังโหลดอยู่
                       onPressed: _isLoading 
                         ? () {} 
                         : () {
@@ -209,6 +207,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                                 builder: (_) => TeacherNodesOverviewPage(
                                     title: 'Nodes Overview',
                                     aiNodes: _nodes,
+                                    pathId: widget.pathId,
                                   ),
                               ),
                             );
@@ -224,16 +223,4 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
       ),
     );
   }
-
-  // ===== ACTIONS =====
-  // void _regenerateNodes() {
-  //   setState(() {
-  //     _nodes.shuffle(); // mock regenerate
-  //   });
-  // }
-
-  // void _saveNodes() {
-  //   debugPrint('Saved nodes: $_nodes');
-  //   // TODO: ไป step ถัดไป
-  // }
 }

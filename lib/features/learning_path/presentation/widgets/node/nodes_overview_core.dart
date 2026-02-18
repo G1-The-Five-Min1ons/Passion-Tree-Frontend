@@ -5,22 +5,25 @@ import 'package:passion_tree_frontend/core/common_widgets/node/tree_canvas.dart'
 
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/node_asset.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/learning_nodes_mock.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/teacher_nodes_overview.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/node_state.dart';
 
 class NodesOverviewCore extends StatelessWidget {
   final bool isEditable;
-  final int nodeCount;
+  final List<NodeUiState> nodeUiList;
   final Function(int index)? onNodeTap;
 
 
   const NodesOverviewCore({
     super.key,
     required this.isEditable,
-    this.nodeCount = 0,
+    required this.nodeUiList,
     this.onNodeTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final nodeCount = nodeUiList.length;
     final canvasHeight = (nodeCount * 200.0) + 200.0;
 
     return Stack(
@@ -40,13 +43,16 @@ class NodesOverviewCore extends StatelessWidget {
                       itemCount: nodeCount,
                       canvasWidth: canvasWidth,
                       nodeBuilder: (index, pos) {
-
+                        final node = nodeUiList[index];
+                        final imageAsset = node.isCreated
+                            ? NodeAsset.image(LearningNodeState.active) 
+                            : NodeAsset.image(LearningNodeState.locked);
 
                         return Positioned(
                           left: pos.dx - 40,
                           top: pos.dy - 40,
                           child: NodeItem(
-                            imagePath: NodeAsset.image(.locked),
+                            imagePath: imageAsset,
                             size: 80,
                             onTap: () {
                               if (onNodeTap != null) {

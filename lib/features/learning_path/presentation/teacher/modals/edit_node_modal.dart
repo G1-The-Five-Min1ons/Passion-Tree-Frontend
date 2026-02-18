@@ -7,15 +7,22 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/upl
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_quiz.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_footer.dart';
 import 'package:passion_tree_frontend/core/common_widgets/popups/delete_popup.dart';
-
+import 'package:passion_tree_frontend/features/learning_path/data/models/create_node_request.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_quiz.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/create_node_request.dart';
 
 class EditNodeModal extends StatefulWidget {
   final String? initialTitle;
+  // [สำคัญ] Callback ส่งข้อมูลกลับไปหน้าหลัก
+  final Function(
+    String title,
+    String desc,
+    List<String> links,
+    List<CreateQuestionWithChoicesRequest> questions, // ส่ง Quiz กลับไปด้วย
+  )?
+  onSaveData;
 
-  const EditNodeModal({
-    super.key,
-    this.initialTitle,
-  });
+  const EditNodeModal({super.key, this.initialTitle, this.onSaveData});
 
   @override
   State<EditNodeModal> createState() => _EditNodeModalState();
@@ -28,6 +35,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
   String _linkInput = '';
   final List<String> _links = []; //ส่วนเพิ่มlink
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
+  List<NodeQuiz> _currentQuizzes = [];
 
   @override
   void initState() {
@@ -111,7 +119,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                   const SizedBox(height: 10),
 
                   // ===== INFO + MATERIALS =====
-                 NodeInfoSection(
+                  NodeInfoSection(
                     // ===== NODE INFO =====
                     titleController: _titleController,
                     onDescriptionChanged: (v) => _description = v,
@@ -128,9 +136,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
                     onUploadFile: _pickFile,
                     onRemoveFile: _removeFile,
                   ),
-                  
+
                   const SizedBox(height: 14),
-                  NodeQuizSection(),
+                  NodeQuizSection(
+                    onChanged: (updatedQuizzes) {
+                      _currentQuizzes = updatedQuizzes;
+                    },
+                  ),
 
                   const SizedBox(height: 14),
 
@@ -151,12 +163,43 @@ class _EditNodeModalState extends State<EditNodeModal> {
                       );
                     },
                     onSave: () {
-                      // TODO: save node
+                      List<CreateQuestionWithChoicesRequest>
+                      apiQuestions = _currentQuizzes.map((q) {
+                        List<CreateChoiceRequest> apiChoices = [];
+                        for (int i = 0; i < q.choices.length; i++) {
+                          apiChoices.add(
+                            CreateChoiceRequest(
+                              choiceText: q.choices[i],
+                              isCorrect:
+                                  i ==
+                                  q.selectedIndex,
+                              reasoning: q.reasons[i] ?? '',
+                            ),
+                          );
+                        }
+
+                        return CreateQuestionWithChoicesRequest(
+                          questionText: q.question,
+                          type: 'multiple_choice',
+                          choices: apiChoices,
+                        );
+                      }).toList();
+
+                      apiQuestions = apiQuestions
+                          .where((q) => q.questionText.isNotEmpty)
+                          .toList();
+
+                      if (widget.onSaveData != null) {
+                        widget.onSaveData!(
+                          _titleController.text,
+                          _description,
+                          _links,
+                          apiQuestions,
+                        );
+                      }
                       Navigator.pop(context);
                     },
                   ),
-
-     
                 ],
               ),
             ),
