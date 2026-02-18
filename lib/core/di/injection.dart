@@ -7,7 +7,6 @@ import 'package:passion_tree_frontend/features/authentication/data/datasources/a
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_remote_data_source.dart';
 import 'package:passion_tree_frontend/features/authentication/data/repositories/auth_repository_impl.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
-import 'package:passion_tree_frontend/features/authentication/data/services/token_storage_service.dart';
 
 final getIt = GetIt.instance;
 

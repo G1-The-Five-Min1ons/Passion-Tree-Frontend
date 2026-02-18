@@ -1,5 +1,3 @@
-import 'package:passion_tree_frontend/features/authentication/domain/entities/user.dart';
-
 abstract class IAuthRepository {
   /// Registers a new user. Returns user ID.
   Future<String> register({
@@ -46,6 +44,9 @@ abstract class IAuthRepository {
 
   /// Performs Google Sign-In
   Future<void> nativeGoogleSignIn(String idToken);
+
+  /// Performs Discord Sign-In
+  Future<void> nativeDiscordSignIn(String code);
 
   /// Validates if a role is selected (local check)
   Future<bool> hasSelectedRole();

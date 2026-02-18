@@ -16,6 +16,7 @@ abstract class AuthRemoteDataSource {
   Future<void> changePassword(String token, ChangePasswordRequest request);
   Future<void> deleteUser(String token);
   Future<NativeGoogleSignInResponse> nativeGoogleSignIn(String idToken);
+  Future<NativeDiscordSignInResponse> nativeDiscordSignIn(String code);
   Future<VerifyEmailResponse> refreshToken(String refreshTokenValue);
 }
 
@@ -204,6 +205,27 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return NativeGoogleSignInResponse.fromJson(raw);
     }
     throw _handleError(response, 'nativeGoogleSignIn');
+  }
+
+  @override
+  Future<NativeDiscordSignInResponse> nativeDiscordSignIn(String code) async {
+    LogHandler.separator(title: 'AUTH REMOTE · NATIVE DISCORD SIGN-IN');
+    final response = await _apiHandler.post(
+      url: ApiConfig.authNativeDiscordSignIn,
+      headers: ApiConfig.defaultHeaders,
+      body: jsonEncode({'code': code}),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Discord sign-in successful');
+      final raw = <String, dynamic>{
+        'success': response.success,
+        'token': (response.data as Map<String, dynamic>?)?['token'] ?? '',
+        'user': (response.data as Map<String, dynamic>?)?['user'],
+      };
+      return NativeDiscordSignInResponse.fromJson(raw);
+    }
+    throw _handleError(response, 'nativeDiscordSignIn');
   }
 
   @override

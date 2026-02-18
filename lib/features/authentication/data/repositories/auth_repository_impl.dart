@@ -1,8 +1,6 @@
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_remote_data_source.dart';
-import 'package:passion_tree_frontend/features/authentication/data/mappers/auth_mapper.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/auth_models.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/entities/profile.dart' as entity;
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements IAuthRepository {
@@ -129,6 +127,15 @@ class AuthRepositoryImpl implements IAuthRepository {
     // Note: NativeGoogleSignInResponse has user data but not refresh token currently?
     // And what about role?
     // We should save what we can.
+    await _localDataSource.saveUserId(response.userId);
+    await _localDataSource.saveUsername(response.username);
+    await _localDataSource.saveRole(response.role);
+  }
+
+  @override
+  Future<void> nativeDiscordSignIn(String code) async {
+    final response = await _remoteDataSource.nativeDiscordSignIn(code);
+    await _localDataSource.saveToken(response.token);
     await _localDataSource.saveUserId(response.userId);
     await _localDataSource.saveUsername(response.username);
     await _localDataSource.saveRole(response.role);

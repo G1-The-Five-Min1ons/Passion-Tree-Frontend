@@ -45,3 +45,12 @@ class LoginWithGoogle extends LoginEvent {
 class LoginWithDiscord extends LoginEvent {
   const LoginWithDiscord();
 }
+
+class LoginWithDiscordCode extends LoginEvent {
+  final String code;
+
+  const LoginWithDiscordCode(this.code);
+
+  @override
+  List<Object?> get props => [code];
+}
