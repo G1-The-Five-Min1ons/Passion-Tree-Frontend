@@ -18,6 +18,7 @@ abstract class AuthRemoteDataSource {
   Future<NativeGoogleSignInResponse> nativeGoogleSignIn(String idToken);
   Future<NativeDiscordSignInResponse> nativeDiscordSignIn(String code);
   Future<VerifyEmailResponse> refreshToken(String refreshTokenValue);
+  Future<void> selectRole(String token, SelectRoleRequest request);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -257,6 +258,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
     LogHandler.error('$context failed: $msg');
     return AuthException(message: msg, statusCode: response.statusCode);
+  }
+
+  @override
+  Future<void> selectRole(String token, SelectRoleRequest request) async {
+    LogHandler.separator(title: 'AUTH REMOTE · SELECT ROLE');
+    final response = await _apiHandler.put(
+      url: ApiConfig.authUpdateUser,
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode(request.toJson()),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Role selected: ${request.role}');
+      return;
+    }
+    throw _handleError(response, 'selectRole');
   }
 
   String _getUserFriendlyMessage(String backendError, String context) {

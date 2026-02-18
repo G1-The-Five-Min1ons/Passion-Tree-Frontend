@@ -23,25 +23,12 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     emit(const RegisterLoading());
 
     try {
-      await _authRepository.register(
-        username: event.username,
-        email: event.email,
-        password: event.password,
-        firstName: event.firstName,
-        lastName: event.lastName,
-        role: event.role,
-        bio: event.bio,
-        location: event.location,
-        avatarUrl: event.avatarUrl,
-      );
-      
       final userId = await _authRepository.register(
         username: event.username,
         email: event.email,
         password: event.password,
         firstName: event.firstName,
         lastName: event.lastName,
-        role: event.role,
         bio: event.bio,
         location: event.location,
         avatarUrl: event.avatarUrl,

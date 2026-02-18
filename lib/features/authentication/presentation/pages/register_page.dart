@@ -16,6 +16,8 @@ import 'package:passion_tree_frontend/features/authentication/presentation/bloc/
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/select_role_popup.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
@@ -155,7 +157,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
             ),
           );
 
-          // Show role selection popup after successful registration
+          // 1. Show role selection popup immediately after registration
           final selectedRole = await showDialog<String>(
             context: context,
             barrierDismissible: false,
@@ -170,16 +172,65 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
 
           if (selectedRole != null && state.userId.isNotEmpty) {
             final authRepo = getIt<IAuthRepository>();
+            // Save role locally
             await authRepo.saveUserRole(selectedRole);
             await authRepo.markRoleSelected();
+            
+            // 2. Auto-login to trigger OTP
+            if (context.mounted) {
+               try {
+                  // Show loading indicator or just block interaction? 
+                  // For now, we rely on the OTP dialog to appear.
+                  final logMsg = await authRepo.login(
+                     identifier: _usernameController.text.trim(),
+                     password: _passwordController.text,
+                  );
+                  
+                  if (!context.mounted) return;
+                  
+                  // 3. Show OTP Dialog
+                  final otpCode = await _showOtpDialog(context, logMsg);
+                  
+                  if (otpCode != null && context.mounted) {
+                     // 4. Verify Email
+                     await authRepo.verifyEmail(otpCode);
+                     
+                     // 5. Post-Auth Logic (Sync Role & Navigate)
+                     await _handlePostAuth(context);
+                  } else if (context.mounted) {
+                      // User cancelled OTP, navigate to login page so they can try logging in again later
+                       Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                           builder: (context) => const LoginPage(),
+                        ),
+                     );
+                  }
+
+               } catch (e) {
+                  LogHandler.error('Auto-login/Verification failed during registration flow', error: e);
+                  if (context.mounted) {
+                     ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Verification failed: ${e.toString()}')),
+                     );
+                     // Fallback to login page
+                     Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                           builder: (context) => const LoginPage(),
+                        ),
+                     );
+                  }
+               }
+            }
+          } else {
+             // User cancelled role selection or something went wrong, fallback to login
+             if (!context.mounted) return;
+             Navigator.of(context).pushReplacement(
+               MaterialPageRoute(
+                 builder: (context) => const LoginPage(),
+               ),
+             );
           }
 
-          if (!context.mounted) return;
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const HomeBarWidget(),
-            ),
-          );
         } else if (state is RegisterFailure) {
           final errorMessage = state.error.toLowerCase();
           
@@ -546,6 +597,128 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
         ),
       ),
     );},
+    );
+  }
+
+  /// Show OTP input dialog and return the entered code
+  Future<String?> _showOtpDialog(BuildContext context, String message) async {
+    final otpController = TextEditingController();
+    
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 25),
+          child: PixelBorderContainer(
+            pixelSize: 4,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Email Verification',
+                  style: AppPixelTypography.h3.copyWith(
+                    color: Theme.of(dialogContext).colorScheme.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  message,
+                  style: AppTypography.bodySemiBold.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                PixelTextField(
+                  label: 'Verification Code',
+                  hintText: 'Enter 6-digit code',
+                  controller: otpController,
+                  height: 38,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        variant: AppButtonVariant.text,
+                        text: 'Cancel',
+                        backgroundColor: AppColors.cancel,
+                        onPressed: () => Navigator.of(dialogContext).pop(null),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppButton(
+                        variant: AppButtonVariant.text,
+                        text: 'Verify',
+                        onPressed: () {
+                          final code = otpController.text.trim();
+                          if (code.isNotEmpty) {
+                            Navigator.of(dialogContext).pop(code);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Handle the post-authentication flow: save data, check role, navigate
+  Future<void> _handlePostAuth(BuildContext context) async {
+    final authRepo = getIt<IAuthRepository>();
+    
+    // 1. Capture local role
+    final localRoleCandidate = await authRepo.getUserRole();
+    LogHandler.info('Reg-PostAuth: Local role candidate is "$localRoleCandidate"');
+    
+    try {
+      // 2. Fetch profile
+      final profileDataMap = await authRepo.getProfile();
+      
+      String backendRole = 'pending';
+      if (profileDataMap is Map<String, dynamic> && 
+          profileDataMap['data'] != null && 
+          profileDataMap['data']['user'] != null) {
+         backendRole = profileDataMap['data']['user']['role'] ?? 'pending';
+      }
+      LogHandler.info('Reg-PostAuth: Backend role is "$backendRole"');
+
+      // 3. Sync if needed
+      if (backendRole == 'pending') {
+         if (localRoleCandidate != null && (localRoleCandidate == 'student' || localRoleCandidate == 'teacher')) {
+            try {
+               LogHandler.info('Reg-PostAuth: Syncing role "$localRoleCandidate"...');
+               await authRepo.selectRole(localRoleCandidate);
+               LogHandler.success('Reg-PostAuth: Role synced.');
+            } catch (e) {
+               LogHandler.error('Reg-PostAuth: Failed to sync role', error: e);
+            }
+         } else {
+             LogHandler.warning('Reg-PostAuth: No valid local role to sync. User remains pending.');
+         }
+      }
+    } catch (e) {
+      LogHandler.error('Reg-PostAuth: Profile fetch failed', error: e);
+    }
+
+    if (!context.mounted) return;
+
+    LogHandler.success('Registration Flow Complete — navigating to home');
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => const HomeBarWidget(),
+      ),
     );
   }
 }

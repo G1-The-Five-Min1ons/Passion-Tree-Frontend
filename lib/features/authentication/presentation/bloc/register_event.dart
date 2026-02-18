@@ -13,7 +13,6 @@ class RegisterSubmitted extends RegisterEvent {
   final String password;
   final String firstName;
   final String lastName;
-  final String role;
   final String? bio;
   final String? location;
   final String? avatarUrl;
@@ -24,7 +23,6 @@ class RegisterSubmitted extends RegisterEvent {
     required this.password,
     required this.firstName,
     required this.lastName,
-    this.role = 'student',
     this.bio,
     this.location,
     this.avatarUrl,
@@ -37,7 +35,6 @@ class RegisterSubmitted extends RegisterEvent {
     password,
     firstName,
     lastName,
-    role,
     bio,
     location,
     avatarUrl,

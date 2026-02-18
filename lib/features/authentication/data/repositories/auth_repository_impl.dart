@@ -20,7 +20,6 @@ class AuthRepositoryImpl implements IAuthRepository {
     required String password,
     required String firstName,
     required String lastName,
-    required String role,
     String? bio,
     String? location,
     String? avatarUrl,
@@ -31,7 +30,6 @@ class AuthRepositoryImpl implements IAuthRepository {
       password: password,
       firstName: firstName,
       lastName: lastName,
-      role: role,
       bio: bio,
       location: location,
       avatarUrl: avatarUrl,
@@ -158,6 +156,15 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<void> saveUserRole(String role) async {
+    await _localDataSource.saveRole(role);
+  }
+
+  @override
+  Future<void> selectRole(String role) async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+    final request = SelectRoleRequest(role: role);
+    await _remoteDataSource.selectRole(token, request);
     await _localDataSource.saveRole(role);
   }
 

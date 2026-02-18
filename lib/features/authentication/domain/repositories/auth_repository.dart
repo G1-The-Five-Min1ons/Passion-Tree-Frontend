@@ -6,7 +6,6 @@ abstract class IAuthRepository {
     required String password,
     required String firstName,
     required String lastName,
-    required String role,
     String? bio,
     String? location,
     String? avatarUrl,
@@ -56,6 +55,9 @@ abstract class IAuthRepository {
   
   /// Saves the user role locally
   Future<void> saveUserRole(String role);
+
+  /// Selects a role for the user via API and saves locally
+  Future<void> selectRole(String role);
   
   /// Checks if user is logged in
   Future<bool> isLoggedIn();

@@ -292,28 +292,59 @@ class _LoginPageState extends State<LoginPage> {
   /// Handle the post-authentication flow: save data, check role, navigate
   Future<void> _handlePostAuth() async {
     final authRepo = getIt<IAuthRepository>();
-    // Tokens are already saved by verifyEmail or nativeGoogleSignIn in the repository
-
-    // Fetch user profile (Repository logic should cache user data)
+    
+    // 1. Capture the locally saved role (selected during registration) BEFORE getProfile overwrites it.
+    final localRoleCandidate = await authRepo.getUserRole();
+    LogHandler.info('Post-Auth Check: Local role candidate is "$localRoleCandidate"');
+    
     try {
-      final profileData = await authRepo.getProfile();
-      // If repository handles caching, we just need to verify success.
-      // profileData is dynamic/map, waiting for typed entity in future refactor.
+      // 2. Fetch current profile from backend. 
+      // This will update local storage with the backend's current role (likely 'pending').
+      final profileDataMap = await authRepo.getProfile();
       
-      // Check if role has been selected
-      final roleSelected = await authRepo.hasSelectedRole();
-      if (!roleSelected) {
-        if (!mounted) return;
-        final selectedRole = await _showRoleSelection();
-        if (selectedRole != null) {
-          await authRepo.saveUserRole(selectedRole);
-          await authRepo.markRoleSelected();
-          LogHandler.success('Role selected: $selectedRole');
-        }
+      // Extract the role safely from the response map
+      String backendRole = 'pending';
+      if (profileDataMap is Map<String, dynamic> && 
+          profileDataMap['data'] != null && 
+          profileDataMap['data']['user'] != null) {
+         backendRole = profileDataMap['data']['user']['role'] ?? 'pending';
       }
+      LogHandler.info('Post-Auth Check: Backend role is "$backendRole"');
+
+      // 3. Sync logic: Only update if backend is still 'pending'
+      if (backendRole == 'pending') {
+         String? roleToSync = localRoleCandidate;
+         
+         // If we don't have a valid local candidate, ask the user now.
+         if (roleToSync == null || (roleToSync != 'student' && roleToSync != 'teacher')) {
+            LogHandler.info('User is pending and no local role found. Prompting selection.');
+            if (mounted) {
+               roleToSync = await _showRoleSelection();
+               LogHandler.info('User selected role via popup: "$roleToSync"');
+            }
+         }
+         
+         // If we have a valid role now, sync it.
+         if (roleToSync == 'student' || roleToSync == 'teacher') {
+            try {
+               LogHandler.info('Attempting to sync role "$roleToSync" to backend...');
+               await authRepo.selectRole(roleToSync!);
+               LogHandler.success('Role synced to backend: $roleToSync');
+            } catch (e) {
+               LogHandler.error('Failed to sync role to backend', error: e);
+               // We continue anyway; user might be prompted again next login or we can block here.
+               // For now, let's allow entry but they might have limited access if backend restricts 'pending'.
+            }
+         } else {
+            LogHandler.warning('No valid role to sync (role is "$roleToSync"). User remains pending.');
+         }
+      } else {
+         LogHandler.info('Backend role is already set to "$backendRole". Skipping sync.');
+      }
+      
     } catch (profileError) {
-      LogHandler.error('Failed to fetch profile', error: profileError);
-      // Still allow navigation even if profile fetch fails
+      LogHandler.error('Failed to fetch profile or sync role', error: profileError);
+      // Proceeding despite error to avoid locking user out, though app might be in degraded state.
     }
 
     if (!mounted) return;
