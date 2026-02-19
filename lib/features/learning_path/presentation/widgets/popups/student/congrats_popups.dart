@@ -27,7 +27,7 @@ class CompletionPopup extends StatelessWidget {
               // ===== HEADER =====
               Text(
                 'Congratulations',
-                style: AppPixelTypography.h3,
+                style: AppPixelTypography.title,
                 textAlign: TextAlign.center,
               ),
 
@@ -61,7 +61,7 @@ class CompletionPopup extends StatelessWidget {
               // ===== QUESTION =====
               Text(
                 'Would You like to Rate This Learning Path',
-                style: AppTypography.subtitleSemiBold.copyWith(
+                style: AppTypography.subtitleRegular.copyWith(
                   color: colors.primary,
                 ),
                 textAlign: TextAlign.center,
