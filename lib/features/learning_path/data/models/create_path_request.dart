@@ -12,7 +12,7 @@ class CreatePathRequest {
     required this.description,
     required this.creatorId,
     this.coverImgUrl,
-    this.publishStatus = 'daft',
+    this.publishStatus = 'draft',
   });
 
   Map<String, dynamic> toJson() => {
