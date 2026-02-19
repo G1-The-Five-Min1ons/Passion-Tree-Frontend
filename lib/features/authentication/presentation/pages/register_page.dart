@@ -56,6 +56,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
   String? _confirmPasswordError;
   String? _firstNameError;
   String? _lastNameError;
+  String? _termsError;
 
   @override
   void dispose() {
@@ -133,6 +134,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
       _emailError = _validateEmail(_emailController.text.trim());
       _passwordError = _validatePassword(_passwordController.text);
       _confirmPasswordError = _validateConfirmPassword(_confirmPasswordController.text);
+      _termsError = !_acceptTerms ? ' Please accept Terms and Privacy Policy' : null;
     });
 
     return _usernameError == null &&
@@ -140,7 +142,8 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
         _lastNameError == null &&
         _emailError == null &&
         _passwordError == null &&
-        _confirmPasswordError == null;
+        _confirmPasswordError == null &&
+        _termsError == null;
   }
 
   @override
@@ -462,50 +465,66 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        PixelCheckbox(
-                          value: _acceptTerms,
-                          onChanged: (value) {
-                            setState(() {
-                              _acceptTerms = value ?? false;
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: RichText(
-                            text: TextSpan(
-                              style: AppTypography.subtitleMedium.copyWith(
-                                color: AppColors.textSecondary,
+                        Row(
+                          children: [
+                            PixelCheckbox(
+                              value: _acceptTerms,
+                              onChanged: (value) {
+                                setState(() {
+                                  _acceptTerms = value ?? false;
+                                  _termsError = !_acceptTerms ? 'You must accept Terms and Privacy Policy' : null;
+                                });
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: RichText(
+                                text: TextSpan(
+                                  style: AppTypography.subtitleMedium.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  children: [
+                                    const TextSpan(text: 'I accept '),
+                                    TextSpan(
+                                      text: 'Terms',
+                                      style: AppTypography.subtitleMedium.copyWith(
+                                        color: colorScheme.primary,
+                                      ),
+                                      // TODO: Add gesture recognizer for Terms
+                                    ),
+                                    const TextSpan(text: ' and '),
+                                    TextSpan(
+                                      text: 'Privacy Policy.',
+                                      style: AppTypography.subtitleMedium.copyWith(
+                                        color: colorScheme.primary,
+                                      ),
+                                      // TODO: Add gesture recognizer for Privacy Policy
+                                    ),
+                                    TextSpan(
+                                      text: ' *',
+                                      style: AppTypography.titleSemiBold.copyWith(
+                                        color: colorScheme.error,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              children: [
-                                const TextSpan(text: 'I accept '),
-                                TextSpan(
-                                  text: 'Terms',
-                                  style: AppTypography.subtitleMedium.copyWith(
-                                    color: colorScheme.primary,
-                                  ),
-                                  // TODO: Add gesture recognizer for Terms
-                                ),
-                                const TextSpan(text: ' and '),
-                                TextSpan(
-                                  text: 'Privacy Policy.',
-                                  style: AppTypography.subtitleMedium.copyWith(
-                                    color: colorScheme.primary,
-                                  ),
-                                  // TODO: Add gesture recognizer for Privacy Policy
-                                ),
-                                TextSpan(
-                                  text: ' *',
-                                  style: AppTypography.titleSemiBold.copyWith(
-                                    color: colorScheme.error,
-                                  ),
-                                ),
-                              ],
+                            ),
+                          ],
+                        ),
+                        if (_termsError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12, top: 4),
+                            child: Text(
+                              _termsError!,
+                              style: AppTypography.bodyRegular.copyWith(
+                                color: AppColors.cancel,
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -517,17 +536,6 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Please fix the errors above'),
-                              backgroundColor: AppColors.cancel,
-                            ),
-                          );
-                          return;
-                        }
-
-                        // Check if terms are accepted
-                        if (!_acceptTerms) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please accept Terms and Privacy Policy'),
                               backgroundColor: AppColors.cancel,
                             ),
                           );
