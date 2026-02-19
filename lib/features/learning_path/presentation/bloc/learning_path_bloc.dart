@@ -8,6 +8,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/nod
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_detail_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/start_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 
 class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
@@ -17,6 +18,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GetNodeDetail getNodeDetail;
   final StartNode startNode;
   final CompleteNode completeNode;
+  final DeleteLearningPath deleteLearningPath;
 
   LearningPathBloc(
     this.getAllLearningPaths,
@@ -25,6 +27,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.getNodeDetail,
     this.startNode,
     this.completeNode,
+    this.deleteLearningPath,
   ) : super(LearningPathInitial()) {
     
     ///  FETCH ALL LEARNING PATHS
@@ -170,6 +173,36 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(NodeDetailLoaded(nodeDetail));
       } catch (e) {
         debugPrint('[BLoC] Error completing node: $e');
+        emit(LearningPathError(e.toString()));
+      }
+    });
+
+    /// DELETE LEARNING PATH
+    
+    on<DeleteLearningPathEvent>((event, emit) async {
+      debugPrint('[BLoC] DeleteLearningPathEvent received');
+      debugPrint('Path ID: ${event.pathId}');
+      
+      try {
+        debugPrint('Deleting learning path...');
+        await deleteLearningPath(event.pathId);
+        debugPrint('[BLoC] Learning path deleted successfully');
+        
+        // Refresh overview if userId is provided
+        if (event.userId != null) {
+          debugPrint('Refreshing overview...');
+          final allPaths = await getAllLearningPaths();
+          final enrolledPaths = await getLearningPathStatus.repository.getEnrolledPaths(event.userId!);
+          
+          emit(LearningPathOverviewLoaded(
+            allPaths: allPaths,
+            enrolledPaths: enrolledPaths,
+          ));
+        } else {
+          emit(LearningPathDeleted('Learning path deleted successfully'));
+        }
+      } catch (e) {
+        debugPrint('[BLoC] Error deleting learning path: $e');
         emit(LearningPathError(e.toString()));
       }
     });

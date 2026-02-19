@@ -59,7 +59,19 @@ class _TeacherLearningPathOverviewPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBarWidget(title: 'Learning Paths', showBackButton: false),
+      appBar: AppBarWidget(
+        title: 'Learning Paths',
+        showBackButton:
+            _activeTab == 0 && _learningView == TeacherLearningView.status,
+        onBackPressed:
+            _activeTab == 0 && _learningView == TeacherLearningView.status
+            ? () {
+                setState(() {
+                  _learningView = TeacherLearningView.main;
+                });
+              }
+            : null,
+      ),
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
@@ -146,6 +158,7 @@ class _TeacherLearningPathOverviewPageState
                       ] else ...[
                         TeacherCreateTab(
                           allPaths: state.allPaths,
+                          userId: mockUserId,
                         ),
                       ],
 

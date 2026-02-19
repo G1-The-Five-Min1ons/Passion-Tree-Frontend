@@ -65,5 +65,10 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   Future<void> completeNode(String nodeId, String userId) async {
     return await dataSource.completeNode(nodeId, userId);
   }
+
+  @override
+  Future<void> deleteLearningPath(String pathId) async {
+    return await dataSource.deleteLearningPath(pathId);
+  }
 }
 

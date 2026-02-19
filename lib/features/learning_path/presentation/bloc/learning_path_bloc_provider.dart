@@ -8,6 +8,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/nod
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_detail_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/start_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 
 class LearningPathBlocProvider extends StatelessWidget {
@@ -26,6 +27,7 @@ class LearningPathBlocProvider extends StatelessWidget {
     final getNodeDetail = GetNodeDetail(repository);
     final startNode = StartNode(repository);
     final completeNode = CompleteNode(repository);
+    final deleteLearningPath = DeleteLearningPath(repository);
 
     return BlocProvider(
       create: (_) => LearningPathBloc(
@@ -35,6 +37,7 @@ class LearningPathBlocProvider extends StatelessWidget {
         getNodeDetail,
         startNode,
         completeNode,
+        deleteLearningPath,
       ),
       child: child,
     );

@@ -36,3 +36,9 @@ class CompleteNodeEvent extends LearningPathEvent {
   CompleteNodeEvent({required this.nodeId, required this.userId});
 }
 
+class DeleteLearningPathEvent extends LearningPathEvent {
+  final String pathId;
+  final String? userId; // For refreshing overview after delete
+  DeleteLearningPathEvent({required this.pathId, this.userId});
+}
+

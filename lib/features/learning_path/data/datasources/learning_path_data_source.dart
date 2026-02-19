@@ -267,4 +267,30 @@ class LearningPathDataSource {
       throw Exception('Failed to complete node: $e');
     }
   }
+
+  Future<void> deleteLearningPath(String pathId) async {
+    try {
+      debugPrint('[DataSource] Deleting learning path...');
+      debugPrint('API: DELETE /learningpaths/$pathId');
+      
+      final response = await client.delete(
+        Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/$pathId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      debugPrint('Response Status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        debugPrint('Successfully deleted learning path: $pathId');
+        return;
+      } else {
+        final error = jsonDecode(response.body);
+        debugPrint('Failed to delete learning path: ${error['message']}');
+        throw Exception(error['message'] ?? 'Failed to delete learning path');
+      }
+    } catch (e) {
+      debugPrint('Exception in deleteLearningPath: $e');
+      throw Exception('Failed to delete learning path: $e');
+    }
+  }
 }
