@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/t_learning_path_overview_login_page.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_login_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/t_learning_path_wrapper.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

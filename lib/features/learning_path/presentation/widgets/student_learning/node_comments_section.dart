@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
-import 'package:passion_tree_frontend/core/theme/theme.dart';
 
 //วางlayoutไว้ก่อน
 class NodeCommentsSection extends StatelessWidget {

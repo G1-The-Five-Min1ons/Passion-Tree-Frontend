@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
-import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
@@ -45,21 +44,19 @@ class LearningCourseContent extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 12),
-
         /// ===== COURSE MAP PREVIEW =====
         Container(
           width: double.infinity,
-          height: 230,
+          height: 400,
           color: AppColors.background,
           child: nodes != null && nodes!.isNotEmpty
               ? Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(2.0),
                   child: FittedBox(
-                    fit: BoxFit.contain,
+                    fit: BoxFit.cover,
                     child: SizedBox(
-                      width: 900,
-                      height: 800,
+                      width: 600,
+                      height: 900,
                       child: IgnorePointer(
                         child: NodesOverviewCore(
                           isEditable: false,
@@ -83,7 +80,7 @@ class LearningCourseContent extends StatelessWidget {
                 ),
         ),
 
-        const SizedBox(height: 24),
+    
 
         /// ===== DESCRIPTION =====
         PixelBorderContainer(

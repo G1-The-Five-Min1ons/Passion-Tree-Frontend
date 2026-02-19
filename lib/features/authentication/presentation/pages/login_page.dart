@@ -8,7 +8,6 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/bottom_buttons.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/pixel_password_field.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_overview_login_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/register_page.dart';
 
 class LoginPage extends StatefulWidget {
