@@ -4,12 +4,15 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_core.dart';
 
 class LearningCourseContent extends StatelessWidget {
   final String title;
   final String description;
   final VoidCallback onStartJourney;
   final bool isEnrolled;
+  final List<NodeDetail>? nodes;
 
   const LearningCourseContent({
     super.key,
@@ -17,6 +20,7 @@ class LearningCourseContent extends StatelessWidget {
     required this.description,
     required this.onStartJourney,
     this.isEnrolled = false,
+    this.nodes,
   });
 
   @override
@@ -42,20 +46,41 @@ class LearningCourseContent extends StatelessWidget {
 
         const SizedBox(height: 24),
 
-        /// ===== COURSE MAP PLACEHOLDER =====
+        /// ===== COURSE MAP PREVIEW =====
         PixelBorderContainer(
           width: double.infinity,
           height: 200,
           borderColor: colors.primary,
           fillColor: colors.surface,
-          child: Center(
-            child: Text(
-              'Course Lp',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: colors.onSurface),
-            ),
-          ),
+          child: nodes != null && nodes!.isNotEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    child: SizedBox(
+                      width: 800,
+                      height: 400,
+                      child: IgnorePointer(
+                        child: NodesOverviewCore(
+                          isEditable: false,
+                          nodes: nodes!,
+                          onNodeTap: (_) {}, // Disabled in preview
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : Center(
+                  child: nodes == null
+                      ? const CircularProgressIndicator()
+                      : Text(
+                          'No nodes available',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: colors.onSurface),
+                        ),
+                ),
         ),
 
         const SizedBox(height: 24),

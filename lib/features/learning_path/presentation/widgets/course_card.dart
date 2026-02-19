@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
@@ -6,6 +7,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
 import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 
 class PixelCourseCard extends StatelessWidget {
   final LearningPath course;
@@ -31,8 +33,11 @@ class PixelCourseCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => LearningCoursePage(
-              course: course,
+            builder: (_) => BlocProvider.value(
+              value: context.read<LearningPathBloc>(),
+              child: LearningCoursePage(
+                course: course,
+              ),
             ),
           ),
         );
