@@ -4,9 +4,7 @@ import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
-import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
-import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 
 class CourseProgressCard extends StatelessWidget {
   final EnrolledLearningPath data;
@@ -133,36 +131,11 @@ class CourseProgressCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Title
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          data.title,
-                          style: AppTypography.subtitleSemiBold,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      IconButton(
-                        constraints: const BoxConstraints(),
-                        padding: EdgeInsets.zero,
-                        splashRadius: 20,
-                        icon: MoreIcon(color: colors.onSurface),
-                        onPressed: () {
-                          ActionPopUp.show(
-                            context,
-                            onEdit: () {
-                              debugPrint('Edit enrolled course: ${data.title}');
-                              // TODO: Add edit logic
-                            },
-                            onDelete: () {
-                              debugPrint('Delete enrolled course: ${data.title}');
-                              // TODO: Add unenroll logic
-                            },
-                          );
-                        },
-                      ),
-                    ],
+                  Text(
+                    data.title,
+                    style: AppTypography.subtitleSemiBold,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
                   const SizedBox(height: 3), // ลด spacing

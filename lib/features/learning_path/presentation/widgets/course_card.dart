@@ -9,10 +9,16 @@ import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.da
 
 class PixelCourseCard extends StatelessWidget {
   final LearningPath course;
+  final bool showMoreIcon;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const PixelCourseCard({
     super.key,
     required this.course,
+    this.showMoreIcon = false,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -124,27 +130,26 @@ class PixelCourseCard extends StatelessWidget {
                           ),
                         ),
 
-                        IconButton(
-                          constraints: const BoxConstraints(),
-                          padding: EdgeInsets.zero,
-                          splashRadius: 20,
-                          icon: MoreIcon(
-                            color: Theme.of(context).colorScheme.onSurface,
+                        if (showMoreIcon)
+                          IconButton(
+                            constraints: const BoxConstraints(),
+                            padding: EdgeInsets.zero,
+                            splashRadius: 20,
+                            icon: MoreIcon(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                            onPressed: () {
+                              ActionPopUp.show(
+                                context,
+                                onEdit: onEdit ?? () {
+                                  debugPrint('Edit course: ${course.title}');
+                                },
+                                onDelete: onDelete ?? () {
+                                  debugPrint('Delete course: ${course.title}');
+                                },
+                              );
+                            },
                           ),
-                          onPressed: () {
-                            ActionPopUp.show(
-                              context,
-                              onEdit: () {
-                                debugPrint('Edit course: ${course.title}');
-                                // TODO: Add edit logic
-                              },
-                              onDelete: () {
-                                debugPrint('Delete course: ${course.title}');
-                                // TODO: Add delete logic
-                              },
-                            );
-                          },
-                        ),
                       ],
                     ),
 

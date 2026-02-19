@@ -118,6 +118,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
             itemBuilder: (context, index) {
               return PixelCourseCard(
                 course: inProgressCourses[index],
+                showMoreIcon: true,
               );
             },
           ),
@@ -203,6 +204,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
             itemBuilder: (context, index) {
               return PixelCourseCard(
                 course: completedCourses[index],
+                showMoreIcon: true,
               );
             },
           ),
