@@ -28,32 +28,14 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
 
   @override
   void initState() {
-    void initState() {
-      super.initState();
-      _cachedNodes = null; // Clear cache on each page load
-      debugPrint('[UI] StudentNodesOverviewPage - initState');
-      debugPrint('Course ID: ${widget.course.id}');
-      debugPrint('Course Title: ${widget.course.title}');
-      
-      // TODO: Get userId from authentication service
-      const userId = '3f9b2c6d-8288-4647-8d33-33d96e1a82b3'; // Hardcoded for testing
-      
-      debugPrint('User ID: $userId');
-      
-      // Always fetch fresh nodes to ensure up-to-date status
-      context.read<LearningPathBloc>().add(
-        FetchNodesForPath(
-          pathId: widget.course.id,
-          userId: userId,
-        ),
-      );
-    }  
+    super.initState();
+    _cachedNodes = null; // Clear cache on each page load
     debugPrint('[UI] StudentNodesOverviewPage - initState');
     debugPrint('Course ID: ${widget.course.id}');
     debugPrint('Course Title: ${widget.course.title}');
     
     // TODO: Get userId from authentication service
-    const userId = '3f9b2c6d-8288-4647-8d33-33d96e1a82b3'; // Hardcoded for testing
+    const userId = 'a4bdfa58-e41e-4344-aa9e-d35f3dcd53c6'; // Hardcoded for testing
     
     debugPrint('User ID: $userId');
     

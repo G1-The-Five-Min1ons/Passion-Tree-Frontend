@@ -4,6 +4,8 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_progress_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
@@ -159,6 +161,33 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                           },
                         ),
 
+                      if (inProgressShown < inProgress.length)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 40),
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'More',
+                                  style: AppPixelTypography.smallTitle.copyWith(
+                                    color: colors.onPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                NavigationButton(
+                                  direction: NavigationDirection.down,
+                                  onPressed: () {
+                                    setState(() {
+                                      inProgressShown += 2;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
                       const SizedBox(height: 60),
 
                       // ================= COMPLETED =================
@@ -214,6 +243,33 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                           itemBuilder: (context, index) {
                             return CourseProgressCard(data: completed[index]);
                           },
+                        ),
+
+                      if (completedShown < completed.length)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 40),
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'More',
+                                  style: AppPixelTypography.smallTitle.copyWith(
+                                    color: colors.onPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                NavigationButton(
+                                  direction: NavigationDirection.down,
+                                  onPressed: () {
+                                    setState(() {
+                                      completedShown += 2;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
 
                       const SizedBox(height: 40),

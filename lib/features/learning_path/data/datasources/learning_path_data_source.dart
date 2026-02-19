@@ -29,7 +29,12 @@ class LearningPathDataSource {
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final paths = data['data'] as List;
+        final paths = data['data'] as List?;
+        
+        if (paths == null || paths.isEmpty) {
+          debugPrint('No learning paths found (empty or null)');
+          return [];
+        }
         
         debugPrint('Successfully fetched ${paths.length} learning paths');
         
@@ -90,7 +95,12 @@ class LearningPathDataSource {
     
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      final list = data['data'] as List;
+      final list = data['data'] as List?;
+      
+      if (list == null || list.isEmpty) {
+        debugPrint('No enrolled paths found (empty or null)');
+        return [];
+      }
       
       debugPrint('Successfully fetched ${list.length} enrolled paths');
       
@@ -116,7 +126,12 @@ class LearningPathDataSource {
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final nodes = data['data'] as List;
+        final nodes = data['data'] as List?;
+        
+        if (nodes == null || nodes.isEmpty) {
+          debugPrint('No nodes found for path: $pathId (empty or null)');
+          return [];
+        }
         
         debugPrint('Successfully fetched ${nodes.length} nodes for path: $pathId');
 
@@ -176,7 +191,12 @@ class LearningPathDataSource {
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final questions = data['data'] as List;
+        final questions = data['data'] as List?;
+        
+        if (questions == null || questions.isEmpty) {
+          debugPrint('No questions found for node: $nodeId (empty or null)');
+          return [];
+        }
         
         debugPrint('Successfully fetched ${questions.length} questions for node: $nodeId');
 

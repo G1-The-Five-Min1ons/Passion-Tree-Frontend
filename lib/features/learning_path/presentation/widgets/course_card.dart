@@ -5,6 +5,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/lea
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
+import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 
 class PixelCourseCard extends StatelessWidget {
   final LearningPath course;
@@ -123,8 +124,26 @@ class PixelCourseCard extends StatelessWidget {
                           ),
                         ),
 
-                        MoreIcon(
-                          color: Theme.of(context).colorScheme.onSurface,
+                        IconButton(
+                          constraints: const BoxConstraints(),
+                          padding: EdgeInsets.zero,
+                          splashRadius: 20,
+                          icon: MoreIcon(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                          onPressed: () {
+                            ActionPopUp.show(
+                              context,
+                              onEdit: () {
+                                debugPrint('Edit course: ${course.title}');
+                                // TODO: Add edit logic
+                              },
+                              onDelete: () {
+                                debugPrint('Delete course: ${course.title}');
+                                // TODO: Add delete logic
+                              },
+                            );
+                          },
                         ),
                       ],
                     ),

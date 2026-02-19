@@ -34,7 +34,7 @@ class _TeacherLearningPathOverviewPageState
   int _activeTab = 0; // 0 = Learning, 1 = Create
   TeacherLearningView _learningView = TeacherLearningView.main;
 
-  static const String? mockUserId = "3f9b2c6d-8288-4647-8d33-33d96e1a82b3"; // Teacher user ID
+  static const String? mockUserId = "feee25bd-db4e-4850-bd2c-5788ce090032"; // Teacher user ID
 
   @override
   void initState() {

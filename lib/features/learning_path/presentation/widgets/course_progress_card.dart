@@ -6,6 +6,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/lea
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
+import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 
 class CourseProgressCard extends StatelessWidget {
   final EnrolledLearningPath data;
@@ -142,7 +143,25 @@ class CourseProgressCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      MoreIcon(color: colors.onSurface),
+                      IconButton(
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.zero,
+                        splashRadius: 20,
+                        icon: MoreIcon(color: colors.onSurface),
+                        onPressed: () {
+                          ActionPopUp.show(
+                            context,
+                            onEdit: () {
+                              debugPrint('Edit enrolled course: ${data.title}');
+                              // TODO: Add edit logic
+                            },
+                            onDelete: () {
+                              debugPrint('Delete enrolled course: ${data.title}');
+                              // TODO: Add unenroll logic
+                            },
+                          );
+                        },
+                      ),
                     ],
                   ),
 

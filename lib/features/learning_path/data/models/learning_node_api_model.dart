@@ -19,13 +19,13 @@ class LearningNodeApiModel {
 
   factory LearningNodeApiModel.fromJson(Map<String, dynamic> json) {
     return LearningNodeApiModel(
-      nodeId: json['node_id'],
-      title: json['title'],
-      description: json['description'],
-      sequence: json['sequence'],
-      pathId: json['path_id'],
+      nodeId: json['node_id'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      sequence: json['sequence'] ?? 0,
+      pathId: json['path_id'] ?? '',
       status: json['status'] ?? 'locked',
-      complete: json['complete'] ?? 'false',
+      complete: (json['complete'] == null || json['complete'] == 'null') ? 'false' : json['complete'].toString(),
     );
   }
 }

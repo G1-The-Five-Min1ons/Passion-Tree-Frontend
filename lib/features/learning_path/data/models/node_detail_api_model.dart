@@ -23,17 +23,17 @@ class NodeDetailApiModel {
 
   factory NodeDetailApiModel.fromJson(Map<String, dynamic> json) {
     return NodeDetailApiModel(
-      nodeId: json['node_id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      sequence: json['sequence'] as int,
-      pathId: json['path_id'] as String,
+      nodeId: json['node_id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      sequence: json['sequence'] ?? 0,
+      pathId: json['path_id']?.toString() ?? '',
       materials: (json['materials'] as List<dynamic>?)
               ?.map((m) => MaterialApiModel.fromJson(m as Map<String, dynamic>))
               .toList() ??
           [],
-      status: json['status'] ?? 'locked',
-      complete: json['complete'] ?? 'false',
+      status: json['status']?.toString() ?? 'locked',
+      complete: (json['complete'] == null || json['complete'] == 'null') ? 'false' : json['complete'].toString(),
     );
   }
 

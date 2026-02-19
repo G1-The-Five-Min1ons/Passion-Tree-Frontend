@@ -30,7 +30,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
     debugPrint('Node ID: ${widget.nodeId}');
     
     // TODO: Get userId from authentication service
-    const userId = '3f9b2c6d-8288-4647-8d33-33d96e1a82b3'; // Hardcoded for testing
+    const userId = 'a4bdfa58-e41e-4344-aa9e-d35f3dcd53c6'; // Hardcoded for testing
     
     debugPrint('User ID: $userId');
     
