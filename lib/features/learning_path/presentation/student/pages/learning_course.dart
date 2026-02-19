@@ -72,7 +72,10 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => StudentNodesOverviewPage(course: widget.course),
+                            builder: (_) => BlocProvider.value(
+                              value: context.read<LearningPathBloc>(),
+                              child: StudentNodesOverviewPage(course: widget.course),
+                            ),
                           ),
                         );
                       },

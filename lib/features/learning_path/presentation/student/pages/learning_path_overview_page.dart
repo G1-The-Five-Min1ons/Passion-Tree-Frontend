@@ -231,8 +231,10 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) =>
-                                          const LearningPathStatusPage(),
+                                      builder: (_) => BlocProvider.value(
+                                        value: context.read<LearningPathBloc>(),
+                                        child: const LearningPathStatusPage(),
+                                      ),
                                     ),
                                   );
                                 }

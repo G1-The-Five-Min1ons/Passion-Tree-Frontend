@@ -35,6 +35,16 @@ class NodesOverviewCore extends StatelessWidget {
     
     final nodeCount = displayNodes.length;
     final canvasHeight = (nodeCount * 200.0) + 200.0;
+    
+    // Find the latest active node (highest sequence number with active status and not completed)
+    NodeDetail? latestActiveNode;
+    for (final node in displayNodes) {
+      if (node.status.toLowerCase() == 'active' && node.complete.toLowerCase() != 'true') {
+        if (latestActiveNode == null || node.sequence > latestActiveNode.sequence) {
+          latestActiveNode = node;
+        }
+      }
+    }
 
     return Stack(
       children: [
@@ -56,6 +66,10 @@ class NodesOverviewCore extends StatelessWidget {
                         final node = displayNodes[index];
                         // Convert API status to LearningNodeState
                         final nodeState = NodeAsset.statusToState(node.status);
+                        
+                        // Check if this is the latest active node
+                        final isLatestActiveNode = latestActiveNode != null && 
+                                                   node.nodeId == latestActiveNode.nodeId;
                       
                         return Positioned(
                           left: pos.dx - 40,
@@ -63,6 +77,7 @@ class NodesOverviewCore extends StatelessWidget {
                           child: NodeItem(
                             imagePath: NodeAsset.image(nodeState),
                             size: 80,
+                            showCurrentIndicator: isLatestActiveNode,
                             onTap: () {
                               if (onNodeTap != null) {
                                 onNodeTap!(index);

@@ -4,6 +4,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_core.dart';
 
@@ -44,22 +45,21 @@ class LearningCourseContent extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
 
         /// ===== COURSE MAP PREVIEW =====
-        PixelBorderContainer(
+        Container(
           width: double.infinity,
-          height: 200,
-          borderColor: colors.primary,
-          fillColor: colors.surface,
+          height: 230,
+          color: AppColors.background,
           child: nodes != null && nodes!.isNotEmpty
               ? Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(12.0),
                   child: FittedBox(
                     fit: BoxFit.contain,
                     child: SizedBox(
-                      width: 800,
-                      height: 400,
+                      width: 900,
+                      height: 800,
                       child: IgnorePointer(
                         child: NodesOverviewCore(
                           isEditable: false,

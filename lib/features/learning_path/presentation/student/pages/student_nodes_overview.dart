@@ -96,8 +96,11 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => LearningNodePage(
-                              nodeId: nodeId,
+                            builder: (_) => BlocProvider.value(
+                              value: context.read<LearningPathBloc>(),
+                              child: LearningNodePage(
+                                nodeId: nodeId,
+                              ),
                             ),
                           ),
                         );
