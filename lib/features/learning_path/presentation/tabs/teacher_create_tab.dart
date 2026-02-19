@@ -39,7 +39,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     
     // Filter paths by publishStatus
     final inProgressCourses = widget.allPaths
-        .where((path) => path.publishStatus == "Draft")
+        .where((path) => path.publishStatus == "draft")
         .toList();
     final completedCourses = widget.allPaths
         .where((path) => path.publishStatus == "Published")
