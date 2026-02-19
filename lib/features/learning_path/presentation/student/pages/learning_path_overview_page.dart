@@ -38,6 +38,9 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
 
   static const String? mockUserId = "a4bdfa58-e41e-4344-aa9e-d35f3dcd53c6"; // Set to null if not logged in
 
+  // Cache overview data
+  LearningPathOverviewLoaded? _cachedOverview;
+
   @override
   void initState() {
     super.initState();
@@ -122,22 +125,31 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
           builder: (context, state) {
             debugPrint('[UI] LearningPathOverviewPage - BlocBuilder state: ${state.runtimeType}');
             
-            if (state is LearningPathLoading || state is LearningPathInitial) {
+            // Cache overview data when loaded
+            if (state is LearningPathOverviewLoaded) {
+              _cachedOverview = state;
+            }
+            
+            // Show loading only if no cached data
+            if ((state is LearningPathLoading || state is LearningPathInitial) && 
+                _cachedOverview == null) {
               debugPrint('Showing loading indicator...');
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is LearningPathError) {
+            if (state is LearningPathError && _cachedOverview == null) {
               debugPrint('Error state: ${state.message}');
               return Center(child: Text(state.message));
             }
 
-            if (state is LearningPathOverviewLoaded) {
-              debugPrint('Overview loaded - All paths: ${state.allPaths.length}, Enrolled: ${state.enrolledPaths.length}');
-              final filteredAll = _filterCourses(state.allPaths);
+            // Use cached overview data
+            final overviewData = _cachedOverview;
+            if (overviewData != null) {
+              debugPrint('Overview data available - All paths: ${overviewData.allPaths.length}, Enrolled: ${overviewData.enrolledPaths.length}');
+              final filteredAll = _filterCourses(overviewData.allPaths);
               
               // Filter and deduplicate enrolled paths
-              final filteredEnrolledWithDuplicates = _filterEnrolledCourses(state.enrolledPaths);
+              final filteredEnrolledWithDuplicates = _filterEnrolledCourses(overviewData.enrolledPaths);
               final seenPathIds = <String>{};
               final filteredEnrolled = filteredEnrolledWithDuplicates.where((path) {
                 if (seenPathIds.contains(path.pathId)) {
@@ -156,7 +168,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
               final shownAllCourses = filteredAll.take(_allListShownCount).toList();
 
               // Check if user has enrolled paths (logged in)
-              final hasEnrolledPaths = state.enrolledPaths.isNotEmpty;
+              final hasEnrolledPaths = overviewData.enrolledPaths.isNotEmpty;
 
               return SingleChildScrollView(
                 child: Padding(

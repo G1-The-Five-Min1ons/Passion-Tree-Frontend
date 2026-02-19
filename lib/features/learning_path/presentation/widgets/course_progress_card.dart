@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 
 class CourseProgressCard extends StatelessWidget {
   final EnrolledLearningPath data;
@@ -41,9 +43,12 @@ class CourseProgressCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => LearningCoursePage(
-              course: course,
-              enrolledPath: data,
+            builder: (_) => BlocProvider.value(
+              value: context.read<LearningPathBloc>(),
+              child: LearningCoursePage(
+                course: course,
+                enrolledPath: data,
+              ),
             ),
           ),
         );

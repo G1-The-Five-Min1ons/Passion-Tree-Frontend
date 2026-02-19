@@ -36,6 +36,9 @@ class _TeacherLearningPathOverviewPageState
 
   static const String? mockUserId = "feee25bd-db4e-4850-bd2c-5788ce090032"; // Teacher user ID
 
+  // Cache overview data
+  LearningPathOverviewLoaded? _cachedOverview;
+
   @override
   void initState() {
     super.initState();
@@ -75,15 +78,24 @@ class _TeacherLearningPathOverviewPageState
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            if (state is LearningPathLoading || state is LearningPathInitial) {
+            // Cache overview data when loaded
+            if (state is LearningPathOverviewLoaded) {
+              _cachedOverview = state;
+            }
+
+            // Show loading only if no cached data
+            if ((state is LearningPathLoading || state is LearningPathInitial) && 
+                _cachedOverview == null) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is LearningPathError) {
+            if (state is LearningPathError && _cachedOverview == null) {
               return Center(child: Text(state.message));
             }
 
-            if (state is LearningPathOverviewLoaded) {
+            // Use cached overview data
+            final overviewData = _cachedOverview;
+            if (overviewData != null) {
               return SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.only(
@@ -139,8 +151,8 @@ class _TeacherLearningPathOverviewPageState
                       if (_activeTab == 0) ...[
                         if (_learningView == TeacherLearningView.main)
                           TeacherLearningTab(
-                            allPaths: state.allPaths,
-                            enrolledPaths: state.enrolledPaths,
+                            allPaths: overviewData.allPaths,
+                            enrolledPaths: overviewData.enrolledPaths,
                             searchQuery: _searchController.text,
                             selectedCategory: _selectedCategory,
                             ratingRange: _ratingRange,
@@ -153,11 +165,11 @@ class _TeacherLearningPathOverviewPageState
                           )
                         else
                           TeacherLearningPathStatus(
-                            enrolledPaths: state.enrolledPaths,
+                            enrolledPaths: overviewData.enrolledPaths,
                           ),
                       ] else ...[
                         TeacherCreateTab(
-                          allPaths: state.allPaths,
+                          allPaths: overviewData.allPaths,
                           userId: mockUserId,
                         ),
                       ],
