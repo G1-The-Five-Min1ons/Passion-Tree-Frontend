@@ -1,7 +1,8 @@
 class ApiConfig {
   // Change this based on environment
-  static const String _devBaseUrl = 'http://10.0.2.2:5000/api/v1';
-  static const String _prodBaseUrl = 'https://your-production-domain.com'; // เปลี่ยนเป็น domain จริง
+  //static const String _devBaseUrl = 'http://10.0.2.2:5000/api/v1';
+  static const String _devBaseUrl = 'http://localhost:5000';
+  //static const String _prodBaseUrl = 'https://your-production-domain.com'; // เปลี่ยนเป็น domain จริง
   
   // Auto-detect environment (or use --dart-define for build)
   static const String baseUrl = String.fromEnvironment(

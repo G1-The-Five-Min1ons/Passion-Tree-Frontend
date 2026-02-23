@@ -7,7 +7,7 @@ import 'package:passion_tree_frontend/features/learning_path/data/models/ai_gene
 import 'package:passion_tree_frontend/features/learning_path/data/models/create_node_request.dart';
 
 Future createLearningPath(CreatePathRequest request) async {
-  final url = Uri.parse('${ApiConfig.baseUrl}/learningpaths');
+  final url = Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths');
 
   try {
     final response = await http.post(
@@ -32,7 +32,7 @@ Future createLearningPath(CreatePathRequest request) async {
 }
 
 Future<AIGenerateResponse> generateNodeWithAI(String topic) async {
-  final url = Uri.parse('${ApiConfig.baseUrl}/learningpaths/generate');
+  final url = Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/generate');
 
   try {
     final response = await http.post(
@@ -54,7 +54,7 @@ Future<AIGenerateResponse> generateNodeWithAI(String topic) async {
 }
 
 Future<Map<String, dynamic>> getLearningPathById(String pathId) async {
-  final url = Uri.parse('${ApiConfig.baseUrl}/learningpaths/$pathId');
+  final url = Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/$pathId');
 
   final response = await http.get(url);
 
@@ -69,7 +69,7 @@ Future<Map<String, dynamic>> getLearningPathById(String pathId) async {
 }
 
 Future<String> createNodeApi(CreateNodeRequest request) async {
-  final url = Uri.parse('${ApiConfig.baseUrl}/learningpaths/${request.pathId}/nodes');
+  final url = Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/${request.pathId}/nodes');
 
   try {
     final response = await http.post(
@@ -90,7 +90,7 @@ Future<String> createNodeApi(CreateNodeRequest request) async {
 }
 
 Future<void> updateNodeApi(String nodeId, String title, String description) async {
-  final url = Uri.parse('${ApiConfig.baseUrl}/nodes/$nodeId');
+  final url = Uri.parse('${ApiConfig.apiBaseUrl}/nodes/$nodeId');
   
   final response = await http.put(
       url,

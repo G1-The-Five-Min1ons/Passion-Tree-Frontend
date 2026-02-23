@@ -12,6 +12,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:image_picker/image_picker.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/ai_node_review_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/teacher_nodes_overview.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/services/learning_path_api_service.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/create_path_request.dart';
 import 'package:passion_tree_frontend/features/upload/data/services/upload_service.dart';
@@ -315,7 +316,92 @@ class _CreateLearningPathInputPageState
                         variant: AppButtonVariant.text,
                         text: 'Create Plain Path',
                         subText: 'Create nodes by yourself',
-                        onPressed: () {},
+                        onPressed: () async {
+                          // 1. Validation
+                          if (_title.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter title'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // Show Loading
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (c) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+
+                          try {
+                            debugPrint("🚀 START PLAIN PATH CREATION...");
+                            final uploadService = UploadApiService();
+                            String coverImgUrl = '';
+
+                            // --- STEP A: Upload Image (ถ้ามี) ---
+                            if (_selectedImageFile != null) {
+                              debugPrint("📸 Found Image, Requesting Presigned URL...");
+                              final fileName = path.basename(
+                                _selectedImageFile!.path,
+                              );
+                              final urls = await uploadService.getPresignedUrl(
+                                fileName,
+                                'reflect',
+                              );
+                              debugPrint("✅ Got URL: ${urls['upload_url']}");
+                              debugPrint("⬆️ Uploading to Blob...");
+                              await uploadService.uploadFileToBlob(
+                                urls['upload_url']!,
+                                _selectedImageFile!,
+                              );
+                              debugPrint("✅ Upload Finished!");
+                              coverImgUrl = urls['public_url']!;
+                            } else {
+                              debugPrint("⚠️ No image selected, skipping upload.");
+                            }
+
+                            // --- STEP B: Create Path ---
+                            debugPrint("📝 Creating Path in Backend...");
+                            final request = CreatePathRequest(
+                              title: _title,
+                              objective: _objectives,
+                              description: _description,
+                              creatorId: 'feee25bd-db4e-4850-bd2c-5788ce090032',
+                              coverImgUrl: coverImgUrl,
+                            );
+
+                            final String pathId = await createLearningPath(request);
+                            debugPrint("✅ Path Created! ID: $pathId");
+
+                            if (context.mounted) {
+                              Navigator.of(context, rootNavigator: true).pop(); // ปิด Loading
+
+                              // --- STEP C: Go to Nodes Overview Page ---
+                              // ไม่ส่ง aiNodes จะทำให้สร้าง default node เปล่าๆ 1 node อัตโนมัติ
+                              debugPrint("➡️ Navigating to Nodes Overview Page...");
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => TeacherNodesOverviewPage(
+                                    title: 'Nodes Overview',
+                                    pathId: pathId,
+                                  ),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            debugPrint("❌ ERROR: $e");
+                            if (context.mounted) {
+                              Navigator.pop(context); // ปิด Loading
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
+                          }
+                        },
                       ),
                     ],
                   ),

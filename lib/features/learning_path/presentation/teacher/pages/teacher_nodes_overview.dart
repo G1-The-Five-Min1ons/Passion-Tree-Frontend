@@ -27,13 +27,13 @@ class NodeUiState {
 
 class TeacherNodesOverviewPage extends StatefulWidget {
   final String title;
-  final List<GeneratedNode> aiNodes;
+  final List<GeneratedNode>? aiNodes;
   final String pathId;
 
   const TeacherNodesOverviewPage({
     super.key,
     required this.title,
-    required this.aiNodes,
+    this.aiNodes,
     required this.pathId,
   });
 
@@ -48,14 +48,27 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   @override
   void initState() {
     super.initState();
-    _uiNodes = widget.aiNodes.map((aiNode) {
-      return NodeUiState(
-        title: aiNode.title,
-        description: "",
-        sequence: aiNode.sequence,
-        isCreated: false,
-      );
-    }).toList();
+    // ถ้ามี AI nodes ให้ใช้ ถ้าไม่มีให้สร้าง default node เปล่าๆ
+    if (widget.aiNodes != null && widget.aiNodes!.isNotEmpty) {
+      _uiNodes = widget.aiNodes!.map((aiNode) {
+        return NodeUiState(
+          title: aiNode.title,
+          description: "",
+          sequence: aiNode.sequence,
+          isCreated: false,
+        );
+      }).toList();
+    } else {
+      // Create Plain Path: สร้าง node เปล่าๆ 1 node
+      _uiNodes = [
+        NodeUiState(
+          title: 'New Node',
+          description: '',
+          sequence: 1,
+          isCreated: false,
+        ),
+      ];
+    }
   }
 
   Future<void> _handleSaveNode(
