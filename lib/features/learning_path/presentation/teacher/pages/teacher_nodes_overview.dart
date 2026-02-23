@@ -120,10 +120,28 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   }
 
   void _openEditNodeModal(BuildContext context, {int? index}) {
-    if (index == null)
-      return;
+    int editIndex;
 
-    final node = _uiNodes[index];
+    // ถ้าไม่มี index (กดปุ่ม Add) ให้สร้าง node ใหม่
+    if (index == null) {
+      final newSequence = _uiNodes.isEmpty ? 1 : _uiNodes.last.sequence + 1;
+      final newNode = NodeUiState(
+        title: 'New Node',
+        description: '',
+        sequence: newSequence,
+        isCreated: false,
+      );
+
+      setState(() {
+        _uiNodes.add(newNode);
+      });
+
+      editIndex = _uiNodes.length - 1; // index ของ node ที่เพิ่งสร้าง
+    } else {
+      editIndex = index;
+    }
+
+    final node = _uiNodes[editIndex];
 
     showModalBottomSheet(
       context: context,
@@ -132,7 +150,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       builder: (_) => EditNodeModal(
         initialTitle: node.title,
         onSaveData: (newTitle, newDesc, newLinks, newQuestions) {
-          _handleSaveNode(index, newTitle, newDesc, newLinks, newQuestions);
+          _handleSaveNode(editIndex, newTitle, newDesc, newLinks, newQuestions);
         },
       ),
     );
