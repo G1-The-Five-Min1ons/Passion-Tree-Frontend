@@ -1,3 +1,5 @@
+import 'package:passion_tree_frontend/core/error/exceptions.dart';
+
 class RegisterRequest {
   final String username;
   final String email;
@@ -80,18 +82,27 @@ class User {
     required this.updatedAt,
   });
 
-  factory User.fromJson(Map<String, dynamic> json) => User(
-    userId: json['user_id'] as String,
-    username: json['username'] as String,
-    email: json['email'] as String,
-    firstName: json['first_name'] as String,
-    lastName: json['last_name'] as String,
-    role: json['role'] as String,
-    heartCount: json['heart_count'] as int,
-    isEmailVerified: json['is_email_verified'] as bool,
-    createdAt: DateTime.parse(json['created_at'] as String),
-    updatedAt: DateTime.parse(json['updated_at'] as String),
-  );
+  factory User.fromJson(Map<String, dynamic> json) {
+    try {
+      return User(
+        userId: json['user_id'] as String,
+        username: json['username'] as String,
+        email: json['email'] as String,
+        firstName: json['first_name'] as String,
+        lastName: json['last_name'] as String,
+        role: json['role'] as String,
+        heartCount: json['heart_count'] as int,
+        isEmailVerified: json['is_email_verified'] as bool,
+        createdAt: DateTime.parse(json['created_at'] as String),
+        updatedAt: DateTime.parse(json['updated_at'] as String),
+      );
+    } catch (e) {
+      throw ParseException(
+        message: 'Failed to parse User',
+        originalError: e,
+      );
+    }
+  }
 
   Map<String, dynamic> toJson() => {
     'user_id': userId,
@@ -134,19 +145,28 @@ class Profile {
     required this.userId,
   });
 
-  factory Profile.fromJson(Map<String, dynamic> json) => Profile(
-    profileId: json['Profile_ID'] as String,
-    avatarUrl: json['Avatar_URL'] as String?,
-    rankName: json['Rank_Name'] as String?,
-    learningStreak: json['Learning_streak'] as int,
-    learningCount: json['Learning_count'] as int,
-    location: json['Location'] as String?,
-    bio: json['Bio'] as String?,
-    level: json['Level'] as int,
-    xp: json['XP'] as int,
-    hourLearned: json['Hour_learned'] as int,
-    userId: json['user_id'] as String,
-  );
+  factory Profile.fromJson(Map<String, dynamic> json) {
+    try {
+      return Profile(
+        profileId: json['Profile_ID'] as String,
+        avatarUrl: json['Avatar_URL'] as String?,
+        rankName: json['Rank_Name'] as String?,
+        learningStreak: json['Learning_streak'] as int,
+        learningCount: json['Learning_count'] as int,
+        location: json['Location'] as String?,
+        bio: json['Bio'] as String?,
+        level: json['Level'] as int,
+        xp: json['XP'] as int,
+        hourLearned: json['Hour_learned'] as int,
+        userId: json['user_id'] as String,
+      );
+    } catch (e) {
+      throw ParseException(
+        message: 'Failed to parse Profile',
+        originalError: e,
+      );
+    }
+  }
 
   Map<String, dynamic> toJson() => {
     'Profile_ID': profileId,
@@ -177,13 +197,20 @@ class RegisterResponse {
   });
 
   factory RegisterResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>?;
-    return RegisterResponse(
-      success: json['success'] as bool,
-      message: json['message'] as String,
-      userId: data?['user_id'] as String,
-      token: data?['token'] as String?,
-    );
+    try {
+      final data = json['data'] as Map<String, dynamic>?;
+      return RegisterResponse(
+        success: json['success'] as bool,
+        message: json['message'] as String,
+        userId: data?['user_id'] as String,
+        token: data?['token'] as String?,
+      );
+    } catch (e) {
+      throw ParseException(
+        message: 'Failed to parse RegisterResponse',
+        originalError: e,
+      );
+    }
   }
 }
 
@@ -200,10 +227,17 @@ class LoginOtpResponse {
   });
 
   factory LoginOtpResponse.fromJson(Map<String, dynamic> json) {
-    return LoginOtpResponse(
-      success: json['success'] as bool,
-      message: json['message'] as String? ?? '',
-    );
+    try {
+      return LoginOtpResponse(
+        success: json['success'] as bool,
+        message: json['message'] as String? ?? '',
+      );
+    } catch (e) {
+      throw ParseException(
+        message: 'Failed to parse LoginOtpResponse',
+        originalError: e,
+      );
+    }
   }
 }
 
@@ -223,13 +257,20 @@ class VerifyEmailResponse {
   });
 
   factory VerifyEmailResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>;
-    return VerifyEmailResponse(
-      success: json['success'] as bool,
-      message: json['message'] as String? ?? '',
-      accessToken: data['access_token'] as String,
-      refreshToken: data['refresh_token'] as String,
-    );
+    try {
+      final data = json['data'] as Map<String, dynamic>;
+      return VerifyEmailResponse(
+        success: json['success'] as bool,
+        message: json['message'] as String? ?? '',
+        accessToken: data['access_token'] as String,
+        refreshToken: data['refresh_token'] as String,
+      );
+    } catch (e) {
+      throw ParseException(
+        message: 'Failed to parse VerifyEmailResponse',
+        originalError: e,
+      );
+    }
   }
 }
 
@@ -256,17 +297,24 @@ class NativeGoogleSignInResponse {
   });
 
   factory NativeGoogleSignInResponse.fromJson(Map<String, dynamic> json) {
-    final user = json['user'] as Map<String, dynamic>;
-    return NativeGoogleSignInResponse(
-      success: json['success'] as bool? ?? true,
-      token: json['token'] as String,
-      userId: user['user_id'] as String,
-      username: user['username'] as String,
-      email: user['email'] as String,
-      firstName: user['first_name'] as String,
-      lastName: user['last_name'] as String,
-      role: user['role'] as String,
-    );
+    try {
+      final user = json['user'] as Map<String, dynamic>;
+      return NativeGoogleSignInResponse(
+        success: json['success'] as bool? ?? true,
+        token: json['token'] as String,
+        userId: user['user_id'] as String,
+        username: user['username'] as String,
+        email: user['email'] as String,
+        firstName: user['first_name'] as String,
+        lastName: user['last_name'] as String,
+        role: user['role'] as String,
+      );
+    } catch (e) {
+      throw ParseException(
+        message: 'Failed to parse NativeGoogleSignInResponse',
+        originalError: e,
+      );
+    }
   }
 }
 
@@ -304,17 +352,24 @@ class NativeDiscordSignInResponse {
   });
 
   factory NativeDiscordSignInResponse.fromJson(Map<String, dynamic> json) {
-    final user = json['user'] as Map<String, dynamic>;
-    return NativeDiscordSignInResponse(
-      success: json['success'] as bool? ?? true,
-      token: json['token'] as String,
-      userId: user['user_id'] as String,
-      username: user['username'] as String,
-      email: user['email'] as String,
-      firstName: user['first_name'] as String,
-      lastName: user['last_name'] as String,
-      role: user['role'] as String,
-    );
+    try {
+      final user = json['user'] as Map<String, dynamic>;
+      return NativeDiscordSignInResponse(
+        success: json['success'] as bool? ?? true,
+        token: json['token'] as String,
+        userId: user['user_id'] as String,
+        username: user['username'] as String,
+        email: user['email'] as String,
+        firstName: user['first_name'] as String,
+        lastName: user['last_name'] as String,
+        role: user['role'] as String,
+      );
+    } catch (e) {
+      throw ParseException(
+        message: 'Failed to parse NativeDiscordSignInResponse',
+        originalError: e,
+      );
+    }
   }
 }
 
@@ -405,13 +460,20 @@ class ApiResponse<T> {
     Map<String, dynamic> json,
     T Function(dynamic)? fromJsonT,
   ) {
-    return ApiResponse(
-      success: json['success'] as bool,
-      message: json['message'] as String?,
-      data: json['data'] != null && fromJsonT != null
-          ? fromJsonT(json['data'])
-          : null,
-      error: json['error'] as String?,
-    );
+    try {
+      return ApiResponse(
+        success: json['success'] as bool,
+        message: json['message'] as String?,
+        data: json['data'] != null && fromJsonT != null
+            ? fromJsonT(json['data'])
+            : null,
+        error: json['error'] as String?,
+      );
+    } catch (e) {
+      throw ParseException(
+        message: 'Failed to parse ApiResponse',
+        originalError: e,
+      );
+    }
   }
 }

@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:dartz/dartz.dart';
+import 'package:passion_tree_frontend/core/error/failures.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/repositories/i_album_repository.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 
@@ -7,15 +10,15 @@ class CreateAlbumUseCase {
 
   CreateAlbumUseCase(this.repository);
 
-  Future<Album> call({
+  Future<Either<Failure, Album>> call({
     required String userId,
     required String albumName,
-    required String coverImageUrl,
+    File? coverImage,
   }) async {
     return await repository.createAlbum(
       userId: userId,
       albumName: albumName,
-      coverImageUrl: coverImageUrl,
+      coverImage: coverImage,
     );
   }
 }
@@ -26,7 +29,7 @@ class GetAlbumsByUserIdUseCase {
 
   GetAlbumsByUserIdUseCase(this.repository);
 
-  Future<List<Album>> call(String userId) async {
+  Future<Either<Failure, List<Album>>> call(String userId) async {
     return await repository.getAlbumsByUserId(userId);
   }
 }
@@ -37,7 +40,7 @@ class GetAlbumByIdUseCase {
 
   GetAlbumByIdUseCase(this.repository);
 
-  Future<Album> call(String albumId) async {
+  Future<Either<Failure, Album>> call(String albumId) async {
     return await repository.getAlbumById(albumId);
   }
 }
@@ -48,15 +51,15 @@ class UpdateAlbumUseCase {
 
   UpdateAlbumUseCase(this.repository);
 
-  Future<void> call({
+  Future<Either<Failure, void>> call({
     required String albumId,
     required String albumName,
-    required String coverImageUrl,
+    File? coverImage,
   }) async {
     return await repository.updateAlbum(
       albumId: albumId,
       albumName: albumName,
-      coverImageUrl: coverImageUrl,
+      coverImage: coverImage,
     );
   }
 }
@@ -67,7 +70,7 @@ class DeleteAlbumUseCase {
 
   DeleteAlbumUseCase(this.repository);
 
-  Future<void> call(String albumId) async {
+  Future<Either<Failure, void>> call(String albumId) async {
     return await repository.deleteAlbum(albumId);
   }
 }

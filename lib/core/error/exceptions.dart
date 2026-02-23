@@ -39,9 +39,9 @@ class NetworkException extends AppException {
 /// Timeout exception
 class TimeoutException extends AppException {
   TimeoutException({
-    String message = 'Request timeout',
+    super.message = 'Request timeout',
     super.originalError,
-  }) : super(message: message, statusCode: 408);
+  });
 
   @override
   String toString() => 'TimeoutException: $message';

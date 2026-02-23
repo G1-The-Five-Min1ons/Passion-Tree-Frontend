@@ -57,11 +57,15 @@ class UpdateAlbumEvent extends AlbumEvent {
 /// Event to delete an album
 class DeleteAlbumEvent extends AlbumEvent {
   final String albumId;
+  final String userId;
 
-  const DeleteAlbumEvent(this.albumId);
+  const DeleteAlbumEvent({
+    required this.albumId,
+    required this.userId,
+  });
 
   @override
-  List<Object?> get props => [albumId];
+  List<Object?> get props => [albumId, userId];
 }
 
 /// Event to load a specific album by ID

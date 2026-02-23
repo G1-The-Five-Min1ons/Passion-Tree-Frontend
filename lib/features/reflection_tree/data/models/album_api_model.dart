@@ -1,3 +1,5 @@
+import 'package:passion_tree_frontend/core/error/exceptions.dart';
+
 class AlbumApiModel {
   final String albumId;
   final String albumName;
@@ -18,19 +20,26 @@ class AlbumApiModel {
   });
 
   factory AlbumApiModel.fromJson(Map<String, dynamic> json) {
-    return AlbumApiModel(
-      albumId: json['album_id'] ?? '',
-      albumName: json['album_name'] ?? '',
-      treeCount: json['tree_count'] ?? 0,
-      coverImageUrl: json['cover_image_url'] ?? '',
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : DateTime.now(),
-      lastEdit: json['last_edit'] != null
-          ? DateTime.parse(json['last_edit'])
-          : DateTime.now(),
-      userId: json['user_id'] ?? '',
-    );
+    try {
+      return AlbumApiModel(
+        albumId: json['album_id'] ?? '',
+        albumName: json['album_name'] ?? '',
+        treeCount: json['tree_count'] ?? 0,
+        coverImageUrl: json['cover_image_url'] ?? '',
+        createdAt: json['created_at'] != null
+            ? DateTime.parse(json['created_at'])
+            : DateTime.now(),
+        lastEdit: json['last_edit'] != null
+            ? DateTime.parse(json['last_edit'])
+            : DateTime.now(),
+        userId: json['user_id'] ?? '',
+      );
+    } catch (e) {
+      throw ParseException(
+        message: 'Failed to parse AlbumApiModel',
+        originalError: e,
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {

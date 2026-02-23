@@ -1,21 +1,9 @@
-import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/usecases/album_usecases.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
-import 'package:passion_tree_frontend/core/services/upload_service.dart';
-import 'package:path/path.dart' as path;
-
-enum AlbumOperationType { created, updated, deleted }
-
-class AlbumOperationResult {
-  final AlbumOperationType type;
-  final Album? album;
-
-  AlbumOperationResult(this.type, {this.album});
-}
 
 class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
   final GetAlbumsByUserIdUseCase getAlbumsByUserId;
@@ -23,9 +11,6 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
   final CreateAlbumUseCase createAlbum;
   final UpdateAlbumUseCase updateAlbum;
   final DeleteAlbumUseCase deleteAlbum;
-
-  final _albumOperationController = StreamController<AlbumOperationResult>.broadcast();
-  Stream<AlbumOperationResult> get albumOperationStream => _albumOperationController.stream;
 
   AlbumBloc({
     required this.getAlbumsByUserId,
@@ -47,12 +32,19 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     Emitter<AlbumState> emit,
   ) async {
     emit(AlbumLoading());
-    try {
-      final albums = await getAlbumsByUserId(event.userId);
-      emit(AlbumsLoaded(albums));
-    } catch (e) {
-      emit(AlbumError('Failed to load albums: ${e.toString()}'));
-    }
+    
+    final result = await getAlbumsByUserId(event.userId);
+    
+    result.fold(
+      (failure) {
+        LogHandler.error('Failed to load albums: ${failure.message}');
+        emit(AlbumError(failure.message));
+      },
+      (albums) {
+        LogHandler.success('Loaded ${albums.length} albums');
+        emit(AlbumsLoaded(albums));
+      },
+    );
   }
 
   Future<void> _onLoadAlbumById(
@@ -60,12 +52,19 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     Emitter<AlbumState> emit,
   ) async {
     emit(AlbumLoading());
-    try {
-      final album = await getAlbumById(event.albumId);
-      emit(AlbumDetailLoaded(album));
-    } catch (e) {
-      emit(AlbumError('Failed to load album: ${e.toString()}'));
-    }
+    
+    final result = await getAlbumById(event.albumId);
+    
+    result.fold(
+      (failure) {
+        LogHandler.error('Failed to load album: ${failure.message}');
+        emit(AlbumError(failure.message));
+      },
+      (album) {
+        LogHandler.success('Loaded album: ${album.albumId}');
+        emit(AlbumDetailLoaded(album));
+      },
+    );
   }
 
   Future<void> _onCreateAlbum(
@@ -77,51 +76,39 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
       currentAlbums = (state as AlbumsLoaded).albums;
     }
 
-    try {
-      String coverImageUrl = '';
-
-      // Upload image if provided
-      if (event.coverImage != null) {
-        emit(ImageUploading(currentAlbums: currentAlbums));
-        
-        LogHandler.info('Uploading album cover image...');
-        final uploadService = UploadApiService();
-        final fileName = path.basename(event.coverImage!.path);
-        
-        final urls = await uploadService.getPresignedUrl(
-          fileName,
-          'reflect',
-        );
-        
-        await uploadService.uploadFileToBlob(
-          urls['upload_url']!,
-          event.coverImage!,
-        );
-        
-        coverImageUrl = urls['public_url']!;
-        LogHandler.success('Album cover uploaded');
-      }
-
+    // Show uploading state if image is provided
+    if (event.coverImage != null) {
+      emit(ImageUploading(currentAlbums: currentAlbums));
+    } else {
       emit(AlbumOperationLoading(currentAlbums: currentAlbums));
-
-      final album = await createAlbum(
-        userId: event.userId,
-        albumName: event.albumName,
-        coverImageUrl: coverImageUrl,
-      );
-      
-      LogHandler.success('Album created: ${album.albumId} — ${album.title}');
-      
-      _albumOperationController.add(
-        AlbumOperationResult(AlbumOperationType.created, album: album),
-      );
-      
-      final albums = await getAlbumsByUserId(event.userId);
-      emit(AlbumsLoaded(albums));
-    } catch (e) {
-      LogHandler.error('Failed to create album', error: e);
-      emit(AlbumError('Failed to create album: ${e.toString()}'));
     }
+
+    // Create album (repository handles upload internally)
+    final createResult = await createAlbum(
+      userId: event.userId,
+      albumName: event.albumName,
+      coverImage: event.coverImage,
+    );
+    
+    await createResult.fold(
+      (failure) {
+        LogHandler.error('Failed to create album: ${failure.message}');
+        emit(AlbumError(failure.message));
+      },
+      (album) async {
+        LogHandler.success('Album created: ${album.albumId} — ${album.title}');
+        
+        // Reload albums with success message
+        final albumsResult = await getAlbumsByUserId(event.userId);
+        albumsResult.fold(
+          (failure) => emit(AlbumError(failure.message)),
+          (albums) => emit(AlbumsLoaded(
+            albums,
+            message: 'Album "${album.title}" created successfully',
+          )),
+        );
+      },
+    );
   }
 
   Future<void> _onUpdateAlbum(
@@ -131,57 +118,41 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     List<Album>? currentAlbums;
     if (state is AlbumsLoaded) {
       currentAlbums = (state as AlbumsLoaded).albums;
-      emit(AlbumOperationLoading(currentAlbums: currentAlbums));
+    }
+
+    // Show uploading state if image is provided
+    if (event.coverImage != null) {
+      emit(ImageUploading(currentAlbums: currentAlbums));
     } else {
-      emit(AlbumLoading());
+      emit(AlbumOperationLoading(currentAlbums: currentAlbums));
     }
 
-    try {
-      String coverImageUrl = event.existingImageUrl ?? '';
-
-      // Upload new image if provided
-      if (event.coverImage != null) {
-        emit(ImageUploading(currentAlbums: currentAlbums));
+    // Update album (repository handles upload internally)
+    final updateResult = await updateAlbum(
+      albumId: event.albumId,
+      albumName: event.albumName,
+      coverImage: event.coverImage,
+    );
+    
+    await updateResult.fold(
+      (failure) {
+        LogHandler.error('Failed to update album: ${failure.message}');
+        emit(AlbumError(failure.message));
+      },
+      (_) async {
+        LogHandler.success('Album updated: ${event.albumId}');
         
-        LogHandler.info('Uploading new album cover image...');
-        final uploadService = UploadApiService();
-        final fileName = path.basename(event.coverImage!.path);
-        
-        final urls = await uploadService.getPresignedUrl(
-          fileName,
-          'reflect',
+        // Reload albums with success message
+        final albumsResult = await getAlbumsByUserId(event.userId);
+        albumsResult.fold(
+          (failure) => emit(AlbumError(failure.message)),
+          (albums) => emit(AlbumsLoaded(
+            albums,
+            message: 'Album updated successfully',
+          )),
         );
-        
-        await uploadService.uploadFileToBlob(
-          urls['upload_url']!,
-          event.coverImage!,
-        );
-        
-        coverImageUrl = urls['public_url']!;
-        LogHandler.success('New album cover uploaded');
-        
-        emit(AlbumOperationLoading(currentAlbums: currentAlbums));
-      }
-
-      await updateAlbum(
-        albumId: event.albumId,
-        albumName: event.albumName,
-        coverImageUrl: coverImageUrl,
-      );
-      
-      LogHandler.success('Album updated: ${event.albumId}');
-      
-      _albumOperationController.add(
-        AlbumOperationResult(AlbumOperationType.updated),
-      );
-      
-      // Reload albums for the user
-      final albums = await getAlbumsByUserId(event.userId);
-      emit(AlbumsLoaded(albums));
-    } catch (e) {
-      LogHandler.error('Failed to update album', error: e);
-      emit(AlbumError('Failed to update album: ${e.toString()}'));
-    }
+      },
+    );
   }
 
   Future<void> _onDeleteAlbum(
@@ -197,39 +168,44 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
       emit(AlbumLoading());
     }
 
-    try {
-      await deleteAlbum(event.albumId);
-      
-      _albumOperationController.add(
-        AlbumOperationResult(AlbumOperationType.deleted),
-      );
-      
-      if (currentAlbums != null) {
-        final updatedAlbums = currentAlbums
-            .where((album) => album.albumId != event.albumId)
-            .toList();
-        emit(AlbumsLoaded(updatedAlbums));
-      }
-    } catch (e) {
-      emit(AlbumError('Failed to delete album: ${e.toString()}'));
-    }
+    final deleteResult = await deleteAlbum(event.albumId);
+    
+    await deleteResult.fold(
+      (failure) {
+        LogHandler.error('Failed to delete album: ${failure.message}');
+        emit(AlbumError(failure.message));
+      },
+      (_) async {
+        LogHandler.success('Album deleted: ${event.albumId}');
+        
+        // Reload albums with success message
+        final albumsResult = await getAlbumsByUserId(event.userId);
+        albumsResult.fold(
+          (failure) => emit(AlbumError(failure.message)),
+          (albums) => emit(AlbumsLoaded(
+            albums,
+            message: 'Album deleted successfully',
+          )),
+        );
+      },
+    );
   }
 
   Future<void> _onRefreshAlbums(
     RefreshAlbumsEvent event,
     Emitter<AlbumState> emit,
   ) async {
-    try {
-      final albums = await getAlbumsByUserId(event.userId);
-      emit(AlbumsLoaded(albums));
-    } catch (e) {
-      emit(AlbumError('Failed to refresh albums: ${e.toString()}'));
-    }
-  }
-
-  @override
-  Future<void> close() {
-    _albumOperationController.close();
-    return super.close();
+    final result = await getAlbumsByUserId(event.userId);
+    
+    result.fold(
+      (failure) {
+        LogHandler.error('Failed to refresh albums: ${failure.message}');
+        emit(AlbumError(failure.message));
+      },
+      (albums) {
+        LogHandler.success('Albums refreshed');
+        emit(AlbumsLoaded(albums));
+      },
+    );
   }
 }

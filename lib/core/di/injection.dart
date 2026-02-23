@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:passion_tree_frontend/core/services/upload_service.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/album_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/repositories/album_repository.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/repositories/i_album_repository.dart';
@@ -28,6 +29,12 @@ Future<void> initializeDependencies() async {
     ),
   );
 
+  // Upload Service
+  getIt.registerLazySingleton<UploadApiService>(
+    () => UploadApiService(),
+  );
+
+  // Album Data Source and Repository
   getIt.registerLazySingleton<AlbumDataSource>(
     () => AlbumDataSource(),
   );
@@ -35,6 +42,7 @@ Future<void> initializeDependencies() async {
     () => AlbumRepository(
       dataSource: getIt<AlbumDataSource>(),
       authLocalDataSource: getIt<AuthLocalDataSource>(),
+      uploadService: getIt<UploadApiService>(),
     ),
   );
 

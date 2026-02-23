@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
@@ -26,7 +25,6 @@ class ReflectionTreePage extends StatefulWidget {
 }
   
 class _ReflectionTreePageState extends State<ReflectionTreePage>{
-  StreamSubscription<AlbumOperationResult>? _operationSubscription;
   
   String userId = '';
 
@@ -34,39 +32,6 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
   void initState() {
     super.initState();
     _loadUserAndAlbums();
-    
-    _operationSubscription = context.read<AlbumBloc>().albumOperationStream.listen(
-      (result) {
-        if (!mounted) return;
-        
-        switch (result.type) {
-          case AlbumOperationType.created:
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Album created successfully'),
-                backgroundColor: AppColors.status,
-              ),
-            );
-            break;
-          case AlbumOperationType.updated:
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Album updated successfully'),
-                backgroundColor: AppColors.status,
-              ),
-            );
-            break;
-          case AlbumOperationType.deleted:
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Album deleted successfully'),
-                backgroundColor: AppColors.status,
-              ),
-            );
-            break;
-        }
-      },
-    );
   }
 
   Future<void> _loadUserAndAlbums() async {
@@ -82,12 +47,6 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
   }
 
   @override
-  void dispose() {
-    _operationSubscription?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AppBarWidget(title: 'Reflection Tree', showBackButton: false),
@@ -98,6 +57,16 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
               SnackBar(
                 content: Text(state.message),
                 backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+          }
+          
+          // Show success message when albums are loaded with a message
+          if (state is AlbumsLoaded && state.message != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message!),
+                backgroundColor: AppColors.status,
               ),
             );
           }

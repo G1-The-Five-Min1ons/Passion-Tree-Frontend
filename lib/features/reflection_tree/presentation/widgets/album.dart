@@ -57,7 +57,10 @@ class PixelAlbumCover extends StatelessWidget {
             );
           },
           onDelete: () {
-            context.read<AlbumBloc>().add(DeleteAlbumEvent(albumId));
+            context.read<AlbumBloc>().add(DeleteAlbumEvent(
+              albumId: albumId,
+              userId: userId,
+            ));
           },
         );
       },

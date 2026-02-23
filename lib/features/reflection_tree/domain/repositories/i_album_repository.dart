@@ -1,26 +1,29 @@
+import 'dart:io';
+import 'package:dartz/dartz.dart';
+import 'package:passion_tree_frontend/core/error/failures.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 
 abstract class IAlbumRepository {
   /// Create a new album
-  Future<Album> createAlbum({
+  Future<Either<Failure, Album>> createAlbum({
     required String userId,
     required String albumName,
-    required String coverImageUrl,
+    File? coverImage,
   });
 
   /// Get album by ID
-  Future<Album> getAlbumById(String albumId);
+  Future<Either<Failure, Album>> getAlbumById(String albumId);
 
   /// Get all albums by user ID
-  Future<List<Album>> getAlbumsByUserId(String userId);
+  Future<Either<Failure, List<Album>>> getAlbumsByUserId(String userId);
 
   /// Update album
-  Future<void> updateAlbum({
+  Future<Either<Failure, void>> updateAlbum({
     required String albumId,
     required String albumName,
-    required String coverImageUrl,
+    File? coverImage,
   });
 
   /// Delete album
-  Future<void> deleteAlbum(String albumId);
+  Future<Either<Failure, void>> deleteAlbum(String albumId);
 }
