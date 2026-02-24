@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
+
 class CoursePreviewCard extends StatelessWidget {
   final String title;
   final String instructor;
   final String objectives;
   final int? learners;
   final int? modules;
+  final String? imageUrl;
 
   const CoursePreviewCard({
     super.key,
@@ -16,6 +18,7 @@ class CoursePreviewCard extends StatelessWidget {
     required this.objectives,
     this.learners,
     this.modules,
+    this.imageUrl,
   });
 
   @override
@@ -28,10 +31,22 @@ class CoursePreviewCard extends StatelessWidget {
           SizedBox(
             height: 90,
             width: double.infinity,
-            child: Image.asset(
-              'assets/images/placeholders/course_preview.png',
-              fit: BoxFit.cover,
-            ),
+            child: imageUrl != null && imageUrl!.isNotEmpty
+                ? Image.network(
+                    imageUrl!,
+                    fit: BoxFit.cover,
+                    // ดักจับ Error กรณีโหลดรูปจาก Network ไม่สำเร็จ ให้กลับไปโชว์ Placeholder
+                    errorBuilder: (context, error, stackTrace) {
+                      return Image.asset(
+                        'assets/images/placeholders/course_preview.png',
+                        fit: BoxFit.cover,
+                      );
+                    },
+                  )
+                : Image.asset(
+                    'assets/images/placeholders/course_preview.png',
+                    fit: BoxFit.cover,
+                  ),
           ),
 
           Expanded(

@@ -9,7 +9,6 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/teache
 import 'package:passion_tree_frontend/core/common_widgets/popups/delete_popup.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/create_node_request.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_quiz.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/models/create_node_request.dart';
 
 class EditNodeModal extends StatefulWidget {
   final String? initialTitle;

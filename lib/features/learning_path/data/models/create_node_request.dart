@@ -3,6 +3,7 @@ class CreateNodeRequest {
   final String description;
   final String pathId;
   final String sequence;
+  final String linkvdo;
   final List<CreateMaterialRequest>? materials;
   final List<CreateQuestionWithChoicesRequest>? questions;
 
@@ -11,6 +12,7 @@ class CreateNodeRequest {
     this.description = '',
     required this.pathId,
     required this.sequence,
+    this.linkvdo = '',
     this.materials,
     this.questions,
   });
@@ -21,6 +23,7 @@ class CreateNodeRequest {
       'description': description,
       'path_id': pathId,
       'sequence': sequence,
+      'link_vdo': linkvdo,
     };
     
     if (materials != null && materials!.isNotEmpty) {

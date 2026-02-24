@@ -31,6 +31,8 @@ class _CreateLearningPathInputPageState
   String _objectives = '';
   String _description = '';
   File? _selectedImageFile;
+  bool _isUploadingImage = false;
+  String _uploadedImageUrl = '';
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -85,9 +87,10 @@ class _CreateLearningPathInputPageState
                 Center(
                   child: CoursePreviewCard(
                     title: _title,
-                    instructor: 'อ.อะตอม', // ตอนนี้ยัง fix ได้
+                    instructor: 'อ.อะตอม',
                     objectives: _objectives,
-                    
+                    imageUrl:
+                        _uploadedImageUrl, // ส่ง URL ที่อัพโหลดเสร็จแล้วเข้ามา
                   ),
                 ),
 
@@ -126,20 +129,57 @@ class _CreateLearningPathInputPageState
                 GestureDetector(
                   onTap: () async {
                     final ImagePicker picker = ImagePicker();
-                    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                    
+                    final XFile? image = await picker.pickImage(
+                      source: ImageSource.gallery,
+                    );
+
                     if (image != null) {
                       setState(() {
                         _selectedImageFile = File(image.path);
+                        _isUploadingImage = true;
                       });
+
+                      try {
+                        final uploadService = UploadApiService();
+                        final fileName = path.basename(image.path);
+
+                        final urls = await uploadService.getPresignedUrl(
+                          fileName,
+                          'reflect',
+                        );
+                        await uploadService.uploadFileToBlob(
+                          urls['upload_url']!,
+                          _selectedImageFile!,
+                        );
+
+                        setState(() {
+                          _uploadedImageUrl = urls['public_url']!;
+                          _isUploadingImage = false;
+                        });
+                        debugPrint(
+                          "✅ Image uploaded to Blob: $_uploadedImageUrl",
+                        );
+                      } catch (e) {
+                        setState(() {
+                          _isUploadingImage = false;
+                        });
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to upload image: $e'),
+                            ),
+                          );
+                        }
+                      }
                     }
                   },
                   child: PixelBorderContainer(
                     width: double.infinity,
                     height: 150,
                     padding: EdgeInsets.zero,
-                    // [แก้ไข] เช็คว่าถ้ามีรูปให้โชว์รูป ถ้าไม่มีให้โชว์ Icon
-                    child: _selectedImageFile != null
+                    child: _isUploadingImage
+                        ? const Center(child: CircularProgressIndicator())
+                        : _selectedImageFile != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Image.file(
@@ -161,8 +201,10 @@ class _CreateLearningPathInputPageState
                                 const SizedBox(height: 8),
                                 Text(
                                   'Tap to upload image',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: AppColors.textSecondary.withValues(alpha: 0.5),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.textSecondary
+                                            .withValues(alpha: 0.5),
                                       ),
                                 ),
                               ],
@@ -227,6 +269,17 @@ class _CreateLearningPathInputPageState
                             return;
                           }
 
+                          if (_isUploadingImage) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'กรุณารอสักครู่ กำลังอัพโหลดรูปภาพ...',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
                           // Show Loading
                           showDialog(
                             context: context,
@@ -238,32 +291,8 @@ class _CreateLearningPathInputPageState
 
                           try {
                             debugPrint("🚀 START PROCESS...");
-                            final uploadService = UploadApiService();
-                            String coverImgUrl = ''; //พี่ขอ mock
 
-                            // --- STEP A: Upload Image (ถ้ามี) ---
-                            if (_selectedImageFile != null) {
-                              debugPrint("📸 Found Image, Requesting Presigned URL...");
-                              final fileName = path.basename(
-                                _selectedImageFile!.path,
-                              );
-                              final urls = await uploadService.getPresignedUrl(
-                                fileName,
-                                'reflect',
-                              );
-                              debugPrint("✅ Got URL: ${urls['upload_url']}");
-                              debugPrint("⬆️ Uploading to Blob...");
-                              await uploadService.uploadFileToBlob(
-                                urls['upload_url']!,
-                                _selectedImageFile!,
-                              );
-                              debugPrint("✅ Upload Finished!");
-                              coverImgUrl = urls['public_url']!;
-                            } else {
-                              debugPrint("⚠️ No image selected, skipping upload.");
-                            }
-
-                            // --- STEP B: Create Path (สร้างบ้านรอก่อน) ---
+                            // --- STEP A: Create Path (สร้างบ้านรอก่อน) ---
                             debugPrint("📝 Creating Path in Backend...");
                             // ต้องแก้ createLearningPath ให้ return ID กลับมาด้วยนะครับ (ใน Backend ส่งกลับมาอยู่แล้ว)
                             final request = CreatePathRequest(
@@ -271,7 +300,7 @@ class _CreateLearningPathInputPageState
                               objective: _objectives,
                               description: _description,
                               creatorId: 'feee25bd-db4e-4850-bd2c-5788ce090032', //พี่ขอ mock
-                              coverImgUrl: coverImgUrl,
+                              coverImgUrl: _uploadedImageUrl,
                             );
 
                             // สมมติว่าแก้ service ให้ return String pathId กลับมา
@@ -281,7 +310,7 @@ class _CreateLearningPathInputPageState
                             if (context.mounted) {
                               Navigator.of(context, rootNavigator: true).pop(); // ปิด Loading
 
-                              // --- STEP D: Go to Review Page (พาไปดูของ) ---
+                              // --- STEP B: Go to Review Page (พาไปดูของ) ---
                               debugPrint("➡️ Navigating to Review Page...");
                               Navigator.push(
                                 context,
@@ -326,6 +355,17 @@ class _CreateLearningPathInputPageState
                             );
                             return;
                           }
+                          
+                          if (_isUploadingImage) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'กรุณารอสักครู่ กำลังอัพโหลดรูปภาพ...',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
 
                           // Show Loading
                           showDialog(
@@ -338,49 +378,24 @@ class _CreateLearningPathInputPageState
 
                           try {
                             debugPrint("🚀 START PLAIN PATH CREATION...");
-                            final uploadService = UploadApiService();
-                            String coverImgUrl = '';
 
-                            // --- STEP A: Upload Image (ถ้ามี) ---
-                            if (_selectedImageFile != null) {
-                              debugPrint("📸 Found Image, Requesting Presigned URL...");
-                              final fileName = path.basename(
-                                _selectedImageFile!.path,
-                              );
-                              final urls = await uploadService.getPresignedUrl(
-                                fileName,
-                                'reflect',
-                              );
-                              debugPrint("✅ Got URL: ${urls['upload_url']}");
-                              debugPrint("⬆️ Uploading to Blob...");
-                              await uploadService.uploadFileToBlob(
-                                urls['upload_url']!,
-                                _selectedImageFile!,
-                              );
-                              debugPrint("✅ Upload Finished!");
-                              coverImgUrl = urls['public_url']!;
-                            } else {
-                              debugPrint("⚠️ No image selected, skipping upload.");
-                            }
-
-                            // --- STEP B: Create Path ---
+                            // --- STEP A: Create Path ---
                             debugPrint("📝 Creating Path in Backend...");
                             final request = CreatePathRequest(
                               title: _title,
                               objective: _objectives,
                               description: _description,
                               creatorId: 'feee25bd-db4e-4850-bd2c-5788ce090032',
-                              coverImgUrl: coverImgUrl,
+                              coverImgUrl: _uploadedImageUrl,
                             );
 
                             final String pathId = await createLearningPath(request);
                             debugPrint("✅ Path Created! ID: $pathId");
 
                             if (context.mounted) {
-                              Navigator.of(context, rootNavigator: true).pop(); // ปิด Loading
+                              Navigator.of(context, rootNavigator: true).pop();
 
-                              // --- STEP C: Go to Nodes Overview Page ---
-                              // ไม่ส่ง aiNodes จะทำให้สร้าง default node เปล่าๆ 1 node อัตโนมัติ
+                              // --- STEP B: Go to Nodes Overview Page ---
                               debugPrint("➡️ Navigating to Nodes Overview Page...");
                               Navigator.push(
                                 context,
@@ -395,7 +410,7 @@ class _CreateLearningPathInputPageState
                           } catch (e) {
                             debugPrint("❌ ERROR: $e");
                             if (context.mounted) {
-                              Navigator.pop(context); // ปิด Loading
+                              Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text('Error: $e')),
                               );
