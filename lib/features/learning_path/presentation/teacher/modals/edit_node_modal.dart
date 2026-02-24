@@ -13,6 +13,7 @@ import 'package:passion_tree_frontend/features/learning_path/data/models/create_
 
 class EditNodeModal extends StatefulWidget {
   final String? initialTitle;
+  final bool isEditMode; // true = แก้ไข, false = สร้างใหม่
   // [สำคัญ] Callback ส่งข้อมูลกลับไปหน้าหลัก
   final Function(
     String title,
@@ -22,7 +23,7 @@ class EditNodeModal extends StatefulWidget {
   )?
   onSaveData;
 
-  const EditNodeModal({super.key, this.initialTitle, this.onSaveData});
+  const EditNodeModal({super.key, this.initialTitle, this.onSaveData, this.isEditMode = true});
 
   @override
   State<EditNodeModal> createState() => _EditNodeModalState();
@@ -115,7 +116,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const NodeModalHeader(),
+                  NodeModalHeader(title: widget.isEditMode ? 'Edit Node' : 'Create Node'),
                   const SizedBox(height: 10),
 
                   // ===== INFO + MATERIALS =====

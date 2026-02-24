@@ -3,7 +3,9 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart';
 
 class NodeModalHeader extends StatelessWidget {
-  const NodeModalHeader({super.key});
+  final String title;
+  
+  const NodeModalHeader({super.key, this.title = 'Edit Node'});
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +33,7 @@ class NodeModalHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Edit Node',
+                title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppPixelTypography.title,

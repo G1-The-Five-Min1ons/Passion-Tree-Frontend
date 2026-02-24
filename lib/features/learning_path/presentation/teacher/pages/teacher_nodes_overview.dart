@@ -149,6 +149,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       backgroundColor: Colors.transparent,
       builder: (_) => EditNodeModal(
         initialTitle: node.title,
+        isEditMode: index != null, // null = สร้างใหม่, ไม่ null = แก้ไข
         onSaveData: (newTitle, newDesc, newLinks, newQuestions) {
           _handleSaveNode(editIndex, newTitle, newDesc, newLinks, newQuestions);
         },
