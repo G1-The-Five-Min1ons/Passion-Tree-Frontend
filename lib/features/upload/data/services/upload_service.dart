@@ -40,6 +40,8 @@ class UploadApiService {
     String contentType = 'image/jpeg'; // ค่า Default
     final extension = path.extension(file.path).toLowerCase();
     if (extension == '.png') contentType = 'image/png';
+    if (extension == '.pdf') contentType = 'application/pdf';
+    else if (extension == '.doc' || extension == '.docx') contentType = 'application/msword';
     
     final response = await http.put( // ใช้ PUT ตามมาตรฐาน Presigned URL ส่วนใหญ่
       Uri.parse(uploadUrl),

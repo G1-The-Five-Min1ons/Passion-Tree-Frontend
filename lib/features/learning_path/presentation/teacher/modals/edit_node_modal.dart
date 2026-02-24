@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_header.dart';
@@ -9,20 +10,26 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/teache
 import 'package:passion_tree_frontend/core/common_widgets/popups/delete_popup.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/create_node_request.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_quiz.dart';
+import 'package:passion_tree_frontend/features/upload/data/services/upload_service.dart';
 
 class EditNodeModal extends StatefulWidget {
   final String? initialTitle;
-  final bool isEditMode; // true = แก้ไข, false = สร้างใหม่
-  // [สำคัญ] Callback ส่งข้อมูลกลับไปหน้าหลัก
+  final bool isEditMode;
   final Function(
     String title,
     String desc,
-    List<String> links,
-    List<CreateQuestionWithChoicesRequest> questions, // ส่ง Quiz กลับไปด้วย
+    String linkVdo,
+    List<CreateMaterialRequest> materials,
+    List<CreateQuestionWithChoicesRequest> questions,
   )?
   onSaveData;
 
-  const EditNodeModal({super.key, this.initialTitle, this.onSaveData, this.isEditMode = true});
+  const EditNodeModal({
+    super.key,
+    this.initialTitle,
+    this.onSaveData,
+    this.isEditMode = true,
+  });
 
   @override
   State<EditNodeModal> createState() => _EditNodeModalState();
@@ -33,9 +40,11 @@ class _EditNodeModalState extends State<EditNodeModal> {
   late TextEditingController _titleController;
   String _description = '';
   String _linkInput = '';
-  final List<String> _links = []; //ส่วนเพิ่มlink
-  final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
+  final List<String> _links = [];
+  final List<UploadedFileItem> _files = [];
   List<NodeQuiz> _currentQuizzes = [];
+
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -92,6 +101,32 @@ class _EditNodeModalState extends State<EditNodeModal> {
     });
   }
 
+  final UploadApiService _uploadService = UploadApiService();
+
+  Future<String> _uploadFileToBlob(UploadedFileItem fileItem) async {
+    if (fileItem.path == null || fileItem.path!.isEmpty) {
+      throw Exception('File path is null or empty. Cannot upload.');
+    }
+
+    final file = File(fileItem.path!);
+
+    final urls = await _uploadService.getPresignedUrl(
+      fileItem.name,
+      'materials-nodes', 
+    );
+
+    final uploadUrl = urls['upload_url'];
+    final publicUrl = urls['public_url'];
+
+    if (uploadUrl == null || publicUrl == null) {
+      throw Exception('Invalid URLs received from backend.');
+    }
+
+    await _uploadService.uploadFileToBlob(uploadUrl, file);
+
+    return publicUrl;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -107,102 +142,134 @@ class _EditNodeModalState extends State<EditNodeModal> {
         child: SizedBox(
           width: 420,
           height: 650,
-          child: PixelBorderContainer(
-            padding: const EdgeInsets.all(16),
-            borderColor: colors.primary,
-            fillColor: colors.surface,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  NodeModalHeader(title: widget.isEditMode ? 'Edit Node' : 'Create Node'),
-                  const SizedBox(height: 10),
+          child: Stack(
+            children: [
+              PixelBorderContainer(
+                padding: const EdgeInsets.all(16),
+                borderColor: colors.primary,
+                fillColor: colors.surface,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const NodeModalHeader(),
+                      const SizedBox(height: 10),
 
-                  // ===== INFO + MATERIALS =====
-                  NodeInfoSection(
-                    // ===== NODE INFO =====
-                    titleController: _titleController,
-                    onDescriptionChanged: (v) => _description = v,
+                      // ===== INFO + MATERIALS =====
+                      NodeInfoSection(
+                        titleController: _titleController,
+                        onDescriptionChanged: (v) => _description = v,
 
-                    // ===== LINKS =====
-                    links: _links,
-                    linkValue: _linkInput,
-                    onLinkChanged: (v) => setState(() => _linkInput = v),
-                    onAddLink: _addLink,
-                    onRemoveLink: _removeLink,
+                        // ===== LINKS =====
+                        links: _links,
+                        linkValue: _linkInput,
+                        onLinkChanged: (v) => setState(() => _linkInput = v),
+                        onAddLink: _addLink,
+                        onRemoveLink: _removeLink,
 
-                    // ===== FILE UPLOAD =====
-                    files: _files,
-                    onUploadFile: _pickFile,
-                    onRemoveFile: _removeFile,
-                  ),
+                        // ===== FILE UPLOAD =====
+                        files: _files,
+                        onUploadFile: _pickFile,
+                        onRemoveFile: _removeFile,
+                      ),
 
-                  const SizedBox(height: 14),
-                  NodeQuizSection(
-                    onChanged: (updatedQuizzes) {
-                      _currentQuizzes = updatedQuizzes;
-                    },
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  NodeFooter(
-                    onDelete: () {
-                      DeletePopUp.show(
-                        context,
-                        title: 'Delete?',
-                        body:
-                            'Are you sure you want to delete?\nThis Process cannot be undone.',
-                        onDelete: () {
-                          // logic ลบ node จริง (ตอนนี้ mock ไว้ก่อน)
-                          debugPrint('Node deleted');
-
-                          // ปิด EditNodeModal
-                          Navigator.pop(context);
+                      const SizedBox(height: 14),
+                      NodeQuizSection(
+                        onChanged: (updatedQuizzes) {
+                          _currentQuizzes = updatedQuizzes;
                         },
-                      );
-                    },
-                    onSave: () {
-                      List<CreateQuestionWithChoicesRequest>
-                      apiQuestions = _currentQuizzes.map((q) {
-                        List<CreateChoiceRequest> apiChoices = [];
-                        for (int i = 0; i < q.choices.length; i++) {
-                          apiChoices.add(
-                            CreateChoiceRequest(
-                              choiceText: q.choices[i],
-                              isCorrect:
-                                  i ==
-                                  q.selectedIndex,
-                              reasoning: q.reasons[i] ?? '',
-                            ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      NodeFooter(
+                        onDelete: () {
+                          DeletePopUp.show(
+                            context,
+                            title: 'Delete?',
+                            body:
+                                'Are you sure you want to delete?\nThis Process cannot be undone.',
+                            onDelete: () {
+                              debugPrint('Node deleted');
+                              Navigator.pop(context);
+                            },
                           );
-                        }
+                        },
+                        onSave: () async {
+                          setState(() => _isUploading = true);
 
-                        return CreateQuestionWithChoicesRequest(
-                          questionText: q.question,
-                          type: 'multiple_choice',
-                          choices: apiChoices,
-                        );
-                      }).toList();
+                          try {
+                            String linkVdo = _links.isNotEmpty
+                                ? _links.first
+                                : '';
 
-                      apiQuestions = apiQuestions
-                          .where((q) => q.questionText.isNotEmpty)
-                          .toList();
+                            List<CreateMaterialRequest> apiMaterials = [];
+                            for (var file in _files) {
+                              final uploadedUrl = await _uploadFileToBlob(file);
+                              apiMaterials.add(
+                                CreateMaterialRequest(
+                                  type: 'file',
+                                  url: uploadedUrl,
+                                ),
+                              );
+                            }
 
-                      if (widget.onSaveData != null) {
-                        widget.onSaveData!(
-                          _titleController.text,
-                          _description,
-                          _links,
-                          apiQuestions,
-                        );
-                      }
-                      Navigator.pop(context);
-                    },
+                            List<CreateQuestionWithChoicesRequest>
+                            apiQuestions = _currentQuizzes.map((q) {
+                              List<CreateChoiceRequest> apiChoices = [];
+                              for (int i = 0; i < q.choices.length; i++) {
+                                apiChoices.add(
+                                  CreateChoiceRequest(
+                                    choiceText: q.choices[i],
+                                    isCorrect: i == q.selectedIndex,
+                                    reasoning: q.reasons[i] ?? '',
+                                  ),
+                                );
+                              }
+
+                              return CreateQuestionWithChoicesRequest(
+                                questionText: q.question,
+                                type: 'multiple_choice',
+                                choices: apiChoices,
+                              );
+                            }).toList();
+
+                            apiQuestions = apiQuestions
+                                .where((q) => q.questionText.isNotEmpty)
+                                .toList();
+
+                            if (widget.onSaveData != null) {
+                              widget.onSaveData!(
+                                _titleController.text,
+                                _description,
+                                linkVdo,
+                                apiMaterials,
+                                apiQuestions,
+                              );
+                            }
+
+                            if (mounted) Navigator.pop(context);
+                          } catch (e) {
+                            debugPrint("Upload Error: $e");
+                          } finally {
+                            if (mounted)
+                              setState(
+                                () => _isUploading = false,
+                              );
+                          }
+                        },
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+
+              if (_isUploading)
+                Container(
+                  color: Colors.black.withOpacity(0.3),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+            ],
           ),
         ),
       ),

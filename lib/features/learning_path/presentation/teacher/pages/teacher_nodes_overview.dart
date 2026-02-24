@@ -75,7 +75,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     int index,
     String title,
     String desc,
-    List<String> links,
+    String linkVdo,
+    List<CreateMaterialRequest> materials,
     List<CreateQuestionWithChoicesRequest> questions,
   ) async {
     final currentNode = _uiNodes[index];
@@ -85,15 +86,12 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         await updateNodeApi(currentNode.realNodeId!, title, desc);
         debugPrint('Updated Node: ${currentNode.realNodeId}');
       } else {
-        List<CreateMaterialRequest> materials = links.map((url) {
-          return CreateMaterialRequest(type: 'link', url: url);
-        }).toList();
-
         final request = CreateNodeRequest(
           title: title,
           description: desc,
           pathId: widget.pathId,
           sequence: currentNode.sequence.toString(),
+          linkvdo: linkVdo,
           materials: materials,
           questions: questions,
         );
@@ -149,9 +147,16 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       backgroundColor: Colors.transparent,
       builder: (_) => EditNodeModal(
         initialTitle: node.title,
-        isEditMode: index != null, // null = สร้างใหม่, ไม่ null = แก้ไข
-        onSaveData: (newTitle, newDesc, newLinks, newQuestions) {
-          _handleSaveNode(editIndex, newTitle, newDesc, newLinks, newQuestions);
+        isEditMode: index != null,
+        onSaveData: (newTitle, newDesc, newLinkVdo, newMaterials, newQuestions) {
+          _handleSaveNode(
+            editIndex, 
+            newTitle, 
+            newDesc, 
+            newLinkVdo, 
+            newMaterials, 
+            newQuestions,
+          );
         },
       ),
     );
