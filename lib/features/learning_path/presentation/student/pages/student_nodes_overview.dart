@@ -63,6 +63,11 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
             // Update cached nodes when new nodes loaded
             if (state is NodesLoaded && state.pathId == widget.course.id) {
               debugPrint('Nodes loaded for path ${widget.course.id}: ${state.nodes.length} nodes');
+              // Debug: Print status of each node
+              for (var i = 0; i < state.nodes.length; i++) {
+                final node = state.nodes[i];
+                debugPrint('[Node $i] ${node.title} - Status: "${node.status}", Complete: "${node.complete}", Sequence: ${node.sequence}');
+              }
               _cachedNodes = state.nodes;
             }
 
@@ -91,7 +96,9 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                     onNodeTap: (index) {
                       if (index < nodes.length) {
                         final nodeId = nodes[index].nodeId;
+                        final currentSequence = nodes[index].sequence;
                         debugPrint('[UI] Node tapped: $nodeId (${nodes[index].title})');
+                        debugPrint('[UI] Sequence: $currentSequence, Total nodes: ${nodes.length}');
                         
                         Navigator.push(
                           context,
@@ -100,6 +107,9 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                               value: context.read<LearningPathBloc>(),
                               child: LearningNodePage(
                                 nodeId: nodeId,
+                                pathName: widget.course.title,
+                                totalNodes: nodes.length,
+                                currentNodeSequence: currentSequence,
                               ),
                             ),
                           ),

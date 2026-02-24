@@ -1,6 +1,6 @@
 class ApiConfig {
-  static const String _devBaseUrl = 'http://10.0.2.2:5000';
-  //static const String _devBaseUrl = 'http://localhost:5000';
+  //static const String _devBaseUrl = 'http://10.0.2.2:5000';
+  static const String _devBaseUrl = 'http://localhost:5000';
   //static const String _prodBaseUrl = 'https://your-production-domain.com';
   
   // Auto-detect environment (or use --dart-define for build)

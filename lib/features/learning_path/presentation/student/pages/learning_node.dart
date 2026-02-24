@@ -11,10 +11,16 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 
 class LearningNodePage extends StatefulWidget {
   final String nodeId;
+  final String? pathName;
+  final int? totalNodes;
+  final int? currentNodeSequence;
 
   const LearningNodePage({
     super.key,
     required this.nodeId,
+    this.pathName,
+    this.totalNodes,
+    this.currentNodeSequence,
   });
 
   @override
@@ -104,6 +110,9 @@ class _LearningNodePageState extends State<LearningNodePage> {
                                 child: LearningPathQuizPage(
                                   nodeId: widget.nodeId,
                                   title: nodeDetail.title,
+                                  pathName: widget.pathName,
+                                  totalNodes: widget.totalNodes,
+                                  currentNodeSequence: widget.currentNodeSequence,
                                 ),
                               ),
                             ),

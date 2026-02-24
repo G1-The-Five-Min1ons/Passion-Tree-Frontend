@@ -11,6 +11,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 
 class LearningPathStatusPage extends StatefulWidget {
   const LearningPathStatusPage({super.key});
@@ -30,6 +31,14 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
     super.initState();
 
     debugPrint('[UI] LearningPathStatusPage - initState');
+    
+    // TODO: Get userId from authentication service
+    const userId = 'a4bdfa58-e41e-4344-aa9e-d35f3dcd53c6'; // Hardcoded for testing
+    
+    // Fetch learning path status data
+    context.read<LearningPathBloc>().add(
+      FetchLearningPathStatus(userId: userId),
+    );
     
     _searchController.addListener(() {
       setState(() {});
