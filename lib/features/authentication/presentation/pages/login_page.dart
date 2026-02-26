@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
@@ -10,12 +11,13 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/bottom_buttons.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/pixel_password_field.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/select_role_popup.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
-import 'package:passion_tree_frontend/core/di/injection.dart';
-import 'package:passion_tree_frontend/core/error/exceptions.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/register_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/forgot_password_page.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_bloc.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_event.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_state.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app_links/app_links.dart';
@@ -31,11 +33,9 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _rememberMe = false;
   
   String? _usernameError;
   String? _passwordError;
-  bool _isLoading = false;
 
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
@@ -84,56 +84,9 @@ class _LoginPageState extends State<LoginPage> {
       
       final code = uri.queryParameters['code'];
       if (code != null) {
-        _handleDiscordCode(code);
+        // Dispatch Discord code authentication event
+        context.read<LoginBloc>().add(LoginWithDiscordCode(code));
       }
-    }
-  }
-
-  Future<void> _handleDiscordCode(String code) async {
-    setState(() => _isLoading = true);
-    try {
-      final authRepo = getIt<IAuthRepository>();
-      await authRepo.nativeDiscordSignIn(code);
-      await _handlePostAuth();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      LogHandler.error('Discord login failed', error: e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Discord login failed: ${e.toString()}')),
-      );
-    }
-  }
-
-  Future<void> _handleGoogleLogin() async {
-    setState(() => _isLoading = true);
-    try {
-      // Google SignIn v7 migration: use instance and authenticate()
-      // Scopes should be requested via authorizationClient if needed, 
-      // but default sign-in often provides basic profile/email.
-      // If we need specific scopes, we might need:
-      // await GoogleSignIn.instance.requestScopes(['email', 'profile']); 
-      // But standard login usually implies email/profile.
-      
-      final account = await GoogleSignIn.instance.authenticate();
-
-      final auth = await account.authentication;
-      final idToken = auth.idToken;
-
-      if (idToken != null) {
-        final authRepo = getIt<IAuthRepository>();
-        await authRepo.nativeGoogleSignIn(idToken);
-        await _handlePostAuth();
-      } else {
-        throw Exception('Failed to retrieve Google ID Token');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      LogHandler.error('Google login failed', error: e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Google login failed: ${e.toString()}')),
-      );
     }
   }
 
@@ -147,17 +100,16 @@ class _LoginPageState extends State<LoginPage> {
       'https://discord.com/api/oauth2/authorize?client_id=$clientId&redirect_uri=$redirectUri&response_type=code&scope=$scope',
     );
 
+    // Dispatch event to initiate Discord OAuth
+    context.read<LoginBloc>().add(const LoginWithDiscord());
+    
     try {
       if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
-        // Do not set loading to false here, wait for callback
-        // or set it to true to show spinner while browser opens
-        setState(() => _isLoading = true);
       } else {
         throw Exception('Could not launch Discord login');
       }
     } catch (e) {
-      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Could not launch Discord login: ${e.toString()}')),
       );
@@ -196,11 +148,318 @@ class _LoginPageState extends State<LoginPage> {
     return _usernameError == null && _passwordError == null;
   }
 
-  /// Show OTP input dialog and return the entered code
-  Future<String?> _showOtpDialog(String message) async {
+  /// Handle login button press
+  void _handleLogin() {
+    if (!_validateAllFields()) {
+      LogHandler.warning('Login validation failed');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fix the errors above'),
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+      return;
+    }
+
+    final bloc = context.read<LoginBloc>();
+    bloc.add(LoginUsernameChanged(_usernameController.text.trim()));
+    bloc.add(LoginPasswordChanged(_passwordController.text));
+    bloc.add(const LoginSubmitted());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return BlocProvider(
+      create: (context) => LoginBloc(
+        loginWithCredentials: getIt(),
+        loginWithGoogle: getIt(),
+        loginWithDiscord: getIt(),
+        verifyEmail: getIt(),
+        getProfile: getIt(),
+        selectRole: getIt(),
+        getUserRole: getIt(),
+      ),
+      child: MultiBlocListener(
+        listeners: [
+          // Error listener
+          BlocListener<LoginBloc, LoginState>(
+            listenWhen: (previous, current) => current.status == LoginStatus.failure,
+            listener: (context, state) {
+              if (state.errorMessage != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.errorMessage!),
+                    backgroundColor: AppColors.cancel,
+                  ),
+                );
+              }
+            },
+          ),
+          // Navigation listener
+          BlocListener<LoginBloc, LoginState>(
+            listenWhen: (previous, current) =>
+                current.status == LoginStatus.success && current.nextStep != null,
+            listener: (context, state) async {
+              switch (state.nextStep!) {
+                case LoginNextStep.otpVerification:
+                  await _showOtpDialog(context);
+                  // After OTP, check role status
+                  if (context.mounted) {
+                    context.read<LoginBloc>().add(const CheckRoleStatus());
+                  }
+                  break;
+
+                case LoginNextStep.roleSelection:
+                  await _showRoleSelectionDialog(context);
+                  break;
+
+                case LoginNextStep.complete:
+                  if (context.mounted) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => const HomeBarWidget(),
+                      ),
+                    );
+                  }
+                  break;
+              }
+            },
+          ),
+        ],
+        child: _buildLoginForm(context, colorScheme),
+      ),
+    );
+  }
+
+  Widget _buildLoginForm(BuildContext context, ColorScheme colorScheme) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 25),
+        child: Center(
+          child: SingleChildScrollView(
+            child: SizedBox(
+              width: 400,
+              child: PixelBorderContainer(
+                pixelSize: 4,
+                padding: const EdgeInsets.all(24),
+                child: BlocBuilder<LoginBloc, LoginState>(
+                  builder: (context, state) {
+                    final isLoading = state.status == LoginStatus.loading;
+
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Logo/Icon
+                        Center(
+                          child: Image.asset(
+                            'assets/icons/tree_icon.png',
+                            width: 80,
+                            height: 80,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 80,
+                                height: 80,
+                                color: AppColors.status,
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Title
+                        Text(
+                          'Sign In',
+                          style: AppPixelTypography.h2.copyWith(
+                            color: colorScheme.onSurface,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Subtitle
+                        Text(
+                          'Ready to continue growing your reflection tree?',
+                          style: AppTypography.bodySemiBold.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Username field
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PixelTextField(
+                              label: 'Username or Email',
+                              hintText: 'Enter your username or email',
+                              controller: _usernameController,
+                              height: 38,
+                              onChanged: (value) {
+                                setState(() {
+                                  _usernameError = _validateUsername(value.trim());
+                                });
+                              },
+                            ),
+                            if (_usernameError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 12, top: 4),
+                                child: Text(
+                                  _usernameError!,
+                                  style: AppTypography.bodyRegular.copyWith(
+                                    color: AppColors.cancel,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Password field with visibility toggle
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PixelPasswordField(
+                              label: 'Password',
+                              hintText: 'Enter Password',
+                              controller: _passwordController,
+                              height: 38,
+                              onChanged: (value) {
+                                setState(() {
+                                  _passwordError = _validatePassword(value);
+                                });
+                              },
+                            ),
+                            if (_passwordError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 12, top: 4),
+                                child: Text(
+                                  _passwordError!,
+                                  style: AppTypography.bodyRegular.copyWith(
+                                    color: AppColors.cancel,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Remember me & Forgot password
+                        Row(
+                          children: [
+                            const SizedBox(width: 8),
+                            PixelCheckbox(
+                              value: state.rememberMe,
+                              onChanged: (value) {
+                                context.read<LoginBloc>().add(
+                                      LoginRememberMeToggled(value ?? false),
+                                    );
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Remember me',
+                              style: AppTypography.subtitleMedium.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const ForgotPasswordPage(),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                'Forgot password',
+                                style: AppTypography.subtitleMedium.copyWith(
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Sign in button
+                        AppButton(
+                          variant: AppButtonVariant.text,
+                          text: isLoading ? 'Signing in...' : 'Sign in',
+                          onPressed: isLoading ? () {} : _handleLogin,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Sign up link
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Don't have an account?  ",
+                              style: AppTypography.titleRegular.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const RegisterPage(),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                'Sign up',
+                                style: AppTypography.titleMedium.copyWith(
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+
+                        // Divider with text
+                        Text(
+                          'Or continue with',
+                          style: AppTypography.titleRegular.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // OAuth buttons
+                        BottomButtons(
+                          onGoogleTap: isLoading
+                              ? () {}
+                              : () {
+                                  context.read<LoginBloc>().add(const LoginWithGoogle());
+                                },
+                          onDiscordTap: isLoading ? () {} : _handleDiscordLogin,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Show OTP dialog
+  Future<void> _showOtpDialog(BuildContext context) async {
     final otpController = TextEditingController();
-    
-    return showDialog<String>(
+
+    return showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
@@ -222,7 +481,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  message,
+                  'Please enter the verification code sent to your email',
                   style: AppTypography.bodySemiBold.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -243,7 +502,10 @@ class _LoginPageState extends State<LoginPage> {
                         variant: AppButtonVariant.text,
                         text: 'Cancel',
                         backgroundColor: AppColors.cancel,
-                        onPressed: () => Navigator.of(dialogContext).pop(null),
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          context.read<LoginBloc>().add(const LoginReset());
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -254,7 +516,8 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () {
                           final code = otpController.text.trim();
                           if (code.isNotEmpty) {
-                            Navigator.of(dialogContext).pop(code);
+                            Navigator.of(dialogContext).pop();
+                            context.read<LoginBloc>().add(VerifyEmailSubmitted(code));
                           }
                         },
                       ),
@@ -269,361 +532,19 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// Show role selection popup and return the selected role
-  Future<String?> _showRoleSelection() async {
-    return showDialog<String>(
+  /// Show role selection dialog
+  Future<void> _showRoleSelectionDialog(BuildContext context) async {
+    return showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
         return SelectRolePopup(
           onRoleSelected: (role) {
-            Navigator.of(dialogContext).pop(role);
+            Navigator.of(dialogContext).pop();
+            context.read<LoginBloc>().add(SelectRoleSubmitted(role));
           },
         );
       },
-    );
-  }
-
-  /// Handle the post-authentication flow: save data, check role, navigate
-  Future<void> _handlePostAuth() async {
-    final authRepo = getIt<IAuthRepository>();
-    
-    // 1. Capture the locally saved role (selected during registration) BEFORE getProfile overwrites it.
-    final localRoleCandidate = await authRepo.getUserRole();
-    LogHandler.info('Post-Auth Check: Local role candidate is "$localRoleCandidate"');
-    
-    try {
-      // 2. Fetch current profile from backend. 
-      // This will update local storage with the backend's current role (likely 'pending').
-      final userProfile = await authRepo.getProfile();
-      
-      // Extract the role from the entity
-      final backendRole = userProfile.user.role;
-      LogHandler.info('Post-Auth Check: Backend role is "$backendRole"');
-
-      // 3. Sync logic: Only update if backend is still 'pending'
-      if (backendRole == 'pending') {
-         String? roleToSync = localRoleCandidate;
-         
-         // If we don't have a valid local candidate, ask the user now.
-         if (roleToSync == null || (roleToSync != 'student' && roleToSync != 'teacher')) {
-            LogHandler.info('User is pending and no local role found. Prompting selection.');
-            if (mounted) {
-               roleToSync = await _showRoleSelection();
-               LogHandler.info('User selected role via popup: "$roleToSync"');
-            }
-         }
-         
-         // If we have a valid role now, sync it.
-         if (roleToSync == 'student' || roleToSync == 'teacher') {
-            try {
-               LogHandler.info('Attempting to sync role "$roleToSync" to backend...');
-               await authRepo.selectRole(roleToSync!);
-               LogHandler.success('Role synced to backend: $roleToSync');
-            } catch (e) {
-               LogHandler.error('Failed to sync role to backend', error: e);
-               // We continue anyway; user might be prompted again next login or we can block here.
-               // For now, let's allow entry but they might have limited access if backend restricts 'pending'.
-            }
-         } else {
-            LogHandler.warning('No valid role to sync (role is "$roleToSync"). User remains pending.');
-         }
-      } else {
-         LogHandler.info('Backend role is already set to "$backendRole". Skipping sync.');
-      }
-      
-    } catch (profileError) {
-      LogHandler.error('Failed to fetch profile or sync role', error: profileError);
-      // Proceeding despite error to avoid locking user out, though app might be in degraded state.
-    }
-
-    if (!mounted) return;
-
-    LogHandler.success('Login successful — navigating to home');
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => const HomeBarWidget(),
-      ),
-    );
-  }
-
-  /// Full login flow: login → OTP → verify → role selection → navigate
-  Future<void> _handleLogin() async {
-    if (!_validateAllFields()) {
-      LogHandler.warning('Login validation failed');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fix the errors above'),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final authRepo = getIt<IAuthRepository>();
-
-      // Step 1: Login → triggers OTP email
-      final message = await authRepo.login(
-        identifier: _usernameController.text.trim(),
-        password: _passwordController.text,
-      );
-
-      if (!mounted) return;
-
-      // Step 2: Show OTP dialog
-      final otpCode = await _showOtpDialog(message);
-      if (otpCode == null) {
-        // User cancelled
-        setState(() => _isLoading = false);
-        return;
-      }
-
-      // Step 3: Verify email with OTP → get tokens (saved by repo)
-      await authRepo.verifyEmail(otpCode);
-
-      // Step 4+5+6: Post-auth flow (save, role check, navigate)
-      await _handlePostAuth();
-    } on AuthException catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      LogHandler.error('Auth error: ${e.message}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      LogHandler.error('Unexpected error', error: e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('An error occurred: ${e.toString()}'),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 25),
-          child: Center(
-            child: SingleChildScrollView(
-              child: SizedBox(
-                width: 400,
-                child: PixelBorderContainer(
-                  pixelSize: 4,
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Logo/Icon
-                    Center(
-                      child: Image.asset(
-                        'assets/icons/tree_icon.png',
-                        width: 80,
-                        height: 80,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 80,
-                            height: 80,
-                            color: AppColors.status,
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Title
-                    Text(
-                      'Sign In',
-                      style: AppPixelTypography.h2.copyWith(
-                        color: colorScheme.onSurface,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    
-                    // Subtitle
-                    Text(
-                      'Ready to continue growing your reflection tree?',
-                      style: AppTypography.bodySemiBold.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Username field
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        PixelTextField(
-                          label: 'Username or Email',
-                          hintText: 'Enter your username or email',
-                          controller: _usernameController,
-                          height: 38,
-                          onChanged: (value) {
-                            setState(() {
-                              _usernameError = _validateUsername(value.trim());
-                            });
-                          },
-                        ),
-                        if (_usernameError != null)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 12, top: 4),
-                            child: Text(
-                              _usernameError!,
-                              style: AppTypography.bodyRegular.copyWith(
-                                color: AppColors.cancel,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Password field with visibility toggle
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        PixelPasswordField(
-                          label: 'Password',
-                          hintText: 'Enter Password',
-                          controller: _passwordController,
-                          height: 38,
-                          onChanged: (value) {
-                            setState(() {
-                              _passwordError = _validatePassword(value);
-                            });
-                          },
-                        ),
-                        if (_passwordError != null)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 12, top: 4),
-                            child: Text(
-                              _passwordError!,
-                              style: AppTypography.bodyRegular.copyWith(
-                                color: AppColors.cancel,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Remember me & Forgot password
-                    Row(
-                      children: [
-                        const SizedBox(width: 8),
-                        PixelCheckbox(
-                          value: _rememberMe,
-                          onChanged: (value) {
-                            setState(() {
-                              _rememberMe = value ?? false;
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Remember me',
-                          style: AppTypography.subtitleMedium.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const ForgotPasswordPage(),
-                              ),
-                            );
-                          },
-                          child: Text(
-                            'Forgot password',
-                            style: AppTypography.subtitleMedium.copyWith(
-                              color: colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Sign in button
-                    AppButton(
-                      variant: AppButtonVariant.text,
-                      text: _isLoading ? 'Signing in...' : 'Sign in',
-                      onPressed: _isLoading ? () {} : _handleLogin,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Sign up link
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Don't have an account?  ",
-                          style: AppTypography.titleRegular.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const RegisterPage(),
-                              ),
-                            );
-                          },
-                          child: Text(
-                            'Sign up',
-                            style: AppTypography.titleMedium.copyWith(
-                              color: colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Divider with text
-                    Text(
-                      'Or continue with',
-                      style: AppTypography.titleRegular.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // OAuth buttons
-                    BottomButtons(
-                      onGoogleTap: _handleGoogleLogin,
-                      onDiscordTap: _handleDiscordLogin,
-                    )
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

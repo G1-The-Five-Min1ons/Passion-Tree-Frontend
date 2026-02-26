@@ -54,3 +54,29 @@ class LoginWithDiscordCode extends LoginEvent {
   @override
   List<Object?> get props => [code];
 }
+
+class LoginReset extends LoginEvent {
+  const LoginReset();
+}
+
+class VerifyEmailSubmitted extends LoginEvent {
+  final String code;
+
+  const VerifyEmailSubmitted(this.code);
+
+  @override
+  List<Object?> get props => [code];
+}
+
+class CheckRoleStatus extends LoginEvent {
+  const CheckRoleStatus();
+}
+
+class SelectRoleSubmitted extends LoginEvent {
+  final String role;
+
+  const SelectRoleSubmitted(this.role);
+
+  @override
+  List<Object?> get props => [role];
+}

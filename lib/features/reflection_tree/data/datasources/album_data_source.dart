@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:passion_tree_frontend/core/config/api_config.dart';
 import 'package:passion_tree_frontend/core/network/api_handler.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
+import 'package:passion_tree_frontend/core/error/exceptions.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/models/album_api_model.dart';
 
 class AlbumDataSource {
@@ -28,7 +29,8 @@ class AlbumDataSource {
 
     final msg = response.error ?? response.message ?? 'Failed to create album';
     LogHandler.error('Create album failed: $msg');
-    throw Exception(msg);
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
   }
 
   /// Get album by ID
@@ -48,7 +50,8 @@ class AlbumDataSource {
 
     final msg = response.error ?? response.message ?? 'Failed to get album';
     LogHandler.error('Get album failed: $msg');
-    throw Exception(msg);
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
   }
 
   /// Get all albums by user ID
@@ -69,7 +72,8 @@ class AlbumDataSource {
 
     final msg = response.error ?? response.message ?? 'Failed to get albums';
     LogHandler.error('Get albums failed: $msg');
-    throw Exception(msg);
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
   }
 
   /// Update album
@@ -89,7 +93,8 @@ class AlbumDataSource {
 
     final msg = response.error ?? response.message ?? 'Failed to update album';
     LogHandler.error('Update album failed: $msg');
-    throw Exception(msg);
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
   }
 
   /// Delete album
@@ -108,7 +113,8 @@ class AlbumDataSource {
 
     final msg = response.error ?? response.message ?? 'Failed to delete album';
     LogHandler.error('Delete album failed: $msg');
-    throw Exception(msg);
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
   }
 
   void dispose() {

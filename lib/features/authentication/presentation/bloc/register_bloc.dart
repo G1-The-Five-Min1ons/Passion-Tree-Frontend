@@ -38,12 +38,29 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
         error: failure.message,
         statusCode: null,
       )),
-      (userId) => emit(RegisterSuccess(
-        userId: userId,
-        token: '', // Token handled by repo or ignored
-        message: 'Registration successful',
-      )),
+      (userId) {
+        // Determine next step based on role
+        final nextStep = _determineNextStep(event.role);
+        
+        emit(RegisterSuccess(
+          userId: userId,
+          token: '',
+          message: 'Registration successful',
+          nextStep: nextStep,
+        ));
+      },
     );
+  }
+
+  /// Determine the next step after registration based on role
+  RegisterNextStep _determineNextStep(String role) {
+    // If role is pending, user needs to select their actual role
+    if (role.toLowerCase() == 'pending') {
+      return RegisterNextStep.roleSelection;
+    }
+    
+    // If role is already set (student/teacher), proceed to OTP verification
+    return RegisterNextStep.otpVerification;
   }
 
   /// Handle registration reset

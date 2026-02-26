@@ -231,7 +231,7 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
                     builder: (context) => BlocProvider.value(
                       value: albumBloc,
                       child: AlbumDetailPage(
-                        album: album,
+                        albumId: album.albumId,
                         userId: userId,
                         onBack: () {
                           Navigator.pop(context);

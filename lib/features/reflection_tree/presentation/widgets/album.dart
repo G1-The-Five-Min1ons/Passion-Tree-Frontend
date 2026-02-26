@@ -57,6 +57,7 @@ class PixelAlbumCover extends StatelessWidget {
             );
           },
           onDelete: () {
+            Navigator.pop(context);
             context.read<AlbumBloc>().add(DeleteAlbumEvent(
               albumId: albumId,
               userId: userId,
@@ -79,6 +80,7 @@ class PixelAlbumCover extends StatelessWidget {
         imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
+        cacheWidth: 400,
         errorBuilder: (context, error, stackTrace) {
           return Container(
             color: primaryColor.withValues(alpha: 0.3),
@@ -100,6 +102,7 @@ class PixelAlbumCover extends StatelessWidget {
         imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
+        cacheWidth: 400,
         errorBuilder: (context, error, stackTrace) {
           return Container(
             color: primaryColor.withValues(alpha: 0.3),

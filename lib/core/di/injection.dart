@@ -12,6 +12,10 @@ import 'package:passion_tree_frontend/features/authentication/domain/usecases/lo
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_google_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_discord_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/register_user_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/verify_email_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_profile_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/select_role_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_user_role_usecase.dart';
 
 final getIt = GetIt.instance;
 
@@ -45,6 +49,18 @@ Future<void> initializeDependencies() async {
   );
   getIt.registerFactory<RegisterUserUseCase>(
     () => RegisterUserUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<VerifyEmailUseCase>(
+    () => VerifyEmailUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<GetProfileUseCase>(
+    () => GetProfileUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<SelectRoleUseCase>(
+    () => SelectRoleUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<GetUserRoleUseCase>(
+    () => GetUserRoleUseCase(getIt<IAuthRepository>()),
   );
 
   // Upload Service
