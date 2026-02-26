@@ -26,7 +26,7 @@ class RegisterPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => RegisterBloc(
-        authRepository: getIt<IAuthRepository>(),
+        registerUser: getIt(),
       ),
       child: const _RegisterPageContent(),
     );
@@ -694,14 +694,9 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
     
     try {
       // 2. Fetch profile
-      final profileDataMap = await authRepo.getProfile();
+      final userProfile = await authRepo.getProfile();
       
-      String backendRole = 'pending';
-      if (profileDataMap is Map<String, dynamic> && 
-          profileDataMap['data'] != null && 
-          profileDataMap['data']['user'] != null) {
-         backendRole = profileDataMap['data']['user']['role'] ?? 'pending';
-      }
+      final backendRole = userProfile.user.role;
       LogHandler.info('Reg-PostAuth: Backend role is "$backendRole"');
 
       // 3. Sync if needed

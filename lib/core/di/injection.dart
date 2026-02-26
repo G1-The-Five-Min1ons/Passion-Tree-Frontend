@@ -8,6 +8,10 @@ import 'package:passion_tree_frontend/features/authentication/data/datasources/a
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_remote_data_source.dart';
 import 'package:passion_tree_frontend/features/authentication/data/repositories/auth_repository_impl.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_credentials_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_google_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_discord_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/register_user_usecase.dart';
 
 final getIt = GetIt.instance;
 
@@ -29,9 +33,25 @@ Future<void> initializeDependencies() async {
     ),
   );
 
+  // Auth Use Cases
+  getIt.registerFactory<LoginWithCredentialsUseCase>(
+    () => LoginWithCredentialsUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<LoginWithGoogleUseCase>(
+    () => LoginWithGoogleUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<LoginWithDiscordUseCase>(
+    () => LoginWithDiscordUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<RegisterUserUseCase>(
+    () => RegisterUserUseCase(getIt<IAuthRepository>()),
+  );
+
   // Upload Service
   getIt.registerLazySingleton<UploadApiService>(
-    () => UploadApiService(),
+    () => UploadApiService(
+      authLocalDataSource: getIt<AuthLocalDataSource>(),
+    ),
   );
 
   // Album Data Source and Repository

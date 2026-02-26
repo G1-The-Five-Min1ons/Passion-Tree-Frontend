@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 abstract class AuthLocalDataSource {
@@ -29,28 +30,29 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   static const String _roleKey = 'user_role';
   static const String _roleSelectedPrefix = 'has_selected_role_';
 
+  final FlutterSecureStorage _secureStorage;
+
+  AuthLocalDataSourceImpl({FlutterSecureStorage? secureStorage})
+      : _secureStorage = secureStorage ?? const FlutterSecureStorage();
+
   @override
   Future<void> saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
+    await _secureStorage.write(key: _tokenKey, value: token);
   }
 
   @override
   Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+    return await _secureStorage.read(key: _tokenKey);
   }
 
   @override
   Future<void> saveRefreshToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_refreshTokenKey, token);
+    await _secureStorage.write(key: _refreshTokenKey, value: token);
   }
 
   @override
   Future<String?> getRefreshToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_refreshTokenKey);
+    return await _secureStorage.read(key: _refreshTokenKey);
   }
 
   @override
@@ -121,9 +123,12 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
   @override
   Future<void> clearAuth() async {
+    // Clear sensitive tokens from secure storage
+    await _secureStorage.delete(key: _tokenKey);
+    await _secureStorage.delete(key: _refreshTokenKey);
+    
+    // Clear general user data from SharedPreferences
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_refreshTokenKey);
     await prefs.remove(_userIdKey);
     await prefs.remove(_usernameKey);
     await prefs.remove(_heartCountKey);
@@ -132,6 +137,10 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
   @override
   Future<void> clearAll() async {
+    // Clear all secure storage
+    await _secureStorage.deleteAll();
+    
+    // Clear all SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }

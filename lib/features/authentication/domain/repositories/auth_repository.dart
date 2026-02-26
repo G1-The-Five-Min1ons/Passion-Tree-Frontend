@@ -1,3 +1,5 @@
+import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
+
 abstract class IAuthRepository {
   /// Registers a new user. Returns user ID.
   Future<String> register({
@@ -30,8 +32,8 @@ abstract class IAuthRepository {
   /// Resets password with code
   Future<void> resetPassword(String code, String newPassword);
 
-  /// Gets the current user profile (requires auth)
-  Future<dynamic> getProfile(); // TODO: Return proper User/Profile entity
+  /// Returns [UserProfile] entity with user and optional profile data
+  Future<UserProfile> getProfile();
 
   /// Changes password
   Future<void> changePassword(String oldPassword, String newPassword);

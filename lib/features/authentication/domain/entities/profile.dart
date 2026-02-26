@@ -41,4 +41,32 @@ class Profile extends Equatable {
         hourLearned,
         userId,
       ];
+
+  Profile copyWith({
+    String? profileId,
+    String? avatarUrl,
+    String? rankName,
+    int? learningStreak,
+    int? learningCount,
+    String? location,
+    String? bio,
+    int? level,
+    int? xp,
+    int? hourLearned,
+    String? userId,
+  }) {
+    return Profile(
+      profileId: profileId ?? this.profileId,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      rankName: rankName ?? this.rankName,
+      learningStreak: learningStreak ?? this.learningStreak,
+      learningCount: learningCount ?? this.learningCount,
+      location: location ?? this.location,
+      bio: bio ?? this.bio,
+      level: level ?? this.level,
+      xp: xp ?? this.xp,
+      hourLearned: hourLearned ?? this.hourLearned,
+      userId: userId ?? this.userId,
+    );
+  }
 }

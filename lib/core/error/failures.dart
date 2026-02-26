@@ -160,3 +160,11 @@ class UnknownFailure extends Failure {
     super.technicalMessage,
   });
 }
+
+/// User cancellation failures (e.g., cancelled OAuth flow)
+class CancellationFailure extends Failure {
+  const CancellationFailure({
+    super.message = 'Operation was cancelled.',
+    super.technicalMessage,
+  });
+}

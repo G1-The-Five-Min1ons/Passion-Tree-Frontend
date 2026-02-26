@@ -8,6 +8,8 @@ import 'package:passion_tree_frontend/features/authentication/data/models/forgot
 import 'package:passion_tree_frontend/features/authentication/data/models/reset_password_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/change_password_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/select_role_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/mappers/auth_mapper.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements IAuthRepository {
@@ -84,25 +86,22 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
-  Future<dynamic> getProfile() async {
+  Future<UserProfile> getProfile() async {
     final token = await _localDataSource.getToken();
     if (token == null) throw Exception('No token found');
     
     final responseMap = await _remoteDataSource.getProfile(token);
-    final data = responseMap['data'];
     
-    // Cache user data if available
-    if (data != null && data['user'] != null) {
-      final user = data['user'];
-      await _localDataSource.saveUserId(user['user_id']);
-      await _localDataSource.saveUsername(user['username']);
-      await _localDataSource.saveRole(user['role']);
-      if (user['heart_count'] != null) {
-        await _localDataSource.saveHeartCount(user['heart_count']);
-      }
-    }
+    // Use mapper to safely parse response into entity
+    final userProfile = AuthMapper.toUserProfileEntity(responseMap);
     
-    return data;
+    // Cache user data locally
+    await _localDataSource.saveUserId(userProfile.user.userId);
+    await _localDataSource.saveUsername(userProfile.user.username);
+    await _localDataSource.saveRole(userProfile.user.role);
+    await _localDataSource.saveHeartCount(userProfile.user.heartCount);
+    
+    return userProfile;
   }
 
   @override

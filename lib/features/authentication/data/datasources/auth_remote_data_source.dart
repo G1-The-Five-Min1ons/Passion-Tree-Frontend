@@ -49,13 +49,21 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       timeout: ApiConfig.connectionTimeout,
     );
     if (response.isSuccess && response.statusCode == 201) {
-      LogHandler.success('Registration successful');
-      final raw = <String, dynamic>{
-        'success': response.success,
-        'message': response.message,
-        'data': response.data,
-      };
-      return RegisterResponse.fromJson(raw);
+      try {
+        LogHandler.success('Registration successful');
+        final raw = <String, dynamic>{
+          'success': response.success,
+          'message': response.message,
+          'data': response.data,
+        };
+        return RegisterResponse.fromJson(raw);
+      } catch (e) {
+        if (e is ParseException) rethrow;
+        throw ParseException(
+          message: 'Failed to parse register response: $e',
+          originalError: e,
+        );
+      }
     }
     throw _handleError(response, 'register');
   }
@@ -89,14 +97,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       timeout: ApiConfig.connectionTimeout,
     );
     if (response.isSuccess) {
-      final data = response.data as Map<String, dynamic>;
-      LogHandler.success('Email verified — tokens received');
-      return VerifyEmailResponse(
-        success: true,
-        message: response.message ?? '',
-        accessToken: data['access_token'] as String,
-        refreshToken: data['refresh_token'] as String,
-      );
+      try {
+        final data = _parseMap(response.data, 'response.data');
+        LogHandler.success('Email verified — tokens received');
+        return VerifyEmailResponse(
+          success: true,
+          message: response.message ?? '',
+          accessToken: _parseString(data['access_token'], 'access_token'),
+          refreshToken: _parseString(data['refresh_token'], 'refresh_token'),
+        );
+      } catch (e) {
+        if (e is ParseException) rethrow;
+        throw ParseException(
+          message: 'Failed to parse verifyEmail response: $e',
+          originalError: e,
+        );
+      }
     }
     throw _handleError(response, 'verifyEmail');
   }
@@ -209,13 +225,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       timeout: ApiConfig.connectionTimeout,
     );
     if (response.isSuccess) {
-      LogHandler.success('Google sign-in successful');
-      final raw = <String, dynamic>{
-        'success': response.success,
-        'token': (response.data as Map<String, dynamic>?)?['token'] ?? '',
-        'user': (response.data as Map<String, dynamic>?)?['user'],
-      };
-      return NativeGoogleSignInResponse.fromJson(raw);
+      try {
+        final data = _parseMap(response.data, 'response.data');
+        LogHandler.success('Google sign-in successful');
+        final raw = <String, dynamic>{
+          'success': response.success,
+          'token': _parseString(data['token'], 'token'),
+          'user': data['user'],
+        };
+        return NativeGoogleSignInResponse.fromJson(raw);
+      } catch (e) {
+        if (e is ParseException) rethrow;
+        throw ParseException(
+          message: 'Failed to parse nativeGoogleSignIn response: $e',
+          originalError: e,
+        );
+      }
     }
     throw _handleError(response, 'nativeGoogleSignIn');
   }
@@ -230,13 +255,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       timeout: ApiConfig.connectionTimeout,
     );
     if (response.isSuccess) {
-      LogHandler.success('Discord sign-in successful');
-      final raw = <String, dynamic>{
-        'success': response.success,
-        'token': (response.data as Map<String, dynamic>?)?['token'] ?? '',
-        'user': (response.data as Map<String, dynamic>?)?['user'],
-      };
-      return NativeDiscordSignInResponse.fromJson(raw);
+      try {
+        final data = _parseMap(response.data, 'response.data');
+        LogHandler.success('Discord sign-in successful');
+        final raw = <String, dynamic>{
+          'success': response.success,
+          'token': _parseString(data['token'], 'token'),
+          'user': data['user'],
+        };
+        return NativeDiscordSignInResponse.fromJson(raw);
+      } catch (e) {
+        if (e is ParseException) rethrow;
+        throw ParseException(
+          message: 'Failed to parse nativeDiscordSignIn response: $e',
+          originalError: e,
+        );
+      }
     }
     throw _handleError(response, 'nativeDiscordSignIn');
   }
@@ -251,14 +285,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       timeout: ApiConfig.connectionTimeout,
     );
     if (response.isSuccess) {
-      final data = response.data as Map<String, dynamic>;
-      LogHandler.success('Token refreshed');
-      return VerifyEmailResponse(
-        success: true,
-        message: response.message ?? '',
-        accessToken: data['access_token'] as String,
-        refreshToken: data['refresh_token'] as String,
-      );
+      try {
+        final data = _parseMap(response.data, 'response.data');
+        LogHandler.success('Token refreshed');
+        return VerifyEmailResponse(
+          success: true,
+          message: response.message ?? '',
+          accessToken: _parseString(data['access_token'], 'access_token'),
+          refreshToken: _parseString(data['refresh_token'], 'refresh_token'),
+        );
+      } catch (e) {
+        if (e is ParseException) rethrow;
+        throw ParseException(
+          message: 'Failed to parse refreshToken response: $e',
+          originalError: e,
+        );
+      }
     }
     throw _handleError(response, 'refreshToken');
   }
@@ -304,5 +346,39 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return 'Login failed';
     }
     return backendError.isNotEmpty ? backendError : 'Something went wrong';
+  }
+
+  /// Safe type casting helpers to prevent runtime errors
+  Map<String, dynamic> _parseMap(dynamic value, String fieldName) {
+    if (value == null) {
+      throw ParseException(
+        message: 'Expected Map for "$fieldName" but received null',
+      );
+    }
+    if (value is! Map<String, dynamic>) {
+      throw ParseException(
+        message: 'Expected Map<String, dynamic> for "$fieldName" but received ${value.runtimeType}',
+      );
+    }
+    return value;
+  }
+
+  String _parseString(dynamic value, String fieldName) {
+    if (value == null) {
+      throw ParseException(
+        message: 'Expected String for "$fieldName" but received null',
+      );
+    }
+    if (value is! String) {
+      throw ParseException(
+        message: 'Expected String for "$fieldName" but received ${value.runtimeType}',
+      );
+    }
+    if (value.isEmpty) {
+      throw ParseException(
+        message: 'Expected non-empty String for "$fieldName" but received empty string',
+      );
+    }
+    return value;
   }
 }

@@ -50,8 +50,9 @@ class AlbumRepository implements IAlbumRepository {
       LogHandler.info('Uploading album cover image...');
       
       final fileName = path.basename(imageFile.path);
+      final bytes = await imageFile.readAsBytes();
       final urls = await uploadService.getPresignedUrl(fileName, 'reflect');
-      await uploadService.uploadFileToBlob(urls['upload_url']!, imageFile);
+      await uploadService.uploadFileToBlob(urls['upload_url']!, bytes, fileName);
       
       final publicUrl = urls['public_url']!;
       LogHandler.success('Album cover uploaded successfully');

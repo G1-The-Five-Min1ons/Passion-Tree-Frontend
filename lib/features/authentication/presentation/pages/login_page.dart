@@ -116,10 +116,6 @@ class _LoginPageState extends State<LoginPage> {
       // But standard login usually implies email/profile.
       
       final account = await GoogleSignIn.instance.authenticate();
-      if (account == null) {
-        setState(() => _isLoading = false);
-        return;
-      }
 
       final auth = await account.authentication;
       final idToken = auth.idToken;
@@ -299,15 +295,10 @@ class _LoginPageState extends State<LoginPage> {
     try {
       // 2. Fetch current profile from backend. 
       // This will update local storage with the backend's current role (likely 'pending').
-      final profileDataMap = await authRepo.getProfile();
+      final userProfile = await authRepo.getProfile();
       
-      // Extract the role safely from the response map
-      String backendRole = 'pending';
-      if (profileDataMap is Map<String, dynamic> && 
-          profileDataMap['data'] != null && 
-          profileDataMap['data']['user'] != null) {
-         backendRole = profileDataMap['data']['user']['role'] ?? 'pending';
-      }
+      // Extract the role from the entity
+      final backendRole = userProfile.user.role;
       LogHandler.info('Post-Auth Check: Backend role is "$backendRole"');
 
       // 3. Sync logic: Only update if backend is still 'pending'

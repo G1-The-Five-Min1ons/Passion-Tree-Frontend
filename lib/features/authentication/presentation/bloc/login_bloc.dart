@@ -1,13 +1,19 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passion_tree_frontend/core/error/failures.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_event.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_state.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_credentials_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_google_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_discord_usecase.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
-  LoginBloc({required IAuthRepository authRepository})
-      : _authRepository = authRepository,
+  LoginBloc({
+    required LoginWithCredentialsUseCase loginWithCredentials,
+    required LoginWithGoogleUseCase loginWithGoogle,
+    required LoginWithDiscordUseCase loginWithDiscord,
+  })  : _loginWithCredentials = loginWithCredentials,
+        _loginWithGoogle = loginWithGoogle,
+        _loginWithDiscord = loginWithDiscord,
         super(const LoginState()) {
     on<LoginUsernameChanged>(_onUsernameChanged);
     on<LoginPasswordChanged>(_onPasswordChanged);
@@ -18,7 +24,9 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<LoginWithDiscordCode>(_onLoginWithDiscordCode);
   }
 
-  final IAuthRepository _authRepository;
+  final LoginWithCredentialsUseCase _loginWithCredentials;
+  final LoginWithGoogleUseCase _loginWithGoogle;
+  final LoginWithDiscordUseCase _loginWithDiscord;
 
   void _onUsernameChanged(
     LoginUsernameChanged event,
@@ -47,21 +55,18 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   ) async {
     emit(state.copyWith(status: LoginStatus.loading));
 
-    try {
-      final message = await _authRepository.login(
-        identifier: state.username,
-        password: state.password,
-      );
-      // Login successful, but might need OTP. 
-      // For now assuming success leads to OTP page or similar.
-      // The state.success normally navigates away.
-      emit(state.copyWith(status: LoginStatus.success));
-    } catch (e) {
-      emit(state.copyWith(
+    final result = await _loginWithCredentials.execute(
+      identifier: state.username,
+      password: state.password,
+    );
+
+    result.fold(
+      (failure) => emit(state.copyWith(
         status: LoginStatus.failure,
-        errorMessage: e.toString(),
-      ));
-    }
+        errorMessage: failure.message,
+      )),
+      (_) => emit(state.copyWith(status: LoginStatus.success)),
+    );
   }
 
   Future<void> _onLoginWithGoogle(
@@ -70,60 +75,41 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   ) async {
     emit(state.copyWith(status: LoginStatus.loading));
 
-    try {
-      // Google SignIn v7 migration
-      final account = await GoogleSignIn.instance.authenticate();
-      if (account == null) {
-        emit(state.copyWith(status: LoginStatus.initial)); // User cancelled
-        return;
-      }
+    final result = await _loginWithGoogle.execute();
 
-      final auth = await account.authentication;
-      final idToken = auth.idToken;
-
-      if (idToken != null) {
-        await _authRepository.nativeGoogleSignIn(idToken);
-        emit(state.copyWith(status: LoginStatus.success));
-      } else {
-        throw Exception('Failed to retrieve Google ID Token');
-      }
-    } catch (e) {
-      emit(state.copyWith(
-        status: LoginStatus.failure,
-        errorMessage: 'Google login failed: ${e.toString()}',
-      ));
-    }
+    result.fold(
+      (failure) {
+        // User cancellation - return to initial state
+        if (failure is CancellationFailure) {
+          emit(state.copyWith(status: LoginStatus.initial));
+        } else {
+          emit(state.copyWith(
+            status: LoginStatus.failure,
+            errorMessage: failure.message,
+          ));
+        }
+      },
+      (_) => emit(state.copyWith(status: LoginStatus.success)),
+    );
   }
 
   Future<void> _onLoginWithDiscord(
     LoginWithDiscord event,
     Emitter<LoginState> emit,
   ) async {
-    // Discord OAuth2 URL
-    // TODO: Replace with actual Client ID and Redirect URI from environment/config
-    const clientId = 'YOUR_DISCORD_CLIENT_ID'; 
-    const redirectUri = 'passiontree://auth/callback';
-    const scope = 'identify email connections guild.join';
-    
-    final url = Uri.parse(
-      'https://discord.com/api/oauth2/authorize?client_id=$clientId&redirect_uri=$redirectUri&response_type=code&scope=$scope',
-    );
+    emit(state.copyWith(status: LoginStatus.loading));
 
-    try {
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-        // We don't change state to success here; we wait for the callback (deep link)
-        // possibly set status to loading?
-        emit(state.copyWith(status: LoginStatus.loading)); 
-      } else {
-        throw Exception('Could not launch Discord login');
-      }
-    } catch (e) {
-      emit(state.copyWith(
+    final result = await _loginWithDiscord.initiateOAuth();
+
+    result.fold(
+      (failure) => emit(state.copyWith(
         status: LoginStatus.failure,
-        errorMessage: 'Discord login failed: ${e.toString()}',
-      ));
-    }
+        errorMessage: failure.message,
+      )),
+      (_) => {
+        // Keep loading state while waiting for callback
+      },
+    );
   }
 
   Future<void> _onLoginWithDiscordCode(
@@ -131,14 +117,15 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     Emitter<LoginState> emit,
   ) async {
     emit(state.copyWith(status: LoginStatus.loading));
-    try {
-      await _authRepository.nativeDiscordSignIn(event.code);
-      emit(state.copyWith(status: LoginStatus.success));
-    } catch (e) {
-      emit(state.copyWith(
+
+    final result = await _loginWithDiscord.authenticateWithCode(event.code);
+
+    result.fold(
+      (failure) => emit(state.copyWith(
         status: LoginStatus.failure,
-        errorMessage: 'Discord login failed: ${e.toString()}',
-      ));
-    }
+        errorMessage: failure.message,
+      )),
+      (_) => emit(state.copyWith(status: LoginStatus.success)),
+    );
   }
 }
