@@ -160,78 +160,51 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
             ),
           );
 
-          // 1. Show role selection popup immediately after registration
-          final selectedRole = await showDialog<String>(
-            context: context,
-            barrierDismissible: false,
-            builder: (dialogContext) {
-              return SelectRolePopup(
-                onRoleSelected: (role) {
-                  Navigator.of(dialogContext).pop(role);
-                },
+          // Auto-login to trigger OTP (role already selected and sent to backend)
+          if (context.mounted) {
+            try {
+              final authRepo = getIt<IAuthRepository>();
+              await authRepo.markRoleSelected();
+              
+              // Auto-login to trigger OTP
+              final logMsg = await authRepo.login(
+                identifier: _usernameController.text.trim(),
+                password: _passwordController.text,
               );
-            },
-          );
-
-          if (selectedRole != null && state.userId.isNotEmpty) {
-            final authRepo = getIt<IAuthRepository>();
-            // Save role locally
-            await authRepo.saveUserRole(selectedRole);
-            await authRepo.markRoleSelected();
-            
-            // 2. Auto-login to trigger OTP
-            if (context.mounted) {
-               try {
-                  // Show loading indicator or just block interaction? 
-                  // For now, we rely on the OTP dialog to appear.
-                  final logMsg = await authRepo.login(
-                     identifier: _usernameController.text.trim(),
-                     password: _passwordController.text,
-                  );
-                  
-                  if (!context.mounted) return;
-                  
-                  // 3. Show OTP Dialog
-                  final otpCode = await _showOtpDialog(context, logMsg);
-                  
-                  if (otpCode != null && context.mounted) {
-                     // 4. Verify Email
-                     await authRepo.verifyEmail(otpCode);
-                     
-                     // 5. Post-Auth Logic (Sync Role & Navigate)
-                     await _handlePostAuth(context);
-                  } else if (context.mounted) {
-                      // User cancelled OTP, navigate to login page so they can try logging in again later
-                       Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                           builder: (context) => const LoginPage(),
-                        ),
-                     );
-                  }
-
-               } catch (e) {
-                  LogHandler.error('Auto-login/Verification failed during registration flow', error: e);
-                  if (context.mounted) {
-                     ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Verification failed: ${e.toString()}')),
-                     );
-                     // Fallback to login page
-                     Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                           builder: (context) => const LoginPage(),
-                        ),
-                     );
-                  }
-               }
+              
+              if (!context.mounted) return;
+              
+              // Show OTP Dialog
+              final otpCode = await _showOtpDialog(context, logMsg);
+              
+              if (otpCode != null && context.mounted) {
+                // Verify Email
+                await authRepo.verifyEmail(otpCode);
+                
+                // Post-Auth Logic & Navigate
+                await _handlePostAuth(context);
+              } else if (context.mounted) {
+                // User cancelled OTP, navigate to login page
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(),
+                  ),
+                );
+              }
+            } catch (e) {
+              LogHandler.error('Auto-login/Verification failed during registration flow', error: e);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Verification failed: ${e.toString()}')),
+                );
+                // Fallback to login page
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(),
+                  ),
+                );
+              }
             }
-          } else {
-             // User cancelled role selection or something went wrong, fallback to login
-             if (!context.mounted) return;
-             Navigator.of(context).pushReplacement(
-               MaterialPageRoute(
-                 builder: (context) => const LoginPage(),
-               ),
-             );
           }
 
         } else if (state is RegisterFailure) {
@@ -531,7 +504,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                     AppButton(
                       variant: AppButtonVariant.text,
                       text: isLoading ? 'Create account' : 'Create account',
-                      onPressed: () {
+                      onPressed: () async {
                         if (!_validateAllFields()) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -542,7 +515,21 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                           return;
                         }
 
-                        // Trigger registration via Bloc
+                        // Show role selection popup first
+                        final selectedRole = await _showRoleSelection();
+                        if (selectedRole == null) {
+                          // User cancelled role selection
+                          return;
+                        }
+
+                        // Save role locally before registration
+                        final authRepo = getIt<IAuthRepository>();
+                        await authRepo.saveUserRole(selectedRole);
+                        LogHandler.info('Role "$selectedRole" selected and saved locally');
+
+                        if (!context.mounted) return;
+
+                        // Trigger registration via Bloc with the selected role
                         context.read<RegisterBloc>().add(
                           RegisterSubmitted(
                             username: _usernameController.text.trim(),
@@ -550,6 +537,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                             password: _passwordController.text,
                             firstName: _firstNameController.text.trim(),
                             lastName: _lastNameController.text.trim(),
+                            role: selectedRole,
                           ),
                         );
                       },
@@ -605,6 +593,21 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
         ),
       ),
     );},
+    );
+  }
+
+  /// Show role selection popup and return the selected role
+  Future<String?> _showRoleSelection() async {
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return SelectRolePopup(
+          onRoleSelected: (role) {
+            Navigator.of(dialogContext).pop(role);
+          },
+        );
+      },
     );
   }
 

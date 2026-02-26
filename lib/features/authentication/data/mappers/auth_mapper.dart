@@ -1,4 +1,5 @@
-import 'package:passion_tree_frontend/features/authentication/data/models/auth_models.dart' as model;
+import 'package:passion_tree_frontend/features/authentication/data/models/user.dart' as model;
+import 'package:passion_tree_frontend/features/authentication/data/models/profile.dart' as modelProfile;
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/profile.dart';
 
@@ -18,19 +19,19 @@ class AuthMapper {
     );
   }
 
-  static Profile toProfileEntity(model.Profile model) {
+  static Profile toProfileEntity(modelProfile.Profile profileModel) {
     return Profile(
-      profileId: model.profileId,
-      avatarUrl: model.avatarUrl,
-      rankName: model.rankName,
-      learningStreak: model.learningStreak,
-      learningCount: model.learningCount,
-      location: model.location,
-      bio: model.bio,
-      level: model.level,
-      xp: model.xp,
-      hourLearned: model.hourLearned,
-      userId: model.userId,
+      profileId: profileModel.profileId,
+      avatarUrl: profileModel.avatarUrl,
+      rankName: profileModel.rankName,
+      learningStreak: profileModel.learningStreak,
+      learningCount: profileModel.learningCount,
+      location: profileModel.location,
+      bio: profileModel.bio,
+      level: profileModel.level,
+      xp: profileModel.xp,
+      hourLearned: profileModel.hourLearned,
+      userId: profileModel.userId,
     );
   }
 }

@@ -13,7 +13,6 @@ import 'package:passion_tree_frontend/features/authentication/presentation/widge
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/error/exceptions.dart';
-import 'package:passion_tree_frontend/features/authentication/data/models/auth_models.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/register_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/forgot_password_page.dart';

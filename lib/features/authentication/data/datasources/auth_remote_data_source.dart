@@ -3,7 +3,19 @@ import 'package:passion_tree_frontend/core/config/api_config.dart';
 import 'package:passion_tree_frontend/core/error/exceptions.dart';
 import 'package:passion_tree_frontend/core/network/api_handler.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
-import 'package:passion_tree_frontend/features/authentication/data/models/auth_models.dart' hide ApiResponse;
+import 'package:passion_tree_frontend/features/authentication/data/models/register_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/register_response.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/login_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/login_otp_response.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/verify_email_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/verify_email_response.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/resend_verification_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/forgot_password_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/reset_password_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/change_password_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/native_google_signin_response.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/native_discord_signin_response.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/select_role_request.dart';
 
 abstract class AuthRemoteDataSource {
   Future<RegisterResponse> register(RegisterRequest request);

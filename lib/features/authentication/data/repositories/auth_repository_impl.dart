@@ -1,6 +1,13 @@
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_remote_data_source.dart';
-import 'package:passion_tree_frontend/features/authentication/data/models/auth_models.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/register_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/login_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/verify_email_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/resend_verification_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/forgot_password_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/reset_password_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/change_password_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/select_role_request.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements IAuthRepository {
@@ -20,6 +27,7 @@ class AuthRepositoryImpl implements IAuthRepository {
     required String password,
     required String firstName,
     required String lastName,
+    required String role,
     String? bio,
     String? location,
     String? avatarUrl,
@@ -30,6 +38,7 @@ class AuthRepositoryImpl implements IAuthRepository {
       password: password,
       firstName: firstName,
       lastName: lastName,
+      role: role,
       bio: bio,
       location: location,
       avatarUrl: avatarUrl,
