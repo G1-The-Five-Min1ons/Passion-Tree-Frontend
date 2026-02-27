@@ -1,30 +1,70 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/verify_email_bloc.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/verify_email_event.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/verify_email_state.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/verify_email_usecase.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
-class VerifyEmailPage extends StatefulWidget {
-  final Function(String) onVerify;
-  final VoidCallback onCancel;
-  final bool isLoading;
-  final String? error;
+class VerifyEmailPage extends StatelessWidget {
+  final Function()? onSuccess;
+  final VoidCallback? onCancel;
 
   const VerifyEmailPage({
     super.key,
-    required this.onVerify,
-    required this.onCancel,
-    this.isLoading = false,
-    this.error,
+    this.onSuccess,
+    this.onCancel,
   });
 
   @override
-  State<VerifyEmailPage> createState() => _VerifyEmailPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => VerifyEmailBloc(
+        verifyEmailUseCase: getIt<VerifyEmailUseCase>(),
+      ),
+      child: BlocListener<VerifyEmailBloc, VerifyEmailState>(
+        listener: (context, state) {
+          if (state.status == VerifyEmailStatus.success) {
+            Navigator.of(context).pop();
+            if (onSuccess != null) {
+              onSuccess!();
+            }
+          } else if (state.status == VerifyEmailStatus.cancelled) {
+            Navigator.of(context).pop();
+            if (onCancel != null) {
+              onCancel!();
+            }
+          } else if (state.status == VerifyEmailStatus.failure) {
+            if (state.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage!),
+                  backgroundColor: AppColors.cancel,
+                ),
+              );
+            }
+          }
+        },
+        child: const _VerifyEmailDialog(),
+      ),
+    );
+  }
 }
 
-class _VerifyEmailPageState extends State<VerifyEmailPage> {
+class _VerifyEmailDialog extends StatefulWidget {
+  const _VerifyEmailDialog();
+
+  @override
+  State<_VerifyEmailDialog> createState() => _VerifyEmailDialogState();
+}
+
+class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
   final _otpController = TextEditingController();
 
   @override
@@ -35,9 +75,6 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
 
   @override
   Widget build(BuildContext context) {
-    // If error is present, show snackbar (handled by parent usually, but can show here too)
-    // We'll rely on parent listener or display error text below input.
-
     return Dialog(
       backgroundColor: AppColors.background,
       insetPadding: const EdgeInsets.symmetric(horizontal: 25),
@@ -49,70 +86,80 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
               child: PixelBorderContainer(
                 pixelSize: 4,
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Email Verification',
-                      style: AppPixelTypography.h3.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Please enter the 6-digit code sent to your email.',
-                      style: AppTypography.bodySemiBold.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    PixelTextField(
-                      label: 'Verification Code',
-                      hintText: 'Enter 6-digit code',
-                      controller: _otpController,
-                      height: 38,
-                    ),
-                    if (widget.error != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          widget.error!,
-                          style: AppTypography.bodyRegular.copyWith(
-                            color: AppColors.cancel,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 24),
-                    Row(
+                child: BlocBuilder<VerifyEmailBloc, VerifyEmailState>(
+                  builder: (context, state) {
+                    final isLoading = state.status == VerifyEmailStatus.loading;
+
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                          child: AppButton(
-                            variant: AppButtonVariant.text,
-                            text: 'Cancel',
-                            backgroundColor: AppColors.cancel,
-                            onPressed: widget.isLoading ? () {} : widget.onCancel,
+                        Text(
+                          'Email Verification',
+                          style: AppPixelTypography.h3.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
+                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: AppButton(
-                            variant: AppButtonVariant.text,
-                            text: widget.isLoading ? 'Verifying...' : 'Verify',
-                            onPressed: widget.isLoading
-                                ? () {}
-                                : () {
-                                    final code = _otpController.text.trim();
-                                    if (code.isNotEmpty) {
-                                      widget.onVerify(code);
-                                    }
-                                  },
+                        const SizedBox(height: 12),
+                        Text(
+                          'Please enter the 6-digit code sent to your email.',
+                          style: AppTypography.bodySemiBold.copyWith(
+                            color: AppColors.textSecondary,
                           ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        PixelTextField(
+                          label: 'Verification Code',
+                          hintText: 'Enter 6-digit code',
+                          controller: _otpController,
+                          height: 38,
+                          onChanged: (value) {
+                            context.read<VerifyEmailBloc>().add(OtpCodeChanged(value));
+                          },
+                        ),
+                        if (state.otpError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              state.otpError!,
+                              style: AppTypography.bodyRegular.copyWith(
+                                color: AppColors.cancel,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: AppButton(
+                                variant: AppButtonVariant.text,
+                                text: 'Cancel',
+                                backgroundColor: AppColors.cancel,
+                                onPressed: isLoading
+                                    ? () {}
+                                    : () {
+                                        context.read<VerifyEmailBloc>().add(const CancelVerifyEmail());
+                                      },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: AppButton(
+                                variant: AppButtonVariant.text,
+                                text: isLoading ? 'Verifying...' : 'Verify',
+                                onPressed: isLoading
+                                    ? () {}
+                                    : () {
+                                        context.read<VerifyEmailBloc>().add(const SubmitVerifyEmail());
+                                      },
+                              ),
+                            ),
+                          ],
                         ),
                       ],
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),

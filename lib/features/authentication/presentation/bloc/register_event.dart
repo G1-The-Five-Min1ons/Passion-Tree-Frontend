@@ -47,3 +47,34 @@ class RegisterSubmitted extends RegisterEvent {
 class RegisterReset extends RegisterEvent {
   const RegisterReset();
 }
+
+// Multi-step flow events
+class AutoLoginAfterRegister extends RegisterEvent {
+  final String username;
+  final String password;
+
+  const AutoLoginAfterRegister({
+    required this.username,
+    required this.password,
+  });
+
+  @override
+  List<Object?> get props => [username, password];
+}
+
+class VerifyEmailAfterRegister extends RegisterEvent {
+  final String otpCode;
+
+  const VerifyEmailAfterRegister(this.otpCode);
+
+  @override
+  List<Object?> get props => [otpCode];
+}
+
+class SyncRoleAfterRegister extends RegisterEvent {
+  const SyncRoleAfterRegister();
+}
+
+class CompleteRegistrationFlow extends RegisterEvent {
+  const CompleteRegistrationFlow();
+}

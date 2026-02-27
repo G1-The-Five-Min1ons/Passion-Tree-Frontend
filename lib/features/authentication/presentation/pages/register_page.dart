@@ -14,7 +14,6 @@ import 'package:passion_tree_frontend/features/authentication/presentation/bloc/
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_event.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_state.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/select_role_popup.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
@@ -26,7 +25,14 @@ class RegisterPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => RegisterBloc(
-        registerUser: getIt(),
+        registerUserUseCase: getIt(),
+        loginWithCredentialsUseCase: getIt(),
+        verifyEmailUseCase: getIt(),
+        getUserRoleUseCase: getIt(),
+        getProfileUseCase: getIt(),
+        selectRoleUseCase: getIt(),
+        markRoleSelectedUseCase: getIt(),
+        saveUserRoleUseCase: getIt(),
       ),
       child: const _RegisterPageContent(),
     );
@@ -151,64 +157,44 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
     final colorScheme = Theme.of(context).colorScheme;
     
     return BlocConsumer<RegisterBloc, RegisterState>(
-      listener: (context, state) async {
-        if (state is RegisterSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.status,
-            ),
-          );
-
-          // Auto-login to trigger OTP (role already selected and sent to backend)
-          if (context.mounted) {
-            try {
-              final authRepo = getIt<IAuthRepository>();
-              await authRepo.markRoleSelected();
-              
-              // Auto-login to trigger OTP
-              final logMsg = await authRepo.login(
-                identifier: _usernameController.text.trim(),
-                password: _passwordController.text,
+      listener: (context, state)  {
+        if (state.status == RegisterStatus.success) {
+          if (state.nextStep == RegisterNextStep.autoLogin) {
+            if (state.successMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.successMessage!),
+                  backgroundColor: AppColors.status,
+                ),
               );
-              
-              if (!context.mounted) return;
-              
-              // Show OTP Dialog
-              final otpCode = await _showOtpDialog(context, logMsg);
-              
-              if (otpCode != null && context.mounted) {
-                // Verify Email
-                await authRepo.verifyEmail(otpCode);
-                
-                // Post-Auth Logic & Navigate
-                await _handlePostAuth(context);
-              } else if (context.mounted) {
-                // User cancelled OTP, navigate to login page
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const LoginPage(),
-                  ),
-                );
-              }
-            } catch (e) {
-              LogHandler.error('Auto-login/Verification failed during registration flow', error: e);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Verification failed: ${e.toString()}')),
-                );
-                // Fallback to login page
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const LoginPage(),
-                  ),
-                );
-              }
             }
+            
+            context.read<RegisterBloc>().add(AutoLoginAfterRegister(
+              username: _usernameController.text.trim(),
+              password: _passwordController.text,
+            ));
+          } else if (state.nextStep == RegisterNextStep.otpVerification) {
+            _showOtpDialog(context, state.successMessage ?? 'Please enter OTP code').then((otpCode) {
+              if (otpCode != null && context.mounted) {
+                context.read<RegisterBloc>().add(VerifyEmailAfterRegister(otpCode));
+              } else if (context.mounted) {
+                // User cancelled, go to login
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              }
+            });
+          } else if (state.nextStep == RegisterNextStep.roleSync) {
+            // Sync role with backend
+            context.read<RegisterBloc>().add(const SyncRoleAfterRegister());
+          } else if (state.nextStep == RegisterNextStep.complete) {
+            LogHandler.success('Registration flow complete');
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const HomeBarWidget()),
+            );
           }
-
-        } else if (state is RegisterFailure) {
-          final errorMessage = state.error.toLowerCase();
+        } else if (state.status == RegisterStatus.failure) {
+          final errorMessage = state.errorMessage?.toLowerCase() ?? '';
           
           bool isFieldError = false;
           
@@ -224,11 +210,10 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
             isFieldError = true;
           }
           
-          // Show SnackBar for non-field errors
           if (!isFieldError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.error),
+                content: Text(state.errorMessage ?? 'An error occurred'),
                 backgroundColor: AppColors.cancel,
               ),
             );
@@ -236,7 +221,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
         }
       },
       builder: (context, state) {
-        final isLoading = state is RegisterLoading;
+        final isLoading = state.status == RegisterStatus.loading;
         
         return Dialog(
       backgroundColor: AppColors.background,
@@ -522,14 +507,8 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                           return;
                         }
 
-                        // Save role locally before registration
-                        final authRepo = getIt<IAuthRepository>();
-                        await authRepo.saveUserRole(selectedRole);
-                        LogHandler.info('Role "$selectedRole" selected and saved locally');
-
                         if (!context.mounted) return;
 
-                        // Trigger registration via Bloc with the selected role
                         context.read<RegisterBloc>().add(
                           RegisterSubmitted(
                             username: _usernameController.text.trim(),
@@ -681,50 +660,6 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
           ),
         );
       },
-    );
-  }
-
-  /// Handle the post-authentication flow: save data, check role, navigate
-  Future<void> _handlePostAuth(BuildContext context) async {
-    final authRepo = getIt<IAuthRepository>();
-    
-    // 1. Capture local role
-    final localRoleCandidate = await authRepo.getUserRole();
-    LogHandler.info('Reg-PostAuth: Local role candidate is "$localRoleCandidate"');
-    
-    try {
-      // 2. Fetch profile
-      final userProfile = await authRepo.getProfile();
-      
-      final backendRole = userProfile.user.role;
-      LogHandler.info('Reg-PostAuth: Backend role is "$backendRole"');
-
-      // 3. Sync if needed
-      if (backendRole == 'pending') {
-         if (localRoleCandidate != null && (localRoleCandidate == 'student' || localRoleCandidate == 'teacher')) {
-            try {
-               LogHandler.info('Reg-PostAuth: Syncing role "$localRoleCandidate"...');
-               await authRepo.selectRole(localRoleCandidate);
-               LogHandler.success('Reg-PostAuth: Role synced.');
-            } catch (e) {
-               LogHandler.error('Reg-PostAuth: Failed to sync role', error: e);
-            }
-         } else {
-             LogHandler.warning('Reg-PostAuth: No valid local role to sync. User remains pending.');
-         }
-      }
-    } catch (e) {
-      LogHandler.error('Reg-PostAuth: Profile fetch failed', error: e);
-    }
-
-    if (!context.mounted) return;
-
-    LogHandler.success('Registration Flow Complete — navigating to home');
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => const HomeBarWidget(),
-      ),
     );
   }
 }

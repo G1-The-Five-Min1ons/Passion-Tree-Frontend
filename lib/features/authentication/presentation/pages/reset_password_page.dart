@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
@@ -6,9 +7,12 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/pixel_password_field.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/reset_password_bloc.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/reset_password_event.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/reset_password_state.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/reset_password_usecase.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   final String email;
@@ -24,11 +28,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  String? _codeError;
-  String? _passwordError;
-  String? _confirmPasswordError;
-  bool _isLoading = false;
-
   @override
   void dispose() {
     _codeController.dispose();
@@ -37,107 +36,47 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     super.dispose();
   }
 
-  String? _validateCode(String value) {
-    if (value.isEmpty) {
-      return 'Reset code is required';
-    }
-    return null;
-  }
-
-  String? _validatePassword(String value) {
-    if (value.isEmpty) {
-      return 'Password is required';
-    }
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters';
-    }
-    if (!RegExp(r'[A-Z]').hasMatch(value)) {
-      return 'Password must contain at least one uppercase letter';
-    }
-    if (!RegExp(r'[a-z]').hasMatch(value)) {
-      return 'Password must contain at least one lowercase letter';
-    }
-    if (!RegExp(r'[0-9]').hasMatch(value)) {
-      return 'Password must contain at least one number';
-    }
-    return null;
-  }
-
-  String? _validateConfirmPassword(String value) {
-    if (value.isEmpty) {
-      return 'Please confirm your password';
-    }
-    if (value != _passwordController.text) {
-      return 'Passwords do not match';
-    }
-    return null;
-  }
-
-  bool _validateAllFields() {
-    setState(() {
-      _codeError = _validateCode(_codeController.text.trim());
-      _passwordError = _validatePassword(_passwordController.text);
-      _confirmPasswordError =
-          _validateConfirmPassword(_confirmPasswordController.text);
-    });
-    return _codeError == null &&
-        _passwordError == null &&
-        _confirmPasswordError == null;
-  }
-
-  Future<void> _handleResetPassword() async {
-    if (!_validateAllFields()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fix the errors above'),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final authRepo = getIt<IAuthRepository>();
-      await authRepo.resetPassword(
-        _codeController.text.trim(),
-        _passwordController.text,
-      );
-
-      if (!mounted) return;
-
-      LogHandler.success('Password reset successfully');
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password reset successfully! Please sign in.'),
-          backgroundColor: AppColors.status,
-        ),
-      );
-
-      // Pop back to login page (pop twice: ResetPassword → ForgotPassword → Login)
-      Navigator.of(context)
-        ..pop()
-        ..pop();
-    } catch (e) {
-      if (!mounted) return;
-      LogHandler.error('Reset password failed', error: e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => ResetPasswordBloc(
+        resetPasswordUseCase: getIt<ResetPasswordUseCase>(),
+      ),
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<ResetPasswordBloc, ResetPasswordState>(
+            listenWhen: (previous, current) => previous.status != current.status,
+            listener: (context, state) {
+              if (state.status == ResetPasswordStatus.success) {
+                LogHandler.success('Password reset successfully');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Password reset successfully! Please sign in.'),
+                    backgroundColor: AppColors.status,
+                  ),
+                );
+                // Pop back to login page (pop twice)
+                Navigator.of(context)
+                  ..pop()
+                  ..pop();
+              } else if (state.status == ResetPasswordStatus.failure) {
+                LogHandler.error('Reset password failed', error: state.errorMessage);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.errorMessage ?? 'An error occurred'),
+                    backgroundColor: AppColors.cancel,
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+        child: _buildBody(),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -160,6 +99,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         'assets/icons/tree_icon.png',
                         width: 80,
                         height: 80,
+                        cacheWidth: 240,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             width: 80,
@@ -192,104 +132,112 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     const SizedBox(height: 32),
 
                     // Code field
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        PixelTextField(
-                          label: 'Reset Code',
-                          hintText: 'Enter the code from your email',
-                          controller: _codeController,
-                          height: 38,
-                          onChanged: (value) {
-                            setState(() {
-                              _codeError = _validateCode(value.trim());
-                            });
-                          },
-                        ),
-                        if (_codeError != null)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 12, top: 4),
-                            child: Text(
-                              _codeError!,
-                              style: AppTypography.bodyRegular.copyWith(
-                                color: AppColors.cancel,
-                              ),
+                    BlocBuilder<ResetPasswordBloc, ResetPasswordState>(
+                      builder: (context, state) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PixelTextField(
+                              label: 'Reset Code',
+                              hintText: 'Enter the code from your email',
+                              controller: _codeController,
+                              height: 38,
+                              onChanged: (value) {
+                                context.read<ResetPasswordBloc>().add(CodeChanged(value));
+                              },
                             ),
-                          ),
-                      ],
+                            if (state.codeError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 12, top: 4),
+                                child: Text(
+                                  state.codeError!,
+                                  style: AppTypography.bodyRegular.copyWith(
+                                    color: AppColors.cancel,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 20),
 
                     // New password field
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        PixelPasswordField(
-                          label: 'New Password',
-                          hintText: 'Enter new password',
-                          controller: _passwordController,
-                          height: 38,
-                          onChanged: (value) {
-                            setState(() {
-                              _passwordError = _validatePassword(value);
-                              if (_confirmPasswordController.text.isNotEmpty) {
-                                _confirmPasswordError =
-                                    _validateConfirmPassword(
-                                  _confirmPasswordController.text,
-                                );
-                              }
-                            });
-                          },
-                        ),
-                        if (_passwordError != null)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 12, top: 4),
-                            child: Text(
-                              _passwordError!,
-                              style: AppTypography.bodyRegular.copyWith(
-                                color: AppColors.cancel,
-                              ),
+                    BlocBuilder<ResetPasswordBloc, ResetPasswordState>(
+                      builder: (context, state) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PixelPasswordField(
+                              label: 'New Password',
+                              hintText: 'Enter new password',
+                              controller: _passwordController,
+                              height: 38,
+                              onChanged: (value) {
+                                context.read<ResetPasswordBloc>().add(PasswordChanged(value));
+                              },
                             ),
-                          ),
-                      ],
+                            if (state.passwordError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 12, top: 4),
+                                child: Text(
+                                  state.passwordError!,
+                                  style: AppTypography.bodyRegular.copyWith(
+                                    color: AppColors.cancel,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 20),
 
                     // Confirm password field
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        PixelPasswordField(
-                          label: 'Confirm Password',
-                          hintText: 'Confirm new password',
-                          controller: _confirmPasswordController,
-                          height: 38,
-                          onChanged: (value) {
-                            setState(() {
-                              _confirmPasswordError =
-                                  _validateConfirmPassword(value);
-                            });
-                          },
-                        ),
-                        if (_confirmPasswordError != null)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 12, top: 4),
-                            child: Text(
-                              _confirmPasswordError!,
-                              style: AppTypography.bodyRegular.copyWith(
-                                color: AppColors.cancel,
-                              ),
+                    BlocBuilder<ResetPasswordBloc, ResetPasswordState>(
+                      builder: (context, state) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PixelPasswordField(
+                              label: 'Confirm Password',
+                              hintText: 'Confirm new password',
+                              controller: _confirmPasswordController,
+                              height: 38,
+                              onChanged: (value) {
+                                context.read<ResetPasswordBloc>().add(ConfirmPasswordChanged(value));
+                              },
                             ),
-                          ),
-                      ],
+                            if (state.confirmPasswordError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 12, top: 4),
+                                child: Text(
+                                  state.confirmPasswordError!,
+                                  style: AppTypography.bodyRegular.copyWith(
+                                    color: AppColors.cancel,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
 
                     // Reset button
-                    AppButton(
-                      variant: AppButtonVariant.text,
-                      text: _isLoading ? 'Resetting...' : 'Reset Password',
-                      onPressed: _isLoading ? () {} : _handleResetPassword,
+                    BlocBuilder<ResetPasswordBloc, ResetPasswordState>(
+                      builder: (context, state) {
+                        final isLoading = state.status == ResetPasswordStatus.loading;
+                        return AppButton(
+                          variant: AppButtonVariant.text,
+                          text: isLoading ? 'Resetting...' : 'Reset Password',
+                          onPressed: isLoading
+                              ? () {}
+                              : () {
+                                  context.read<ResetPasswordBloc>().add(const SubmitResetPassword());
+                                },
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
 

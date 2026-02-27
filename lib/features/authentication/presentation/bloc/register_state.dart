@@ -1,60 +1,60 @@
 import 'package:equatable/equatable.dart';
 
+enum RegisterStatus { initial, loading, success, failure }
+
 enum RegisterNextStep {
+  none,
+  autoLogin,
   otpVerification,
-  roleSelection,
+  roleSync,
   complete,
 }
 
-abstract class RegisterState extends Equatable {
-  const RegisterState();
-
-  @override
-  List<Object?> get props => [];
-}
-
-class RegisterInitial extends RegisterState {
-  const RegisterInitial();
-}
-
-/// State when registration is in progress
-class RegisterLoading extends RegisterState {
-  const RegisterLoading();
-}
-
-/// State when registration is successful
-class RegisterSuccess extends RegisterState {
-  final String userId;
-  final String? token;
-  final String message;
+class RegisterState extends Equatable {
+  final RegisterStatus status;
   final RegisterNextStep nextStep;
-
-  const RegisterSuccess({
-    required this.userId,
-    this.token,
-    this.message = 'Registration successful',
-    this.nextStep = RegisterNextStep.complete,
-  });
-
-  @override
-  List<Object?> get props => [userId, token, message, nextStep];
-}
-
-/// State when registration fails
-class RegisterFailure extends RegisterState {
-  final String error;
-  final int? statusCode;
+  final String? errorMessage;
   final Map<String, List<String>>? fieldErrors;
+  final String? userId;
+  final String? token;
+  final String? successMessage;
 
-  const RegisterFailure({
-    required this.error,
-    this.statusCode,
+  const RegisterState({
+    this.status = RegisterStatus.initial,
+    this.nextStep = RegisterNextStep.none,
+    this.errorMessage,
     this.fieldErrors,
+    this.userId,
+    this.token,
+    this.successMessage,
   });
+
+  RegisterState copyWith({
+    RegisterStatus? status,
+    RegisterNextStep? nextStep,
+    String? errorMessage,
+    Map<String, List<String>>? fieldErrors,
+    String? userId,
+    String? token,
+    String? successMessage,
+  }) {
+    return RegisterState(
+      status: status ?? this.status,
+      nextStep: nextStep ?? this.nextStep,
+      errorMessage: errorMessage,
+      fieldErrors: fieldErrors,
+      userId: userId ?? this.userId,
+      token: token ?? this.token,
+      successMessage: successMessage,
+    );
+  }
 
   @override
   List<Object?> get props => [
-        statusCode,
+        status,
+        nextStep,
         fieldErrors,
+        userId,
+        token,
       ];
 }

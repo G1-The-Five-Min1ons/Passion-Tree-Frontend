@@ -16,6 +16,10 @@ import 'package:passion_tree_frontend/features/authentication/domain/usecases/ve
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_profile_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/select_role_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_user_role_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/forgot_password_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/mark_role_selected_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/save_user_role_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/reset_password_usecase.dart';
 
 final getIt = GetIt.instance;
 
@@ -61,6 +65,18 @@ Future<void> initializeDependencies() async {
   );
   getIt.registerFactory<GetUserRoleUseCase>(
     () => GetUserRoleUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<ForgotPasswordUseCase>(
+    () => ForgotPasswordUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<MarkRoleSelectedUseCase>(
+    () => MarkRoleSelectedUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<SaveUserRoleUseCase>(
+    () => SaveUserRoleUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<ResetPasswordUseCase>(
+    () => ResetPasswordUseCase(getIt<IAuthRepository>()),
   );
 
   // Upload Service

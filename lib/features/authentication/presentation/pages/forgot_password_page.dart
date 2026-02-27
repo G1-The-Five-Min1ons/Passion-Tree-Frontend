@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/reset_password_page.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/forgot_password_bloc.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/forgot_password_event.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/forgot_password_state.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/forgot_password_usecase.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -19,8 +23,6 @@ class ForgotPasswordPage extends StatefulWidget {
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _emailController = TextEditingController();
-  String? _emailError;
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -28,57 +30,42 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     super.dispose();
   }
 
-  String? _validateEmail(String value) {
-    if (value.isEmpty) {
-      return 'Email is required';
-    }
-    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-      return 'Please enter a valid email address';
-    }
-    return null;
-  }
-
-  Future<void> _handleSubmit() async {
-    final email = _emailController.text.trim();
-    final error = _validateEmail(email);
-    setState(() => _emailError = error);
-
-    if (error != null) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      final authRepo = getIt<IAuthRepository>();
-      await authRepo.forgotPassword(email);
-
-      if (!mounted) return;
-
-      LogHandler.success('Password reset email sent');
-
-      // Navigate to reset password page
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => ResetPasswordPage(email: email),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      LogHandler.error('Forgot password failed', error: e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => ForgotPasswordBloc(
+        forgotPasswordUseCase: getIt<ForgotPasswordUseCase>(),
+      ),
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<ForgotPasswordBloc, ForgotPasswordState>(
+            listenWhen: (previous, current) => previous.status != current.status,
+            listener: (context, state) {
+              if (state.status == ForgotPasswordStatus.success) {
+                LogHandler.success('Password reset email sent');
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ResetPasswordPage(email: state.email),
+                  ),
+                );
+              } else if (state.status == ForgotPasswordStatus.failure) {
+                LogHandler.error('Forgot password failed', error: state.errorMessage);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.errorMessage ?? 'An error occurred'),
+                    backgroundColor: AppColors.cancel,
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+        child: _buildBody(),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -101,6 +88,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         'assets/icons/tree_icon.png',
                         width: 80,
                         height: 80,
+                        cacheWidth: 240,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             width: 80,
@@ -133,39 +121,50 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     const SizedBox(height: 32),
 
                     // Email field
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        PixelTextField(
-                          label: 'Email',
-                          hintText: 'Enter your email',
-                          controller: _emailController,
-                          height: 38,
-                          onChanged: (value) {
-                            setState(() {
-                              _emailError = _validateEmail(value.trim());
-                            });
-                          },
-                        ),
-                        if (_emailError != null)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 12, top: 4),
-                            child: Text(
-                              _emailError!,
-                              style: AppTypography.bodyRegular.copyWith(
-                                color: AppColors.cancel,
-                              ),
+                    BlocBuilder<ForgotPasswordBloc, ForgotPasswordState>(
+                      builder: (context, state) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PixelTextField(
+                              label: 'Email',
+                              hintText: 'Enter your email',
+                              controller: _emailController,
+                              height: 38,
+                              onChanged: (value) {
+                                context.read<ForgotPasswordBloc>().add(EmailChanged(value));
+                              },
                             ),
-                          ),
-                      ],
+                            if (state.emailError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 12, top: 4),
+                                child: Text(
+                                  state.emailError!,
+                                  style: AppTypography.bodyRegular.copyWith(
+                                    color: AppColors.cancel,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
 
                     // Submit button
-                    AppButton(
-                      variant: AppButtonVariant.text,
-                      text: _isLoading ? 'Sending...' : 'Send Reset Code',
-                      onPressed: _isLoading ? () {} : _handleSubmit,
+                    BlocBuilder<ForgotPasswordBloc, ForgotPasswordState>(
+                      builder: (context, state) {
+                        final isLoading = state.status == ForgotPasswordStatus.loading;
+                        return AppButton(
+                          variant: AppButtonVariant.text,
+                          text: isLoading ? 'Sending...' : 'Send Reset Code',
+                          onPressed: isLoading
+                              ? () {}
+                              : () {
+                                  context.read<ForgotPasswordBloc>().add(const SubmitForgotPassword());
+                                },
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
 
