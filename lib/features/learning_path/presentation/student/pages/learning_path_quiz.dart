@@ -15,17 +15,24 @@ import 'package:passion_tree_frontend/features/learning_path/data/repositories/l
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
 
 enum QuizViewState { loading, answering, result, error }
 
 class LearningPathQuizPage extends StatefulWidget {
   final String nodeId;
   final String? title;
+  final String? pathName;
+  final int? totalNodes;
+  final int? currentNodeSequence;
 
   const LearningPathQuizPage({
     super.key,
     required this.nodeId,
     this.title,
+    this.pathName,
+    this.totalNodes,
+    this.currentNodeSequence,
   });
 
   @override
@@ -264,29 +271,78 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
       ),
     );
     
-    // Show congratulation popup
-    showDialog(
-      context: context,
-      builder: (_) => CompletionPopup(
-        onYes: () {
-          Navigator.pop(context); // Close congrat popup
-          // Show rating popup
-          showDialog(
-            context: context,
-            builder: (_) => RatingPopup(
-              pathName: widget.title ?? 'Quiz',
-              onSubmit: () {
-                Navigator.pop(context); // Close rating popup
-                Navigator.pop(context); // Back to previous page
-              },
-            ),
-          );
-        },
-        onNo: () {
-          Navigator.pop(context); // Close congrat popup
-          Navigator.pop(context); // Back to previous page
-        },
-      ),
-    );
+    // Check if this is the last node (sequence starts from 0)
+    debugPrint('[QUIZ] Checking if last node:');
+    debugPrint('[QUIZ] currentNodeSequence: ${widget.currentNodeSequence}');
+    debugPrint('[QUIZ] totalNodes: ${widget.totalNodes}');
+    
+    final isLastNode = widget.totalNodes != null && 
+                       widget.currentNodeSequence != null && 
+                       widget.currentNodeSequence == widget.totalNodes! - 1;
+    
+    debugPrint('[QUIZ] isLastNode: $isLastNode');
+    
+    // Only show popups if this is the last node
+    if (isLastNode && widget.pathName != null) {
+      // Store references to avoid context issues
+      final scaffoldContext = context;
+      final bloc = context.read<LearningPathBloc>();
+      
+      // Show congratulation popup
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => CompletionPopup(
+          onYes: () {
+            Navigator.of(scaffoldContext).pop(); // Close congrat popup
+            
+            // Show rating popup
+            debugPrint('[QUIZ] Showing rating popup for path: ${widget.pathName}');
+            showDialog(
+              context: scaffoldContext,
+              barrierDismissible: false,
+              builder: (dialogContext) => RatingPopup(
+                pathName: widget.pathName!,
+                onSubmit: () {
+                  debugPrint('[QUIZ] Rating submitted, navigating to status page');
+                  Navigator.of(dialogContext).pop(); // Close rating popup
+                  
+                  // Navigate to Learning Path Status page (will fetch data in initState)
+                  Navigator.of(scaffoldContext).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: bloc,
+                        child: const LearningPathStatusPage(),
+                      ),
+                    ),
+                    (route) => route.isFirst,
+                  );
+                },
+              ),
+            );
+          },
+          onNo: () {
+            debugPrint('[QUIZ] Skipping rating, going to status page');
+            Navigator.of(scaffoldContext).pop(); // Close congrat popup
+            
+            // Navigate to Learning Path Status page (will fetch data in initState)
+            Navigator.of(scaffoldContext).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (_) => BlocProvider.value(
+                  value: bloc,
+                  child: const LearningPathStatusPage(),
+                ),
+              ),
+              (route) => route.isFirst,
+            );
+          },
+        ),
+      );
+    } else {
+      // Not the last node, go back to nodes overview
+      debugPrint('[QUIZ] Not last node, going back to nodes overview');
+      Navigator.pop(context); // Pop quiz page
+      Navigator.pop(context); // Pop learning node page -> back to nodes overview
+    }
   }
 }

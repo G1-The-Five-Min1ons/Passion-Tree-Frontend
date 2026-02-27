@@ -11,6 +11,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 
 class LearningCoursePage extends StatefulWidget {
   final LearningPath course;
@@ -26,6 +27,8 @@ class LearningCoursePage extends StatefulWidget {
 }
 
 class _LearningCoursePageState extends State<LearningCoursePage> {
+  List<NodeDetail>? _cachedNodes;
+
   @override
   void initState() {
     super.initState();
@@ -47,9 +50,13 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            final nodes = state is NodesLoaded && state.pathId == widget.course.id
-                ? state.nodes
-                : null;
+            // Update cached nodes when NodesLoaded state is received
+            if (state is NodesLoaded && state.pathId == widget.course.id) {
+              _cachedNodes = state.nodes;
+            }
+            
+            // Use cached nodes to prevent loading spinner when returning from node detail page
+            final nodes = _cachedNodes;
 
             return SingleChildScrollView(
               child: Padding(

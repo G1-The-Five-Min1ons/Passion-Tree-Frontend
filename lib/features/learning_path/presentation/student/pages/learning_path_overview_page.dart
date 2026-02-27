@@ -159,13 +159,14 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                 return true;
               }).toList();
               
-              // Filter out enrolled paths from recommended section
+              // Filter out enrolled paths from recommended section and all paths
               final enrolledPathIds = filteredEnrolled.map((e) => e.pathId).toSet();
               final filteredRecommended = filteredAll
                   .where((path) => !enrolledPathIds.contains(path.id))
                   .toList();
               
-              final shownAllCourses = filteredAll.take(_allListShownCount).toList();
+              // Use filtered courses (without enrolled) for "All Learning Paths" section
+              final shownAllCourses = filteredRecommended.take(_allListShownCount).toList();
 
               // Check if user has enrolled paths (logged in)
               final hasEnrolledPaths = overviewData.enrolledPaths.isNotEmpty;
@@ -313,7 +314,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                         const SizedBox(height: 40),
                         SizedBox(
                           height: BaseCourseCard.defaultHeight,
-                          child: filteredAll.isEmpty
+                          child: filteredRecommended.isEmpty
                               ? Center(
                                   child: Text(
                                     'No popular paths found',
@@ -325,10 +326,10 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                               : ListView.separated(
                                   scrollDirection: Axis.horizontal,
                                   padding: const EdgeInsets.symmetric(horizontal: 0),
-                                  itemCount: filteredAll.length,
+                                  itemCount: filteredRecommended.length,
                                   separatorBuilder: (_, __) => const SizedBox(width: 12),
                                   itemBuilder: (context, index) {
-                                    return PixelCourseCard(course: filteredAll[index]);
+                                    return PixelCourseCard(course: filteredRecommended[index]);
                                   },
                                 ),
                         ),
@@ -372,33 +373,34 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           },
                         ),
 
-                      const SizedBox(height: 40),
-
                       // ===== MORE BUTTON =====
-                      Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'More',
-                              style: AppPixelTypography.smallTitle.copyWith(
-                                color: colors.onPrimary,
+                      if (_allListShownCount < filteredRecommended.length) ...[
+                        const SizedBox(height: 40),
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'More',
+                                style: AppPixelTypography.smallTitle.copyWith(
+                                  color: colors.onPrimary,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 5),
-                            NavigationButton(
-                              direction: NavigationDirection.down,
-                              onPressed: () {
-                                setState(() {
-                                  _allListShownCount += 4;
-                                });
-                              },
-                            ),
-                          ],
+                              const SizedBox(height: 5),
+                              NavigationButton(
+                                direction: NavigationDirection.down,
+                                onPressed: () {
+                                  setState(() {
+                                    _allListShownCount += 4;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-
-                      const SizedBox(height: 40),
+                        const SizedBox(height: 40),
+                      ] else
+                        const SizedBox(height: 40),
                     ],
                   ),
                 ),
