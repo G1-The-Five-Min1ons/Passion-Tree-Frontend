@@ -4,7 +4,6 @@ import 'package:passion_tree_frontend/core/common_widgets/node/node_item.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/tree_canvas.dart';
 
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/node_asset.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/mocks/learning_nodes_mock.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 
 class NodesOverviewCore extends StatelessWidget {
@@ -21,17 +20,8 @@ class NodesOverviewCore extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use provided nodes or fallback to mock data
-    final displayNodes = nodes ?? mockLearningNodes.map((mockNode) => NodeDetail(
-      nodeId: 'mock-${mockNode.title}',
-      title: mockNode.title,
-      description: '',
-      sequence: mockLearningNodes.indexOf(mockNode),
-      pathId: '',
-      materials: const [],
-      status: 'locked',
-      complete: 'false',
-    )).toList();
+    // Use provided nodes from backend
+    final displayNodes = nodes ?? [];
     
     final nodeCount = displayNodes.length;
     final canvasHeight = (nodeCount * 200.0) + 200.0;
