@@ -11,8 +11,6 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/page
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/tree_information_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/heart_status.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/recommend_popup.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/retrieve_popup.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/tree_status_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_album.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
@@ -21,13 +19,11 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc
 
 class AlbumDetailPage extends StatefulWidget {
   final String albumId;
-  final String userId;
   final VoidCallback onBack;
 
   const AlbumDetailPage({
     super.key, 
     required this.albumId,
-    required this.userId,
     required this.onBack, 
   });
 
@@ -113,17 +109,21 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
               AppButton(
                 variant: AppButtonVariant.iconOnly,
                 icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
-                onPressed: () {
+                onPressed: () async {
                   final albumBloc = BlocProvider.of<AlbumBloc>(context);
-                  Navigator.push(
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => BlocProvider.value(
                         value: albumBloc,
-                        child: AddReflectPage(userId: widget.userId),
+                        child: const AddReflectPage(),
                       ),
                     ),
                   );
+                  // Reload album data when returning from AddReflectPage
+                  if (mounted) {
+                    context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
+                  }
                 },
               ),
             ],

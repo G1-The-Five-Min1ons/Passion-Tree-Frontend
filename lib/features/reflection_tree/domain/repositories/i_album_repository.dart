@@ -7,7 +7,7 @@ abstract class IAlbumRepository {
   /// Create a new album
   Future<Either<Failure, Album>> createAlbum({
     required String userId,
-    required String albumName,
+    required String title,
     File? coverImage,
   });
 
@@ -20,7 +20,7 @@ abstract class IAlbumRepository {
   /// Update album
   Future<Either<Failure, void>> updateAlbum({
     required String albumId,
-    required String albumName,
+    required String title,
     File? coverImage,
   });
 

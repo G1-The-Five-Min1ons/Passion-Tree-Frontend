@@ -14,13 +14,11 @@ import 'dart:io';
 class CreatePopUp extends StatefulWidget {
   final String title;
   final String hint;
-  final String userId;
 
   const CreatePopUp({
     super.key,
     required this.title,
     required this.hint,
-    required this.userId,
   });
 
   @override
@@ -28,7 +26,6 @@ class CreatePopUp extends StatefulWidget {
 
   static Future<bool?> show(
     BuildContext context, {
-    required String userId,
     String title = 'Create Album',
     String hint = 'Album Name',
   }) {
@@ -40,7 +37,6 @@ class CreatePopUp extends StatefulWidget {
         child: CreatePopUp(
           title: title,
           hint: hint,
-          userId: userId,
         ),
       ),
     );
@@ -102,8 +98,7 @@ class _CreatePopUpState extends State<CreatePopUp> {
 
     context.read<AlbumBloc>().add(
       CreateAlbumEvent(
-        userId: widget.userId,
-        albumName: albumName,
+        title: albumName,
         coverImage: _selectedImage,
       ),
     );

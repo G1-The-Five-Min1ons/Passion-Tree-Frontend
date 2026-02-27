@@ -70,7 +70,7 @@ class AlbumRepository implements IAlbumRepository {
   @override
   Future<Either<Failure, Album>> createAlbum({
     required String userId,
-    required String albumName,
+    required String title,
     File? coverImage,
   }) async {
     try {
@@ -101,7 +101,7 @@ class AlbumRepository implements IAlbumRepository {
           // Proceed with album creation
           final request = CreateAlbumRequest(
             userId: userId,
-            albumName: albumName,
+            albumName: title,
             coverImageUrl: coverImageUrl,
           );
           final apiModel = await dataSource.createAlbum(request, token);
@@ -166,7 +166,7 @@ class AlbumRepository implements IAlbumRepository {
   @override
   Future<Either<Failure, void>> updateAlbum({
     required String albumId,
-    required String albumName,
+    required String title,
     File? coverImage,
   }) async {
     try {
@@ -195,7 +195,7 @@ class AlbumRepository implements IAlbumRepository {
           }
           
           final request = UpdateAlbumRequest(
-            albumName: albumName,
+            albumName: title,
             coverImageUrl: coverImageUrl,
           );
           await dataSource.updateAlbum(albumId, request, token);

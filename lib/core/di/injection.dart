@@ -99,7 +99,10 @@ Future<void> initializeDependencies() async {
   );
 
   getIt.registerFactory<GetAlbumsByUserIdUseCase>(
-    () => GetAlbumsByUserIdUseCase(getIt<IAlbumRepository>()),
+    () => GetAlbumsByUserIdUseCase(
+      getIt<IAlbumRepository>(),
+      getIt<AuthLocalDataSource>(),
+    ),
   );
 
   getIt.registerFactory<GetAlbumByIdUseCase>(
@@ -107,7 +110,10 @@ Future<void> initializeDependencies() async {
   );
 
   getIt.registerFactory<CreateAlbumUseCase>(
-    () => CreateAlbumUseCase(getIt<IAlbumRepository>()),
+    () => CreateAlbumUseCase(
+      getIt<IAlbumRepository>(),
+      getIt<AuthLocalDataSource>(),
+    ),
   );
 
   getIt.registerFactory<UpdateAlbumUseCase>(

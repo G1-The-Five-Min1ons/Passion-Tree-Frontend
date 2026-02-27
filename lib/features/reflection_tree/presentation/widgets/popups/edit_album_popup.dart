@@ -13,7 +13,6 @@ import 'dart:io';
 class EditAlbumPopup extends StatefulWidget {
   final String title;
   final String albumId;
-  final String userId;
   final String initialValue;
   final String? imageUrl;
 
@@ -21,7 +20,6 @@ class EditAlbumPopup extends StatefulWidget {
     super.key,
     required this.title,
     required this.albumId,
-    required this.userId,
     required this.initialValue,
     this.imageUrl,
   });
@@ -33,7 +31,6 @@ class EditAlbumPopup extends StatefulWidget {
     BuildContext context, {
     String title = 'Edit Album',
     required String albumId,
-    required String userId,
     required String initialValue,
     String? imageUrl,
   }) {
@@ -45,7 +42,6 @@ class EditAlbumPopup extends StatefulWidget {
         child: EditAlbumPopup(
           title: title,
           albumId: albumId,
-          userId: userId,
           initialValue: initialValue,
           imageUrl: imageUrl,
         ),
@@ -225,8 +221,7 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
                           context.read<AlbumBloc>().add(
                             UpdateAlbumEvent(
                               albumId: widget.albumId,
-                              userId: widget.userId,
-                              albumName: albumName,
+                              title: albumName,
                               coverImage: _selectedImage,
                               existingImageUrl: widget.imageUrl,
                             ),

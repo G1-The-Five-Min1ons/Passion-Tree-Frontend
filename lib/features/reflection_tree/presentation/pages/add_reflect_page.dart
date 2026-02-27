@@ -13,11 +13,9 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
 
 class AddReflectPage extends StatefulWidget{
-  final String userId;
   
   const AddReflectPage({
     super.key,
-    required this.userId,
   });
 
   @override
@@ -43,7 +41,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
   void initState() {
     super.initState();
     //Load user's albums
-    context.read<AlbumBloc>().add(LoadAlbumsEvent(widget.userId));
+    context.read<AlbumBloc>().add(const LoadAlbumsEvent());
   }
 
   @override
@@ -127,7 +125,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
                       variant: AppButtonVariant.text,
                       text: 'Add',
                       onPressed: () {
-                        CreatePopUp.show(context, userId: widget.userId);
+                        CreatePopUp.show(context);
                       },
                     ),
                   ],

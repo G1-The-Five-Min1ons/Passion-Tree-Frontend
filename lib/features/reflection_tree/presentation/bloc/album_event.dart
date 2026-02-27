@@ -10,62 +10,49 @@ abstract class AlbumEvent extends Equatable {
 
 /// Event to load albums for a specific user
 class LoadAlbumsEvent extends AlbumEvent {
-  final String userId;
-
-  const LoadAlbumsEvent(this.userId);
-
-  @override
-  List<Object?> get props => [userId];
+  const LoadAlbumsEvent();
 }
 
 /// Event to create a new album
 class CreateAlbumEvent extends AlbumEvent {
-  final String userId;
-  final String albumName;
+  final String title;
   final File? coverImage;
 
   const CreateAlbumEvent({
-    required this.userId,
-    required this.albumName,
+    required this.title,
     this.coverImage,
   });
 
   @override
-  List<Object?> get props => [userId, albumName, coverImage?.path];
+  List<Object?> get props => [title, coverImage?.path];
 }
 
 /// Event to update an existing album
 class UpdateAlbumEvent extends AlbumEvent {
   final String albumId;
-  final String userId;
-  final String albumName;
+  final String title;
   final File? coverImage;
   final String? existingImageUrl;
 
   const UpdateAlbumEvent({
     required this.albumId,
-    required this.userId,
-    required this.albumName,
+    required this.title,
     this.coverImage,
     this.existingImageUrl,
   });
 
   @override
-  List<Object?> get props => [albumId, userId, albumName, coverImage?.path, existingImageUrl];
+  List<Object?> get props => [albumId, title, coverImage?.path, existingImageUrl];
 }
 
 /// Event to delete an album
 class DeleteAlbumEvent extends AlbumEvent {
   final String albumId;
-  final String userId;
 
-  const DeleteAlbumEvent({
-    required this.albumId,
-    required this.userId,
-  });
+  const DeleteAlbumEvent(this.albumId);
 
   @override
-  List<Object?> get props => [albumId, userId];
+  List<Object?> get props => [albumId];
 }
 
 /// Event to load a specific album by ID
@@ -80,10 +67,10 @@ class LoadAlbumByIdEvent extends AlbumEvent {
 
 /// Event to refresh albums
 class RefreshAlbumsEvent extends AlbumEvent {
-  final String userId;
+  const RefreshAlbumsEvent();
+}
 
-  const RefreshAlbumsEvent(this.userId);
-
-  @override
-  List<Object?> get props => [userId];
+/// Event to clear error state
+class ClearAlbumErrorEvent extends AlbumEvent {
+  const ClearAlbumErrorEvent();
 }

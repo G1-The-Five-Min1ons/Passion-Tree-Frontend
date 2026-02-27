@@ -43,7 +43,7 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
     if (!mounted) return;
     setState(() => userId = storedUserId);
     LogHandler.info('Loading albums for user: $userId');
-    context.read<AlbumBloc>().add(LoadAlbumsEvent(userId));
+    context.read<AlbumBloc>().add(const LoadAlbumsEvent());
   }
 
   @override
@@ -84,10 +84,7 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
                         title: "Albums",
                         actionIcon: Symbols.add_rounded,
                         onActionPressed: () {
-                          CreatePopUp.show(
-                            context,
-                            userId: userId,
-                          );
+                          CreatePopUp.show(context);
                         },
                       ),
                       const SizedBox(height: 20),
@@ -223,16 +220,15 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
             final album = albums[index];
 
             return GestureDetector(
-              onTap: () {
+              onTap: () async {
                 final albumBloc = BlocProvider.of<AlbumBloc>(context);
-                Navigator.push(
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => BlocProvider.value(
                       value: albumBloc,
                       child: AlbumDetailPage(
                         albumId: album.albumId,
-                        userId: userId,
                         onBack: () {
                           Navigator.pop(context);
                         },
@@ -240,10 +236,13 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
                     ),
                   ),
                 );
+                // Reload albums when returning from detail page
+                if (mounted) {
+                  context.read<AlbumBloc>().add(const LoadAlbumsEvent());
+                }
               },
               child: PixelAlbumCover(
                 albumId: album.albumId,
-                userId: userId,
                 size: 150,
                 title: album.title,
                 subtitle: album.subtitle,

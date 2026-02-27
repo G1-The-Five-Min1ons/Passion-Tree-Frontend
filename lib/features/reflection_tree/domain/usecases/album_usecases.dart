@@ -3,21 +3,29 @@ import 'package:dartz/dartz.dart';
 import 'package:passion_tree_frontend/core/error/failures.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/repositories/i_album_repository.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
+import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 
 /// Use case for creating a new album
 class CreateAlbumUseCase {
   final IAlbumRepository repository;
+  final AuthLocalDataSource authLocalDataSource;
 
-  CreateAlbumUseCase(this.repository);
+  CreateAlbumUseCase(this.repository, this.authLocalDataSource);
 
   Future<Either<Failure, Album>> call({
-    required String userId,
-    required String albumName,
+    required String title,
     File? coverImage,
   }) async {
+    final userId = await authLocalDataSource.getUserId();
+    if (userId == null) {
+      return Left(AuthFailure.unauthorized(
+        message: 'User not authenticated',
+      ));
+    }
+    
     return await repository.createAlbum(
       userId: userId,
-      albumName: albumName,
+      title: title,
       coverImage: coverImage,
     );
   }
@@ -26,10 +34,18 @@ class CreateAlbumUseCase {
 /// Use case for getting albums by user ID
 class GetAlbumsByUserIdUseCase {
   final IAlbumRepository repository;
+  final AuthLocalDataSource authLocalDataSource;
 
-  GetAlbumsByUserIdUseCase(this.repository);
+  GetAlbumsByUserIdUseCase(this.repository, this.authLocalDataSource);
 
-  Future<Either<Failure, List<Album>>> call(String userId) async {
+  Future<Either<Failure, List<Album>>> call() async {
+    final userId = await authLocalDataSource.getUserId();
+    if (userId == null) {
+      return Left(AuthFailure.unauthorized(
+        message: 'User not authenticated',
+      ));
+    }
+    
     return await repository.getAlbumsByUserId(userId);
   }
 }
@@ -53,12 +69,12 @@ class UpdateAlbumUseCase {
 
   Future<Either<Failure, void>> call({
     required String albumId,
-    required String albumName,
+    required String title,
     File? coverImage,
   }) async {
     return await repository.updateAlbum(
       albumId: albumId,
-      albumName: albumName,
+      title: title,
       coverImage: coverImage,
     );
   }

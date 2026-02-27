@@ -25,6 +25,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     on<UpdateAlbumEvent>(_onUpdateAlbum);
     on<DeleteAlbumEvent>(_onDeleteAlbum);
     on<RefreshAlbumsEvent>(_onRefreshAlbums);
+    on<ClearAlbumErrorEvent>(_onClearAlbumError);
   }
 
   Future<void> _onLoadAlbums(
@@ -33,7 +34,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
   ) async {
     emit(AlbumLoading());
     
-    final result = await getAlbumsByUserId(event.userId);
+    final result = await getAlbumsByUserId();
     
     result.fold(
       (failure) {
@@ -85,8 +86,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
 
     // Create album (repository handles upload internally)
     final createResult = await createAlbum(
-      userId: event.userId,
-      albumName: event.albumName,
+      title: event.title,
       coverImage: event.coverImage,
     );
     
@@ -99,7 +99,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         LogHandler.success('Album created: ${album.albumId} — ${album.title}');
         
         // Reload albums with success message
-        final albumsResult = await getAlbumsByUserId(event.userId);
+        final albumsResult = await getAlbumsByUserId();
         albumsResult.fold(
           (failure) => emit(AlbumError(failure.message)),
           (albums) => emit(AlbumsLoaded(
@@ -130,7 +130,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     // Update album (repository handles upload internally)
     final updateResult = await updateAlbum(
       albumId: event.albumId,
-      albumName: event.albumName,
+      title: event.title,
       coverImage: event.coverImage,
     );
     
@@ -143,7 +143,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         LogHandler.success('Album updated: ${event.albumId}');
         
         // Reload albums with success message
-        final albumsResult = await getAlbumsByUserId(event.userId);
+        final albumsResult = await getAlbumsByUserId();
         albumsResult.fold(
           (failure) => emit(AlbumError(failure.message)),
           (albums) => emit(AlbumsLoaded(
@@ -179,7 +179,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         LogHandler.success('Album deleted: ${event.albumId}');
         
         // Reload albums with success message
-        final albumsResult = await getAlbumsByUserId(event.userId);
+        final albumsResult = await getAlbumsByUserId();
         albumsResult.fold(
           (failure) => emit(AlbumError(failure.message)),
           (albums) => emit(AlbumsLoaded(
@@ -195,7 +195,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     RefreshAlbumsEvent event,
     Emitter<AlbumState> emit,
   ) async {
-    final result = await getAlbumsByUserId(event.userId);
+    final result = await getAlbumsByUserId();
     
     result.fold(
       (failure) {
@@ -207,5 +207,13 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         emit(AlbumsLoaded(albums));
       },
     );
+  }
+
+  void _onClearAlbumError(
+    ClearAlbumErrorEvent event,
+    Emitter<AlbumState> emit,
+  ) {
+    LogHandler.info('Clearing album error state');
+    emit(AlbumInitial());
   }
 }
