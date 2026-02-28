@@ -7,6 +7,7 @@ class PixelBorderContainer extends StatelessWidget {
   final double pixelSize;
   final Color? borderColor;
   final Color? fillColor;
+  final Gradient? gradient; // optional gradient fill
   final EdgeInsetsGeometry padding;
 
   const PixelBorderContainer({
@@ -17,6 +18,7 @@ class PixelBorderContainer extends StatelessWidget {
     this.pixelSize = 3.0,
     this.borderColor,
     this.fillColor,
+    this.gradient,
     this.padding = const EdgeInsets.all(12), 
   });
 
@@ -36,7 +38,17 @@ class PixelBorderContainer extends StatelessWidget {
               ),
             ),
           ),
-          // ส่วนเนื้อหา
+          // gradient overlay inside pixel border shape
+          if (gradient != null)
+            Positioned.fill(
+              child: ClipPath(
+                clipper: _PixelBorderClipper(pixelSize),
+                child: Container(
+                  decoration: BoxDecoration(gradient: gradient),
+                ),
+              ),
+            ),
+          // content
           Padding(
             padding: padding,
             child: child,
@@ -46,6 +58,34 @@ class PixelBorderContainer extends StatelessWidget {
     );
   }
 }
+
+/// Clips a child to the same pixel-notch shape as _PixelBorderPainter
+/// so gradient overlays fit perfectly inside the border.
+class _PixelBorderClipper extends CustomClipper<Path> {
+  final double pixelSize;
+  _PixelBorderClipper(this.pixelSize);
+
+  @override
+  Path getClip(Size size) {
+    final p = pixelSize;
+    final w = size.width;
+    final h = size.height;
+    return Path()
+      ..moveTo(p * 3, p * 2)
+      ..lineTo(w - p * 3, p * 2)
+      ..lineTo(w - p * 2, p * 3)
+      ..lineTo(w - p * 2, h - p * 3)
+      ..lineTo(w - p * 3, h - p * 2)
+      ..lineTo(p * 3, h - p * 2)
+      ..lineTo(p * 2, h - p * 3)
+      ..lineTo(p * 2, p * 3)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
 
 class _PixelBorderPainter extends CustomPainter {
   final Color color;

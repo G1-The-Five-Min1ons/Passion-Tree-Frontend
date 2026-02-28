@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/selections/radio.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/student_quiz.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class QuizQuestionWidget extends StatelessWidget {
   final QuizQuestionStudent question;
@@ -15,7 +16,7 @@ class QuizQuestionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    // final colors = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),// ระยะห่างระหว่างคำถาม
@@ -27,7 +28,7 @@ class QuizQuestionWidget extends StatelessWidget {
             question.question,
             style: Theme.of(
               context,
-            ).textTheme.titleLarge?.copyWith(color: colors.onSurface),
+            ).textTheme.titleLarge?.copyWith(color: AppColors.textPrimary),
           ),
 
           const SizedBox(height: 18),// ระยะห่างระหว่างคำถามกับตัวเลือก
@@ -53,7 +54,7 @@ class QuizQuestionWidget extends StatelessWidget {
                             child: Text(
                               question.choices[cIndex],
                               style: AppTypography.subtitleSemiBold.copyWith(
-                              color: colors.onSurface,
+                              color: AppColors.textPrimary,
                               ),
                             ),
                           ),

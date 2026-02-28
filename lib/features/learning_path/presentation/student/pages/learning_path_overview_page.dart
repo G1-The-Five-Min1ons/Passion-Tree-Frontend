@@ -255,3 +255,4 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     );
   }
 }
+

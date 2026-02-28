@@ -7,6 +7,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/student_quiz.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_question.dart'; 
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_result.dart'; 
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/student_quiz_mock.dart';
 
 enum QuizViewState { answering, result }
@@ -67,7 +68,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                 PixelBorderContainer(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
-                  borderColor: colors.primary,
+                  borderColor: AppColors.cardBorder,
                   fillColor: colors.surface,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,7 +77,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                       Text(
                         'Quiz',
                         style: Theme.of(context).textTheme.displaySmall
-                            ?.copyWith(color: colors.primary),
+                            ?.copyWith(color: AppColors.title),
                       ),
 
                       const SizedBox(height: 24),
