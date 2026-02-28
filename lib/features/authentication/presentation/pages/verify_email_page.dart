@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/save_cancel.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/verify_email_bloc.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/verify_email_event.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/verify_email_state.dart';
@@ -15,11 +14,13 @@ import 'package:passion_tree_frontend/core/di/injection.dart';
 class VerifyEmailPage extends StatelessWidget {
   final Function()? onSuccess;
   final VoidCallback? onCancel;
+  final String verifyText;
 
   const VerifyEmailPage({
     super.key,
     this.onSuccess,
     this.onCancel,
+    this.verifyText = 'Verify',
   });
 
   @override
@@ -51,14 +52,16 @@ class VerifyEmailPage extends StatelessWidget {
             }
           }
         },
-        child: const _VerifyEmailDialog(),
+        child: _VerifyEmailDialog(verifyText: verifyText),
       ),
     );
   }
 }
 
 class _VerifyEmailDialog extends StatefulWidget {
-  const _VerifyEmailDialog();
+  final String verifyText;
+
+  const _VerifyEmailDialog({required this.verifyText});
 
   @override
   State<_VerifyEmailDialog> createState() => _VerifyEmailDialogState();
@@ -88,13 +91,13 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                 padding: const EdgeInsets.all(24),
                 child: BlocBuilder<VerifyEmailBloc, VerifyEmailState>(
                   builder: (context, state) {
-                    final isLoading = state.status == VerifyEmailStatus.loading;
+                    //final isLoading = state.status == VerifyEmailStatus.loading;
 
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Email Verification',
+                          'Email Verification test',
                           style: AppPixelTypography.h3.copyWith(
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
@@ -129,33 +132,16 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                             ),
                           ),
                         const SizedBox(height: 24),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: AppButton(
-                                variant: AppButtonVariant.text,
-                                text: 'Cancel',
-                                backgroundColor: AppColors.cancel,
-                                onPressed: isLoading
-                                    ? () {}
-                                    : () {
-                                        context.read<VerifyEmailBloc>().add(const CancelVerifyEmail());
-                                      },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: AppButton(
-                                variant: AppButtonVariant.text,
-                                text: isLoading ? 'Verifying...' : 'Verify',
-                                onPressed: isLoading
-                                    ? () {}
-                                    : () {
-                                        context.read<VerifyEmailBloc>().add(const SubmitVerifyEmail());
-                                      },
-                              ),
-                            ),
-                          ],
+                        SaveCancel(
+                          saveText: widget.verifyText,
+                          saveButtonColor: AppColors.submit,
+                          cancelText: 'Cancel',
+                          onCancel: () { 
+                            context.read<VerifyEmailBloc>().add(const CancelVerifyEmail());
+                          },
+                          onSave: () {
+                            context.read<VerifyEmailBloc>().add(const SubmitVerifyEmail());
+                          },
                         ),
                       ],
                     );

@@ -152,7 +152,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   /// Handle login button press
-  void _handleLogin() {
+  void _handleLogin(BuildContext context) {
     if (!_validateAllFields()) {
       LogHandler.warning('Login validation failed');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -407,7 +407,7 @@ class _LoginPageState extends State<LoginPage> {
                         AppButton(
                           variant: AppButtonVariant.text,
                           text: isLoading ? 'Signing in...' : 'Sign in',
-                          onPressed: isLoading ? () {} : _handleLogin,
+                          onPressed: isLoading ? () {} : () => _handleLogin(context),
                         ),
                         const SizedBox(height: 24),
 
