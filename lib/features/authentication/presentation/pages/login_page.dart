@@ -17,6 +17,9 @@ import 'package:passion_tree_frontend/features/authentication/presentation/pages
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_bloc.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_event.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_state.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_event.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -217,11 +220,24 @@ class _LoginPageState extends State<LoginPage> {
 
                 case LoginNextStep.complete:
                   if (context.mounted) {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => const HomeBarWidget(),
-                      ),
-                    );
+                    // Load user data into UserBloc before navigation
+                    try {
+                      final userId = await getIt<IAuthRepository>().getUserId();
+                      if (userId != null && context.mounted) {
+                        context.read<UserBloc>().add(LoadUser(userId));
+                      }
+                    } catch (e) {
+                      // Log error but continue navigation
+                      debugPrint('Failed to load user data: $e');
+                    }
+                    
+                    if (context.mounted) {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const HomeBarWidget(),
+                        ),
+                      );
+                    }
                   }
                   break;
               }

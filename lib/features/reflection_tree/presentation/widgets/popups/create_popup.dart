@@ -102,13 +102,23 @@ class _CreatePopUpState extends State<CreatePopUp> {
         coverImage: _selectedImage,
       ),
     );
-
-    Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AlbumBloc, AlbumState>(
+    return BlocConsumer<AlbumBloc, AlbumState>(
+      listener: (context, state) {
+        if (state is AlbumsLoaded) {
+          Navigator.pop(context, true);
+        } else if (state is AlbumError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.cancel,
+            ),
+          );
+        }
+      },
       builder: (context, state) {
         final isLoading = state is ImageUploading || state is AlbumOperationLoading;
 
@@ -147,6 +157,27 @@ class _CreatePopUpState extends State<CreatePopUp> {
                                 child: Image.file(
                                   _selectedImage!,
                                   fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.broken_image,
+                                            size: 48,
+                                            color: AppColors.cancel,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Failed to load image',
+                                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                              color: AppColors.cancel,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                             )

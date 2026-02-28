@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
@@ -8,6 +9,8 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_event.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -97,6 +100,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (confirmed == true) {
       LogHandler.separator(title: 'AUTH · LOGOUT');
+      
+      // Clear user data from UserBloc
+      if (mounted) {
+        context.read<UserBloc>().add(const ClearUser());
+      }
+      
       await getIt<IAuthRepository>().clearAuth();
       LogHandler.success('User logged out — tokens cleared');
 

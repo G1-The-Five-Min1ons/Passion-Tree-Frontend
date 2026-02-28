@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/save_cancel.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
@@ -53,11 +54,19 @@ class EditAlbumPopup extends StatefulWidget {
 class _EditAlbumPopupState extends State<EditAlbumPopup> {
   late TextEditingController _controller;
   File? _selectedImage;
+  String? _albumNameError;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  String? _validateAlbumName(String value) {
+    if (value.isEmpty) {
+      return 'Album name is required';
+    }
+    return null;
   }
 
   Future<void> _pickImage() async {
@@ -82,14 +91,49 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
     }
   }
 
+  void _saveChanges() {
+    final albumName = _controller.text.trim();
+    final error = _validateAlbumName(albumName);
+    
+    setState(() {
+      _albumNameError = error;
+    });
+    
+    if (error != null) {
+      return;
+    }
+
+    context.read<AlbumBloc>().add(
+      UpdateAlbumEvent(
+        albumId: widget.albumId,
+        title: albumName,
+        coverImage: _selectedImage,
+        existingImageUrl: widget.imageUrl,
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
+  
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AlbumBloc, AlbumState>(
+    return BlocConsumer<AlbumBloc, AlbumState>(
+      listener: (context, state) {
+        if (state is AlbumsLoaded) {
+          Navigator.pop(context, true);
+        } else if (state is AlbumError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.cancel,
+            ),
+          );
+        }
+      },
       builder: (context, state) {
         final isLoading = state is ImageUploading || state is AlbumOperationLoading;
 
@@ -127,6 +171,27 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
                                 width: double.infinity,
                                 height: 150,
                                 fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.broken_image,
+                                          size: 48,
+                                          color: AppColors.cancel,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Failed to load image',
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: AppColors.cancel,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                             )
                           : widget.imageUrl != null && widget.imageUrl!.isNotEmpty
@@ -196,9 +261,29 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
 
                 const SizedBox(height: 18),
 
-                PixelTextField(
-                  controller: _controller,
-                  height: 38,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    PixelTextField(
+                      controller: _controller,
+                      height: 38,
+                      onChanged: (value) {
+                        setState(() {
+                          _albumNameError = _validateAlbumName(value.trim());
+                        });
+                      },
+                    ),
+                    if (_albumNameError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12, top: 4),
+                        child: Text(
+                          _albumNameError!,
+                          style: AppTypography.bodyRegular.copyWith(
+                            color: AppColors.cancel,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
 
                 const SizedBox(height: 24),
@@ -209,26 +294,7 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
                         onCancel: () {
                           Navigator.pop(context, false);
                         },
-                        onSave: () {
-                          final albumName = _controller.text.trim();
-                          if (albumName.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Album name is required')),
-                            );
-                            return;
-                          }
-
-                          context.read<AlbumBloc>().add(
-                            UpdateAlbumEvent(
-                              albumId: widget.albumId,
-                              title: albumName,
-                              coverImage: _selectedImage,
-                              existingImageUrl: widget.imageUrl,
-                            ),
-                          );
-
-                          Navigator.pop(context, true);
-                        },
+                        onSave: _saveChanges,
                       ),
 
               ],

@@ -20,6 +20,7 @@ import 'package:passion_tree_frontend/features/authentication/domain/usecases/fo
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/mark_role_selected_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/save_user_role_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/reset_password_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -77,6 +78,11 @@ Future<void> initializeDependencies() async {
   );
   getIt.registerFactory<ResetPasswordUseCase>(
     () => ResetPasswordUseCase(getIt<IAuthRepository>()),
+  );
+
+  // Auth Blocs
+  getIt.registerFactory<UserBloc>(
+    () => UserBloc(authRepository: getIt<IAuthRepository>()),
   );
 
   // Upload Service
