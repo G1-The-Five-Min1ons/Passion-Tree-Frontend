@@ -13,8 +13,10 @@ class AppColors{
   static const Color status = Color(0xFF2AB930);
   static const Color cancel = Color(0xFFDA100B);
   static const Color warning = Color(0xFFFFCD29);
-  static const Color bar = Color(0XFF00327C);
-  static const Color iconbar = Color(0XFF8ABCFF);
+  static const Color bar          = Color(0XFF00327C);
+  static const Color appBarColor  = Colors.transparent; // AppBar
+  static const Color homeBarColor = Color(0XFF00327C); // BottomNav
+  static const Color iconbar      = Color(0XFF8ABCFF);
   static const Color title = Color(0xFF0088FF);
   static const Color cardBorder     = Color(0xFF1E4080);
   static const Color buttonBorder   = Color(0xFFFFFFFF);

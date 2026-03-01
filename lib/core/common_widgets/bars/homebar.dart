@@ -60,7 +60,7 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
           });
         },
         type: BottomNavigationBarType.fixed, 
-        backgroundColor: AppColors.bar,
+        backgroundColor: AppColors.homeBarColor,
         selectedItemColor:  Theme.of(context).colorScheme.onPrimary,
         unselectedItemColor: AppColors.iconbar,
 
