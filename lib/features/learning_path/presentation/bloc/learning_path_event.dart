@@ -30,6 +30,12 @@ class StartNodeEvent extends LearningPathEvent {
   StartNodeEvent({required this.nodeId, required this.userId});
 }
 
+class EnrollPathEvent extends LearningPathEvent {
+  final String pathId;
+  final String userId;
+  EnrollPathEvent({required this.pathId, required this.userId});
+}
+
 class CompleteNodeEvent extends LearningPathEvent {
   final String nodeId;
   final String userId;

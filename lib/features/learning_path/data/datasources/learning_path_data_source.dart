@@ -268,6 +268,44 @@ class LearningPathDataSource {
     }
   }
 
+  Future<void> enrollPath(String pathId, String userId) async {
+    try {
+      debugPrint('[DataSource] ========== ENROLLING IN PATH ==========');
+      debugPrint('[DataSource] API: POST /learningpaths/$pathId/start');
+      debugPrint('[DataSource] Path ID: $pathId');
+      debugPrint('[DataSource] User ID: $userId');
+      debugPrint('[DataSource] Request Body: ${jsonEncode({'user_id': userId})}');
+      
+      final response = await client.post(
+        Uri.parse('${ApiConfig.apiBaseUrl}/learningpaths/$pathId/start'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': userId}),
+      );
+
+      debugPrint('[DataSource] Response Status: ${response.statusCode}');
+      debugPrint('[DataSource] Response Body: ${response.body}');
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        debugPrint('[DataSource] Successfully enrolled in learning path: $pathId');
+        return;
+      } else {
+        try {
+          final error = jsonDecode(response.body);
+          debugPrint('[DataSource] Error Response: $error');
+          debugPrint('[DataSource] Error Message: ${error['message']}');
+          throw Exception(error['message'] ?? 'Failed to enroll in learning path');
+        } catch (e) {
+          debugPrint('[DataSource] Failed to parse error response: $e');
+          debugPrint('[DataSource] Raw response: ${response.body}');
+          throw Exception('Failed to enroll (Status ${response.statusCode}): ${response.body}');
+        }
+      }
+    } catch (e) {
+      debugPrint('[DataSource] Exception in enrollPath: $e');
+      rethrow;
+    }
+  }
+
   Future<void> deleteLearningPath(String pathId) async {
     try {
       debugPrint('[DataSource] Deleting learning path...');

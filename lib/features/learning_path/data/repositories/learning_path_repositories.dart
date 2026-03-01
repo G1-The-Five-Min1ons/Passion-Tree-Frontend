@@ -57,6 +57,11 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   }
 
   @override
+  Future<void> enrollPath(String pathId, String userId) async {
+    return await dataSource.enrollPath(pathId, userId);
+  }
+
+  @override
   Future<void> startNode(String nodeId, String userId) async {
     return await dataSource.startNode(nodeId, userId);
   }

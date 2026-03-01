@@ -6,6 +6,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/lea
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_status.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/nodes_for_path_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_detail_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enroll_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/start_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
@@ -16,6 +17,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GetLearningPathStatus getLearningPathStatus;
   final GetNodesForPath getNodesForPath;
   final GetNodeDetail getNodeDetail;
+  final EnrollPath enrollPath;
   final StartNode startNode;
   final CompleteNode completeNode;
   final DeleteLearningPath deleteLearningPath;
@@ -25,6 +27,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.getLearningPathStatus,
     this.getNodesForPath,
     this.getNodeDetail,
+    this.enrollPath,
     this.startNode,
     this.completeNode,
     this.deleteLearningPath,
@@ -152,6 +155,24 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(NodeDetailLoaded(nodeDetail));
       } catch (e) {
         debugPrint('[BLoC] Error starting node: $e');
+        emit(LearningPathError(e.toString()));
+      }
+    });
+
+    /// ENROLL PATH
+    
+    on<EnrollPathEvent>((event, emit) async {
+      debugPrint('[BLoC] EnrollPathEvent received');
+      debugPrint('Path ID: ${event.pathId}');
+      debugPrint('User ID: ${event.userId}');
+      
+      try {
+        debugPrint('Enrolling in path...');
+        await enrollPath(event.pathId, event.userId);
+        debugPrint('[BLoC] Successfully enrolled in path');
+        emit(PathEnrolled(pathId: event.pathId, userId: event.userId));
+      } catch (e) {
+        debugPrint('[BLoC] Error enrolling in path: $e');
         emit(LearningPathError(e.toString()));
       }
     });

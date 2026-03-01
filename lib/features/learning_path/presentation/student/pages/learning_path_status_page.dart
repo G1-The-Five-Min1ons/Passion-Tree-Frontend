@@ -26,6 +26,9 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
   int inProgressShown = 2;
   int completedShown = 2;
 
+  // Cache enrolled paths data
+  List<EnrolledLearningPath>? _cachedEnrolledPaths;
+
   @override
   void initState() {
     super.initState();
@@ -33,7 +36,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
     debugPrint('[UI] LearningPathStatusPage - initState');
     
     // TODO: Get userId from authentication service
-    const userId = 'a4bdfa58-e41e-4344-aa9e-d35f3dcd53c6'; // Hardcoded for testing
+    const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
     
     // Fetch learning path status data
     context.read<LearningPathBloc>().add(
@@ -73,17 +76,28 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
           builder: (context, state) {
             debugPrint('[UI] LearningPathStatusPage - BlocBuilder state: ${state.runtimeType}');
             
-             if (state is LearningPathLoading || state is LearningPathInitial) {
-              debugPrint('Showing loading indicator...');
+            // Cache data when loaded
+            if (state is LearningPathOverviewLoaded) {
+              _cachedEnrolledPaths = state.enrolledPaths;
+            } else if (state is LearningPathStatusLoaded) {
+              _cachedEnrolledPaths = state.paths;
+            }
+            
+            // Show loading only if no cached data
+            if ((state is LearningPathLoading || state is LearningPathInitial) && 
+                _cachedEnrolledPaths == null) {
+              debugPrint('Showing loading indicator (no cache)...');
               return const Center(child: CircularProgressIndicator());
             }
 
-            // Accept both states: from overview page or direct fetch
-            if (state is LearningPathOverviewLoaded || state is LearningPathStatusLoaded) {
-              final enrolledPaths = state is LearningPathOverviewLoaded 
-                  ? state.enrolledPaths 
-                  : (state as LearningPathStatusLoaded).paths;
-              debugPrint('Enrolled paths loaded: ${enrolledPaths.length}');
+            // Use cached data or data from state
+            final enrolledPaths = _cachedEnrolledPaths ??
+                (state is LearningPathOverviewLoaded 
+                    ? state.enrolledPaths 
+                    : (state is LearningPathStatusLoaded ? state.paths : null));
+
+            if (enrolledPaths != null) {
+              debugPrint('Enrolled paths available: ${enrolledPaths.length}');
               final filtered = _filterPaths(enrolledPaths);
 
               // คอร์สที่กำลังเรียนอยู่ (In Progress)
@@ -287,11 +301,12 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
               );
             }
 
-            if (state is LearningPathError) {
+            if (state is LearningPathError && _cachedEnrolledPaths == null) {
               return Center(child: Text(state.message));
             }
 
-            return const SizedBox();
+            // Default: show loading if no cached data available
+            return const Center(child: CircularProgressIndicator());
           },
         ),
       ),

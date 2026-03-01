@@ -6,6 +6,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/lea
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_status.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/nodes_for_path_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_detail_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enroll_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/start_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
@@ -25,6 +26,7 @@ class LearningPathBlocProvider extends StatelessWidget {
     final getLearningPathStatus = GetLearningPathStatus(repository);
     final getNodesForPath = GetNodesForPath(repository);
     final getNodeDetail = GetNodeDetail(repository);
+    final enrollPath = EnrollPath(repository);
     final startNode = StartNode(repository);
     final completeNode = CompleteNode(repository);
     final deleteLearningPath = DeleteLearningPath(repository);
@@ -35,6 +37,7 @@ class LearningPathBlocProvider extends StatelessWidget {
         getLearningPathStatus,
         getNodesForPath,
         getNodeDetail,
+        enrollPath,
         startNode,
         completeNode,
         deleteLearningPath,

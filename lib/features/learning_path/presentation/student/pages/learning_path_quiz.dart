@@ -261,7 +261,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
 
   void _finishQuiz() {
     // TODO: Get userId from authentication service
-    const userId = 'a4bdfa58-e41e-4344-aa9e-d35f3dcd53c6'; // Hardcoded for testing
+    const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
     
     // Mark node as completed
     context.read<LearningPathBloc>().add(
@@ -271,14 +271,14 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
       ),
     );
     
-    // Check if this is the last node (sequence starts from 0)
+    // Check if this is the last node (sequence starts from 1)
     debugPrint('[QUIZ] Checking if last node:');
     debugPrint('[QUIZ] currentNodeSequence: ${widget.currentNodeSequence}');
     debugPrint('[QUIZ] totalNodes: ${widget.totalNodes}');
     
     final isLastNode = widget.totalNodes != null && 
                        widget.currentNodeSequence != null && 
-                       widget.currentNodeSequence == widget.totalNodes! - 1;
+                       widget.currentNodeSequence == widget.totalNodes;
     
     debugPrint('[QUIZ] isLastNode: $isLastNode');
     

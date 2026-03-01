@@ -14,6 +14,7 @@ abstract class LearningPathRepository {
   Future<List<NodeDetail>> getNodesForPath(String pathId, String userId);
   Future<NodeDetail> getNodeDetail(String nodeId, String userId);
   Future<List<QuizQuestion>> getNodeQuestions(String nodeId);
+  Future<void> enrollPath(String pathId, String userId);
   Future<void> startNode(String nodeId, String userId);
   Future<void> completeNode(String nodeId, String userId);
   Future<void> deleteLearningPath(String pathId);

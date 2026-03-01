@@ -30,12 +30,23 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
   void initState() {
     super.initState();
     _cachedNodes = null; // Clear cache on each page load
-    debugPrint('[UI] StudentNodesOverviewPage - initState');
+    _fetchNodes();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // This will be called when we navigate back to this page
+    debugPrint('[UI] StudentNodesOverviewPage - didChangeDependencies');
+  }
+
+  void _fetchNodes() {
+    debugPrint('[UI] StudentNodesOverviewPage - _fetchNodes');
     debugPrint('Course ID: ${widget.course.id}');
     debugPrint('Course Title: ${widget.course.title}');
     
     // TODO: Get userId from authentication service
-    const userId = 'a4bdfa58-e41e-4344-aa9e-d35f3dcd53c6'; // Hardcoded for testing
+    const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
     
     debugPrint('User ID: $userId');
     
@@ -113,7 +124,11 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                               ),
                             ),
                           ),
-                        );
+                        ).then((_) {
+                          // Refetch nodes when returning from learning node page
+                          debugPrint('[UI] Returned from learning node page, refetching nodes...');
+                          _fetchNodes();
+                        });
                       }
                     },
                   ),

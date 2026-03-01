@@ -36,7 +36,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
   // === NEW: State for controlling number of shown cards ===
   int _allListShownCount = 4;
 
-  static const String? mockUserId = "a4bdfa58-e41e-4344-aa9e-d35f3dcd53c6"; // Set to null if not logged in
+  static const String? mockUserId = "a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc"; // Set to null if not logged in
 
   // Cache overview data
   LearningPathOverviewLoaded? _cachedOverview;
