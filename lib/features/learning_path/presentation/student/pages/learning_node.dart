@@ -101,6 +101,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
                         title: nodeDetail.title,
                         description: nodeDetail.description,
                         materials: nodeDetail.materials,
+                        status: nodeDetail.status,
                         onTakeQuiz: () {
                           Navigator.push(
                             context,

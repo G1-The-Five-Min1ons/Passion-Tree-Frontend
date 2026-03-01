@@ -10,6 +10,7 @@ class LearningNodeContent extends StatelessWidget {
   final String description;
   final List<lp.Material> materials;
   final VoidCallback onTakeQuiz;
+  final String status;
 
   const LearningNodeContent({
     super.key,
@@ -17,6 +18,7 @@ class LearningNodeContent extends StatelessWidget {
     required this.description,
     required this.materials,
     required this.onTakeQuiz,
+    required this.status,
   });
 
   @override
@@ -131,7 +133,23 @@ class LearningNodeContent extends StatelessWidget {
           child: AppButton(
             variant: AppButtonVariant.text,
             text: 'Take Quiz',
-            onPressed: onTakeQuiz,
+            onPressed: () {
+              // Check if node is active before allowing quiz
+              if (status.toLowerCase() == 'active') {
+                onTakeQuiz();
+              } else {
+                // Show snackbar warning if trying to skip nodes
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'Please complete previous nodes first',
+                    ),
+                    duration: const Duration(seconds: 3),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                );
+              }
+            },
           ),
         ),
       ],
