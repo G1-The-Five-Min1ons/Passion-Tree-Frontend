@@ -4,13 +4,15 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/material.dart' as lp;
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
-class LearningNodeContent extends StatelessWidget {
+class LearningNodeContent extends StatefulWidget {
   final String title;
   final String description;
   final List<lp.Material> materials;
   final VoidCallback onTakeQuiz;
   final String status;
+  final String? videoUrl;
 
   const LearningNodeContent({
     super.key,
@@ -19,7 +21,47 @@ class LearningNodeContent extends StatelessWidget {
     required this.materials,
     required this.onTakeQuiz,
     required this.status,
+    this.videoUrl,
   });
+
+  @override
+  State<LearningNodeContent> createState() => _LearningNodeContentState();
+}
+
+class _LearningNodeContentState extends State<LearningNodeContent> {
+  YoutubePlayerController? _controller;
+  String? _videoId;
+  bool _showPlayer = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Extract video ID from YouTube URL
+    // Use video URL from backend if available, otherwise use default
+    final videoUrl = widget.videoUrl ?? 'https://youtu.be/Yf4M3WZilRI?si=HU_zfUG1GzGMizNb';
+    _videoId = YoutubePlayer.convertUrlToId(videoUrl) ?? '';
+  }
+
+  void _initializePlayer() {
+    if (_videoId != null && _videoId!.isNotEmpty) {
+      _controller = YoutubePlayerController(
+        initialVideoId: _videoId!,
+        flags: const YoutubePlayerFlags(
+          autoPlay: true,
+          mute: false,
+        ),
+      );
+      setState(() {
+        _showPlayer = true;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +76,7 @@ class LearningNodeContent extends StatelessWidget {
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              title,
+              widget.title,
               style: Theme.of(
                 context,
               ).textTheme.displayLarge?.copyWith(color: colors.onPrimary),
@@ -47,10 +89,63 @@ class LearningNodeContent extends StatelessWidget {
         /// ===== VIDEO / COVER =====
         PixelBorderContainer(
           width: double.infinity,
-          height: 180,
+          height: 240,
           borderColor: colors.primary,
           fillColor: colors.surface,
-          child: const Center(child: Icon(Icons.play_circle_outline, size: 56)),
+          child: _showPlayer && _controller != null
+              ? YoutubePlayer(
+                  controller: _controller!,
+                  showVideoProgressIndicator: true,
+                  progressIndicatorColor: colors.primary,
+                )
+              : GestureDetector(
+                  onTap: _initializePlayer,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Thumbnail image from YouTube
+                      if (_videoId != null && _videoId!.isNotEmpty)
+                        Image.network(
+                          'https://img.youtube.com/vi/$_videoId/maxresdefault.jpg',
+                          width: double.infinity,
+                          height: 240,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback to lower quality thumbnail
+                            return Image.network(
+                              'https://img.youtube.com/vi/$_videoId/hqdefault.jpg',
+                              width: double.infinity,
+                              height: 240,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                // If both fail, show placeholder
+                                return Container(
+                                  color: colors.surface,
+                                  child: const Center(
+                                    child: Icon(Icons.videocam_off, size: 56),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      // Play button overlay
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.play_arrow,
+                          size: 48,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
         ),
 
         const SizedBox(height: 24),
@@ -72,7 +167,7 @@ class LearningNodeContent extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                description,
+                widget.description,
                 style: AppTypography.bodySemiBold.copyWith(
                   color: colors.onSurface,
                 ),
@@ -99,7 +194,7 @@ class LearningNodeContent extends StatelessWidget {
                 ).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
-              ...materials.map(
+              ...widget.materials.map(
                 (material) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
@@ -135,8 +230,8 @@ class LearningNodeContent extends StatelessWidget {
             text: 'Take Quiz',
             onPressed: () {
               // Check if node is active before allowing quiz
-              if (status.toLowerCase() == 'active') {
-                onTakeQuiz();
+              if (widget.status.toLowerCase() == 'active') {
+                widget.onTakeQuiz();
               } else {
                 // Show snackbar warning if trying to skip nodes
                 ScaffoldMessenger.of(context).showSnackBar(

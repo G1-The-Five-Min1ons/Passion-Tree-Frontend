@@ -9,6 +9,7 @@ class NodeDetailApiModel {
   final List<MaterialApiModel> materials;
   final String status;
   final String complete;
+  final String? linkVdo;
 
   const NodeDetailApiModel({
     required this.nodeId,
@@ -19,6 +20,7 @@ class NodeDetailApiModel {
     required this.materials,
     required this.status,
     required this.complete,
+    this.linkVdo,
   });
 
   factory NodeDetailApiModel.fromJson(Map<String, dynamic> json) {
@@ -34,6 +36,7 @@ class NodeDetailApiModel {
           [],
       status: json['status']?.toString() ?? 'locked',
       complete: (json['complete'] == null || json['complete'] == 'null') ? 'false' : json['complete'].toString(),
+      linkVdo: (json['link_vdo'] == null || json['link_vdo'] == 'null') ? null : json['link_vdo']?.toString(),
     );
   }
 
@@ -47,6 +50,7 @@ class NodeDetailApiModel {
       'materials': materials.map((m) => m.toJson()).toList(),
       'status': status,
       'complete': complete,
+      'link_vdo': linkVdo,
     };
   }
 }

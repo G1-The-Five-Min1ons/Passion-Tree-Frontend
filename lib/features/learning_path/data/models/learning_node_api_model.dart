@@ -6,6 +6,7 @@ class LearningNodeApiModel {
   final String pathId;
   final String status;
   final String complete;
+  final String? linkVdo;
 
   LearningNodeApiModel({
     required this.nodeId,
@@ -15,6 +16,7 @@ class LearningNodeApiModel {
     required this.pathId,
     required this.status,
     required this.complete,
+    this.linkVdo,
   });
 
   factory LearningNodeApiModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class LearningNodeApiModel {
       pathId: json['path_id'] ?? '',
       status: json['status'] ?? 'locked',
       complete: (json['complete'] == null || json['complete'] == 'null') ? 'false' : json['complete'].toString(),
+      linkVdo: (json['link_vdo'] == null || json['link_vdo'] == 'null') ? null : json['link_vdo']?.toString(),
     );
   }
 }

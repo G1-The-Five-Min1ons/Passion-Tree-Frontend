@@ -9,6 +9,7 @@ class NodeDetail {
   final List<Material> materials;
   final String status;
   final String complete;
+  final String? linkVdo;
 
   const NodeDetail({
     required this.nodeId,
@@ -19,5 +20,6 @@ class NodeDetail {
     required this.materials,
     required this.status,
     required this.complete,
+    this.linkVdo,
   });
 }

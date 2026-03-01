@@ -13,6 +13,7 @@ extension NodeDetailMapper on NodeDetailApiModel {
       materials: materials.map((m) => m.toEntity()).toList(),
       status: status,
       complete: complete,
+      linkVdo: linkVdo,
     );
   }
 }

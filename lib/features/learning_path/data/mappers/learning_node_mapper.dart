@@ -12,6 +12,7 @@ extension LearningNodeMapper on LearningNodeApiModel {
       materials: const [],
       status: status,
       complete: complete,
+      linkVdo: linkVdo,
     );
   }
 }
