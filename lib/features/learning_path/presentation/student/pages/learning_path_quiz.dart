@@ -263,14 +263,6 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
     // TODO: Get userId from authentication service
     const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
     
-    // Mark node as completed
-    context.read<LearningPathBloc>().add(
-      CompleteNodeEvent(
-        nodeId: widget.nodeId,
-        userId: userId,
-      ),
-    );
-    
     // Check if this is the last node (sequence starts from 1)
     debugPrint('[QUIZ] Checking if last node:');
     debugPrint('[QUIZ] currentNodeSequence: ${widget.currentNodeSequence}');
@@ -292,22 +284,35 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (_) => CompletionPopup(
+        builder: (congratsDialogContext) => CompletionPopup(
           onYes: () {
-            Navigator.of(scaffoldContext).pop(); // Close congrat popup
+            // Note: CompletionPopup already handles Navigator.pop internally
             
             // Show rating popup
             debugPrint('[QUIZ] Showing rating popup for path: ${widget.pathName}');
             showDialog(
               context: scaffoldContext,
               barrierDismissible: false,
-              builder: (dialogContext) => RatingPopup(
+              builder: (ratingDialogContext) => RatingPopup(
                 pathName: widget.pathName!,
-                onSubmit: () {
-                  debugPrint('[QUIZ] Rating submitted, navigating to status page');
-                  Navigator.of(dialogContext).pop(); // Close rating popup
+                onSubmit: () async {
+                  debugPrint('[QUIZ] Rating submitted, closing popup...');
+                  Navigator.of(ratingDialogContext).pop(); // Close rating popup first
                   
-                  // Navigate to Learning Path Status page (will fetch data in initState)
+                  // Mark node as completed
+                  debugPrint('[QUIZ] Completing node...');
+                  bloc.add(
+                    CompleteNodeEvent(
+                      nodeId: widget.nodeId,
+                      userId: userId,
+                    ),
+                  );
+                  
+                  // Wait for backend to process completion (1 second)
+                  await Future.delayed(const Duration(milliseconds: 1000));
+                  
+                  // Navigate to status page after completion
+                  debugPrint('[QUIZ] Navigating to status page...');
                   Navigator.of(scaffoldContext).pushAndRemoveUntil(
                     MaterialPageRoute(
                       builder: (_) => BlocProvider.value(
@@ -321,11 +326,23 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
               ),
             );
           },
-          onNo: () {
-            debugPrint('[QUIZ] Skipping rating, going to status page');
-            Navigator.of(scaffoldContext).pop(); // Close congrat popup
+          onNo: () async {
+            // Note: CompletionPopup already handles Navigator.pop internally
+            debugPrint('[QUIZ] Skipping rating, completing node...');
             
-            // Navigate to Learning Path Status page (will fetch data in initState)
+            // Mark node as completed
+            bloc.add(
+              CompleteNodeEvent(
+                nodeId: widget.nodeId,
+                userId: userId,
+              ),
+            );
+            
+            // Wait for backend to process completion (1 second)
+            await Future.delayed(const Duration(milliseconds: 1000));
+            
+            // Navigate to status page after completion
+            debugPrint('[QUIZ] Navigating to status page...');
             Navigator.of(scaffoldContext).pushAndRemoveUntil(
               MaterialPageRoute(
                 builder: (_) => BlocProvider.value(
@@ -339,8 +356,18 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
         ),
       );
     } else {
-      // Not the last node, go back to nodes overview
-      debugPrint('[QUIZ] Not last node, going back to nodes overview');
+      // Not the last node - complete node first, then go back
+      debugPrint('[QUIZ] Not last node, completing node...');
+      
+      // Mark node as completed
+      context.read<LearningPathBloc>().add(
+        CompleteNodeEvent(
+          nodeId: widget.nodeId,
+          userId: userId,
+        ),
+      );
+      
+      debugPrint('[QUIZ] Going back to nodes overview');
       Navigator.pop(context); // Pop quiz page
       Navigator.pop(context); // Pop learning node page -> back to nodes overview
     }

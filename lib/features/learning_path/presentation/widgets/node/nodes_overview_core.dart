@@ -26,10 +26,10 @@ class NodesOverviewCore extends StatelessWidget {
     final nodeCount = displayNodes.length;
     final canvasHeight = (nodeCount * 200.0) + 200.0;
     
-    // Find the latest active node (highest sequence number with active status and not completed)
+    // Find the latest active node (highest sequence number with active status)
     NodeDetail? latestActiveNode;
     for (final node in displayNodes) {
-      if (node.status.toLowerCase() == 'active' && node.complete.toLowerCase() != 'true') {
+      if (node.status.toLowerCase() == 'active') {
         if (latestActiveNode == null || node.sequence > latestActiveNode.sequence) {
           latestActiveNode = node;
         }
