@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 /// =======================================================
 /// Pixel Painter (private)
@@ -167,7 +168,7 @@ class BaseCourseCard extends StatelessWidget {
             child: IgnorePointer(
               child: CustomPaint(
                 painter: _PixelCoursePainter(
-                  color: borderColor ?? colors.primary,
+                  color: borderColor ?? AppColors.cardBorder,
                   pixelSize: pixelSize,
                   fillColor: Colors.transparent,
                 ),

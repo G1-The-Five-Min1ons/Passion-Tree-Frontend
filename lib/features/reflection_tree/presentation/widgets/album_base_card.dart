@@ -82,7 +82,7 @@ class PixelBaseCard extends StatelessWidget {
                             ],
                           ),
                           if (actionIcon != null)
-                              Positioned(top: -16, right: -14, child: actionIcon!),
+                              Positioned(top: -20, right: -14, child: actionIcon!),
                         ],
                       ),
                     ),

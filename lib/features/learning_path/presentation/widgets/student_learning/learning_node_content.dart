@@ -5,6 +5,7 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/material.dart' as lp;
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class LearningNodeContent extends StatefulWidget {
   final String title;
@@ -89,8 +90,8 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
         /// ===== VIDEO / COVER =====
         PixelBorderContainer(
           width: double.infinity,
-          height: 240,
-          borderColor: colors.primary,
+          height: 180,
+          borderColor: AppColors.cardBorder,
           fillColor: colors.surface,
           child: _showPlayer && _controller != null
               ? YoutubePlayer(
@@ -154,7 +155,7 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
         PixelBorderContainer(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
-          borderColor: colors.primary,
+          borderColor: AppColors.cardBorder,
           fillColor: colors.surface,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,7 +183,7 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
         PixelBorderContainer(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
-          borderColor: colors.primary,
+          borderColor: AppColors.cardBorder,
           fillColor: colors.surface,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

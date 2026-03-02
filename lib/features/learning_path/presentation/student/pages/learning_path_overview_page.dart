@@ -26,90 +26,22 @@ class LearningPathOverviewPage extends StatefulWidget {
 }
 
 class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
-  final TextEditingController _searchController = TextEditingController();
-
-  // Filter state
-  String? _selectedCategory;
-  RangeValues? _ratingRange;
-  int? _maxModules;
-
-  // === NEW: State for controlling number of shown cards ===
+  String _searchQuery = '';
   int _allListShownCount = 4;
 
-  static const String? mockUserId = "a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc"; // Set to null if not logged in
-
-  // Cache overview data
-  LearningPathOverviewLoaded? _cachedOverview;
-
-  @override
-  void initState() {
-    super.initState();
-    
-    debugPrint('[UI] LearningPathOverviewPage - initState');
-    debugPrint('Mock User ID: $mockUserId');
-    
-    // Fetch overview data from backend
-    context.read<LearningPathBloc>().add(
-      FetchLearningPathOverview(userId: mockUserId),
-    );
-    
-    _searchController.addListener(() {
-      setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
- 
-  List<LearningPath> _filterCourses(List<LearningPath> courses) {
-    return courses.where((c) {
-      final query = _searchController.text.trim().toLowerCase();
-
-      final matchesSearch =
-          query.isEmpty ||
-          c.title.toLowerCase().contains(query) ||
-          c.description.toLowerCase().contains(query) ||
-          c.instructor.toLowerCase().contains(query);
-
-      final matchesRating =
-          _ratingRange == null ||
-          (c.rating >= _ratingRange!.start && c.rating <= _ratingRange!.end);
-
-      final matchesModules = _maxModules == null || c.modules <= _maxModules!;
-
-      return matchesSearch && matchesRating && matchesModules;
-    }).toList();
-  }
-
-  List<EnrolledLearningPath> _filterEnrolledCourses(List<EnrolledLearningPath> courses) {
-    return courses.where((c) {
-      final query = _searchController.text.trim().toLowerCase();
-
-      final matchesSearch =
-          query.isEmpty ||
-          c.title.toLowerCase().contains(query) ||
-          c.description.toLowerCase().contains(query) ||
-          c.instructor.toLowerCase().contains(query);
-
-      final matchesRating =
-          _ratingRange == null ||
-          (c.rating >= _ratingRange!.start && c.rating <= _ratingRange!.end);
-
-      final matchesModules = _maxModules == null || c.modules <= _maxModules!;
-
-      return matchesSearch && matchesRating && matchesModules;
-    }).toList();
+  List<Course> _filterCourses(List<Course> courses) {
+    final q = _searchQuery.trim().toLowerCase();
+    if (q.isEmpty) return courses;
+    return courses.where((c) =>
+      c.title.toLowerCase().contains(q) ||
+      c.description.toLowerCase().contains(q) ||
+      c.instructor.toLowerCase().contains(q),
+    ).toList();
   }
 
   void _clearFilters() {
     setState(() {
-      _selectedCategory = null;
-      _ratingRange = null;
-      _maxModules = null;
-      // NEW: Reset shown count when filters are cleared
+      _searchQuery = '';
       _allListShownCount = 4;
     });
   }
@@ -119,7 +51,11 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBarWidget(title: 'Learning Paths', showBackButton: false),
+      appBar: AppBarWidget(
+        title: 'Learning Paths',
+        showBackButton: false,
+        onSearch: (q) => setState(() => _searchQuery = q),
+      ),
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
@@ -372,6 +308,46 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                             return PixelCourseCard(course: shownAllCourses[index]);
                           },
                         ),
+                ),
+
+                // Section → Section
+                const SizedBox(height: 24),
+
+                // ===== ALL TITLE =====
+                Text(
+                  'All Learning Paths',
+                  style: AppPixelTypography.title.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    fontSize: 22,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // ===== ALL LIST =====
+                if (shownAllCourses.isEmpty)
+                  Center(
+                    child: Text(
+                      'No learning paths found',
+                      style: AppTypography.subtitleSemiBold.copyWith(
+                        color: colors.onPrimary,
+                      ),
+                    ),
+                  )
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: shownAllCourses.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 35,
+                          crossAxisSpacing: 12,
+                          childAspectRatio:
+                              BaseCourseCard.defaultWidth /
+                              BaseCourseCard.defaultHeight,
+                        ),
 
                       // ===== MORE BUTTON =====
                       if (_allListShownCount < filteredRecommended.length) ...[
@@ -414,3 +390,4 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     );
   }
 }
+

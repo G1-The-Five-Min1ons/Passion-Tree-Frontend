@@ -1,92 +1,148 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
-import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/domain/album_model.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/add_reflect_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/tree_information_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/heart_status.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/recommend_popup.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/retrieve_popup.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/tree_status_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_album.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
 
 
-class AlbumDetailPage extends StatelessWidget{
-  final Album album;
+class AlbumDetailPage extends StatefulWidget {
+  final String albumId;
   final VoidCallback onBack;
 
   const AlbumDetailPage({
     super.key, 
-    required this.album, 
+    required this.albumId,
     required this.onBack, 
   });
 
   @override
+  State<AlbumDetailPage> createState() => _AlbumDetailPageState();
+}
+
+class _AlbumDetailPageState extends State<AlbumDetailPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Load album data when page opens
+    context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-       appBar: AppBarWidget(
+      appBar: AppBarWidget(
         title: 'Reflection Tree', 
         showBackButton: true,
-        onBackPressed: onBack, 
+        onBackPressed: widget.onBack, 
       ), 
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xmargin),
-        child: ListView(
-          padding: const EdgeInsets.only(top: AppSpacing.ymargin),
-          children: [
-            Text(
-              album.title,
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
-              ),
-              const SizedBox(height: 4),
+      body: BlocBuilder<AlbumBloc, AlbumState>(
+        builder: (context, state) {
+          if (state is AlbumLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        
-              Row(
+          if (state is AlbumError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const HeartStatus(),
-                  const Spacer(),
-                  AppButton(
-                  variant: AppButtonVariant.iconOnly,
-                  icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
-                  onPressed: (){
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddReflectPage(),
-                        ),
-                      );
-                  }),
-                ],
-              ),  
-              if (album.items != null && album.items!.isNotEmpty)
-              _buildItemGrid(context, album, album.items!)
-            else
-              _buildEmptyState(context),   
-
-              GestureDetector(
-                onTap: () {
-                  RecommendPopup.show(context);
-                },
-                child: Text(
-                  "recommend (mock ไว้ดู)",
-                  style: AppTypography.bodyRegular.copyWith(
-                    color: AppColors.warning,
+                  Text(
+                    'Error: ${state.message}',
+                    style: AppTypography.bodyRegular.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
-                ),
-              ),             
-          ],
-        ),
+                  const SizedBox(height: 16),
+                  AppButton(
+                    variant: AppButtonVariant.text,
+                    text: 'Retry',
+                    onPressed: () {
+                      context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
+                    },
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (state is AlbumDetailLoaded) {
+            final album = state.album;
+            return _buildAlbumContent(context, album);
+          }
+
+          return const SizedBox.shrink();
+        },
       ),
     );  
   }
-}
+
+  Widget _buildAlbumContent(BuildContext context, Album album) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xmargin),
+      child: ListView(
+        padding: const EdgeInsets.only(top: AppSpacing.ymargin),
+        children: [
+          Text(
+            album.title,
+            style: Theme.of(context).textTheme.displayMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+
+          Row(
+            children: [
+              const HeartStatus(),
+              const Spacer(),
+              AppButton(
+                variant: AppButtonVariant.iconOnly,
+                icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
+                onPressed: () async {
+                  final albumBloc = BlocProvider.of<AlbumBloc>(context);
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BlocProvider.value(
+                        value: albumBloc,
+                        child: const AddReflectPage(),
+                      ),
+                    ),
+                  );
+                  // Reload album data when returning from AddReflectPage
+                  if (mounted) {
+                    context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
+                  }
+                },
+              ),
+            ],
+          ),  
+
+          if (album.items != null && album.items!.isNotEmpty)
+            _buildItemGrid(context, album, album.items!)
+          else
+            _buildEmptyState(context),   
+
+          GestureDetector(
+            onTap: () {
+              RecommendPopup.show(context);
+            },
+          ),             
+        ],
+      ),
+    );
+  }
 
   Widget _buildItemGrid(BuildContext context,Album album, List<AlbumItem> items) {
     return GridView.builder(
@@ -121,14 +177,14 @@ class AlbumDetailPage extends StatelessWidget{
           },
 
           //TODO: ดึงจาก status จริง
-          onStatusTap: () {
+          /* onStatusTap: () {
             final status = item.status.toLowerCase().trim();
             if (status == 'died') {
             RetrievePopup.show(context); 
           } else if (['growing', 'fading', 'dying'].contains(status)) {
             TreeStatusPopup.show(context, status);
           }
-          },
+          }, */
         );
       }
     );
@@ -151,5 +207,4 @@ class AlbumDetailPage extends StatelessWidget{
       ),
     );
   }
-
- 
+}

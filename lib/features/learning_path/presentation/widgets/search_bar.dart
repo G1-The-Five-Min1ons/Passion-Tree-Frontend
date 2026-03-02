@@ -92,7 +92,7 @@ class LearningPathSearchBar extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final ScrollController scrollController = ScrollController();
 
-    final activeBorderColor = borderColor ?? colorScheme.primary;
+    final activeBorderColor = borderColor ?? colorScheme.surface;
     final activeTextColor = textColor ?? colorScheme.onSurface;
     final activeHintColor = hintColor ?? AppColors.textSecondary.withValues(alpha: 0.5);
 

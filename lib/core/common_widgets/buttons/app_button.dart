@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'dart:math';
 
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 
 class AppButton extends StatefulWidget {
@@ -24,7 +25,7 @@ class AppButton extends StatefulWidget {
     this.text,
     this.icon,
     this.size = AppButtonSize.small,
-    this.backgroundColor, //ทำให้กำหนดสีพื้นหลังได้
+    this.backgroundColor, 
     this.borderColor, 
     this.textColor,
   });
@@ -49,7 +50,7 @@ class _AppButtonState extends State<AppButton> {
     final scheme = Theme.of(context).colorScheme;
     final offset = _pressed ? 2.0 : 4.0;
     final bgColor = widget.backgroundColor ?? scheme.primary;
-    final bdColor = widget.borderColor ?? scheme.onSurface;
+    final bdColor = widget.borderColor ?? AppColors.buttonBorder;
     final fgColor = widget.textColor ?? scheme.onPrimary;
 
 
@@ -75,31 +76,14 @@ class _AppButtonState extends State<AppButton> {
         widget.onPressed();
       },
       onTapCancel: () => setState(() => _pressed = false),
-      child: SizedBox(
-        width: buttonWidth,
-        height: _height() + offset,
-        child: Stack(
-          children: [
-            Positioned(
-              top: offset,
-              child: PixelBorderContainer(
-                padding: EdgeInsets.zero,
-                fillColor: bdColor, 
-                borderColor: bdColor,
-                child: SizedBox(width: buttonWidth, height: _height()),
-              ),
-            ),
-            PixelBorderContainer(
-                padding: EdgeInsets.zero,
-                fillColor: bgColor,
-                borderColor: bdColor,
-                child: SizedBox(
-                  width: buttonWidth,
-                  height: _height(),
-                  child: Center(child: _buildContent(buttonTextStyle)),
-                ),
-              ),
-          ],
+      child: PixelBorderContainer(
+        padding: EdgeInsets.zero,
+        fillColor: bgColor,
+        borderColor: bdColor,
+        child: SizedBox(
+          width: buttonWidth,
+          height: _height(),
+          child: Center(child: _buildContent(buttonTextStyle)),
         ),
       ),
     );

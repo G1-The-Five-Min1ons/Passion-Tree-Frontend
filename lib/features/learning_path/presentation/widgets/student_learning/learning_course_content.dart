@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
@@ -86,8 +88,13 @@ class LearningCourseContent extends StatelessWidget {
         PixelBorderContainer(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
-          borderColor: colors.primary,
-          fillColor: colors.surface,
+          borderColor: AppColors.cardBorder,
+          fillColor: AppColors.surface,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1A3660), AppColors.surface],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -114,8 +121,13 @@ class LearningCourseContent extends StatelessWidget {
       PixelBorderContainer(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
-        borderColor: colors.primary,
-        fillColor: colors.surface,
+        borderColor: AppColors.cardBorder,
+        fillColor: AppColors.surface,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A3660), AppColors.surface],
+        ),
         child: Column(
           children: [
             /// ===== TITLE (CENTER FIX) =====
@@ -128,7 +140,7 @@ class LearningCourseContent extends StatelessWidget {
                   style: Theme.of(context)
                       .textTheme
                       .titleLarge
-                      ?.copyWith(color: colors.primary),
+                      ?.copyWith(color: AppColors.title),
                 ),
               ),
             ),

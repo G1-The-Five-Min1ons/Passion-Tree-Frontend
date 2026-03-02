@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 //วางlayoutไว้ก่อน
 class NodeCommentsSection extends StatelessWidget {
@@ -12,7 +13,7 @@ class NodeCommentsSection extends StatelessWidget {
     return PixelBorderContainer(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      borderColor: colors.primary,
+      borderColor: AppColors.cardBorder,
       fillColor: colors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

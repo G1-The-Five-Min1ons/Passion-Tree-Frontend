@@ -8,6 +8,8 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_question.dart'; 
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_result.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mocks/student_quiz_mock.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/congrats_popups.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/rating_popup.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/datasources/learning_path_data_source.dart';
@@ -146,6 +148,23 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
             ),
 
             const SizedBox(height: 40),
+                const SizedBox(height: 40),
+
+                // ===== QUIZ CARD =====
+                PixelBorderContainer(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  borderColor: AppColors.cardBorder,
+                  fillColor: colors.surface,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ===== QUIZ TITLE =====
+                      Text(
+                        'Quiz',
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(color: AppColors.title),
+                      ),
 
             // ===== QUIZ CARD =====
             PixelBorderContainer(
