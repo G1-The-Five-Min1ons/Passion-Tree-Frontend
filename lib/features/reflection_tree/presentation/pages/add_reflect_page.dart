@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
@@ -7,9 +8,15 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/create_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/searchdropdown.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_level_card.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
 
 class AddReflectPage extends StatefulWidget{
-  const AddReflectPage ({super.key});
+  
+  const AddReflectPage({
+    super.key,
+  });
 
   @override
   State<AddReflectPage> createState() => _AddReflectPageState();
@@ -28,14 +35,14 @@ class _AddReflectPageState extends State<AddReflectPage>{
   'Cell Biology',
   'Chemistry'];
 
-  final List<String> _albums = 
-  ['Science',
-  'Languages',
-  'University',
-  'Math',
-  'Chemichejai',
-  'Coding'];
   String _selectedDifficulty = 'Easy';
+
+  @override
+  void initState() {
+    super.initState();
+    //Load user's albums
+    context.read<AlbumBloc>().add(const LoadAlbumsEvent());
+  }
 
   @override
   void dispose() {
@@ -52,62 +59,77 @@ class _AddReflectPageState extends State<AddReflectPage>{
         showBackButton: true,
         onBackPressed: () => Navigator.pop(context), 
       ), 
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xmargin),
-        child: ListView(
-          padding: const EdgeInsets.only(top: AppSpacing.ymargin),
-          children: [
-              Text(
-              "Create\nNew Tree",
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
-              ),
+      body: BlocBuilder<AlbumBloc, AlbumState>(
+        builder: (context, state) {
+          final List<String> albumNames = state is AlbumsLoaded
+              ? state.albums.map((album) => album.title).toList()
+              : [];
 
-            const SizedBox(height: 30),
-            SearchDropdown(
-              options: _subjects,
-              header: "Learning Path",
-              label: "Select Learning Path",
-              controller: _categoryController,
-              onSelected: (selectedItem) {
-                FocusScope.of(context).unfocus();
-              },
-            ),
-
-            const SizedBox(height: 30),
-            Padding(
-              padding: const EdgeInsets.only(left: 8, bottom: 8),
-              child: Text(
-                "Album",
-                style: AppTypography.titleSemiBold.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
-              ),
-            ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xmargin),
+            child: ListView(
+              padding: const EdgeInsets.only(top: AppSpacing.ymargin),
               children: [
-                Expanded(child: 
-                  SearchDropdown(
-                    options: _albums,
-                    label: "Select Album",
-                    controller: _albumController,
-                    onSelected: (selectedItem) {
-                      FocusScope.of(context).unfocus();
-                    },
+                Text(
+                  "Create\nNew Tree",
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
-                const SizedBox(width: 8),
-                AppButton(
-                  variant: AppButtonVariant.text,
-                  text: 'Add',
-                  onPressed: (){
-                    CreatePopUp.show(context);
-                  }
+
+                const SizedBox(height: 30),
+                SearchDropdown(
+                  options: _subjects,
+                  header: "Learning Path",
+                  label: "Select Learning Path",
+                  controller: _categoryController,
+                  onSelected: (selectedItem) {
+                    FocusScope.of(context).unfocus();
+                  },
                 ),
-              ],
-            ),
+
+                const SizedBox(height: 30),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8, bottom: 8),
+                  child: Text(
+                    "Album",
+                    style: AppTypography.titleSemiBold.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: state is AlbumLoading
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            )
+                          : SearchDropdown(
+                              options: albumNames.isEmpty 
+                                  ? ['No albums found'] 
+                                  : albumNames,
+                              label: "Select Album",
+                              controller: _albumController,
+                              onSelected: (selectedItem) {
+                                FocusScope.of(context).unfocus();
+                              },
+                            ),
+                    ),
+                    const SizedBox(width: 8),
+                    AppButton(
+                      variant: AppButtonVariant.text,
+                      text: 'Add',
+                      onPressed: () {
+                        CreatePopUp.show(context);
+                      },
+                    ),
+                  ],
+                ),
 
             const SizedBox(height: 40),
             Text(
@@ -153,9 +175,11 @@ class _AddReflectPageState extends State<AddReflectPage>{
                 )
               ],
             ),
-            const SizedBox(height: 80),
-          ],
-        ),
+                const SizedBox(height: 80),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

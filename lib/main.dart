@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
@@ -8,10 +11,18 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_but
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button_white.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree.dart';
-
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize all dependencies (GetIt)
+  await initializeDependencies();
+  
   runApp(const MyApp());
 }
 
@@ -20,11 +31,67 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: AppTheme.lightTheme,
-      themeMode: ThemeMode.light,
-      home: const HomeBarWidget(),
+    return BlocProvider(
+      create: (context) => getIt<UserBloc>(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Passion Tree',
+        theme: AppTheme.lightTheme,
+        themeMode: ThemeMode.light,
+        home: const AuthGate(),
+      ),
+    );
+  }
+}
+
+/// Gates the entire app behind authentication.
+/// Checks if a valid token exists — if yes, goes to HomeBarWidget;
+/// otherwise shows LoginPage.
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: getIt<IAuthRepository>().isLoggedIn(),
+      builder: (context, snapshot) {
+        // While checking auth status, show a loading screen
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/icons/tree_icon.png',
+                    width: 100,
+                    height: 100,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const SizedBox(width: 100, height: 100);
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Passion Tree',
+                    style: AppPixelTypography.h2.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // If logged in, go to main app
+        if (snapshot.data == true) {
+          return const HomeBarWidget();
+        }
+
+        // Otherwise, require login
+        return const LoginPage();
+      },
     );
   }
 }
