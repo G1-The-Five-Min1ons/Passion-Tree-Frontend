@@ -44,16 +44,6 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   ) async {
     emit(state.copyWith(status: RegisterStatus.loading));
 
-    // Save user role locally before registration
-    final saveRoleResult = await saveUserRoleUseCase(event.role);
-    if (saveRoleResult.isLeft()) {
-      emit(state.copyWith(
-        status: RegisterStatus.failure,
-        errorMessage: 'Failed to save user role',
-      ));
-      return;
-    }
-
     final result = await registerUserUseCase.execute(
       username: event.username,
       email: event.email,
@@ -74,8 +64,8 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
       (userId) => emit(state.copyWith(
         status: RegisterStatus.success,
         userId: userId,
-        nextStep: RegisterNextStep.autoLogin,
-        successMessage: 'Registration successful',
+        nextStep: RegisterNextStep.complete,
+        successMessage: 'Registration successful! Please sign in.',
       )),
     );
   }
@@ -85,16 +75,6 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     Emitter<RegisterState> emit,
   ) async {
     emit(state.copyWith(status: RegisterStatus.loading));
-
-    // Mark role as selected
-    final markResult = await markRoleSelectedUseCase();
-    if (markResult.isLeft()) {
-      emit(state.copyWith(
-        status: RegisterStatus.failure,
-        errorMessage: 'Failed to mark role as selected',
-      ));
-      return;
-    }
 
     // Auto-login
     final loginResult = await loginWithCredentialsUseCase.execute(

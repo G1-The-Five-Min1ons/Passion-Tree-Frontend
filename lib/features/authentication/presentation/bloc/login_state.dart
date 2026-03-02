@@ -8,7 +8,8 @@ enum LoginStatus {
 }
 
 enum LoginNextStep {
-  otpVerification, 
+  otpVerification,
+  checkingRole,
   roleSelection,
   complete,
 }

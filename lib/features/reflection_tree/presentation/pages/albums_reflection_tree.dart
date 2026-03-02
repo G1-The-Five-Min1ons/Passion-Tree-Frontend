@@ -16,6 +16,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc_provider.dart';
 
 class ReflectionTreePage extends StatefulWidget {
   const ReflectionTreePage({super.key});
@@ -221,12 +222,10 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
 
             return GestureDetector(
               onTap: () async {
-                final albumBloc = BlocProvider.of<AlbumBloc>(context);
                 await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => BlocProvider.value(
-                      value: albumBloc,
+                    builder: (context) => AlbumBlocProvider(
                       child: AlbumDetailPage(
                         albumId: album.albumId,
                         onBack: () {
@@ -238,7 +237,7 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
                 );
                 // Reload albums when returning from detail page
                 if (mounted) {
-                  context.read<AlbumBloc>().add(const LoadAlbumsEvent());
+                  context.read<AlbumBloc>().add(const RefreshAlbumsEvent());
                 }
               },
               child: PixelAlbumCover(

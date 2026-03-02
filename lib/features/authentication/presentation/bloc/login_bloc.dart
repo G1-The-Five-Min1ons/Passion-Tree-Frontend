@@ -172,10 +172,9 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         errorMessage: failure.message,
       )),
       (_) {
-        // After successful OTP verification, check role status
         emit(state.copyWith(
           status: LoginStatus.success,
-          nextStep: LoginNextStep.roleSelection, // Will be updated by CheckRoleStatus
+          nextStep: LoginNextStep.checkingRole,
         ));
       },
     );

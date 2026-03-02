@@ -7,13 +7,13 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart
 import 'package:passion_tree_frontend/core/common_widgets/selections/checkbox.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
-import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
+
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/bottom_buttons.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/pixel_password_field.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_bloc.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_event.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_state.dart';
-import 'package:passion_tree_frontend/features/authentication/presentation/widgets/select_role_popup.dart';
+
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
@@ -158,41 +158,17 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
     
     return BlocConsumer<RegisterBloc, RegisterState>(
       listener: (context, state)  {
-        if (state.status == RegisterStatus.success) {
-          if (state.nextStep == RegisterNextStep.autoLogin) {
-            if (state.successMessage != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.successMessage!),
-                  backgroundColor: AppColors.status,
-                ),
-              );
-            }
-            
-            context.read<RegisterBloc>().add(AutoLoginAfterRegister(
-              username: _usernameController.text.trim(),
-              password: _passwordController.text,
-            ));
-          } else if (state.nextStep == RegisterNextStep.otpVerification) {
-            _showOtpDialog(context, state.successMessage ?? 'Please enter OTP code').then((otpCode) {
-              if (otpCode != null && context.mounted) {
-                context.read<RegisterBloc>().add(VerifyEmailAfterRegister(otpCode));
-              } else if (context.mounted) {
-                // User cancelled, go to login
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                );
-              }
-            });
-          } else if (state.nextStep == RegisterNextStep.roleSync) {
-            // Sync role with backend
-            context.read<RegisterBloc>().add(const SyncRoleAfterRegister());
-          } else if (state.nextStep == RegisterNextStep.complete) {
-            LogHandler.success('Registration flow complete');
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const HomeBarWidget()),
-            );
-          }
+        if (state.status == RegisterStatus.success && state.nextStep == RegisterNextStep.complete) {
+          LogHandler.success('Registration complete, redirecting to login');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.successMessage ?? 'Registration successful! Please sign in.'),
+              backgroundColor: AppColors.status,
+            ),
+          );
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
         } else if (state.status == RegisterStatus.failure) {
           final errorMessage = state.errorMessage?.toLowerCase() ?? '';
           
@@ -489,7 +465,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                     AppButton(
                       variant: AppButtonVariant.text,
                       text: isLoading ? 'Create account' : 'Create account',
-                      onPressed: () async {
+                      onPressed: () {
                         if (!_validateAllFields()) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -500,15 +476,6 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                           return;
                         }
 
-                        // Show role selection popup first
-                        final selectedRole = await _showRoleSelection();
-                        if (selectedRole == null) {
-                          // User cancelled role selection
-                          return;
-                        }
-
-                        if (!context.mounted) return;
-
                         context.read<RegisterBloc>().add(
                           RegisterSubmitted(
                             username: _usernameController.text.trim(),
@@ -516,7 +483,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                             password: _passwordController.text,
                             firstName: _firstNameController.text.trim(),
                             lastName: _lastNameController.text.trim(),
-                            role: selectedRole,
+                            role: 'pending',
                           ),
                         );
                       },
@@ -575,91 +542,5 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
     );
   }
 
-  /// Show role selection popup and return the selected role
-  Future<String?> _showRoleSelection() async {
-    return showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return SelectRolePopup(
-          onRoleSelected: (role) {
-            Navigator.of(dialogContext).pop(role);
-          },
-        );
-      },
-    );
-  }
 
-  /// Show OTP input dialog and return the entered code
-  Future<String?> _showOtpDialog(BuildContext context, String message) async {
-    final otpController = TextEditingController();
-    
-    return showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 25),
-          child: PixelBorderContainer(
-            pixelSize: 4,
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Email Verification',
-                  style: AppPixelTypography.h3.copyWith(
-                    color: Theme.of(dialogContext).colorScheme.onSurface,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  message,
-                  style: AppTypography.bodySemiBold.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                PixelTextField(
-                  label: 'Verification Code',
-                  hintText: 'Enter 6-digit code',
-                  controller: otpController,
-                  height: 38,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'Cancel',
-                        backgroundColor: AppColors.cancel,
-                        onPressed: () => Navigator.of(dialogContext).pop(null),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'Verify',
-                        onPressed: () {
-                          final code = otpController.text.trim();
-                          if (code.isNotEmpty) {
-                            Navigator.of(dialogContext).pop(code);
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 }

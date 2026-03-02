@@ -208,7 +208,9 @@ class _LoginPageState extends State<LoginPage> {
               switch (state.nextStep!) {
                 case LoginNextStep.otpVerification:
                   await _showOtpDialog(context);
-                  // After OTP, check role status
+                  break;
+
+                case LoginNextStep.checkingRole:
                   if (context.mounted) {
                     context.read<LoginBloc>().add(const CheckRoleStatus());
                   }
