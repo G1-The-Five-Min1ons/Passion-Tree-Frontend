@@ -22,10 +22,10 @@ class _CreateLearningPathInputPageState
     extends State<CreateLearningPathInputPage> {
   String _title = '';
   String _objectives = '';
-  String _description = '';
+
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+
 
     return Scaffold(
       appBar: AppBarWidget(title: 'Learning Paths', showBackButton: true),
@@ -169,11 +169,7 @@ class _CreateLearningPathInputPageState
                   labelColor: Theme.of(context).colorScheme.onPrimary,
                   hintText: 'Describe this learning path in detail',
                   height: 150,
-                  onChanged: (value) {
-                    setState(() {
-                      _description = value;
-                    });
-                  },
+                  onChanged: (value) {},
                 ),
 
                 const SizedBox(height: 30),

@@ -1,3 +1,4 @@
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_header.dart';
@@ -17,9 +18,6 @@ class EditNodeModal extends StatefulWidget {
 }
 
 class _EditNodeModalState extends State<EditNodeModal> {
-  // ===== STATE =====
-  String _title = '';
-  String _description = '';
   String _linkInput = '';
   final List<String> _links = []; //ส่วนเพิ่มlink
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
@@ -94,8 +92,8 @@ class _EditNodeModalState extends State<EditNodeModal> {
                   // ===== INFO + MATERIALS =====
                  NodeInfoSection(
                     // ===== NODE INFO =====
-                    onTitleChanged: (v) => _title = v,
-                    onDescriptionChanged: (v) => _description = v,
+                    onTitleChanged: (v) {},
+                    onDescriptionChanged: (v) {},
 
                     // ===== LINKS =====
                     links: _links,
@@ -124,7 +122,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                             'Are you sure you want to delete?\nThis Process cannot be undone.',
                         onDelete: () {
                           // logic ลบ node จริง (ตอนนี้ mock ไว้ก่อน)
-                          debugPrint('Node deleted');
+                          LogHandler.info('Node deleted');
 
                           // ปิด EditNodeModal
                           Navigator.pop(context);

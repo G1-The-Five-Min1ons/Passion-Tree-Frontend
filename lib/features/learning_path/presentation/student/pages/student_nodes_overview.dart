@@ -1,3 +1,4 @@
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -37,18 +38,18 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // This will be called when we navigate back to this page
-    debugPrint('[UI] StudentNodesOverviewPage - didChangeDependencies');
+    LogHandler.info('[UI] StudentNodesOverviewPage - didChangeDependencies');
   }
 
   void _fetchNodes() {
-    debugPrint('[UI] StudentNodesOverviewPage - _fetchNodes');
-    debugPrint('Course ID: ${widget.course.id}');
-    debugPrint('Course Title: ${widget.course.title}');
+    LogHandler.info('[UI] StudentNodesOverviewPage - _fetchNodes');
+    LogHandler.info('Course ID: ${widget.course.id}');
+    LogHandler.info('Course Title: ${widget.course.title}');
     
     // TODO: Get userId from authentication service
     const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
     
-    debugPrint('User ID: $userId');
+    LogHandler.info('User ID: $userId');
     
     // Always fetch fresh nodes to ensure up-to-date status
     context.read<LearningPathBloc>().add(
@@ -69,27 +70,27 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            debugPrint('[UI] StudentNodesOverviewPage - BlocBuilder state: ${state.runtimeType}');
+            LogHandler.info('[UI] StudentNodesOverviewPage - BlocBuilder state: ${state.runtimeType}');
             
             // Update cached nodes when new nodes loaded
             if (state is NodesLoaded && state.pathId == widget.course.id) {
-              debugPrint('Nodes loaded for path ${widget.course.id}: ${state.nodes.length} nodes');
+              LogHandler.info('Nodes loaded for path ${widget.course.id}: ${state.nodes.length} nodes');
               // Debug: Print status of each node
               for (var i = 0; i < state.nodes.length; i++) {
                 final node = state.nodes[i];
-                debugPrint('[Node $i] ${node.title} - Status: "${node.status}", Complete: "${node.complete}", Sequence: ${node.sequence}');
+                LogHandler.info('[Node $i] ${node.title} - Status: "${node.status}", Complete: "${node.complete}", Sequence: ${node.sequence}');
               }
               _cachedNodes = state.nodes;
             }
 
             // Show loading only if no cached nodes
             if (state is LearningPathLoading && _cachedNodes == null) {
-              debugPrint('Loading nodes (no cache)...');
+              LogHandler.info('Loading nodes (no cache)...');
               return const Center(child: CircularProgressIndicator());
             }
 
             if (state is LearningPathError && _cachedNodes == null) {
-              debugPrint('Error loading nodes: ${state.message}');
+              LogHandler.info('Error loading nodes: ${state.message}');
               return Center(child: Text('Error: ${state.message}'));
             }
 
@@ -108,8 +109,8 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                       if (index < nodes.length) {
                         final nodeId = nodes[index].nodeId;
                         final currentSequence = nodes[index].sequence;
-                        debugPrint('[UI] Node tapped: $nodeId (${nodes[index].title})');
-                        debugPrint('[UI] Sequence: $currentSequence, Total nodes: ${nodes.length}');
+                        LogHandler.info('[UI] Node tapped: $nodeId (${nodes[index].title})');
+                        LogHandler.info('[UI] Sequence: $currentSequence, Total nodes: ${nodes.length}');
                         
                         Navigator.push(
                           context,
@@ -126,7 +127,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                           ),
                         ).then((_) {
                           // Refetch nodes when returning from learning node page
-                          debugPrint('[UI] Returned from learning node page, refetching nodes...');
+                          LogHandler.info('[UI] Returned from learning node page, refetching nodes...');
                           _fetchNodes();
                         });
                       }

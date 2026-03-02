@@ -1,3 +1,4 @@
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
@@ -32,16 +33,16 @@ class _LearningNodePageState extends State<LearningNodePage> {
   void initState() {
     super.initState();
     
-    debugPrint('[UI] LearningNodePage - initState');
-    debugPrint('Node ID: ${widget.nodeId}');
+    LogHandler.info('[UI] LearningNodePage - initState');
+    LogHandler.info('Node ID: ${widget.nodeId}');
     
     // TODO: Get userId from authentication service
     const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
     
-    debugPrint('User ID: $userId');
+    LogHandler.info('User ID: $userId');
     
     // Start node when page loads
-    debugPrint('Dispatching StartNodeEvent...');
+    LogHandler.info('Dispatching StartNodeEvent...');
     context.read<LearningPathBloc>().add(
           StartNodeEvent(
             nodeId: widget.nodeId,
@@ -50,7 +51,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
         );
     
     // Fetch node detail when page loads
-    debugPrint('Dispatching FetchNodeDetail...');
+    LogHandler.info('Dispatching FetchNodeDetail...');
     context.read<LearningPathBloc>().add(
           FetchNodeDetail(
             nodeId: widget.nodeId,
@@ -66,15 +67,15 @@ class _LearningNodePageState extends State<LearningNodePage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            debugPrint('[UI] LearningNodePage - BlocBuilder state: ${state.runtimeType}');
+            LogHandler.info('[UI] LearningNodePage - BlocBuilder state: ${state.runtimeType}');
             
             if (state is LearningPathLoading || state is LearningPathInitial) {
-              debugPrint('Loading node detail...');
+              LogHandler.info('Loading node detail...');
               return const Center(child: CircularProgressIndicator());
             }
 
             if (state is LearningPathError) {
-              debugPrint('Error loading node: ${state.message}');
+              LogHandler.info('Error loading node: ${state.message}');
               return Center(
                 child: Text('Error: ${state.message}'),
               );
@@ -82,8 +83,8 @@ class _LearningNodePageState extends State<LearningNodePage> {
 
             if (state is NodeDetailLoaded) {
               final nodeDetail = state.nodeDetail;
-              debugPrint('Node detail loaded: ${nodeDetail.title}');
-              debugPrint('Progress: ${nodeDetail.status}');
+              LogHandler.info('Node detail loaded: ${nodeDetail.title}');
+              LogHandler.info('Progress: ${nodeDetail.status}');
 
               return SingleChildScrollView(
                 child: Padding(

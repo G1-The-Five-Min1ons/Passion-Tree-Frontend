@@ -3,9 +3,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_core.dart';
 

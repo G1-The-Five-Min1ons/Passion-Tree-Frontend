@@ -1,3 +1,4 @@
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
@@ -178,8 +179,4 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
     });
   }
 
-  void _saveNodes() {
-    debugPrint('Saved nodes: $_nodes');
-    // TODO: ไป step ถัดไป
-  }
 }

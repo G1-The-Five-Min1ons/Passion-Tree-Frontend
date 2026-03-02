@@ -1,3 +1,4 @@
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
@@ -7,7 +8,6 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_progress_card.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
@@ -21,7 +21,7 @@ class LearningPathStatusPage extends StatefulWidget {
 }
 
 class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
-  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   int inProgressShown = 2;
   int completedShown = 2;
@@ -33,29 +33,25 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
   void initState() {
     super.initState();
 
-    debugPrint('[UI] LearningPathStatusPage - initState');
-    
+    LogHandler.info('[UI] LearningPathStatusPage - initState');
+
     // TODO: Get userId from authentication service
-    const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
-    
+    const userId =
+        'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
+
     // Fetch learning path status data
     context.read<LearningPathBloc>().add(
       FetchLearningPathStatus(userId: userId),
     );
-    
-    _searchController.addListener(() {
-      setState(() {});
-    });
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
     super.dispose();
   }
 
-   List<EnrolledLearningPath> _filterPaths(List<EnrolledLearningPath> paths) {
-    final query = _searchController.text.trim().toLowerCase();
+  List<EnrolledLearningPath> _filterPaths(List<EnrolledLearningPath> paths) {
+    final query = _searchQuery.trim().toLowerCase();
 
     return paths.where((p) {
       return query.isEmpty ||
@@ -70,41 +66,51 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBarWidget(title: 'Learning Paths', showBackButton: true),
+      appBar: AppBarWidget(
+        title: 'Learning Paths',
+        showBackButton: true,
+        onSearch: (q) => setState(() => _searchQuery = q),
+      ),
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            debugPrint('[UI] LearningPathStatusPage - BlocBuilder state: ${state.runtimeType}');
-            
+            LogHandler.info(
+              '[UI] LearningPathStatusPage - BlocBuilder state: ${state.runtimeType}',
+            );
+
             // Cache data when loaded
             if (state is LearningPathOverviewLoaded) {
               _cachedEnrolledPaths = state.enrolledPaths;
             } else if (state is LearningPathStatusLoaded) {
               _cachedEnrolledPaths = state.paths;
             }
-            
+
             // Show loading only if no cached data
-            if ((state is LearningPathLoading || state is LearningPathInitial) && 
+            if ((state is LearningPathLoading ||
+                    state is LearningPathInitial) &&
                 _cachedEnrolledPaths == null) {
-              debugPrint('Showing loading indicator (no cache)...');
+              LogHandler.info('Showing loading indicator (no cache)...');
               return const Center(child: CircularProgressIndicator());
             }
 
             // Use cached data or data from state
-            final enrolledPaths = _cachedEnrolledPaths ??
-                (state is LearningPathOverviewLoaded 
-                    ? state.enrolledPaths 
+            final enrolledPaths =
+                _cachedEnrolledPaths ??
+                (state is LearningPathOverviewLoaded
+                    ? state.enrolledPaths
                     : (state is LearningPathStatusLoaded ? state.paths : null));
 
             if (enrolledPaths != null) {
-              debugPrint('Enrolled paths available: ${enrolledPaths.length}');
+              LogHandler.info(
+                'Enrolled paths available: ${enrolledPaths.length}',
+              );
               final filtered = _filterPaths(enrolledPaths);
 
               // คอร์สที่กำลังเรียนอยู่ (In Progress)
               final inProgress = filtered
                   .where((p) => p.progressStatus != "Completed")
                   .toList();
-                  
+
               // คอร์สที่เรียนจบแล้ว (Completed)
               final completed = filtered
                   .where((p) => p.progressStatus == "Completed")
@@ -120,10 +126,6 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      LearningPathSearchBar(controller: _searchController),
-
-                      const SizedBox(height: 40),
-
                       // ================= IN PROGRESS =================
                       Text(
                         'My Learning Paths',
@@ -174,12 +176,11 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                                 crossAxisCount: 2,
                                 mainAxisSpacing: 35,
                                 crossAxisSpacing: 12,
-                                childAspectRatio: 0.692, // 180/260 สำหรับ progress card
+                                childAspectRatio:
+                                    0.692, // 180/260 สำหรับ progress card
                               ),
                           itemBuilder: (context, index) {
-                            return CourseProgressCard(
-                              data: inProgress[index],
-                            );
+                            return CourseProgressCard(data: inProgress[index]);
                           },
                         ),
 
@@ -260,7 +261,8 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                                 maxCrossAxisExtent: 220,
                                 mainAxisSpacing: 35,
                                 crossAxisSpacing: 12,
-                                childAspectRatio: 0.692, // 180/260 สำหรับ progress card
+                                childAspectRatio:
+                                    0.692, // 180/260 สำหรับ progress card
                               ),
                           itemBuilder: (context, index) {
                             return CourseProgressCard(data: completed[index]);

@@ -165,7 +165,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
               : ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: filteredAll.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  separatorBuilder: (context, index) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     return PixelCourseCard(
                       course: filteredAll[index],

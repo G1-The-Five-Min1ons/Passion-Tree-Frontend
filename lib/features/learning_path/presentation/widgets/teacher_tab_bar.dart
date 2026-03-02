@@ -56,7 +56,7 @@ class _TabButton extends StatelessWidget {
           style: AppPixelTypography.smallTitle.copyWith(
             color: isActive
                 ? Theme.of(context).colorScheme.onPrimary
-                : Theme.of(context).colorScheme.onPrimary.withOpacity(0.6),
+                : Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.6),
           ),
         ),
       ),

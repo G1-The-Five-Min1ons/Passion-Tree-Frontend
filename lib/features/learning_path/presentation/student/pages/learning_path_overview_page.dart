@@ -7,14 +7,15 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_but
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_progress_card.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
 
 class LearningPathOverviewPage extends StatefulWidget {
@@ -28,22 +29,59 @@ class LearningPathOverviewPage extends StatefulWidget {
 class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
   String _searchQuery = '';
   int _allListShownCount = 4;
+  LearningPathOverviewLoaded? _cachedOverview;
 
-  List<Course> _filterCourses(List<Course> courses) {
-    final q = _searchQuery.trim().toLowerCase();
-    if (q.isEmpty) return courses;
-    return courses.where((c) =>
-      c.title.toLowerCase().contains(q) ||
-      c.description.toLowerCase().contains(q) ||
-      c.instructor.toLowerCase().contains(q),
-    ).toList();
+  String? userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOverviewData();
   }
 
-  void _clearFilters() {
-    setState(() {
-      _searchQuery = '';
-      _allListShownCount = 4;
-    });
+  Future<void> _loadOverviewData() async {
+    final storedUserId = await getIt<IAuthRepository>().getUserId();
+    if (storedUserId == null || storedUserId.isEmpty) {
+      LogHandler.info('No user ID found — loading generic overview');
+      if (mounted) {
+        context.read<LearningPathBloc>().add(FetchLearningPathOverview());
+      }
+      return;
+    }
+    if (!mounted) return;
+    setState(() => userId = storedUserId);
+    LogHandler.info('Loading overview for user: $userId');
+    context.read<LearningPathBloc>().add(
+      FetchLearningPathOverview(userId: userId),
+    );
+  }
+
+  List<LearningPath> _filterCourses(List<LearningPath> courses) {
+    final q = _searchQuery.trim().toLowerCase();
+    if (q.isEmpty) return courses;
+    return courses
+        .where(
+          (c) =>
+              c.title.toLowerCase().contains(q) ||
+              c.description.toLowerCase().contains(q) ||
+              c.instructor.toLowerCase().contains(q),
+        )
+        .toList();
+  }
+
+  List<EnrolledLearningPath> _filterEnrolledCourses(
+    List<EnrolledLearningPath> courses,
+  ) {
+    final q = _searchQuery.trim().toLowerCase();
+    if (q.isEmpty) return courses;
+    return courses
+        .where(
+          (c) =>
+              c.title.toLowerCase().contains(q) ||
+              c.description.toLowerCase().contains(q) ||
+              c.instructor.toLowerCase().contains(q),
+        )
+        .toList();
   }
 
   @override
@@ -59,50 +97,63 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            debugPrint('[UI] LearningPathOverviewPage - BlocBuilder state: ${state.runtimeType}');
-            
+            LogHandler.info(
+              '[UI] LearningPathOverviewPage - BlocBuilder state: ${state.runtimeType}',
+            );
+
             // Cache overview data when loaded
             if (state is LearningPathOverviewLoaded) {
               _cachedOverview = state;
             }
-            
+
             // Show loading only if no cached data
-            if ((state is LearningPathLoading || state is LearningPathInitial) && 
+            if ((state is LearningPathLoading ||
+                    state is LearningPathInitial) &&
                 _cachedOverview == null) {
-              debugPrint('Showing loading indicator...');
+              LogHandler.info('Showing loading indicator...');
               return const Center(child: CircularProgressIndicator());
             }
 
             if (state is LearningPathError && _cachedOverview == null) {
-              debugPrint('Error state: ${state.message}');
+              LogHandler.error('Error state: ${state.message}');
               return Center(child: Text(state.message));
             }
 
             // Use cached overview data
             final overviewData = _cachedOverview;
             if (overviewData != null) {
-              debugPrint('Overview data available - All paths: ${overviewData.allPaths.length}, Enrolled: ${overviewData.enrolledPaths.length}');
+              LogHandler.info(
+                'Overview data available - All paths: ${overviewData.allPaths.length}, Enrolled: ${overviewData.enrolledPaths.length}',
+              );
               final filteredAll = _filterCourses(overviewData.allPaths);
-              
+
               // Filter and deduplicate enrolled paths
-              final filteredEnrolledWithDuplicates = _filterEnrolledCourses(overviewData.enrolledPaths);
+              final filteredEnrolledWithDuplicates = _filterEnrolledCourses(
+                overviewData.enrolledPaths,
+              );
               final seenPathIds = <String>{};
-              final filteredEnrolled = filteredEnrolledWithDuplicates.where((path) {
+              final filteredEnrolled = filteredEnrolledWithDuplicates.where((
+                path,
+              ) {
                 if (seenPathIds.contains(path.pathId)) {
                   return false;
                 }
                 seenPathIds.add(path.pathId);
                 return true;
               }).toList();
-              
+
               // Filter out enrolled paths from recommended section and all paths
-              final enrolledPathIds = filteredEnrolled.map((e) => e.pathId).toSet();
+              final enrolledPathIds = filteredEnrolled
+                  .map((e) => e.pathId)
+                  .toSet();
               final filteredRecommended = filteredAll
                   .where((path) => !enrolledPathIds.contains(path.id))
                   .toList();
-              
+
               // Use filtered courses (without enrolled) for "All Learning Paths" section
-              final shownAllCourses = filteredRecommended.take(_allListShownCount).toList();
+              final shownAllCourses = filteredRecommended
+                  .take(_allListShownCount)
+                  .toList();
 
               // Check if user has enrolled paths (logged in)
               final hasEnrolledPaths = overviewData.enrolledPaths.isNotEmpty;
@@ -117,36 +168,6 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ===== SEARCH BAR & FILTER =====
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 1),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: LearningPathSearchBar(
-                                controller: _searchController,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            FilterSection(
-                              selectedCategory: _selectedCategory,
-                              ratingRange: _ratingRange,
-                              maxModules: _maxModules,
-                              onFiltersChanged: (category, rating, modules) {
-                                setState(() {
-                                  _selectedCategory = category;
-                                  _ratingRange = rating;
-                                  _maxModules = modules;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
                       // ===== CONDITIONAL SECTION: MY LEARNING PATHS OR POPULAR =====
                       if (hasEnrolledPaths) ...[
                         // Logged in user: Show My Learning Paths
@@ -174,9 +195,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                                       ),
                                     ),
                                   );
-                                }
-
-
+                                },
                               ),
                             ),
                           ],
@@ -198,14 +217,18 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                             itemCount: filteredEnrolled.length < 2
                                 ? filteredEnrolled.length
                                 : 2,
-                            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 220,
-                              mainAxisSpacing: 35,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 0.692, // 180/260 สำหรับ progress card
-                            ),
+                            gridDelegate:
+                                const SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 220,
+                                  mainAxisSpacing: 35,
+                                  crossAxisSpacing: 12,
+                                  childAspectRatio:
+                                      0.692, // 180/260 สำหรับ progress card
+                                ),
                             itemBuilder: (context, index) {
-                              return CourseProgressCard(data: filteredEnrolled[index]);
+                              return CourseProgressCard(
+                                data: filteredEnrolled[index],
+                              );
                             },
                           ),
                         const SizedBox(height: 60),
@@ -224,18 +247,22 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                               ? Center(
                                   child: Text(
                                     'No recommended paths found',
-                                    style: AppTypography.subtitleSemiBold.copyWith(
-                                      color: colors.onPrimary,
-                                    ),
+                                    style: AppTypography.subtitleSemiBold
+                                        .copyWith(color: colors.onPrimary),
                                   ),
                                 )
                               : ListView.separated(
                                   scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(horizontal: 0),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 0,
+                                  ),
                                   itemCount: filteredRecommended.length,
-                                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 12),
                                   itemBuilder: (context, index) {
-                                    return PixelCourseCard(course: filteredRecommended[index]);
+                                    return PixelCourseCard(
+                                      course: filteredRecommended[index],
+                                    );
                                   },
                                 ),
                         ),
@@ -254,18 +281,22 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                               ? Center(
                                   child: Text(
                                     'No popular paths found',
-                                    style: AppTypography.subtitleSemiBold.copyWith(
-                                      color: colors.onPrimary,
-                                    ),
+                                    style: AppTypography.subtitleSemiBold
+                                        .copyWith(color: colors.onPrimary),
                                   ),
                                 )
                               : ListView.separated(
                                   scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(horizontal: 0),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 0,
+                                  ),
                                   itemCount: filteredRecommended.length,
-                                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 12),
                                   itemBuilder: (context, index) {
-                                    return PixelCourseCard(course: filteredRecommended[index]);
+                                    return PixelCourseCard(
+                                      course: filteredRecommended[index],
+                                    );
                                   },
                                 ),
                         ),
@@ -305,48 +336,10 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                                     BaseCourseCard.defaultHeight,
                               ),
                           itemBuilder: (context, index) {
-                            return PixelCourseCard(course: shownAllCourses[index]);
+                            return PixelCourseCard(
+                              course: shownAllCourses[index],
+                            );
                           },
-                        ),
-                ),
-
-                // Section → Section
-                const SizedBox(height: 24),
-
-                // ===== ALL TITLE =====
-                Text(
-                  'All Learning Paths',
-                  style: AppPixelTypography.title.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontSize: 22,
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // ===== ALL LIST =====
-                if (shownAllCourses.isEmpty)
-                  Center(
-                    child: Text(
-                      'No learning paths found',
-                      style: AppTypography.subtitleSemiBold.copyWith(
-                        color: colors.onPrimary,
-                      ),
-                    ),
-                  )
-                else
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: shownAllCourses.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 35,
-                          crossAxisSpacing: 12,
-                          childAspectRatio:
-                              BaseCourseCard.defaultWidth /
-                              BaseCourseCard.defaultHeight,
                         ),
 
                       // ===== MORE BUTTON =====
@@ -390,4 +383,3 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     );
   }
 }
-

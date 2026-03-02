@@ -1,3 +1,4 @@
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
@@ -26,7 +27,7 @@ class TeacherNodesOverviewPage extends StatelessWidget {
       body: 'Are you sure to save draft',
       confirmText: 'Save',
       onConfirm: () {
-        debugPrint('Save draft nodes');
+        LogHandler.info('Save draft nodes');
       },
     );
   }
@@ -38,7 +39,7 @@ class TeacherNodesOverviewPage extends StatelessWidget {
       body: 'Are you sure to publish Learning Path',
       confirmText: 'Publish',
       onConfirm: () {
-        debugPrint('Publish learning path');
+        LogHandler.info('Publish learning path');
       },
     );
   }
