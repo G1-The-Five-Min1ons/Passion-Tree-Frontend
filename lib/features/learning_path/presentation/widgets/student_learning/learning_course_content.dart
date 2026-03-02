@@ -5,17 +5,24 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_core.dart';
 
 class LearningCourseContent extends StatelessWidget {
   final String title;
   final String description;
   final VoidCallback onStartJourney;
+  final bool isEnrolled;
+  final List<NodeDetail>? nodes;
 
   const LearningCourseContent({
     super.key,
     required this.title,
     required this.description,
     required this.onStartJourney,
+    this.isEnrolled = false,
+    this.nodes,
   });
 
   @override
@@ -39,30 +46,43 @@ class LearningCourseContent extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 24),
-
-        /// ===== COURSE MAP PLACEHOLDER =====
-        PixelBorderContainer(
+        /// ===== COURSE MAP PREVIEW =====
+        Container(
           width: double.infinity,
-          height: 200,
-          borderColor: AppColors.cardBorder,
-          fillColor: AppColors.surface,
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1A3660), AppColors.surface],
-          ),
-          child: Center(
-            child: Text(
-              'Course Lp',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: colors.onSurface),
-            ),
-          ),
+          height: 400,
+          color: AppColors.background,
+          child: nodes != null && nodes!.isNotEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(2.0),
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: 600,
+                      height: 900,
+                      child: IgnorePointer(
+                        child: NodesOverviewCore(
+                          isEditable: false,
+                          nodes: nodes!,
+                          onNodeTap: (_) {}, // Disabled in preview
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : Center(
+                  child: nodes == null
+                      ? const CircularProgressIndicator()
+                      : Text(
+                          'No nodes available',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: colors.onSurface),
+                        ),
+                ),
         ),
 
-        const SizedBox(height: 24),
+    
 
         /// ===== DESCRIPTION =====
         PixelBorderContainer(
@@ -115,7 +135,7 @@ class LearningCourseContent extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity, 
                 child: Text(
-                  'Ready To Explore?',
+                  isEnrolled ? 'Continue Your Journey' : 'Ready To Explore?',
                   textAlign: TextAlign.center,
                   style: Theme.of(context)
                       .textTheme
@@ -142,7 +162,7 @@ class LearningCourseContent extends StatelessWidget {
             Center(
               child: AppButton(
                 variant: AppButtonVariant.text,
-                text: 'Start Journey',
+                text: isEnrolled ? 'Continue Journey' : 'Start Journey',
                 onPressed: onStartJourney,
               ),
             ),

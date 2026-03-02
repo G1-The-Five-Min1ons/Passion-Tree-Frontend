@@ -1,15 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
+import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 
 class PixelCourseCard extends StatelessWidget {
-  final Course course;
+  final LearningPath course;
+  final bool showMoreIcon;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
-  const PixelCourseCard({super.key, required this.course});
+  const PixelCourseCard({
+    super.key,
+    required this.course,
+    this.showMoreIcon = false,
+    this.onEdit,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +32,14 @@ class PixelCourseCard extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => LearningCoursePage(course: course)),
+          MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: context.read<LearningPathBloc>(),
+              child: LearningCoursePage(
+                course: course,
+              ),
+            ),
+          ),
         );
       },
       child: BaseCourseCard(
@@ -33,16 +52,28 @@ class PixelCourseCard extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: Image.asset(
-                      course.imageAsset,
+                    child: Image.network(
+                      course.coverImageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) {
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
                         return Container(
                           color: colors.primary.withValues(alpha: 0.15),
                           alignment: Alignment.center,
-                          child: Text(
-                            'NO IMAGE',
-                            style: AppPixelTypography.smallTitle,
+                          child: Icon(
+                            Icons.broken_image,
+                            size: 50,
+                            color: colors.onPrimary.withValues(alpha: 0.5),
                           ),
                         );
                       },
@@ -104,9 +135,26 @@ class PixelCourseCard extends StatelessWidget {
                           ),
                         ),
 
-                        MoreIcon(
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                        if (showMoreIcon)
+                          IconButton(
+                            constraints: const BoxConstraints(),
+                            padding: EdgeInsets.zero,
+                            splashRadius: 20,
+                            icon: MoreIcon(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                            onPressed: () {
+                              ActionPopUp.show(
+                                context,
+                                onEdit: onEdit ?? () {
+                                  debugPrint('Edit course: ${course.title}');
+                                },
+                                onDelete: onDelete ?? () {
+                                  debugPrint('Delete course: ${course.title}');
+                                },
+                              );
+                            },
+                          ),
                       ],
                     ),
 

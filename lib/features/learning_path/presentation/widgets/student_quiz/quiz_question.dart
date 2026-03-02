@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/selections/radio.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/student_quiz.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class QuizQuestionWidget extends StatelessWidget {
-  final QuizQuestionStudent question;
+  final QuizQuestion question;
   final Function(int) onSelect;
 
   const QuizQuestionWidget({
@@ -25,7 +25,7 @@ class QuizQuestionWidget extends StatelessWidget {
         children: [
           // ===== QUESTION TEXT =====
           Text(
-            question.question,
+            question.questionText,
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(color: AppColors.textPrimary),
@@ -52,7 +52,7 @@ class QuizQuestionWidget extends StatelessWidget {
                           const SizedBox(width: 26),// ระยะห่างระหว่างปุ่มเลือกกับข้อความ
                           Expanded(
                             child: Text(
-                              question.choices[cIndex],
+                              question.choices[cIndex].choiceText,
                               style: AppTypography.subtitleSemiBold.copyWith(
                               color: AppColors.textPrimary,
                               ),

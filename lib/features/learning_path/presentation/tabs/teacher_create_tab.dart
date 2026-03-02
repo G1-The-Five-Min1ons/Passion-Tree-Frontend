@@ -1,23 +1,27 @@
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/create_learning_path_input_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 
 class TeacherCreateTab extends StatefulWidget {
-  final List<Course> inProgressCourses;
-  final List<Course> completedCourses;
+  final List<LearningPath> allPaths;
+  final String? userId;
 
   const TeacherCreateTab({
     super.key,
-    required this.inProgressCourses,
-    required this.completedCourses,
+    required this.allPaths,
+    this.userId,
   });
 
   @override
@@ -32,8 +36,14 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
   Widget build(BuildContext context) {
 
     final colors = Theme.of(context).colorScheme;
-    final inProgressCourses = widget.inProgressCourses;
-    final completedCourses = widget.completedCourses;
+    
+    // Filter paths by publishStatus
+    final inProgressCourses = widget.allPaths
+        .where((path) => path.publishStatus == "draft")
+        .toList();
+    final completedCourses = widget.allPaths
+        .where((path) => path.publishStatus == "Published")
+        .toList();
   
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +121,23 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
             ),
 
             itemBuilder: (context, index) {
-              return PixelCourseCard(course: inProgressCourses[index]);
+              return PixelCourseCard(
+                course: inProgressCourses[index],
+                showMoreIcon: true,
+                onEdit: () {
+                  debugPrint('Edit course: ${inProgressCourses[index].title}');
+                  // TODO: Navigate to edit page
+                },
+                onDelete: () {
+                  debugPrint('Delete course: ${inProgressCourses[index].title}');
+                  context.read<LearningPathBloc>().add(
+                    DeleteLearningPathEvent(
+                      pathId: inProgressCourses[index].id,
+                      userId: widget.userId,
+                    ),
+                  );
+                },
+              );
             },
           ),
 
@@ -194,11 +220,27 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                   BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
             ),
             itemBuilder: (context, index) {
-              return PixelCourseCard(course: completedCourses[index]);
+              return PixelCourseCard(
+                course: completedCourses[index],
+                showMoreIcon: true,
+                onEdit: () {
+                  debugPrint('Edit course: ${completedCourses[index].title}');
+                  // TODO: Navigate to edit page
+                },
+                onDelete: () {
+                  debugPrint('Delete course: ${completedCourses[index].title}');
+                  context.read<LearningPathBloc>().add(
+                    DeleteLearningPathEvent(
+                      pathId: completedCourses[index].id,
+                      userId: widget.userId,
+                    ),
+                  );
+                },
+              );
             },
           ),
 
-        if (inProgressShown < inProgressCourses.length)
+        if (completedShown < completedCourses.length)
           Padding(
             padding: const EdgeInsets.only(top: 40),
             child: Center(
@@ -216,7 +258,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                     direction: NavigationDirection.down,
                     onPressed: () {
                       setState(() {
-                        inProgressShown += 2;
+                        completedShown += 2;
                       });
                     },
                   ),

@@ -45,8 +45,12 @@ class DeletePopUp extends StatelessWidget {
                 saveText: 'Delete',
                 saveButtonColor: Theme.of(context).colorScheme.error,
                 cancelText: 'Cancel',
-                onCancel: () => Navigator.pop(context),
+                onCancel: () {
+                  debugPrint('[DeletePopUp] Delete cancelled');
+                  Navigator.pop(context);
+                },
                 onSave: () {
+                  debugPrint('[DeletePopUp] Delete button pressed, closing popup and executing onDelete');
                   Navigator.pop(context);
                   onDelete(); 
                 },

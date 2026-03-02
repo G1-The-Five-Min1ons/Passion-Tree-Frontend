@@ -1,20 +1,18 @@
+
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_progress_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 
 class TeacherLearningPathStatus extends StatefulWidget {
-  final List<Course> inProgressCourses;
-  final List<Course> completedCourses;
+  final List<EnrolledLearningPath> enrolledPaths;
 
   const TeacherLearningPathStatus({
     super.key,
-    required this.inProgressCourses,
-    required this.completedCourses,
+    required this.enrolledPaths,
   });
 
   @override
@@ -28,8 +26,15 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final inProgressCourses = widget.inProgressCourses;
-    final completedCourses = widget.completedCourses;
+    
+    // แยกตามสถานะ
+    final inProgressCourses = widget.enrolledPaths
+        .where((c) => c.progressStatus != "Completed")
+        .toList();
+    
+    final completedCourses = widget.enrolledPaths
+        .where((c) => c.progressStatus == "Completed")
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,11 +88,12 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
               crossAxisCount: 2,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
-              childAspectRatio:
-                  BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
+              childAspectRatio: 0.692, // 180/260 สำหรับ progress card
             ),
             itemBuilder: (context, index) {
-              return PixelCourseCard(course: inProgressCourses[index]);
+              return CourseProgressCard(
+                data: inProgressCourses[index],
+              );
             },
           ),
 
@@ -168,11 +174,12 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
               crossAxisCount: 2,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
-              childAspectRatio:
-                  BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
+              childAspectRatio: 0.692, // 180/260 สำหรับ progress card
             ),
             itemBuilder: (context, index) {
-              return PixelCourseCard(course: completedCourses[index]);
+              return CourseProgressCard(
+                data: completedCourses[index],
+              );
             },
           ),
 

@@ -1,35 +1,80 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/student_quiz.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_question.dart'; 
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_result.dart'; 
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_result.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/student_quiz_mock.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/congrats_popups.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/rating_popup.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/datasources/learning_path_data_source.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/repositories/learning_path_repositories.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
 
-enum QuizViewState { answering, result }
+enum QuizViewState { loading, answering, result, error }
 
 class LearningPathQuizPage extends StatefulWidget {
-  const LearningPathQuizPage({super.key});
+  final String nodeId;
+  final String? title;
+  final String? pathName;
+  final int? totalNodes;
+  final int? currentNodeSequence;
+
+  const LearningPathQuizPage({
+    super.key,
+    required this.nodeId,
+    this.title,
+    this.pathName,
+    this.totalNodes,
+    this.currentNodeSequence,
+  });
 
   @override
   State<LearningPathQuizPage> createState() => _LearningPathQuizPageState();
 }
 
 class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
-  late List<QuizQuestionStudent> _questions;
-  QuizViewState _viewState = QuizViewState.answering;
+  List<QuizQuestion> _questions = [];
+  QuizViewState _viewState = QuizViewState.loading;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    // clone เพื่อไม่แก้ reference ของ mock
-    _questions = List.from(mockStudentQuiz.questions);
+    _loadQuestions();
+  }
+
+  Future<void> _loadQuestions() async {
+    setState(() {
+      _viewState = QuizViewState.loading;
+      _errorMessage = null;
+    });
+
+    try {
+      final dataSource = LearningPathDataSource();
+      final repository = LearningPathRepositoryImpl(dataSource);
+      final getNodeQuestions = GetNodeQuestions(repository);
+
+      final questions = await getNodeQuestions(widget.nodeId);
+
+      setState(() {
+        _questions = questions;
+        _viewState = QuizViewState.answering;
+      });
+    } catch (e) {
+      setState(() {
+        _viewState = QuizViewState.error;
+        _errorMessage = e.toString();
+      });
+    }
   }
 
   @override
@@ -39,31 +84,70 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
     return Scaffold(
       appBar: const AppBarWidget(title: 'Learning Paths', showBackButton: true),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: AppSpacing.xmargin,
-              right: AppSpacing.xmargin,
-              top: AppSpacing.ymargin,
-              bottom: 40,
+        child: _buildBody(colors),
+      ),
+    );
+  }
+
+  Widget _buildBody(ColorScheme colors) {
+    if (_viewState == QuizViewState.loading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_viewState == QuizViewState.error) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Error loading quiz',
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ===== HEADER =====
-                SizedBox(
-                  height: 72,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      mockStudentQuiz.title,
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        color: colors.onPrimary,
-                      ),
-                    ),
+            const SizedBox(height: 8),
+            Text(
+              _errorMessage ?? 'Unknown error',
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            AppButton(
+              variant: AppButtonVariant.text,
+              text: 'Retry',
+              onPressed: _loadQuestions,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.only(
+          left: AppSpacing.xmargin,
+          right: AppSpacing.xmargin,
+          top: AppSpacing.ymargin,
+          bottom: 40,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ===== HEADER =====
+            SizedBox(
+              height: 72,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  widget.title ?? 'Quiz',
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    color: colors.onPrimary,
                   ),
                 ),
+              ),
+            ),
 
+            const SizedBox(height: 40),
                 const SizedBox(height: 40),
 
                 // ===== QUIZ CARD =====
@@ -82,40 +166,54 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                             ?.copyWith(color: AppColors.title),
                       ),
 
-                      const SizedBox(height: 24),
-
-                      // ===== QUESTIONS / RESULT =====
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: _buildQuizContent(),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // ===== ACTION BUTTON =====
-                      Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: _viewState == QuizViewState.answering
-                              ? AppButton(
-                                  variant: AppButtonVariant.text,
-                                  text: 'Submit',
-                                  onPressed: _submitQuiz,
-                                )
-                              : AppButton(
-                                  variant: AppButtonVariant.text,
-                                  text: 'Finish',
-                                  onPressed: _finishQuiz,
-                                ),
-                        ),
-                      ),
-                    ],
+            // ===== QUIZ CARD =====
+            PixelBorderContainer(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              borderColor: colors.primary,
+              fillColor: colors.surface,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ===== QUIZ TITLE =====
+                  Text(
+                    'Quiz',
+                    style: Theme.of(context).textTheme.displaySmall
+                        ?.copyWith(color: colors.primary),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 24),
+
+                  // ===== QUESTIONS / RESULT =====
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: _buildQuizContent(),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // ===== ACTION BUTTON =====
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: _viewState == QuizViewState.answering
+                          ? AppButton(
+                              variant: AppButtonVariant.text,
+                              text: 'Submit',
+                              onPressed: _submitQuiz,
+                            )
+                          : AppButton(
+                              variant: AppButtonVariant.text,
+                              text: 'Finish',
+                              onPressed: _finishQuiz,
+                            ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -150,34 +248,147 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
 
   // ===== ACTIONS =====
   void _submitQuiz() {
+    // ตรวจสอบว่าเลือกคำตอบครบทุกข้อหรือยัง
+    final unansweredQuestions = <int>[];
+    for (int i = 0; i < _questions.length; i++) {
+      if (_questions[i].selectedIndex == null) {
+        unansweredQuestions.add(i + 1);
+      }
+    }
+
+    // ถ้ายังไม่ได้เลือกครบ แสดง SnackBar เตือน
+    if (unansweredQuestions.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            unansweredQuestions.length == 1
+                ? 'Please answer question'
+                : 'Please answer all questions',
+          ),
+          duration: const Duration(seconds: 3),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    // ถ้าเลือกครบแล้ว เปลี่ยนเป็น result view
     setState(() {
       _viewState = QuizViewState.result;
     });
   }
 
   void _finishQuiz() {
-    // Show congratulation popup
-    showDialog(
-      context: context,
-      builder: (_) => CompletionPopup(
-        onYes: () {
-          Navigator.pop(context); // Close congrat popup
-          // Show rating popup
-          showDialog(
-            context: context,
-            builder: (_) => RatingPopup(
-              pathName: mockStudentQuiz.title,
-              onSubmit: () {
-                Navigator.pop(context); // Close rating popup
-                // You can add more actions here after rating
-              },
-            ),
-          );
-        },
-        onNo: () {
-          Navigator.pop(context); // Close congrat popup
-        },
-      ),
-    );
+    // TODO: Get userId from authentication service
+    const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
+    
+    // Check if this is the last node (sequence starts from 1)
+    debugPrint('[QUIZ] Checking if last node:');
+    debugPrint('[QUIZ] currentNodeSequence: ${widget.currentNodeSequence}');
+    debugPrint('[QUIZ] totalNodes: ${widget.totalNodes}');
+    
+    final isLastNode = widget.totalNodes != null && 
+                       widget.currentNodeSequence != null && 
+                       widget.currentNodeSequence == widget.totalNodes;
+    
+    debugPrint('[QUIZ] isLastNode: $isLastNode');
+    
+    // Only show popups if this is the last node
+    if (isLastNode && widget.pathName != null) {
+      // Store references to avoid context issues
+      final scaffoldContext = context;
+      final bloc = context.read<LearningPathBloc>();
+      
+      // Show congratulation popup
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (congratsDialogContext) => CompletionPopup(
+          onYes: () {
+            // Note: CompletionPopup already handles Navigator.pop internally
+            
+            // Show rating popup
+            debugPrint('[QUIZ] Showing rating popup for path: ${widget.pathName}');
+            showDialog(
+              context: scaffoldContext,
+              barrierDismissible: false,
+              builder: (ratingDialogContext) => RatingPopup(
+                pathName: widget.pathName!,
+                onSubmit: () async {
+                  debugPrint('[QUIZ] Rating submitted, closing popup...');
+                  Navigator.of(ratingDialogContext).pop(); // Close rating popup first
+                  
+                  // Mark node as completed
+                  debugPrint('[QUIZ] Completing node...');
+                  bloc.add(
+                    CompleteNodeEvent(
+                      nodeId: widget.nodeId,
+                      userId: userId,
+                    ),
+                  );
+                  
+                  // Wait for backend to process completion (1 second)
+                  await Future.delayed(const Duration(milliseconds: 1000));
+                  
+                  // Navigate to status page after completion
+                  debugPrint('[QUIZ] Navigating to status page...');
+                  Navigator.of(scaffoldContext).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: bloc,
+                        child: const LearningPathStatusPage(),
+                      ),
+                    ),
+                    (route) => route.isFirst,
+                  );
+                },
+              ),
+            );
+          },
+          onNo: () async {
+            // Note: CompletionPopup already handles Navigator.pop internally
+            debugPrint('[QUIZ] Skipping rating, completing node...');
+            
+            // Mark node as completed
+            bloc.add(
+              CompleteNodeEvent(
+                nodeId: widget.nodeId,
+                userId: userId,
+              ),
+            );
+            
+            // Wait for backend to process completion (1 second)
+            await Future.delayed(const Duration(milliseconds: 1000));
+            
+            // Navigate to status page after completion
+            debugPrint('[QUIZ] Navigating to status page...');
+            Navigator.of(scaffoldContext).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (_) => BlocProvider.value(
+                  value: bloc,
+                  child: const LearningPathStatusPage(),
+                ),
+              ),
+              (route) => route.isFirst,
+            );
+          },
+        ),
+      );
+    } else {
+      // Not the last node - complete node first, then go back
+      debugPrint('[QUIZ] Not last node, completing node...');
+      
+      // Mark node as completed
+      context.read<LearningPathBloc>().add(
+        CompleteNodeEvent(
+          nodeId: widget.nodeId,
+          userId: userId,
+        ),
+      );
+      
+      debugPrint('[QUIZ] Going back to nodes overview');
+      Navigator.pop(context); // Pop quiz page
+      Navigator.pop(context); // Pop learning node page -> back to nodes overview
+    }
   }
 }

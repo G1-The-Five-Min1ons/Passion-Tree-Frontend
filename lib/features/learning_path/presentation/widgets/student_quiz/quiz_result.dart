@@ -1,12 +1,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/selections/radio.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/student_quiz.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class QuizResultQuestionWidget extends StatelessWidget {
-  final QuizQuestionStudent question;
+  final QuizQuestion question;
 
   const QuizResultQuestionWidget({super.key, required this.question});
 
@@ -21,7 +21,7 @@ class QuizResultQuestionWidget extends StatelessWidget {
         children: [
           // ===== QUESTION =====
           Text(
-            question.question,
+            question.questionText,
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(color: colors.onSurface),
@@ -51,7 +51,7 @@ class QuizResultQuestionWidget extends StatelessWidget {
                   const SizedBox(width: 26),
                   Expanded(
                     child: Text(
-                      question.choices[cIndex],
+                      question.choices[cIndex].choiceText,
                       style: AppTypography.subtitleSemiBold.copyWith(
                         color: textColor,
                       ),
@@ -72,7 +72,7 @@ class QuizResultQuestionWidget extends StatelessWidget {
                   style: AppTypography.titleSemiBold,
                 ),
                 TextSpan(
-                  text: question.reason,
+                  text: question.correctReasoning,
                   style: AppTypography.subtitleSemiBold.copyWith(
                     color: AppColors.textSecondary, 
                   ),

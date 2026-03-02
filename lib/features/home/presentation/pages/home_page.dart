@@ -43,6 +43,7 @@ class HomePage extends StatelessWidget {
 
                 const SizedBox(height: 60),
               // ไปLP นักเรียน ที่เรียนแล้ว
+              /*
               Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -66,9 +67,10 @@ class HomePage extends StatelessWidget {
                   child: const Text('S_LearningPathOverviewLoginPage'),
                 ),
               ),
-
+              */
                 const SizedBox(height: 60),
               // ไปLPครู ที่เรียนแล้ว
+              
               Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -86,7 +88,7 @@ class HomePage extends StatelessWidget {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) =>
-                            const TeacherLearningPathOverviewPage(),
+                            const TeacherLearningPathWrapper(),
                       ),
                     );
                   },

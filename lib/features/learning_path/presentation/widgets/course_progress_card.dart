@@ -1,28 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
-import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 
 class CourseProgressCard extends StatelessWidget {
-  final Course course;
-  final int completedModules; 
+  final EnrolledLearningPath data;
 
-  const CourseProgressCard({          
+  const CourseProgressCard({
     super.key,
-    required this.course,
-    required this.completedModules,
+    required this.data,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    final progress = (completedModules / course.modules).clamp(0.0, 1.0);
-    final percent = (progress * 100).round();
+    
+    final progress = (data.progressPercent / 100).clamp(0.0, 1.0);
+    final percent = data.progressPercent.round();
 
-    return BaseCourseCard(
+    // Convert EnrolledLearningPath to LearningPath for navigation
+    final course = LearningPath(
+      id: data.pathId,
+      title: data.title,
+      description: data.description,
+      coverImageUrl: data.coverImgUrl,
+      rating: data.rating,
+      publishStatus: 'Published',
+      instructor: data.instructor,
+      students: 0, // Not available in EnrolledLearningPath
+      modules: data.modules,
+    );
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: context.read<LearningPathBloc>(),
+              child: LearningCoursePage(
+                course: course,
+                enrolledPath: data,
+              ),
+            ),
+          ),
+        );
+      },
+      child: BaseCourseCard(
+      height: 260, // เพิ่มความสูงสำหรับ progress card (จาก default 240)
       child: Column(
         children: [
           // ================= IMAGE =================
@@ -32,16 +64,28 @@ class CourseProgressCard extends StatelessWidget {
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: Image.asset(
-                    course.imageAsset,
+                  child: Image.network(
+                    data.coverImgUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) {
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
                       return Container(
                         color: colors.primary.withValues(alpha: 0.15),
                         alignment: Alignment.center,
-                        child: Text(
-                          'NO IMAGE',
-                          style: AppPixelTypography.smallTitle,
+                        child: Icon(
+                          Icons.broken_image,
+                          size: 50,
+                          color: colors.onPrimary.withValues(alpha: 0.5),
                         ),
                       );
                     },
@@ -68,7 +112,7 @@ class CourseProgressCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            course.rating.toStringAsFixed(1),
+                            data.rating.toStringAsFixed(1),
                             style: AppTypography.bodySemiBold.copyWith(
                               color: colors.secondary,
                             ),
@@ -92,37 +136,30 @@ class CourseProgressCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Title
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          course.title,
-                          style: AppTypography.subtitleSemiBold,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      MoreIcon(color: Theme.of(context).colorScheme.onSurface),
-                    ],
+                  Text(
+                    data.title,
+                    style: AppTypography.subtitleSemiBold,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 3), // ลด spacing
 
                   Text(
-                    'สอนโดย ${course.instructor}',
+                    'สอนโดย ${data.instructor}',
                     style: AppTypography.smallBodyMedium,
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6), // ลด spacing
 
                   Text(
-                    course.description,
+                    data.description,
                     style: AppTypography.smallBodyMedium,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8), // ลด spacing
 
                   // ================= PROGRESS HEADER =================
                   Row(
@@ -131,13 +168,13 @@ class CourseProgressCard extends StatelessWidget {
                       Text(
                         'Progress',
                         style: AppTypography.smallBodyMedium.copyWith(
-                          color: colors.surface,
+                          color: colors.onSurface,
                         ),
                       ),
                       Text(
                         '$percent%',
                         style: AppTypography.smallBodyMedium.copyWith(
-                          color: colors.surface,
+                          color: colors.onSurface,
                         ),
                       ),
                     ],
@@ -149,23 +186,21 @@ class CourseProgressCard extends StatelessWidget {
                   Container(
                     height: 10,
                     width: double.infinity,
-                    color: colors.secondary, // หลอดสีเหลือง
+                    color: colors.secondary,
                     child: FractionallySizedBox(
                       alignment: Alignment.centerLeft,
                       widthFactor: progress,
-                      child: Container(
-                        color: colors.primary, // สีน้ำเงิน progress
-                      ),
+                      child: Container(color: colors.primary),
                     ),
                   ),
 
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4), // ลด spacing
 
                   // ================= MODULE INFO =================
                   Text(
-                    '$completedModules / ${course.modules} modules',
+                    '${data.completedNodes} / ${data.modules} modules',
                     style: AppTypography.smallBodyMedium.copyWith(
-                      color: colors.surface,
+                      color: colors.onSurface,
                     ),
                   ),
                 ],
@@ -173,6 +208,7 @@ class CourseProgressCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
