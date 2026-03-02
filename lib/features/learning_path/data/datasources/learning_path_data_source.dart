@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:passion_tree_frontend/core/config/api_config.dart';
@@ -28,8 +30,9 @@ class LearningPathDataSource {
       debugPrint('Response Status: ${response.statusCode}');
       
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final paths = data['data'] as List?;
+        try {
+          final data = jsonDecode(response.body);
+          final paths = data['data'] as List?;
         
         if (paths == null || paths.isEmpty) {
           debugPrint('No learning paths found (empty or null)');
@@ -41,11 +44,30 @@ class LearningPathDataSource {
         return paths
             .map((path) => LearningPathApiModel.fromJson(path))
             .toList();
+        } on FormatException catch (e) {
+          debugPrint('Failed to parse JSON response: $e');
+          debugPrint('Raw response body: ${response.body}');
+          throw Exception('Server returned invalid JSON response (possibly HTML error page)');
+        }
       } else {
-        final error = jsonDecode(response.body);
-        debugPrint('Failed to get learning paths: ${error['message']}');
-        throw Exception(error['message'] ?? 'Failed to get learning paths');
+        try {
+          final error = jsonDecode(response.body);
+          debugPrint('Failed to get learning paths: ${error['message']}');
+          throw Exception(error['message'] ?? 'Failed to get learning paths');
+        } on FormatException {
+          debugPrint('Failed to parse error response. Raw body: ${response.body}');
+          throw Exception('Failed to get learning paths (Status ${response.statusCode})');
+        }
       }
+    } on SocketException catch (e) {
+      debugPrint('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      debugPrint('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      debugPrint('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
     } catch (e) {
       debugPrint('Exception in getAllLearningPaths: $e');
       throw Exception('Failed to fetch learning paths: $e');
@@ -55,59 +77,99 @@ class LearningPathDataSource {
     String pathId,
     String userId,
   ) async {
-    debugPrint('[DataSource] Fetching learning path progress...');
-    debugPrint('API: /user/learningpaths/$pathId/progress');
-    debugPrint('User ID: $userId');
-    
-    final response = await client.get(
-      Uri.parse(
-        '${ApiConfig.apiBaseUrl}/user/learningpaths/$pathId/progress?user_id=$userId',
-      ),
-      headers: {'Content-Type': 'application/json'},
-    );
+    try {
+      debugPrint('[DataSource] Fetching learning path progress...');
+      debugPrint('API: /user/learningpaths/$pathId/progress');
+      debugPrint('User ID: $userId');
+      
+      final response = await client.get(
+        Uri.parse(
+          '${ApiConfig.apiBaseUrl}/user/learningpaths/$pathId/progress?user_id=$userId',
+        ),
+        headers: {'Content-Type': 'application/json'},
+      );
 
-    debugPrint('Response Status: ${response.statusCode}');
-    
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      debugPrint('Successfully fetched progress for path: $pathId');
-      return LearningPathProgressApiModel.fromJson(data['data']);
-    } else {
-      debugPrint('Failed to load progress');
-      throw Exception('Failed to load progress');
+      debugPrint('Response Status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        try {
+          final data = jsonDecode(response.body);
+          debugPrint('Successfully fetched progress for path: $pathId');
+          return LearningPathProgressApiModel.fromJson(data['data']);
+        } on FormatException catch (e) {
+          debugPrint('Failed to parse JSON response: $e');
+          debugPrint('Raw response body: ${response.body}');
+          throw Exception('Server returned invalid JSON response (possibly HTML error page)');
+        }
+      } else {
+        debugPrint('Failed to load progress');
+        throw Exception('Failed to load progress');
+      }
+    } on SocketException catch (e) {
+      debugPrint('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      debugPrint('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      debugPrint('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
+    } catch (e) {
+      debugPrint('Exception in getLearningPathProgress: $e');
+      rethrow;
     }
   }
   Future<List<EnrolledLearningPathApiModel>> getEnrolledPaths(
     String userId,
   ) async {
-    debugPrint('[DataSource] Fetching enrolled paths...');
-    debugPrint('API: /learningpaths/user/enroll');
-    debugPrint('User ID: $userId');
-    
-    final response = await client.get(
-      Uri.parse(
-        '${ApiConfig.apiBaseUrl}/learningpaths/user/enroll?user_id=$userId',
-      ),
-      headers: {'Content-Type': 'application/json'},
-    );
+    try {
+      debugPrint('[DataSource] Fetching enrolled paths...');
+      debugPrint('API: /learningpaths/user/enroll');
+      debugPrint('User ID: $userId');
+      
+      final response = await client.get(
+        Uri.parse(
+          '${ApiConfig.apiBaseUrl}/learningpaths/user/enroll?user_id=$userId',
+        ),
+        headers: {'Content-Type': 'application/json'},
+      );
 
-    debugPrint('Response Status: ${response.statusCode}');
-    
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final list = data['data'] as List?;
+      debugPrint('Response Status: ${response.statusCode}');
       
-      if (list == null || list.isEmpty) {
-        debugPrint('No enrolled paths found (empty or null)');
-        return [];
+      if (response.statusCode == 200) {
+        try {
+          final data = jsonDecode(response.body);
+          final list = data['data'] as List?;
+          
+          if (list == null || list.isEmpty) {
+            debugPrint('No enrolled paths found (empty or null)');
+            return [];
+          }
+          
+          debugPrint('Successfully fetched ${list.length} enrolled paths');
+          
+          return list.map((e) => EnrolledLearningPathApiModel.fromJson(e)).toList();
+        } on FormatException catch (e) {
+          debugPrint('Failed to parse JSON response: $e');
+          debugPrint('Raw response body: ${response.body}');
+          throw Exception('Server returned invalid JSON response (possibly HTML error page)');
+        }
+      } else {
+        debugPrint('Failed to load enrolled paths');
+        throw Exception('Failed to load enrolled paths');
       }
-      
-      debugPrint('Successfully fetched ${list.length} enrolled paths');
-      
-      return list.map((e) => EnrolledLearningPathApiModel.fromJson(e)).toList();
-    } else {
-      debugPrint('Failed to load enrolled paths');
-      throw Exception('Failed to load enrolled paths');
+    } on SocketException catch (e) {
+      debugPrint('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      debugPrint('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      debugPrint('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
+    } catch (e) {
+      debugPrint('Exception in getEnrolledPaths: $e');
+      rethrow;
     }
   }
 
@@ -125,8 +187,9 @@ class LearningPathDataSource {
       debugPrint('Response Status: ${response.statusCode}');
       
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final nodes = data['data'] as List?;
+        try {
+          final data = jsonDecode(response.body);
+          final nodes = data['data'] as List?;
         
         if (nodes == null || nodes.isEmpty) {
           debugPrint('No nodes found for path: $pathId (empty or null)');
@@ -138,11 +201,30 @@ class LearningPathDataSource {
         return nodes
             .map((node) => LearningNodeApiModel.fromJson(node))
             .toList();
+        } on FormatException catch (e) {
+          debugPrint('Failed to parse JSON response: $e');
+          debugPrint('Raw response body: ${response.body}');
+          throw Exception('Server returned invalid JSON response (possibly HTML error page)');
+        }
       } else {
-        final error = jsonDecode(response.body);
-        debugPrint('Failed to get nodes: ${error['message']}');
-        throw Exception(error['message'] ?? 'Failed to get nodes');
+        try {
+          final error = jsonDecode(response.body);
+          debugPrint('Failed to get nodes: ${error['message']}');
+          throw Exception(error['message'] ?? 'Failed to get nodes');
+        } on FormatException {
+          debugPrint('Failed to parse error response. Raw body: ${response.body}');
+          throw Exception('Failed to get nodes (Status ${response.statusCode})');
+        }
       }
+    } on SocketException catch (e) {
+      debugPrint('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      debugPrint('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      debugPrint('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
     } catch (e) {
       debugPrint('Exception in getNodesForPath: $e');
       throw Exception('Failed to fetch nodes: $e');
@@ -163,14 +245,34 @@ class LearningPathDataSource {
       debugPrint('Response Status: ${response.statusCode}');
       
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        debugPrint('Successfully fetched node detail: $nodeId');
-        return NodeDetailApiModel.fromJson(data['data']);
+        try {
+          final data = jsonDecode(response.body);
+          debugPrint('Successfully fetched node detail: $nodeId');
+          return NodeDetailApiModel.fromJson(data['data']);
+        } on FormatException catch (e) {
+          debugPrint('Failed to parse JSON response: $e');
+          debugPrint('Raw response body: ${response.body}');
+          throw Exception('Server returned invalid JSON response (possibly HTML error page)');
+        }
       } else {
-        final error = jsonDecode(response.body);
-        debugPrint('Failed to get node detail: ${error['message']}');
-        throw Exception(error['message'] ?? 'Failed to get node detail');
+        try {
+          final error = jsonDecode(response.body);
+          debugPrint('Failed to get node detail: ${error['message']}');
+          throw Exception(error['message'] ?? 'Failed to get node detail');
+        } on FormatException {
+          debugPrint('Failed to parse error response. Raw body: ${response.body}');
+          throw Exception('Failed to get node detail (Status ${response.statusCode})');
+        }
       }
+    } on SocketException catch (e) {
+      debugPrint('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      debugPrint('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      debugPrint('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
     } catch (e) {
       debugPrint('Exception in getNodeDetail: $e');
       throw Exception('Failed to fetch node detail: $e');
@@ -190,8 +292,9 @@ class LearningPathDataSource {
       debugPrint('Response Status: ${response.statusCode}');
       
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final questions = data['data'] as List?;
+        try {
+          final data = jsonDecode(response.body);
+          final questions = data['data'] as List?;
         
         if (questions == null || questions.isEmpty) {
           debugPrint('No questions found for node: $nodeId (empty or null)');
@@ -203,11 +306,30 @@ class LearningPathDataSource {
         return questions
             .map((question) => QuizQuestionApiModel.fromJson(question))
             .toList();
+        } on FormatException catch (e) {
+          debugPrint('Failed to parse JSON response: $e');
+          debugPrint('Raw response body: ${response.body}');
+          throw Exception('Server returned invalid JSON response (possibly HTML error page)');
+        }
       } else {
-        final error = jsonDecode(response.body);
-        debugPrint('Failed to get questions: ${error['message']}');
-        throw Exception(error['message'] ?? 'Failed to get questions');
+        try {
+          final error = jsonDecode(response.body);
+          debugPrint('Failed to get questions: ${error['message']}');
+          throw Exception(error['message'] ?? 'Failed to get questions');
+        } on FormatException {
+          debugPrint('Failed to parse error response. Raw body: ${response.body}');
+          throw Exception('Failed to get questions (Status ${response.statusCode})');
+        }
       }
+    } on SocketException catch (e) {
+      debugPrint('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      debugPrint('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      debugPrint('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
     } catch (e) {
       debugPrint('Exception in getNodeQuestions: $e');
       throw Exception('Failed to fetch questions: $e');
@@ -231,10 +353,24 @@ class LearningPathDataSource {
         debugPrint('Successfully started node: $nodeId');
         return;
       } else {
-        final error = jsonDecode(response.body);
-        debugPrint('Failed to start node: ${error['message']}');
-        throw Exception(error['message'] ?? 'Failed to start node');
+        try {
+          final error = jsonDecode(response.body);
+          debugPrint('Failed to start node: ${error['message']}');
+          throw Exception(error['message'] ?? 'Failed to start node');
+        } on FormatException {
+          debugPrint('Failed to parse error response. Raw body: ${response.body}');
+          throw Exception('Failed to start node (Status ${response.statusCode})');
+        }
       }
+    } on SocketException catch (e) {
+      debugPrint('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      debugPrint('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      debugPrint('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
     } catch (e) {
       debugPrint('Exception in startNode: $e');
       throw Exception('Failed to start node: $e');
@@ -258,10 +394,24 @@ class LearningPathDataSource {
         debugPrint('Successfully completed node: $nodeId');
         return;
       } else {
-        final error = jsonDecode(response.body);
-        debugPrint('Failed to complete node: ${error['message']}');
-        throw Exception(error['message'] ?? 'Failed to complete node');
+        try {
+          final error = jsonDecode(response.body);
+          debugPrint('Failed to complete node: ${error['message']}');
+          throw Exception(error['message'] ?? 'Failed to complete node');
+        } on FormatException {
+          debugPrint('Failed to parse error response. Raw body: ${response.body}');
+          throw Exception('Failed to complete node (Status ${response.statusCode})');
+        }
       }
+    } on SocketException catch (e) {
+      debugPrint('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      debugPrint('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      debugPrint('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
     } catch (e) {
       debugPrint('Exception in completeNode: $e');
       throw Exception('Failed to complete node: $e');
@@ -300,6 +450,15 @@ class LearningPathDataSource {
           throw Exception('Failed to enroll (Status ${response.statusCode}): ${response.body}');
         }
       }
+    } on SocketException catch (e) {
+      debugPrint('[DataSource] No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      debugPrint('[DataSource] Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      debugPrint('[DataSource] HTTP error: $e');
+      throw Exception('Network error. Please try again.');
     } catch (e) {
       debugPrint('[DataSource] Exception in enrollPath: $e');
       rethrow;
@@ -322,10 +481,24 @@ class LearningPathDataSource {
         debugPrint('Successfully deleted learning path: $pathId');
         return;
       } else {
-        final error = jsonDecode(response.body);
-        debugPrint('Failed to delete learning path: ${error['message']}');
-        throw Exception(error['message'] ?? 'Failed to delete learning path');
+        try {
+          final error = jsonDecode(response.body);
+          debugPrint('Failed to delete learning path: ${error['message']}');
+          throw Exception(error['message'] ?? 'Failed to delete learning path');
+        } on FormatException {
+          debugPrint('Failed to parse error response. Raw body: ${response.body}');
+          throw Exception('Failed to delete learning path (Status ${response.statusCode})');
+        }
       }
+    } on SocketException catch (e) {
+      debugPrint('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      debugPrint('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      debugPrint('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
     } catch (e) {
       debugPrint('Exception in deleteLearningPath: $e');
       throw Exception('Failed to delete learning path: $e');
