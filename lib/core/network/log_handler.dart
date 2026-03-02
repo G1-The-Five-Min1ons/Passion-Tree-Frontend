@@ -14,14 +14,7 @@ class _AnsiColors {
 }
 
 /// Log levels with corresponding colors
-enum LogLevel {
-  info,
-  request,
-  response,
-  success,
-  error,
-  warning,
-}
+enum LogLevel { info, request, response, success, error, warning }
 
 /// Custom logger for API and general application logging
 class LogHandler {
@@ -50,7 +43,7 @@ class LogHandler {
   /// Get color for log level
   static String _getColor(LogLevel level) {
     if (!_useColors) return '';
-    
+
     switch (level) {
       case LogLevel.info:
         return _AnsiColors.brightCyan;
@@ -70,11 +63,11 @@ class LogHandler {
   /// Log info message
   static void info(String message) {
     if (!_enabled) return;
-    
+
     final timestamp = _timestamp();
     final color = _getColor(LogLevel.info);
     final reset = _useColors ? _AnsiColors.reset : '';
-    
+
     debugPrint('$color$timestamp [INFO] : $message$reset');
   }
 
@@ -86,15 +79,16 @@ class LogHandler {
     dynamic body,
   }) {
     if (!_enabled) return;
-    
+
     final timestamp = _timestamp();
     final color = _getColor(LogLevel.request);
     final reset = _useColors ? _AnsiColors.reset : '';
-    
+
     debugPrint('$color$timestamp [REQUEST] [$method] : $url$reset');
-    
+
     if (body != null) {
-      debugPrint('$color$timestamp Body : ${_prettyJson(body)}$reset');
+      // Disabled by default to reduce noise
+      // debugPrint('$color$timestamp Body : ${_prettyJson(body)}$reset');
     }
   }
 
@@ -106,43 +100,46 @@ class LogHandler {
     dynamic data,
   }) {
     if (!_enabled) return;
-    
+
     final timestamp = _timestamp();
     final color = _getColor(LogLevel.response);
     final reset = _useColors ? _AnsiColors.reset : '';
-    
-    debugPrint('$color$timestamp [RESPONSE] <$statusCode>-[$method] : $url$reset');
-    
+
+    debugPrint(
+      '$color$timestamp [RESPONSE] <$statusCode>-[$method] : $url$reset',
+    );
+
     if (data != null) {
-      debugPrint('$color$timestamp Data : ${_prettyJson(data)}$reset');
+      // Disabled by default to reduce noise
+      // debugPrint('$color$timestamp Data : ${_prettyJson(data)}$reset');
     }
   }
 
   /// Log success message
   static void success(String message) {
     if (!_enabled) return;
-    
+
     final timestamp = _timestamp();
     final color = _getColor(LogLevel.success);
     final reset = _useColors ? _AnsiColors.reset : '';
-    
+
     debugPrint('$color$timestamp [SUCCESS] : $message$reset');
   }
 
   /// Log error message
   static void error(String message, {Object? error, StackTrace? stackTrace}) {
     if (!_enabled) return;
-    
+
     final timestamp = _timestamp();
     final color = _getColor(LogLevel.error);
     final reset = _useColors ? _AnsiColors.reset : '';
-    
+
     debugPrint('$color$timestamp [ERROR] : $message$reset');
-    
+
     if (error != null) {
       debugPrint('$color$timestamp Error Details : $error$reset');
     }
-    
+
     if (stackTrace != null) {
       debugPrint('$color$timestamp StackTrace :\n$stackTrace$reset');
     }
@@ -151,11 +148,11 @@ class LogHandler {
   /// Log warning message
   static void warning(String message) {
     if (!_enabled) return;
-    
+
     final timestamp = _timestamp();
     final color = _getColor(LogLevel.warning);
     final reset = _useColors ? _AnsiColors.reset : '';
-    
+
     debugPrint('$color$timestamp [WARNING] : $message$reset');
   }
 
@@ -179,10 +176,10 @@ class LogHandler {
   /// Log section separator
   static void separator({String? title}) {
     if (!_enabled) return;
-    
+
     final color = _useColors ? _AnsiColors.gray : '';
     final reset = _useColors ? _AnsiColors.reset : '';
-    
+
     if (title != null) {
       debugPrint('$color${'=' * 60}$reset');
       debugPrint('$color$title$reset');

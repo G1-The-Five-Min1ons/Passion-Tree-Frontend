@@ -1,4 +1,3 @@
-import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
@@ -266,15 +265,11 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
     const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
     
     // Check if this is the last node (sequence starts from 1)
-    LogHandler.info('[QUIZ] Checking if last node:');
-    LogHandler.info('[QUIZ] currentNodeSequence: ${widget.currentNodeSequence}');
-    LogHandler.info('[QUIZ] totalNodes: ${widget.totalNodes}');
     
     final isLastNode = widget.totalNodes != null && 
                        widget.currentNodeSequence != null && 
                        widget.currentNodeSequence == widget.totalNodes;
     
-    LogHandler.info('[QUIZ] isLastNode: $isLastNode');
     
     // Only show popups if this is the last node
     if (isLastNode && widget.pathName != null) {
@@ -291,18 +286,15 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
             // Note: CompletionPopup already handles Navigator.pop internally
             
             // Show rating popup
-            LogHandler.info('[QUIZ] Showing rating popup for path: ${widget.pathName}');
             showDialog(
               context: scaffoldContext,
               barrierDismissible: false,
               builder: (ratingDialogContext) => RatingPopup(
                 pathName: widget.pathName!,
                 onSubmit: () async {
-                  LogHandler.info('[QUIZ] Rating submitted, closing popup...');
                   Navigator.of(ratingDialogContext).pop(); // Close rating popup first
                   
                   // Mark node as completed
-                  LogHandler.info('[QUIZ] Completing node...');
                   bloc.add(
                     CompleteNodeEvent(
                       nodeId: widget.nodeId,
@@ -314,7 +306,6 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                   await Future.delayed(const Duration(milliseconds: 1000));
                   
                   // Navigate to status page after completion
-                  LogHandler.info('[QUIZ] Navigating to status page...');
                   Navigator.of(scaffoldContext).pushAndRemoveUntil(
                     MaterialPageRoute(
                       builder: (_) => BlocProvider.value(
@@ -330,7 +321,6 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
           },
           onNo: () async {
             // Note: CompletionPopup already handles Navigator.pop internally
-            LogHandler.info('[QUIZ] Skipping rating, completing node...');
             
             // Mark node as completed
             bloc.add(
@@ -344,7 +334,6 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
             await Future.delayed(const Duration(milliseconds: 1000));
             
             // Navigate to status page after completion
-            LogHandler.info('[QUIZ] Navigating to status page...');
             Navigator.of(scaffoldContext).pushAndRemoveUntil(
               MaterialPageRoute(
                 builder: (_) => BlocProvider.value(
@@ -359,7 +348,6 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
       );
     } else {
       // Not the last node - complete node first, then go back
-      LogHandler.info('[QUIZ] Not last node, completing node...');
       
       // Mark node as completed
       context.read<LearningPathBloc>().add(
@@ -369,7 +357,6 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
         ),
       );
       
-      LogHandler.info('[QUIZ] Going back to nodes overview');
       Navigator.pop(context); // Pop quiz page
       Navigator.pop(context); // Pop learning node page -> back to nodes overview
     }

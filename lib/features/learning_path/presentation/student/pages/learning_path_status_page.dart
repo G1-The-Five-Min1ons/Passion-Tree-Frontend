@@ -1,4 +1,3 @@
-import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
@@ -12,6 +11,8 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/enr
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 class LearningPathStatusPage extends StatefulWidget {
   const LearningPathStatusPage({super.key});
@@ -29,20 +30,24 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
   // Cache enrolled paths data
   List<EnrolledLearningPath>? _cachedEnrolledPaths;
 
+  String? userId;
+
   @override
   void initState() {
     super.initState();
+    _loadStatusData();
+  }
 
-    LogHandler.info('[UI] LearningPathStatusPage - initState');
+  Future<void> _loadStatusData() async {
+    final storedUserId = await getIt<IAuthRepository>().getUserId();
+    if (!mounted) return;
 
-    // TODO: Get userId from authentication service
-    const userId =
-        'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
-
-    // Fetch learning path status data
-    context.read<LearningPathBloc>().add(
-      FetchLearningPathStatus(userId: userId),
-    );
+    if (storedUserId != null && storedUserId.isNotEmpty) {
+      setState(() => userId = storedUserId);
+      context.read<LearningPathBloc>().add(
+        FetchLearningPathStatus(userId: storedUserId),
+      );
+    }
   }
 
   @override
@@ -74,10 +79,6 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            LogHandler.info(
-              '[UI] LearningPathStatusPage - BlocBuilder state: ${state.runtimeType}',
-            );
-
             // Cache data when loaded
             if (state is LearningPathOverviewLoaded) {
               _cachedEnrolledPaths = state.enrolledPaths;
@@ -89,7 +90,6 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
             if ((state is LearningPathLoading ||
                     state is LearningPathInitial) &&
                 _cachedEnrolledPaths == null) {
-              LogHandler.info('Showing loading indicator (no cache)...');
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -101,9 +101,6 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                     : (state is LearningPathStatusLoaded ? state.paths : null));
 
             if (enrolledPaths != null) {
-              LogHandler.info(
-                'Enrolled paths available: ${enrolledPaths.length}',
-              );
               final filtered = _filterPaths(enrolledPaths);
 
               // คอร์สที่กำลังเรียนอยู่ (In Progress)

@@ -1,4 +1,3 @@
-import 'package:passion_tree_frontend/core/network/log_handler.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -126,11 +125,9 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                 course: inProgressCourses[index],
                 showMoreIcon: true,
                 onEdit: () {
-                  LogHandler.info('Edit course: ${inProgressCourses[index].title}');
                   // TODO: Navigate to edit page
                 },
                 onDelete: () {
-                  LogHandler.info('Delete course: ${inProgressCourses[index].title}');
                   context.read<LearningPathBloc>().add(
                     DeleteLearningPathEvent(
                       pathId: inProgressCourses[index].id,
@@ -225,11 +222,9 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                 course: completedCourses[index],
                 showMoreIcon: true,
                 onEdit: () {
-                  LogHandler.info('Edit course: ${completedCourses[index].title}');
                   // TODO: Navigate to edit page
                 },
                 onDelete: () {
-                  LogHandler.info('Delete course: ${completedCourses[index].title}');
                   context.read<LearningPathBloc>().add(
                     DeleteLearningPathEvent(
                       pathId: completedCourses[index].id,

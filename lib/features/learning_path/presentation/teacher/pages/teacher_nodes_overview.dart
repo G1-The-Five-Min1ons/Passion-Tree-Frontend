@@ -27,7 +27,6 @@ class TeacherNodesOverviewPage extends StatelessWidget {
       body: 'Are you sure to save draft',
       confirmText: 'Save',
       onConfirm: () {
-        LogHandler.info('Save draft nodes');
       },
     );
   }
@@ -39,7 +38,6 @@ class TeacherNodesOverviewPage extends StatelessWidget {
       body: 'Are you sure to publish Learning Path',
       confirmText: 'Publish',
       onConfirm: () {
-        LogHandler.info('Publish learning path');
       },
     );
   }

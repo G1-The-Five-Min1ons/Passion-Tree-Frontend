@@ -13,7 +13,6 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/enr
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
-import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
@@ -42,7 +41,6 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
   Future<void> _loadOverviewData() async {
     final storedUserId = await getIt<IAuthRepository>().getUserId();
     if (storedUserId == null || storedUserId.isEmpty) {
-      LogHandler.info('No user ID found — loading generic overview');
       if (mounted) {
         context.read<LearningPathBloc>().add(FetchLearningPathOverview());
       }
@@ -50,7 +48,6 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     }
     if (!mounted) return;
     setState(() => userId = storedUserId);
-    LogHandler.info('Loading overview for user: $userId');
     context.read<LearningPathBloc>().add(
       FetchLearningPathOverview(userId: userId),
     );
@@ -97,10 +94,6 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            LogHandler.info(
-              '[UI] LearningPathOverviewPage - BlocBuilder state: ${state.runtimeType}',
-            );
-
             // Cache overview data when loaded
             if (state is LearningPathOverviewLoaded) {
               _cachedOverview = state;
@@ -110,21 +103,16 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
             if ((state is LearningPathLoading ||
                     state is LearningPathInitial) &&
                 _cachedOverview == null) {
-              LogHandler.info('Showing loading indicator...');
               return const Center(child: CircularProgressIndicator());
             }
 
             if (state is LearningPathError && _cachedOverview == null) {
-              LogHandler.error('Error state: ${state.message}');
               return Center(child: Text(state.message));
             }
 
             // Use cached overview data
             final overviewData = _cachedOverview;
             if (overviewData != null) {
-              LogHandler.info(
-                'Overview data available - All paths: ${overviewData.allPaths.length}, Enrolled: ${overviewData.enrolledPaths.length}',
-              );
               final filteredAll = _filterCourses(overviewData.allPaths);
 
               // Filter and deduplicate enrolled paths

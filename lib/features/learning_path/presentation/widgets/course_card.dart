@@ -1,4 +1,3 @@
-import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
@@ -148,10 +147,8 @@ class PixelCourseCard extends StatelessWidget {
                               ActionPopUp.show(
                                 context,
                                 onEdit: onEdit ?? () {
-                                  LogHandler.info('Edit course: ${course.title}');
                                 },
                                 onDelete: onDelete ?? () {
-                                  LogHandler.info('Delete course: ${course.title}');
                                 },
                               );
                             },

@@ -1,4 +1,3 @@
-import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_header.dart';
@@ -122,7 +121,6 @@ class _EditNodeModalState extends State<EditNodeModal> {
                             'Are you sure you want to delete?\nThis Process cannot be undone.',
                         onDelete: () {
                           // logic ลบ node จริง (ตอนนี้ mock ไว้ก่อน)
-                          LogHandler.info('Node deleted');
 
                           // ปิด EditNodeModal
                           Navigator.pop(context);
