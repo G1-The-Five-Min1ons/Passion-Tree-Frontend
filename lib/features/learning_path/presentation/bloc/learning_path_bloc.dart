@@ -92,7 +92,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             // Fetch both in parallel using Future.wait
             final results = await Future.wait([
               getAllLearningPaths(),
-              getLearningPathStatus.repository.getEnrolledPaths(event.userId!),
+              getLearningPathStatus(event.userId!),
             ]);
             
             final allPaths = results[0] as List<LearningPath>;
@@ -260,7 +260,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             // Fetch both in parallel using Future.wait
             final results = await Future.wait([
               getAllLearningPaths(),
-              getLearningPathStatus.repository.getEnrolledPaths(event.userId!),
+              getLearningPathStatus(event.userId!),
             ]);
             
             final allPaths = results[0] as List<LearningPath>;
