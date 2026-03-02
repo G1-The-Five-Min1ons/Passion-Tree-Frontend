@@ -1,5 +1,3 @@
-import 'package:passion_tree_frontend/core/network/log_handler.dart';
-
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_header.dart';
@@ -7,6 +5,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/edit_node_modal.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_core.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/teacher/confirm_popup.dart';
+
 class TeacherNodesOverviewPage extends StatelessWidget {
   final String title;
 
@@ -20,14 +19,14 @@ class TeacherNodesOverviewPage extends StatelessWidget {
       builder: (_) => const EditNodeModal(),
     );
   }
+
   void _confirmSaveDraft(BuildContext context) {
     ConfirmPopup.show(
       context,
       title: 'Save Draft\n Confirmation',
       body: 'Are you sure to save draft',
       confirmText: 'Save',
-      onConfirm: () {
-      },
+      onConfirm: () {},
     );
   }
 
@@ -37,8 +36,7 @@ class TeacherNodesOverviewPage extends StatelessWidget {
       title: 'Publish\n Confirmation',
       body: 'Are you sure to publish Learning Path',
       confirmText: 'Publish',
-      onConfirm: () {
-      },
+      onConfirm: () {},
     );
   }
 
@@ -64,11 +62,11 @@ class TeacherNodesOverviewPage extends StatelessWidget {
               top: 16,
               left: 0,
               right: 0,
-                child: HeaderBar(
-                  title: title,
-                  showAddButton: true,
-                  onPressed: () => _openEditNodeModal(context),
-                ),
+              child: HeaderBar(
+                title: title,
+                showAddButton: true,
+                onPressed: () => _openEditNodeModal(context),
+              ),
             ),
 
             /// ===== FLOATING BOTTOM =====

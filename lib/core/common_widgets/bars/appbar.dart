@@ -31,7 +31,6 @@ class _AppBarWidgetState extends State<AppBarWidget>
   final _searchController = TextEditingController();
   final _focusNode = FocusNode();
   late final AnimationController _animController;
-  late final Animation<double> _fade;
 
   @override
   void initState() {
@@ -40,7 +39,6 @@ class _AppBarWidgetState extends State<AppBarWidget>
       vsync: this,
       duration: const Duration(milliseconds: 220),
     );
-    _fade = CurvedAnimation(parent: _animController, curve: Curves.easeInOut);
   }
 
   @override
@@ -86,10 +84,8 @@ class _AppBarWidgetState extends State<AppBarWidget>
             height: kToolbarHeight,
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 220),
-              transitionBuilder: (child, animation) => FadeTransition(
-                opacity: animation,
-                child: child,
-              ),
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
               child: _isSearching
                   // ── Search mode ─────────────────────────────────
                   ? Row(
@@ -145,9 +141,7 @@ class _AppBarWidgetState extends State<AppBarWidget>
                         // ── True center title ──────────────────────
                         Text(
                           widget.title,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
+                          style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 color: textColor,
                                 fontSize: widget.titleFontSize,

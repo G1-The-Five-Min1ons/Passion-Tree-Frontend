@@ -25,8 +25,8 @@ class AppButton extends StatefulWidget {
     this.text,
     this.icon,
     this.size = AppButtonSize.small,
-    this.backgroundColor, 
-    this.borderColor, 
+    this.backgroundColor,
+    this.borderColor,
     this.textColor,
   });
 
@@ -35,8 +35,6 @@ class AppButton extends StatefulWidget {
 }
 
 class _AppButtonState extends State<AppButton> {
-  bool _pressed = false;
-
   static const double _pixel = 4;
   static const double _horizontalPadding = 40; // 20 + 20
   static const double _iconSize = 16;
@@ -48,17 +46,13 @@ class _AppButtonState extends State<AppButton> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final offset = _pressed ? 2.0 : 4.0;
     final bgColor = widget.backgroundColor ?? scheme.primary;
     final bdColor = widget.borderColor ?? AppColors.buttonBorder;
     final fgColor = widget.textColor ?? scheme.onPrimary;
 
-
-    
-   final TextStyle buttonTextStyle = AppPixelTypography.smallTitle.copyWith(
+    final TextStyle buttonTextStyle = AppPixelTypography.smallTitle.copyWith(
       color: fgColor,
     );
-
 
     final double buttonWidth = switch (widget.variant) {
       AppButtonVariant.iconOnly => _iconOnlyWidth(),
@@ -66,16 +60,13 @@ class _AppButtonState extends State<AppButton> {
         buttonTextStyle,
       ),
       AppButtonVariant.text => _calculateWidthFromText(buttonTextStyle),
-      AppButtonVariant.leadingIconWithText => _calculateWidthFromTextAndIcon(buttonTextStyle),
+      AppButtonVariant.leadingIconWithText => _calculateWidthFromTextAndIcon(
+        buttonTextStyle,
+      ),
     };
 
     return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        widget.onPressed();
-      },
-      onTapCancel: () => setState(() => _pressed = false),
+      onTap: widget.onPressed,
       child: PixelBorderContainer(
         padding: EdgeInsets.zero,
         fillColor: bgColor,
@@ -116,7 +107,7 @@ class _AppButtonState extends State<AppButton> {
           ],
         );
 
-        case AppButtonVariant.leadingIconWithText:
+      case AppButtonVariant.leadingIconWithText:
         return Row(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -126,7 +117,6 @@ class _AppButtonState extends State<AppButton> {
             Text(widget.text ?? '', style: textStyle),
           ],
         );
-
 
       case AppButtonVariant.textWithIcon:
         return Row(
@@ -179,7 +169,6 @@ class _AppButtonState extends State<AppButton> {
     return (rawWidth / _pixel).ceil() * _pixel;
   }
 
-
   double _calculateWidthFromTextAndIcon(TextStyle style) {
     final painter = TextPainter(
       text: TextSpan(text: widget.text ?? '', style: style),
@@ -191,9 +180,12 @@ class _AppButtonState extends State<AppButton> {
 
     return (rawWidth / _pixel).ceil() * _pixel;
   }
+
   double _getSpacing() {
-  return widget.variant == AppButtonVariant.leadingIconWithText ? 8 : _iconSpacing;
-}
+    return widget.variant == AppButtonVariant.leadingIconWithText
+        ? 8
+        : _iconSpacing;
+  }
 }
 
 //---------------------- วิธีเรียกใช้ ----------------------//

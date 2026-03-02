@@ -1,4 +1,3 @@
-import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
@@ -42,7 +41,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              // ===== HEADER =====
+                // ===== HEADER =====
                 SizedBox(
                   height: 72,
                   child: Align(
@@ -92,7 +91,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                       const SizedBox(height: 16),
 
                       // ===== NODE LIST =====
-                     Expanded(
+                      Expanded(
                         child: ListView.builder(
                           itemCount: _nodes.length,
                           itemBuilder: (context, index) {
@@ -100,20 +99,24 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                               padding: const EdgeInsets.only(bottom: 8),
                               child: RichText(
                                 text: TextSpan(
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                  ),
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
                                   children: [
                                     TextSpan(
                                       text: 'Node${index + 1} : ',
-                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                     ),
                                     TextSpan(text: _nodes[index]),
                                   ],
@@ -123,7 +126,6 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                           },
                         ),
                       ),
-
                     ],
                   ),
                 ),
@@ -138,14 +140,12 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                     AppButton(
                       variant: AppButtonVariant.text,
                       text: 'Cancel',
-                      backgroundColor:
-                          AppColors.scale,
-                           textColor: AppColors.textPrimary,
+                      backgroundColor: AppColors.scale,
+                      textColor: AppColors.textPrimary,
                       onPressed: () {
                         Navigator.pop(context);
                       },
                     ),
-
 
                     const SizedBox(width: 12),
 
@@ -156,14 +156,15 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const TeacherNodesOverviewPage(title: 'Nodes Overview'),
+                            builder: (_) => const TeacherNodesOverviewPage(
+                              title: 'Nodes Overview',
+                            ),
                           ),
                         );
                       },
                     ),
                   ],
                 ),
-
               ],
             ),
           ),
@@ -178,5 +179,4 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
       _nodes.shuffle(); // mock regenerate
     });
   }
-
 }

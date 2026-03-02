@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
@@ -14,13 +13,11 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 class StudentNodesOverviewPage extends StatefulWidget {
   final LearningPath course;
 
-  const StudentNodesOverviewPage({
-    super.key,
-    required this.course,
-  });
+  const StudentNodesOverviewPage({super.key, required this.course});
 
   @override
-  State<StudentNodesOverviewPage> createState() => _StudentNodesOverviewPageState();
+  State<StudentNodesOverviewPage> createState() =>
+      _StudentNodesOverviewPageState();
 }
 
 class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
@@ -40,37 +37,25 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
   }
 
   void _fetchNodes() {
-    
     // TODO: Get userId from authentication service
-    const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
-    
-    
+    const userId =
+        'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
+
     // Always fetch fresh nodes to ensure up-to-date status
     context.read<LearningPathBloc>().add(
-      FetchNodesForPath(
-        pathId: widget.course.id,
-        userId: userId,
-      ),
+      FetchNodesForPath(pathId: widget.course.id, userId: userId),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const AppBarWidget(
-        title: 'Learning Paths',
-        showBackButton: true,
-      ),
+      appBar: const AppBarWidget(title: 'Learning Paths', showBackButton: true),
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            
             // Update cached nodes when new nodes loaded
             if (state is NodesLoaded && state.pathId == widget.course.id) {
-              // Debug: Print status of each node
-              for (var i = 0; i < state.nodes.length; i++) {
-                final node = state.nodes[i];
-              }
               _cachedNodes = state.nodes;
             }
 
@@ -84,8 +69,8 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
             }
 
             // Use cached nodes or nodes from state
-            final nodes = _cachedNodes ?? 
-                (state is NodesLoaded ? state.nodes : null);
+            final nodes =
+                _cachedNodes ?? (state is NodesLoaded ? state.nodes : null);
 
             if (nodes != null && nodes.isNotEmpty) {
               return Stack(
@@ -98,7 +83,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                       if (index < nodes.length) {
                         final nodeId = nodes[index].nodeId;
                         final currentSequence = nodes[index].sequence;
-                        
+
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -134,9 +119,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
               );
             }
 
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           },
         ),
       ),
