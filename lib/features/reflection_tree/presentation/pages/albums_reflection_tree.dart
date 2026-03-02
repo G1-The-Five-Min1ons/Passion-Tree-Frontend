@@ -141,15 +141,9 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
     if (state is AlbumOperationLoading) {
       if (state.currentAlbums != null && state.currentAlbums!.isNotEmpty) {
         return _buildAlbumList(context, state.currentAlbums!);
+      } else {
+        return _buildEmptyState(context);
       }
-      return SliverFillRemaining(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(50.0),
-            child: CircularProgressIndicator(),
-          ),
-        ),
-      );
     }
 
     return _buildEmptyState(context);

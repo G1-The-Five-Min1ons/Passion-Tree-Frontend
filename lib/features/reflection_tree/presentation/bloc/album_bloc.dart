@@ -162,7 +162,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     List<Album>? currentAlbums;
     
     if (state is AlbumsLoaded) {
-      currentAlbums = (state as AlbumsLoaded).albums;
+      currentAlbums = (state as AlbumsLoaded).albums.where((a) => a.albumId != event.albumId).toList();
       emit(AlbumOperationLoading(currentAlbums: currentAlbums));
     } else {
       emit(AlbumLoading());
