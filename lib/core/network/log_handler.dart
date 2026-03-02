@@ -1,11 +1,9 @@
 import 'package:flutter/foundation.dart';
-import 'dart:convert';
 
 /// ANSI color codes for terminal output
 class _AnsiColors {
   static const String reset = '\x1B[0m';
   static const String magenta = '\x1B[35m';
-  static const String gray = '\x1B[90m';
   static const String brightRed = '\x1B[91m';
   static const String brightGreen = '\x1B[92m';
   static const String brightYellow = '\x1B[93m';
@@ -86,10 +84,9 @@ class LogHandler {
 
     debugPrint('$color$timestamp [REQUEST] [$method] : $url$reset');
 
-    if (body != null) {
-      // Disabled by default to reduce noise
-      // debugPrint('$color$timestamp Body : ${_prettyJson(body)}$reset');
-    }
+    // if (body != null) {
+    //   debugPrint('$color$timestamp Body : ${_prettyJson(body)}$reset');
+    // }
   }
 
   /// Log API response
@@ -109,10 +106,9 @@ class LogHandler {
       '$color$timestamp [RESPONSE] <$statusCode>-[$method] : $url$reset',
     );
 
-    if (data != null) {
-      // Disabled by default to reduce noise
-      // debugPrint('$color$timestamp Data : ${_prettyJson(data)}$reset');
-    }
+    // if (data != null) {
+    //   debugPrint('$color$timestamp Data : ${_prettyJson(data)}$reset');
+    // }
   }
 
   /// Log success message
@@ -156,28 +152,29 @@ class LogHandler {
     debugPrint('$color$timestamp [WARNING] : $message$reset');
   }
 
-  static String _prettyJson(dynamic json) {
-    try {
-      const encoder = JsonEncoder.withIndent('  ');
-      if (json is String) {
-        try {
-          final decoded = jsonDecode(json);
-          return encoder.convert(decoded);
-        } catch (_) {
-          return json;
-        }
-      }
-      return encoder.convert(json);
-    } catch (e) {
-      return json.toString();
-    }
-  }
+  // static String _prettyJson(dynamic json) {
+  //   try {
+  //     const encoder = JsonEncoder.withIndent('  ');
+  //     if (json is String) {
+  //       try {
+  //         final decoded = jsonDecode(json);
+  //         return encoder.convert(decoded);
+  //       } catch (_) {
+  //         return json;
+  //       }
+  //       return encoder.convert(json);
+  //     } catch (e) {
+  //       return json.toString();
+  //     }
+  // }
 
   /// Log section separator
   static void separator({String? title}) {
     if (!_enabled) return;
 
-    final color = _useColors ? _AnsiColors.gray : '';
+    final color = _useColors
+        ? _AnsiColors.magenta
+        : ''; // Using magenta as fallback for gray
     final reset = _useColors ? _AnsiColors.reset : '';
 
     if (title != null) {
