@@ -112,7 +112,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
 
       // Navigate to LoginPage and clear entire navigation stack
-      Navigator.of(context).pushAndRemoveUntil(
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const LoginPage()),
         (route) => false,
       );

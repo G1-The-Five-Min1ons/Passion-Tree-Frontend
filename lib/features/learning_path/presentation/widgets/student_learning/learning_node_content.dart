@@ -4,6 +4,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class LearningNodeContent extends StatelessWidget {
   final String title;
@@ -46,7 +47,7 @@ class LearningNodeContent extends StatelessWidget {
         PixelBorderContainer(
           width: double.infinity,
           height: 180,
-          borderColor: colors.primary,
+          borderColor: AppColors.cardBorder,
           fillColor: colors.surface,
           child: const Center(child: Icon(Icons.play_circle_outline, size: 56)),
         ),
@@ -57,7 +58,7 @@ class LearningNodeContent extends StatelessWidget {
         PixelBorderContainer(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
-          borderColor: colors.primary,
+          borderColor: AppColors.cardBorder,
           fillColor: colors.surface,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,7 +86,7 @@ class LearningNodeContent extends StatelessWidget {
         PixelBorderContainer(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
-          borderColor: colors.primary,
+          borderColor: AppColors.cardBorder,
           fillColor: colors.surface,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

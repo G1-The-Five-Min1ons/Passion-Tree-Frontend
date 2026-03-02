@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/core/common_widgets/layout/app_background.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
         title: 'Passion Tree',
         theme: AppTheme.lightTheme,
         themeMode: ThemeMode.light,
+        builder: (context, child) => AppBackground(child: child!),
         home: const AuthGate(),
       ),
     );

@@ -5,8 +5,6 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/course.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mocks/course_mock.dart';
@@ -20,65 +18,22 @@ class LearningPathOverviewPage extends StatefulWidget {
 }
 
 class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
-  final TextEditingController _searchController = TextEditingController();
-
-  // Filter state
-  String? _selectedCategory;
-  RangeValues? _ratingRange;
-  int? _maxModules;
-
-  // === NEW: State for controlling number of shown cards ===
+  String _searchQuery = '';
   int _allListShownCount = 4;
 
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(() {
-      setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   List<Course> _filterCourses(List<Course> courses) {
-    return courses.where((Course c) {
-      // Search query filter
-      final query = _searchController.text.trim().toLowerCase();
-      final matchesSearch =
-          query.isEmpty ||
-          c.title.toLowerCase().contains(query) ||
-          c.description.toLowerCase().contains(query) ||
-          c.instructor.toLowerCase().contains(query);
-
-      // Category filter
-      final matchesCategory =
-          _selectedCategory == null || c.category == _selectedCategory;
-
-      // Rating filter (range)
-      final matchesRating =
-          _ratingRange == null ||
-          (c.rating >= _ratingRange!.start && c.rating <= _ratingRange!.end);
-
-      // Modules filter
-      final matchesModules = _maxModules == null || c.modules <= _maxModules!;
-
-      return matchesSearch &&
-          matchesCategory &&
-          matchesRating &&
-          matchesModules;
-    }).toList();
+    final q = _searchQuery.trim().toLowerCase();
+    if (q.isEmpty) return courses;
+    return courses.where((c) =>
+      c.title.toLowerCase().contains(q) ||
+      c.description.toLowerCase().contains(q) ||
+      c.instructor.toLowerCase().contains(q),
+    ).toList();
   }
 
   void _clearFilters() {
     setState(() {
-      _selectedCategory = null;
-      _ratingRange = null;
-      _maxModules = null;
-      // NEW: Reset shown count when filters are cleared
+      _searchQuery = '';
       _allListShownCount = 4;
     });
   }
@@ -93,60 +48,34 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     final shownAllCourses = filteredAll.take(_allListShownCount).toList();
 
     return Scaffold(
-      appBar: AppBarWidget(title: 'Learning Paths', showBackButton: false),
+      appBar: AppBarWidget(
+        title: 'Learning Paths',
+        showBackButton: false,
+        onSearch: (q) => setState(() => _searchQuery = q),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.only(
               left: AppSpacing.xmargin,
               right: AppSpacing.xmargin,
-              top: AppSpacing.ymargin,
+              top: 12,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-               
-                // ===== SEARCH BAR & FILTER =====
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 1),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: LearningPathSearchBar(
-                          controller: _searchController,
-                        ),
-                      ),
-                      const SizedBox(width: 12), 
-                      FilterSection(
-                        selectedCategory: _selectedCategory,
-                        ratingRange: _ratingRange,
-                        maxModules: _maxModules,
-                        onFiltersChanged: (category, rating, modules) {
-                          setState(() {
-                            _selectedCategory = category;
-                            _ratingRange = rating;
-                            _maxModules = modules;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
 
-                // Title → Section (40)
-                const SizedBox(height: 40),
 
                 // ===== POPULAR TITLE =====
                 Text(
                   'Popular\nLearning Paths',
                   style: AppPixelTypography.title.copyWith(
                     color: Theme.of(context).colorScheme.onPrimary,
+                    fontSize: 22,
                   ),
                 ),
 
-                // Title → Content (40)
-                const SizedBox(height: 40),
+                const SizedBox(height: 16),
 
                 // ===== POPULAR LIST =====
                 SizedBox(
@@ -174,19 +103,19 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                         ),
                 ),
 
-                // Section → Section (60)
-                const SizedBox(height: 60),
+                // Section → Section
+                const SizedBox(height: 24),
 
                 // ===== ALL TITLE =====
                 Text(
                   'All Learning Paths',
                   style: AppPixelTypography.title.copyWith(
                     color: Theme.of(context).colorScheme.onPrimary,
+                    fontSize: 22,
                   ),
                 ),
 
-                // Title → Content (40)
-                const SizedBox(height: 40),
+                const SizedBox(height: 16),
 
                 // ===== ALL LIST =====
                 if (shownAllCourses.isEmpty)
@@ -255,3 +184,4 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     );
   }
 }
+
