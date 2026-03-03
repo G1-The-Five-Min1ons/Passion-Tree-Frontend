@@ -21,11 +21,19 @@ import 'package:passion_tree_frontend/features/authentication/domain/usecases/ma
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/save_user_role_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/reset_password_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/datasources/comment_remote_data_source.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/repositories/comment_repository_impl.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/repositories/comment_repository.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/get_node_comments.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/create_comment.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/update_comment.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/delete_comment.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/add_comment_reaction.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/comment/comment_bloc.dart';
 
 final getIt = GetIt.instance;
 
 Future<void> initializeDependencies() async {
-
   // Auth Data Sources
   getIt.registerLazySingleton<AuthLocalDataSource>(
     () => AuthLocalDataSourceImpl(),
@@ -87,15 +95,11 @@ Future<void> initializeDependencies() async {
 
   // Upload Service
   getIt.registerLazySingleton<UploadApiService>(
-    () => UploadApiService(
-      authLocalDataSource: getIt<AuthLocalDataSource>(),
-    ),
+    () => UploadApiService(authLocalDataSource: getIt<AuthLocalDataSource>()),
   );
 
   // Album Data Source and Repository
-  getIt.registerLazySingleton<AlbumDataSource>(
-    () => AlbumDataSource(),
-  );
+  getIt.registerLazySingleton<AlbumDataSource>(() => AlbumDataSource());
   getIt.registerLazySingleton<IAlbumRepository>(
     () => AlbumRepository(
       dataSource: getIt<AlbumDataSource>(),
@@ -128,6 +132,43 @@ Future<void> initializeDependencies() async {
 
   getIt.registerFactory<DeleteAlbumUseCase>(
     () => DeleteAlbumUseCase(getIt<IAlbumRepository>()),
+  );
+
+  // Comment Feature
+  getIt.registerLazySingleton<CommentRemoteDataSource>(
+    () => CommentRemoteDataSource(),
+  );
+
+  getIt.registerLazySingleton<CommentRepository>(
+    () => CommentRepositoryImpl(
+      remoteDataSource: getIt<CommentRemoteDataSource>(),
+    ),
+  );
+
+  getIt.registerFactory<GetNodeComments>(
+    () => GetNodeComments(getIt<CommentRepository>()),
+  );
+  getIt.registerFactory<CreateComment>(
+    () => CreateComment(getIt<CommentRepository>()),
+  );
+  getIt.registerFactory<UpdateComment>(
+    () => UpdateComment(getIt<CommentRepository>()),
+  );
+  getIt.registerFactory<DeleteComment>(
+    () => DeleteComment(getIt<CommentRepository>()),
+  );
+  getIt.registerFactory<AddCommentReaction>(
+    () => AddCommentReaction(getIt<CommentRepository>()),
+  );
+
+  getIt.registerFactory<CommentBloc>(
+    () => CommentBloc(
+      getNodeComments: getIt<GetNodeComments>(),
+      createComment: getIt<CreateComment>(),
+      updateComment: getIt<UpdateComment>(),
+      deleteComment: getIt<DeleteComment>(),
+      addCommentReaction: getIt<AddCommentReaction>(),
+    ),
   );
 }
 

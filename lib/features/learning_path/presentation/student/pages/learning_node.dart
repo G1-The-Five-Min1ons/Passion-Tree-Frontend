@@ -31,27 +31,20 @@ class _LearningNodePageState extends State<LearningNodePage> {
   @override
   void initState() {
     super.initState();
-    
-    
+
     // TODO: Get userId from authentication service
-    const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
-    
-    
+    const userId =
+        'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
+
     // Start node when page loads
     context.read<LearningPathBloc>().add(
-          StartNodeEvent(
-            nodeId: widget.nodeId,
-            userId: userId,
-          ),
-        );
-    
+      StartNodeEvent(nodeId: widget.nodeId, userId: userId),
+    );
+
     // Fetch node detail when page loads
     context.read<LearningPathBloc>().add(
-          FetchNodeDetail(
-            nodeId: widget.nodeId,
-            userId: userId,
-          ),
-        );
+      FetchNodeDetail(nodeId: widget.nodeId, userId: userId),
+    );
   }
 
   @override
@@ -61,15 +54,12 @@ class _LearningNodePageState extends State<LearningNodePage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            
             if (state is LearningPathLoading || state is LearningPathInitial) {
               return const Center(child: CircularProgressIndicator());
             }
 
             if (state is LearningPathError) {
-              return Center(
-                child: Text('Error: ${state.message}'),
-              );
+              return Center(child: Text('Error: ${state.message}'));
             }
 
             if (state is NodeDetailLoaded) {
@@ -104,7 +94,8 @@ class _LearningNodePageState extends State<LearningNodePage> {
                                   title: nodeDetail.title,
                                   pathName: widget.pathName,
                                   totalNodes: widget.totalNodes,
-                                  currentNodeSequence: widget.currentNodeSequence,
+                                  currentNodeSequence:
+                                      widget.currentNodeSequence,
                                 ),
                               ),
                             ),
@@ -115,16 +106,14 @@ class _LearningNodePageState extends State<LearningNodePage> {
                       const SizedBox(height: 32),
 
                       /// ===== COMMENTS =====
-                      const NodeCommentsSection(),
+                      NodeCommentsSection(nodeId: widget.nodeId),
                     ],
                   ),
                 ),
               );
             }
 
-            return const Center(
-              child: Text('Please select a learning path'),
-            );
+            return const Center(child: Text('Please select a learning path'));
           },
         ),
       ),
