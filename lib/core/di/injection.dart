@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:passion_tree_frontend/core/network/api_handler.dart';
 import 'package:passion_tree_frontend/core/services/upload_service.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/album_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/repositories/album_repository.dart';
@@ -34,12 +35,15 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/c
 final getIt = GetIt.instance;
 
 Future<void> initializeDependencies() async {
+  // Core Network
+  getIt.registerLazySingleton<ApiHandler>(() => ApiHandler());
+
   // Auth Data Sources
   getIt.registerLazySingleton<AuthLocalDataSource>(
     () => AuthLocalDataSourceImpl(),
   );
   getIt.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(),
+    () => AuthRemoteDataSourceImpl(apiHandler: getIt<ApiHandler>()),
   );
 
   // Auth Repository
@@ -47,6 +51,7 @@ Future<void> initializeDependencies() async {
     () => AuthRepositoryImpl(
       remoteDataSource: getIt<AuthRemoteDataSource>(),
       localDataSource: getIt<AuthLocalDataSource>(),
+      apiHandler: getIt<ApiHandler>(),
     ),
   );
 
