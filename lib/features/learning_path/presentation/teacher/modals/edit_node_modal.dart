@@ -26,9 +26,6 @@ class EditNodeModal extends StatefulWidget {
 }
 
 class _EditNodeModalState extends State<EditNodeModal> {
-  // ===== STATE =====
-  String _title = '';
-  String _description = '';
   String _linkInput = '';
   final List<String> _links = []; //ส่วนเพิ่มlink
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile

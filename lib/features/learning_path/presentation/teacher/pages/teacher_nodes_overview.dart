@@ -144,6 +144,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       ),
     );
   }
+
   void _confirmSaveDraft(BuildContext context) {
     ConfirmPopup.show(
       context,

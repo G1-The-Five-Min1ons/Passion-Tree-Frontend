@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
@@ -56,16 +57,15 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     
     on<FetchLearningPaths>(
       (event, emit) async {
-        debugPrint('[BLoC] FetchLearningPaths event received');
+        LogHandler.debug('[BLoC] FetchLearningPaths event received');
         emit(LearningPathLoading());
 
         try {
-          debugPrint('Fetching all learning paths...');
           final paths = await getAllLearningPaths();
-          debugPrint('[BLoC] Successfully loaded ${paths.length} paths');
+          LogHandler.debug('[BLoC] Loaded ${paths.length} paths');
           emit(LearningPathLoaded(paths));
         } catch (e) {
-          debugPrint('[BLoC] Error fetching paths: $e');
+          LogHandler.error('[BLoC] Error fetching paths: $e');
           emit(LearningPathError(e.toString()));
         }
       },
@@ -77,17 +77,15 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     
     on<FetchLearningPathStatus>(
       (event, emit) async {
-        debugPrint('[BLoC] FetchLearningPathStatus event received');
-        debugPrint('User ID: ${event.userId}');
+        LogHandler.debug('[BLoC] FetchLearningPathStatus event received');
         emit(LearningPathLoading());
 
         try {
-          debugPrint('Fetching learning path status...');
           final result = await getLearningPathStatus(event.userId);
-          debugPrint('[BLoC] Successfully loaded ${result.length} enrolled paths');
+          LogHandler.debug('[BLoC] Loaded ${result.length} enrolled paths');
           emit(LearningPathStatusLoaded(result));
         } catch (e) {
-          debugPrint('[BLoC] Error fetching status: $e');
+          LogHandler.error('[BLoC] Error fetching status: $e');
           emit(LearningPathError(e.toString()));
         }
       },
@@ -98,13 +96,10 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     
     on<FetchLearningPathOverview>(
       (event, emit) async {
-        debugPrint('[BLoC] FetchLearningPathOverview event received');
-        debugPrint('User ID: ${event.userId ?? "Guest (no login)"}');
+        LogHandler.debug('[BLoC] FetchLearningPathOverview event received');
         emit(LearningPathLoading());
 
         try {
-          debugPrint('Fetching all paths and enrolled paths in parallel...');
-          
           if (event.userId != null) {
             // Fetch both in parallel using Future.wait
             final results = await Future.wait([
@@ -115,27 +110,24 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             final allPaths = results[0] as List<LearningPath>;
             final enrolledPaths = results[1] as List<EnrolledLearningPath>;
             
-            debugPrint('Loaded ${allPaths.length} all paths');
-            debugPrint('Loaded ${enrolledPaths.length} enrolled paths');
+            LogHandler.debug('[BLoC] Overview: ${allPaths.length} paths, ${enrolledPaths.length} enrolled');
 
             emit(LearningPathOverviewLoaded(
               allPaths: allPaths,
               enrolledPaths: enrolledPaths,
             ));
-            debugPrint('[BLoC] Overview loaded successfully');
           } else {
             // Guest user - only fetch all paths
             final allPaths = await getAllLearningPaths();
-            debugPrint('Loaded ${allPaths.length} all paths (guest mode)');
+            LogHandler.debug('[BLoC] Overview: ${allPaths.length} paths (guest)');
             
             emit(LearningPathOverviewLoaded(
               allPaths: allPaths,
               enrolledPaths: <EnrolledLearningPath>[],
             ));
-            debugPrint('[BLoC] Overview loaded successfully');
           }
         } catch (e) {
-          debugPrint('[BLoC] Error fetching overview: $e');
+          LogHandler.error('[BLoC] Error fetching overview: $e');
           emit(LearningPathError(e.toString()));
         }
       },
@@ -146,21 +138,18 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     
     on<FetchNodesForPath>(
       (event, emit) async {
-        debugPrint('[BLoC] FetchNodesForPath event received');
-        debugPrint('Path ID: ${event.pathId}');
-        debugPrint('User ID: ${event.userId}');
+        LogHandler.debug('[BLoC] FetchNodesForPath: ${event.pathId}');
         emit(LearningPathLoading());
 
         try {
-          debugPrint('Fetching nodes for path...');
           final nodes = await getNodesForPath(event.pathId, event.userId);
-          debugPrint('[BLoC] Successfully loaded ${nodes.length} nodes');
+          LogHandler.debug('[BLoC] Loaded ${nodes.length} nodes');
           emit(NodesLoaded(
             pathId: event.pathId,
             nodes: nodes,
           ));
         } catch (e) {
-          debugPrint('[BLoC] Error fetching nodes: $e');
+          LogHandler.error('[BLoC] Error fetching nodes: $e');
           emit(LearningPathError(e.toString()));
         }
       },
@@ -171,18 +160,15 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     
     on<FetchNodeDetail>(
       (event, emit) async {
-        debugPrint('[BLoC] FetchNodeDetail event received');
-        debugPrint('Node ID: ${event.nodeId}');
-        debugPrint('User ID: ${event.userId}');
+        LogHandler.debug('[BLoC] FetchNodeDetail: ${event.nodeId}');
         emit(LearningPathLoading());
 
         try {
-          debugPrint('Fetching node detail...');
           final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
-          debugPrint('[BLoC] Successfully loaded node detail: ${nodeDetail.title}');
+          LogHandler.debug('[BLoC] Loaded node detail: ${nodeDetail.title}');
           emit(NodeDetailLoaded(nodeDetail));
         } catch (e) {
-          debugPrint('[BLoC] Error fetching node detail: $e');
+          LogHandler.error('[BLoC] Error fetching node detail: $e');
           emit(LearningPathError(e.toString()));
         }
       },
@@ -193,20 +179,16 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     
     on<StartNodeEvent>(
       (event, emit) async {
-        debugPrint('[BLoC] StartNodeEvent received');
-        debugPrint('Node ID: ${event.nodeId}');
-        debugPrint('User ID: ${event.userId}');
+        LogHandler.debug('[BLoC] StartNodeEvent: ${event.nodeId}');
         
         try {
-          debugPrint('Starting node...');
           await startNode(event.nodeId, event.userId);
-          debugPrint('Node started, fetching updated detail...');
-          // Optionally refetch node detail to get updated status
+          // Refetch node detail to get updated status
           final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
-          debugPrint('[BLoC] Node started successfully');
+          LogHandler.debug('[BLoC] Node started successfully');
           emit(NodeDetailLoaded(nodeDetail));
         } catch (e) {
-          debugPrint('[BLoC] Error starting node: $e');
+          LogHandler.error('[BLoC] Error starting node: $e');
           emit(LearningPathError(e.toString()));
         }
       },
@@ -217,17 +199,14 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     
     on<EnrollPathEvent>(
       (event, emit) async {
-        debugPrint('[BLoC] EnrollPathEvent received');
-        debugPrint('Path ID: ${event.pathId}');
-        debugPrint('User ID: ${event.userId}');
+        LogHandler.debug('[BLoC] EnrollPathEvent: ${event.pathId}');
         
         try {
-          debugPrint('Enrolling in path...');
           await enrollPath(event.pathId, event.userId);
-          debugPrint('[BLoC] Successfully enrolled in path');
+          LogHandler.info('[BLoC] Enrolled in path: ${event.pathId}');
           emit(PathEnrolled(pathId: event.pathId, userId: event.userId));
         } catch (e) {
-          debugPrint('[BLoC] Error enrolling in path: $e');
+          LogHandler.error('[BLoC] Error enrolling in path: $e');
           emit(LearningPathError(e.toString()));
         }
       },
@@ -238,20 +217,16 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     
     on<CompleteNodeEvent>(
       (event, emit) async {
-        debugPrint('[BLoC] CompleteNodeEvent received');
-        debugPrint('Node ID: ${event.nodeId}');
-        debugPrint('User ID: ${event.userId}');
+        LogHandler.debug('[BLoC] CompleteNodeEvent: ${event.nodeId}');
         
         try {
-          debugPrint('Completing node...');
           await completeNode(event.nodeId, event.userId);
-          debugPrint('Node completed, fetching updated detail...');
-          // Optionally refetch node detail to get updated status
+          // Refetch node detail to get updated status
           final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
-          debugPrint('[BLoC] Node completed successfully');
+          LogHandler.debug('[BLoC] Node completed successfully');
           emit(NodeDetailLoaded(nodeDetail));
         } catch (e) {
-          debugPrint('[BLoC] Error completing node: $e');
+          LogHandler.error('[BLoC] Error completing node: $e');
           emit(LearningPathError(e.toString()));
         }
       },
@@ -262,18 +237,14 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     
     on<DeleteLearningPathEvent>(
       (event, emit) async {
-        debugPrint('[BLoC] DeleteLearningPathEvent received');
-        debugPrint('Path ID: ${event.pathId}');
+        LogHandler.debug('[BLoC] DeleteLearningPathEvent: ${event.pathId}');
         
         try {
-          debugPrint('Deleting learning path...');
           await deleteLearningPath(event.pathId);
-          debugPrint('[BLoC] Learning path deleted successfully');
+          LogHandler.info('[BLoC] Deleted path: ${event.pathId}');
           
           // Refresh overview if userId is provided
           if (event.userId != null) {
-            debugPrint('Refreshing overview in parallel...');
-            
             // Fetch both in parallel using Future.wait
             final results = await Future.wait([
               getAllLearningPaths(),
@@ -283,8 +254,6 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             final allPaths = results[0] as List<LearningPath>;
             final enrolledPaths = results[1] as List<EnrolledLearningPath>;
             
-            debugPrint('Refreshed: ${allPaths.length} all paths, ${enrolledPaths.length} enrolled paths');
-            
             emit(LearningPathOverviewLoaded(
               allPaths: allPaths,
               enrolledPaths: enrolledPaths,
@@ -293,7 +262,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             emit(LearningPathDeleted('Learning path deleted successfully'));
           }
         } catch (e) {
-          debugPrint('[BLoC] Error deleting learning path: $e');
+          LogHandler.error('[BLoC] Error deleting learning path: $e');
           emit(LearningPathError(e.toString()));
         }
       },

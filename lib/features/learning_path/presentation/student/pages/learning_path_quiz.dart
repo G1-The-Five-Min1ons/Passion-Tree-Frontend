@@ -6,10 +6,12 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_question.dart'; 
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_question.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_quiz/quiz_result.dart';
+
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/congrats_popups.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/rating_popup.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/datasources/learning_path_data_source.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/repositories/learning_path_repositories.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
@@ -81,17 +83,13 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
 
     return Scaffold(
       appBar: const AppBarWidget(title: 'Learning Paths', showBackButton: true),
-      body: SafeArea(
-        child: _buildBody(colors),
-      ),
+      body: SafeArea(child: _buildBody(colors)),
     );
   }
 
   Widget _buildBody(ColorScheme colors) {
     if (_viewState == QuizViewState.loading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_viewState == QuizViewState.error) {
@@ -138,9 +136,9 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   widget.title ?? 'Quiz',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    color: colors.onPrimary,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.displayLarge?.copyWith(color: colors.onPrimary),
                 ),
               ),
             ),
@@ -159,8 +157,9 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                   // ===== QUIZ TITLE =====
                   Text(
                     'Quiz',
-                    style: Theme.of(context).textTheme.displaySmall
-                        ?.copyWith(color: colors.primary),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.displaySmall?.copyWith(color: colors.primary),
                   ),
 
                   const SizedBox(height: 24),
@@ -209,6 +208,9 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
           (index) => QuizQuestionWidget(
             question: _questions[index],
             onSelect: (choiceIndex) {
+              LogHandler.info(
+                'Action: User answered question index $index, selected choice $choiceIndex in node ${widget.nodeId}',
+              );
               setState(() {
                 _questions[index].selectedIndex = choiceIndex;
               });
@@ -261,25 +263,22 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
 
   void _finishQuiz() {
     // TODO: Get userId from authentication service
-    const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
-    
+    const userId =
+        'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
+
     // Check if this is the last node (sequence starts from 1)
-    debugPrint('[QUIZ] Checking if last node:');
-    debugPrint('[QUIZ] currentNodeSequence: ${widget.currentNodeSequence}');
-    debugPrint('[QUIZ] totalNodes: ${widget.totalNodes}');
-    
-    final isLastNode = widget.totalNodes != null && 
-                       widget.currentNodeSequence != null && 
-                       widget.currentNodeSequence == widget.totalNodes;
-    
-    debugPrint('[QUIZ] isLastNode: $isLastNode');
-    
+
+    final isLastNode =
+        widget.totalNodes != null &&
+        widget.currentNodeSequence != null &&
+        widget.currentNodeSequence == widget.totalNodes;
+
     // Only show popups if this is the last node
     if (isLastNode && widget.pathName != null) {
       // Store references to avoid context issues
       final scaffoldContext = context;
       final bloc = context.read<LearningPathBloc>();
-      
+
       // Show congratulation popup
       showDialog(
         context: context,
@@ -287,32 +286,30 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
         builder: (congratsDialogContext) => CompletionPopup(
           onYes: () {
             // Note: CompletionPopup already handles Navigator.pop internally
-            
+
             // Show rating popup
-            debugPrint('[QUIZ] Showing rating popup for path: ${widget.pathName}');
             showDialog(
               context: scaffoldContext,
               barrierDismissible: false,
               builder: (ratingDialogContext) => RatingPopup(
                 pathName: widget.pathName!,
                 onSubmit: () async {
-                  debugPrint('[QUIZ] Rating submitted, closing popup...');
-                  Navigator.of(ratingDialogContext).pop(); // Close rating popup first
-                  
-                  // Mark node as completed
-                  debugPrint('[QUIZ] Completing node...');
-                  bloc.add(
-                    CompleteNodeEvent(
-                      nodeId: widget.nodeId,
-                      userId: userId,
-                    ),
+                  Navigator.of(
+                    ratingDialogContext,
+                  ).pop(); // Close rating popup first
+
+                  LogHandler.info(
+                    'Action: User completed and tracked progress for node ${widget.nodeId}',
                   );
-                  
+                  // Mark node as completed
+                  bloc.add(
+                    CompleteNodeEvent(nodeId: widget.nodeId, userId: userId),
+                  );
+
                   // Wait for backend to process completion (1 second)
                   await Future.delayed(const Duration(milliseconds: 1000));
-                  
+
                   // Navigate to status page after completion
-                  debugPrint('[QUIZ] Navigating to status page...');
                   Navigator.of(scaffoldContext).pushAndRemoveUntil(
                     MaterialPageRoute(
                       builder: (_) => BlocProvider.value(
@@ -328,21 +325,17 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
           },
           onNo: () async {
             // Note: CompletionPopup already handles Navigator.pop internally
-            debugPrint('[QUIZ] Skipping rating, completing node...');
-            
-            // Mark node as completed
-            bloc.add(
-              CompleteNodeEvent(
-                nodeId: widget.nodeId,
-                userId: userId,
-              ),
+
+            LogHandler.info(
+              'Action: User completed and tracked progress for node ${widget.nodeId}',
             );
-            
+            // Mark node as completed
+            bloc.add(CompleteNodeEvent(nodeId: widget.nodeId, userId: userId));
+
             // Wait for backend to process completion (1 second)
             await Future.delayed(const Duration(milliseconds: 1000));
-            
+
             // Navigate to status page after completion
-            debugPrint('[QUIZ] Navigating to status page...');
             Navigator.of(scaffoldContext).pushAndRemoveUntil(
               MaterialPageRoute(
                 builder: (_) => BlocProvider.value(
@@ -357,19 +350,19 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
       );
     } else {
       // Not the last node - complete node first, then go back
-      debugPrint('[QUIZ] Not last node, completing node...');
-      
+
+      LogHandler.info(
+        'Action: User completed and tracked progress for node ${widget.nodeId}',
+      );
       // Mark node as completed
       context.read<LearningPathBloc>().add(
-        CompleteNodeEvent(
-          nodeId: widget.nodeId,
-          userId: userId,
-        ),
+        CompleteNodeEvent(nodeId: widget.nodeId, userId: userId),
       );
-      
-      debugPrint('[QUIZ] Going back to nodes overview');
+
       Navigator.pop(context); // Pop quiz page
-      Navigator.pop(context); // Pop learning node page -> back to nodes overview
+      Navigator.pop(
+        context,
+      ); // Pop learning node page -> back to nodes overview
     }
   }
 }

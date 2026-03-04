@@ -125,11 +125,9 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                 course: inProgressCourses[index],
                 showMoreIcon: true,
                 onEdit: () {
-                  debugPrint('Edit course: ${inProgressCourses[index].title}');
                   // TODO: Navigate to edit page
                 },
                 onDelete: () {
-                  debugPrint('Delete course: ${inProgressCourses[index].title}');
                   context.read<LearningPathBloc>().add(
                     DeleteLearningPathEvent(
                       pathId: inProgressCourses[index].id,
@@ -224,11 +222,9 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                 course: completedCourses[index],
                 showMoreIcon: true,
                 onEdit: () {
-                  debugPrint('Edit course: ${completedCourses[index].title}');
                   // TODO: Navigate to edit page
                 },
                 onDelete: () {
-                  debugPrint('Delete course: ${completedCourses[index].title}');
                   context.read<LearningPathBloc>().add(
                     DeleteLearningPathEvent(
                       pathId: completedCourses[index].id,

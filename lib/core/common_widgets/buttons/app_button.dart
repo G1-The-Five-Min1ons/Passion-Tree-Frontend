@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'dart:math';
 
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 
 class AppButton extends StatefulWidget {
@@ -24,8 +25,8 @@ class AppButton extends StatefulWidget {
     this.text,
     this.icon,
     this.size = AppButtonSize.small,
-    this.backgroundColor, //ทำให้กำหนดสีพื้นหลังได้
-    this.borderColor, 
+    this.backgroundColor,
+    this.borderColor,
     this.textColor,
   });
 
@@ -34,30 +35,21 @@ class AppButton extends StatefulWidget {
 }
 
 class _AppButtonState extends State<AppButton> {
-  bool _pressed = false;
-
   static const double _pixel = 4;
   static const double _horizontalPadding = 40; // 20 + 20
   static const double _iconSize = 16;
   static const double _iconSpacing = 16;
 
-  // ===================================================
-  // Build
-  // ===================================================
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final offset = _pressed ? 2.0 : 4.0;
     final bgColor = widget.backgroundColor ?? scheme.primary;
-    final bdColor = widget.borderColor ?? scheme.onSurface;
+    final bdColor = widget.borderColor ?? AppColors.buttonBorder;
     final fgColor = widget.textColor ?? scheme.onPrimary;
 
-
-    
-   final TextStyle buttonTextStyle = AppPixelTypography.smallTitle.copyWith(
+    final TextStyle buttonTextStyle = AppPixelTypography.smallTitle.copyWith(
       color: fgColor,
     );
-
 
     final double buttonWidth = switch (widget.variant) {
       AppButtonVariant.iconOnly => _iconOnlyWidth(),
@@ -65,41 +57,21 @@ class _AppButtonState extends State<AppButton> {
         buttonTextStyle,
       ),
       AppButtonVariant.text => _calculateWidthFromText(buttonTextStyle),
-      AppButtonVariant.leadingIconWithText => _calculateWidthFromTextAndIcon(buttonTextStyle),
+      AppButtonVariant.leadingIconWithText => _calculateWidthFromTextAndIcon(
+        buttonTextStyle,
+      ),
     };
 
     return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        widget.onPressed();
-      },
-      onTapCancel: () => setState(() => _pressed = false),
-      child: SizedBox(
-        width: buttonWidth,
-        height: _height() + offset,
-        child: Stack(
-          children: [
-            Positioned(
-              top: offset,
-              child: PixelBorderContainer(
-                padding: EdgeInsets.zero,
-                fillColor: bdColor, 
-                borderColor: bdColor,
-                child: SizedBox(width: buttonWidth, height: _height()),
-              ),
-            ),
-            PixelBorderContainer(
-                padding: EdgeInsets.zero,
-                fillColor: bgColor,
-                borderColor: bdColor,
-                child: SizedBox(
-                  width: buttonWidth,
-                  height: _height(),
-                  child: Center(child: _buildContent(buttonTextStyle)),
-                ),
-              ),
-          ],
+      onTap: widget.onPressed,
+      child: PixelBorderContainer(
+        padding: EdgeInsets.zero,
+        fillColor: bgColor,
+        borderColor: bdColor,
+        child: SizedBox(
+          width: buttonWidth,
+          height: _height(),
+          child: Center(child: _buildContent(buttonTextStyle)),
         ),
       ),
     );
@@ -132,7 +104,7 @@ class _AppButtonState extends State<AppButton> {
           ],
         );
 
-        case AppButtonVariant.leadingIconWithText:
+      case AppButtonVariant.leadingIconWithText:
         return Row(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -142,7 +114,6 @@ class _AppButtonState extends State<AppButton> {
             Text(widget.text ?? '', style: textStyle),
           ],
         );
-
 
       case AppButtonVariant.textWithIcon:
         return Row(
@@ -195,7 +166,6 @@ class _AppButtonState extends State<AppButton> {
     return (rawWidth / _pixel).ceil() * _pixel;
   }
 
-
   double _calculateWidthFromTextAndIcon(TextStyle style) {
     final painter = TextPainter(
       text: TextSpan(text: widget.text ?? '', style: style),
@@ -207,9 +177,12 @@ class _AppButtonState extends State<AppButton> {
 
     return (rawWidth / _pixel).ceil() * _pixel;
   }
+
   double _getSpacing() {
-  return widget.variant == AppButtonVariant.leadingIconWithText ? 8 : _iconSpacing;
-}
+    return widget.variant == AppButtonVariant.leadingIconWithText
+        ? 8
+        : _iconSpacing;
+  }
 }
 
 //---------------------- วิธีเรียกใช้ ----------------------//

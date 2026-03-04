@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/student_nodes_overview.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 
 class CourseProgressCard extends StatelessWidget {
@@ -24,6 +25,8 @@ class CourseProgressCard extends StatelessWidget {
     final progress = (data.progressPercent / 100).clamp(0.0, 1.0);
     final percent = data.progressPercent.round();
 
+    final isCompleted = data.progressStatus == 'Completed';
+
     // Convert EnrolledLearningPath to LearningPath for navigation
     final course = LearningPath(
       id: data.pathId,
@@ -33,19 +36,20 @@ class CourseProgressCard extends StatelessWidget {
       rating: data.rating,
       publishStatus: 'Published',
       instructor: data.instructor,
-      students: 0, // Not available in EnrolledLearningPath
+      students: 0,
       modules: data.modules,
     );
 
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: () {
+        // Navigate directly to nodes overview (user is already enrolled)
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => BlocProvider.value(
               value: context.read<LearningPathBloc>(),
-              child: LearningCoursePage(
+              child: StudentNodesOverviewPage(
                 course: course,
                 enrolledPath: data,
               ),
@@ -54,7 +58,7 @@ class CourseProgressCard extends StatelessWidget {
         );
       },
       child: BaseCourseCard(
-      height: 260, // เพิ่มความสูงสำหรับ progress card (จาก default 240)
+      height: 260,
       child: Column(
         children: [
           // ================= IMAGE =================
@@ -118,6 +122,30 @@ class CourseProgressCard extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ---------- STATUS BADGE ----------
+                Positioned(
+                  top: 3,
+                  left: 3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
+                    color: isCompleted
+                        ? AppColors.status.withValues(alpha: 0.9)
+                        : colors.secondary.withValues(alpha: 0.9),
+                    child: Text(
+                      isCompleted ? 'Completed' : 'In Progress',
+                      style: AppTypography.smallBodyMedium.copyWith(
+                        color: isCompleted
+                            ? colors.primary
+                            : colors.onPrimary,
+                        fontSize: 9,
                       ),
                     ),
                   ),

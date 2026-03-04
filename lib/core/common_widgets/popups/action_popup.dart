@@ -57,10 +57,7 @@ class ActionPopUp extends StatelessWidget {
                   
                   DeletePopUp.show(
                     context,
-                    onDelete: () {
-                      debugPrint('[ActionPopUp] Delete confirmed, executing onDelete callback');
-                      onDelete();
-                    },
+                    onDelete: onDelete,
                   );
                 },
               ),

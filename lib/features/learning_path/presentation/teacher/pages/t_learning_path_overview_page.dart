@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/search_bar.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/filter_section.dart';
+// Filter section removed
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/teacher_tab_bar.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/tabs/teacher_learning_tab.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/tabs/teacher_status_tab.dart';
@@ -24,17 +23,16 @@ class TeacherLearningPathOverviewPage extends StatefulWidget {
 
 class _TeacherLearningPathOverviewPageState
     extends State<TeacherLearningPathOverviewPage> {
-  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   // Filter state
-  String? _selectedCategory;
-  RangeValues? _ratingRange;
-  int? _maxModules;
+  // Filters removed
 
   int _activeTab = 0; // 0 = Learning, 1 = Create
   TeacherLearningView _learningView = TeacherLearningView.main;
 
-  static const String? mockUserId = "8049de4b-ec43-40f8-b429-6fa5dcfd4351"; // Teacher user ID
+  static const String? mockUserId =
+      "8049de4b-ec43-40f8-b429-6fa5dcfd4351"; // Teacher user ID
 
   // Cache overview data
   LearningPathOverviewLoaded? _cachedOverview;
@@ -42,20 +40,15 @@ class _TeacherLearningPathOverviewPageState
   @override
   void initState() {
     super.initState();
-    
+
     // Fetch overview data from backend
     context.read<LearningPathBloc>().add(
       FetchLearningPathOverview(userId: mockUserId),
     );
-    
-    _searchController.addListener(() {
-      setState(() {});
-    });
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -66,6 +59,7 @@ class _TeacherLearningPathOverviewPageState
         title: 'Learning Paths',
         showBackButton:
             _activeTab == 0 && _learningView == TeacherLearningView.status,
+        onSearch: (q) => setState(() => _searchQuery = q),
         onBackPressed:
             _activeTab == 0 && _learningView == TeacherLearningView.status
             ? () {
@@ -84,7 +78,8 @@ class _TeacherLearningPathOverviewPageState
             }
 
             // Show loading only if no cached data
-            if ((state is LearningPathLoading || state is LearningPathInitial) && 
+            if ((state is LearningPathLoading ||
+                    state is LearningPathInitial) &&
                 _cachedOverview == null) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -106,31 +101,7 @@ class _TeacherLearningPathOverviewPageState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ===== SEARCH + FILTER =====
-                      Row(
-                        children: [
-                          Expanded(
-                            child: LearningPathSearchBar(
-                              controller: _searchController,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          FilterSection(
-                            selectedCategory: _selectedCategory,
-                            ratingRange: _ratingRange,
-                            maxModules: _maxModules,
-                            onFiltersChanged: (category, rating, modules) {
-                              setState(() {
-                                _selectedCategory = category;
-                                _ratingRange = rating;
-                                _maxModules = modules;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 40),
+                      // ===== SEARCH & FILTERS REMOVED =====
 
                       // ===== TAB BAR =====
                       TeacherTabBar(
@@ -153,10 +124,10 @@ class _TeacherLearningPathOverviewPageState
                           TeacherLearningTab(
                             allPaths: overviewData.allPaths,
                             enrolledPaths: overviewData.enrolledPaths,
-                            searchQuery: _searchController.text,
-                            selectedCategory: _selectedCategory,
-                            ratingRange: _ratingRange,
-                            maxModules: _maxModules,
+                            searchQuery: _searchQuery,
+                            selectedCategory: null,
+                            ratingRange: null,
+                            maxModules: null,
                             onOpenStatus: () {
                               setState(() {
                                 _learningView = TeacherLearningView.status;

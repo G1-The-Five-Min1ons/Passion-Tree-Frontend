@@ -147,10 +147,8 @@ class PixelCourseCard extends StatelessWidget {
                               ActionPopUp.show(
                                 context,
                                 onEdit: onEdit ?? () {
-                                  debugPrint('Edit course: ${course.title}');
                                 },
                                 onDelete: onDelete ?? () {
-                                  debugPrint('Delete course: ${course.title}');
                                 },
                               );
                             },

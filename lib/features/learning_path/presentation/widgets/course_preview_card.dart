@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart'; // เพิ่ม ✅
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
+
 class CoursePreviewCard extends StatelessWidget {
   final String title;
   final String instructor;
@@ -25,6 +27,7 @@ class CoursePreviewCard extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
 
     return BaseCourseCard(
+      borderColor: AppColors.cardBorder,
       child: Column(
         children: [
           SizedBox(

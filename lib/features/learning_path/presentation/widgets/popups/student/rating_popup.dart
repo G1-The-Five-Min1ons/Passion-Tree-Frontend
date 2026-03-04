@@ -148,14 +148,4 @@ class _RatingPopupState extends State<RatingPopup> {
     );
   }
 
-  static void show(
-    BuildContext context, {
-    required String pathName,
-    required VoidCallback onSubmit,
-  }) {
-    showDialog(
-      context: context,
-      builder: (_) => RatingPopup(pathName: pathName, onSubmit: onSubmit),
-    );
-  }
 }

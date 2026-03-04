@@ -7,6 +7,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/studen
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/node_comments_section.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 
 class LearningNodePage extends StatefulWidget {
@@ -31,32 +32,21 @@ class _LearningNodePageState extends State<LearningNodePage> {
   @override
   void initState() {
     super.initState();
-    
-    debugPrint('[UI] LearningNodePage - initState');
-    debugPrint('Node ID: ${widget.nodeId}');
-    
+
     // TODO: Get userId from authentication service
-    const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
-    
-    debugPrint('User ID: $userId');
-    
+    const userId =
+        'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
+
     // Start node when page loads
-    debugPrint('Dispatching StartNodeEvent...');
+    LogHandler.info('Action: User joined learning node ${widget.nodeId}');
     context.read<LearningPathBloc>().add(
-          StartNodeEvent(
-            nodeId: widget.nodeId,
-            userId: userId,
-          ),
-        );
-    
+      StartNodeEvent(nodeId: widget.nodeId, userId: userId),
+    );
+
     // Fetch node detail when page loads
-    debugPrint('Dispatching FetchNodeDetail...');
     context.read<LearningPathBloc>().add(
-          FetchNodeDetail(
-            nodeId: widget.nodeId,
-            userId: userId,
-          ),
-        );
+      FetchNodeDetail(nodeId: widget.nodeId, userId: userId),
+    );
   }
 
   @override
@@ -66,24 +56,16 @@ class _LearningNodePageState extends State<LearningNodePage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            debugPrint('[UI] LearningNodePage - BlocBuilder state: ${state.runtimeType}');
-            
             if (state is LearningPathLoading || state is LearningPathInitial) {
-              debugPrint('Loading node detail...');
               return const Center(child: CircularProgressIndicator());
             }
 
             if (state is LearningPathError) {
-              debugPrint('Error loading node: ${state.message}');
-              return Center(
-                child: Text('Error: ${state.message}'),
-              );
+              return Center(child: Text('Error: ${state.message}'));
             }
 
             if (state is NodeDetailLoaded) {
               final nodeDetail = state.nodeDetail;
-              debugPrint('Node detail loaded: ${nodeDetail.title}');
-              debugPrint('Progress: ${nodeDetail.status}');
 
               return SingleChildScrollView(
                 child: Padding(
@@ -114,7 +96,8 @@ class _LearningNodePageState extends State<LearningNodePage> {
                                   title: nodeDetail.title,
                                   pathName: widget.pathName,
                                   totalNodes: widget.totalNodes,
-                                  currentNodeSequence: widget.currentNodeSequence,
+                                  currentNodeSequence:
+                                      widget.currentNodeSequence,
                                 ),
                               ),
                             ),
@@ -125,16 +108,14 @@ class _LearningNodePageState extends State<LearningNodePage> {
                       const SizedBox(height: 32),
 
                       /// ===== COMMENTS =====
-                      const NodeCommentsSection(),
+                      CommentsSection(nodeId: widget.nodeId),
                     ],
                   ),
                 ),
               );
             }
 
-            return const Center(
-              child: Text('Please select a learning path'),
-            );
+            return const Center(child: Text('Please select a learning path'));
           },
         ),
       ),
