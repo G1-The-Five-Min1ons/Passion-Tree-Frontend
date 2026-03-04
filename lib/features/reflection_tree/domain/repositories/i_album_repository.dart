@@ -26,4 +26,12 @@ abstract class IAlbumRepository {
 
   /// Delete album
   Future<Either<Failure, void>> deleteAlbum(String albumId);
+
+  /// Create a new tree
+  Future<Either<Failure, String>> createTree({
+    required String title,
+    required String difficulties,
+    required String pathId,
+    required String albumId,
+  });
 }

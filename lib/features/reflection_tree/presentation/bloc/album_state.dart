@@ -64,3 +64,16 @@ class ImageUploading extends AlbumState {
   @override
   List<Object?> get props => [currentAlbums];
 }
+
+class TreeCreated extends AlbumState {
+  final String treeId;
+  final String message;
+
+  const TreeCreated({
+    required this.treeId,
+    this.message = 'Tree created successfully',
+  });
+
+  @override
+  List<Object?> get props => [treeId, message];
+}

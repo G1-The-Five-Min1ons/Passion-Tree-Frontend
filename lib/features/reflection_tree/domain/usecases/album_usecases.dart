@@ -90,3 +90,24 @@ class DeleteAlbumUseCase {
     return await repository.deleteAlbum(albumId);
   }
 }
+
+/// Use case for creating a new tree
+class CreateTreeUseCase {
+  final IAlbumRepository repository;
+
+  CreateTreeUseCase(this.repository);
+
+  Future<Either<Failure, String>> call({
+    required String title,
+    required String difficulties,
+    required String pathId,
+    required String albumId,
+  }) async {
+    return await repository.createTree(
+      title: title,
+      difficulties: difficulties,
+      pathId: pathId,
+      albumId: albumId,
+    );
+  }
+}

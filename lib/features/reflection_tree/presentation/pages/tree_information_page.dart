@@ -63,7 +63,7 @@ class TreeDetailPage extends StatelessWidget {
                                 imagePath: chapter.isEnrolled
                                     ? 'assets/images/trees/node-enrolled.png'
                                     : 'assets/images/trees/node_notenrolled.png',
-                                size: 80,
+                                size: 90,
                                 onTap: () {
                                   //
                                   //TODO: logic ทีหลัง

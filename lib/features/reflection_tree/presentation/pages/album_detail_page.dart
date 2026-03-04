@@ -15,6 +15,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc_provider.dart';
 
 
 class AlbumDetailPage extends StatefulWidget {
@@ -32,6 +33,8 @@ class AlbumDetailPage extends StatefulWidget {
 }
 
 class _AlbumDetailPageState extends State<AlbumDetailPage> {
+  String? _pendingTreeId;
+
   @override
   void initState() {
     super.initState();
@@ -41,51 +44,77 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBarWidget(
-        title: 'Reflection Tree', 
-        showBackButton: true,
-        onBackPressed: widget.onBack, 
-      ), 
-      body: BlocBuilder<AlbumBloc, AlbumState>(
-        builder: (context, state) {
-          if (state is AlbumLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state is AlbumError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Error: ${state.message}',
-                    style: AppTypography.bodyRegular.copyWith(
-                      color: Theme.of(context).colorScheme.error,
+    return LearningPathBlocProvider(
+      child: Scaffold(
+        appBar: AppBarWidget(
+          title: 'Reflection Tree', 
+          showBackButton: true,
+          onBackPressed: widget.onBack, 
+        ), 
+        body: BlocListener<AlbumBloc, AlbumState>(
+          listener: (context, state) {
+            if (state is AlbumDetailLoaded && _pendingTreeId != null) {
+              final album = state.album;
+              if (album.items != null && album.items!.isNotEmpty) {
+                final newTree = album.items!.first;
+                
+                final treeToNavigate = newTree;
+                setState(() {
+                  _pendingTreeId = null;
+                });
+                
+                Future.microtask(() {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TreeDetailPage(item: treeToNavigate),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  AppButton(
-                    variant: AppButtonVariant.text,
-                    text: 'Retry',
-                    onPressed: () {
-                      context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
-                    },
-                  ),
-                ],
-              ),
-            );
-          }
+                  );
+                });
+              }
+            }
+          },
+          child: BlocBuilder<AlbumBloc, AlbumState>(
+          builder: (context, state) {
+            if (state is AlbumLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (state is AlbumDetailLoaded) {
-            final album = state.album;
-            return _buildAlbumContent(context, album);
-          }
+            if (state is AlbumError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Error: ${state.message}',
+                      style: AppTypography.bodyRegular.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    AppButton(
+                      variant: AppButtonVariant.text,
+                      text: 'Retry',
+                      onPressed: () {
+                        context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }
 
-          return const SizedBox.shrink();
-        },
+            if (state is AlbumDetailLoaded) {
+              final album = state.album;
+              return _buildAlbumContent(context, album);
+            }
+
+            return const SizedBox.shrink();
+          },
+        ),
+        ),
       ),
-    );  
+    );
   }
 
   Widget _buildAlbumContent(BuildContext context, Album album) {
@@ -111,23 +140,27 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
                 icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
                 onPressed: () async {
                   final albumBloc = BlocProvider.of<AlbumBloc>(context);
-                  await Navigator.push(
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => BlocProvider.value(
-                        value: albumBloc,
-                        child: const AddReflectPage(),
+                      builder: (context) => LearningPathBlocProvider(
+                        child: BlocProvider.value(
+                          value: albumBloc,
+                          child: const AddReflectPage(),
+                        ),
                       ),
                     ),
                   );
-                  // Reload album data when returning from AddReflectPage
-                  if (mounted) {
+                  if (mounted && result != null) {
+                    setState(() {
+                      _pendingTreeId = result as String;
+                    });
                     context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
                   }
                 },
               ),
             ],
-          ),  
+          ),
 
           if (album.items != null && album.items!.isNotEmpty)
             _buildItemGrid(context, album, album.items!)

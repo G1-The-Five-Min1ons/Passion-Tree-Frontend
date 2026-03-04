@@ -7,6 +7,7 @@ import 'package:passion_tree_frontend/core/services/upload_service.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/album_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/models/album_api_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/mappers/album_mapper.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/mappers/tree_mapper.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/repositories/i_album_repository.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
@@ -126,8 +127,12 @@ class AlbumRepository implements IAlbumRepository {
       return tokenResult.fold(
         (failure) => Left(failure),
         (token) async {
-          final apiModel = await dataSource.getAlbumById(albumId, token);
-          return Right(AlbumMapper.toAlbum(apiModel));
+          final albumApiModel = await dataSource.getAlbumById(albumId, token);
+          final treesApiModels = await dataSource.getTreesByAlbumId(albumId, token);
+          
+          final items = TreeMapper.toAlbumItemList(treesApiModels);
+          
+          return Right(AlbumMapper.toAlbumWithItems(albumApiModel, items));
         },
       );
     } on AppException catch (e) {
@@ -230,6 +235,42 @@ class AlbumRepository implements IAlbumRepository {
       LogHandler.error('Repository: delete album failed', error: e);
       return Left(UnknownFailure(
         message: 'Failed to delete album',
+        technicalMessage: e.toString(),
+      ));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> createTree({
+    required String title,
+    required String difficulties,
+    required String pathId,
+    required String albumId,
+  }) async {
+    try {
+      final tokenResult = await _getValidToken();
+      return tokenResult.fold(
+        (failure) => Left(failure),
+        (token) async {
+          final request = CreateTreeRequest(
+            title: title,
+            difficulties: difficulties,
+            pathId: pathId,
+            albumId: albumId,
+          );
+          
+          final tree = await dataSource.createTree(request, token);
+          LogHandler.success('Tree created with ID: ${tree.treeId}');
+          
+          return Right(tree.treeId);
+        },
+      );
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository: create tree failed', error: e);
+      return Left(UnknownFailure(
+        message: 'Failed to create tree',
         technicalMessage: e.toString(),
       ));
     }
