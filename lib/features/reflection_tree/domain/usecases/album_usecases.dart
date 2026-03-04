@@ -111,3 +111,14 @@ class CreateTreeUseCase {
     );
   }
 }
+
+/// Use case for deleting a tree
+class DeleteTreeUseCase {
+  final IAlbumRepository repository;
+
+  DeleteTreeUseCase(this.repository);
+
+  Future<Either<Failure, void>> call(String treeId) async {
+    return await repository.deleteTree(treeId);
+  }
+}

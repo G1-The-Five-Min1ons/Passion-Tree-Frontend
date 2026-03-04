@@ -92,3 +92,17 @@ class CreateTreeEvent extends AlbumEvent {
   @override
   List<Object?> get props => [title, difficulties, pathId, albumId];
 }
+
+/// Event to delete a tree
+class DeleteTreeEvent extends AlbumEvent {
+  final String treeId;
+  final String albumId;
+
+  const DeleteTreeEvent({
+    required this.treeId,
+    required this.albumId,
+  });
+
+  @override
+  List<Object?> get props => [treeId, albumId];
+}

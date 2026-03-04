@@ -161,6 +161,26 @@ class AlbumDataSource {
     throw createExceptionFromStatusCode(statusCode, msg);
   }
 
+  /// Delete a tree
+  Future<void> deleteTree(String treeId, String token) async {
+    LogHandler.separator(title: 'TREE · DELETE');
+    final response = await _apiHandler.delete(
+      url: ApiConfig.treeById(treeId),
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (response.isSuccess) {
+      LogHandler.success('Tree deleted: $treeId');
+      return;
+    }
+
+    final msg = response.error ?? response.message ?? 'Failed to delete tree';
+    LogHandler.error('Delete tree failed: $msg');
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
+  }
+
   void dispose() {
     _apiHandler.dispose();
   }

@@ -45,7 +45,6 @@ class AlbumRepository implements IAlbumRepository {
   }
 
   /// Upload image to blob storage and return public URL
-  /// Returns Either<Failure, String> where String is the public URL
   Future<Either<Failure, String>> _uploadImage(File imageFile) async {
     try {
       LogHandler.info('Uploading album cover image...');
@@ -271,6 +270,28 @@ class AlbumRepository implements IAlbumRepository {
       LogHandler.error('Repository: create tree failed', error: e);
       return Left(UnknownFailure(
         message: 'Failed to create tree',
+        technicalMessage: e.toString(),
+      ));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteTree(String treeId) async {
+    try {
+      final tokenResult = await _getValidToken();
+      return tokenResult.fold(
+        (failure) => Left(failure),
+        (token) async {
+          await dataSource.deleteTree(treeId, token);
+          return const Right(null);
+        },
+      );
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository: delete tree failed', error: e);
+      return Left(UnknownFailure(
+        message: 'Failed to delete tree',
         technicalMessage: e.toString(),
       ));
     }

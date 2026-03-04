@@ -19,6 +19,7 @@ class TreeAlbumCard extends StatelessWidget {
   final String currentAlbumname;
   final VoidCallback? onStatusTap;
   final VoidCallback? onCardTap;
+  final VoidCallback? onDelete;
   final String? resumeOn;
 
   const TreeAlbumCard({
@@ -32,6 +33,7 @@ class TreeAlbumCard extends StatelessWidget {
     required this.currentAlbumname,
     this.onStatusTap,
     this.onCardTap,
+    this.onDelete,
     this.resumeOn,
   });
 
@@ -59,7 +61,7 @@ class TreeAlbumCard extends StatelessWidget {
                   initialName: title,
                   initialPath: currentAlbumname,
                   pathOptions: [
-                    'Biology 101', //เดี๋ยวค่อยถึงมาจาก db จริง
+                    'Biology 101', //TODO : เดี๋ยวค่อยถึงมาจาก db จริง
                     'Genetics',
                     'Microbiology',
                     'Criminal Law',
@@ -67,7 +69,7 @@ class TreeAlbumCard extends StatelessWidget {
                 );
               },
               onDelete: () {
-                debugPrint("Delete Album: $title");
+                onDelete?.call();
                 },
               );
             },

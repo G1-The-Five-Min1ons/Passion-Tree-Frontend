@@ -11,7 +11,7 @@ class TreeMapper {
     return AlbumItem(
       treeId: tree.treeId,
       subjectName: tree.title,
-      lastEdited: _formatLastEdited(tree.lastUpdate),
+      lastEdited: 'Edited ${_formatLastEdited(tree.lastUpdate)}',
       status: tree.status,
       chapters: chapters,
       overallStatus: tree.isPause ? 'paused' : tree.status,
@@ -32,19 +32,19 @@ class TreeMapper {
       return 'just now';
     } else if (difference.inMinutes < 60) {
       final minutes = difference.inMinutes;
-      return '$minutes ${minutes == 1 ? 'min' : 'mins'} ago';
+      return '$minutes ${minutes == 1 ? 'minute' : 'minutes'} ago';
     } else if (difference.inHours < 24) {
       final hours = difference.inHours;
-      return '$hours ${hours == 1 ? 'hr' : 'hrs'} ago';
+      return '$hours ${hours == 1 ? 'hour' : 'hours'} ago';
     } else if (difference.inDays < 30) {
       final days = difference.inDays;
       return '$days ${days == 1 ? 'day' : 'days'} ago';
     } else if (difference.inDays < 365) {
       final months = (difference.inDays / 30).floor();
-      return '$months ${months == 1 ? 'mo' : 'mos'} ago';
+      return '$months ${months == 1 ? 'month' : 'months'} ago';
     } else {
       final years = (difference.inDays / 365).floor();
-      return '$years ${years == 1 ? 'yr' : 'yrs'} ago';
+      return '$years ${years == 1 ? 'year' : 'years'} ago';
     }
   }
 

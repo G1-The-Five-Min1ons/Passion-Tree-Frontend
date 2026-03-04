@@ -22,6 +22,7 @@ class AlbumBlocProvider extends StatelessWidget {
         updateAlbum: getIt<UpdateAlbumUseCase>(),
         deleteAlbum: getIt<DeleteAlbumUseCase>(),
         createTree: getIt<CreateTreeUseCase>(),
+        deleteTree: getIt<DeleteTreeUseCase>(),
       ),
       child: child,
     );

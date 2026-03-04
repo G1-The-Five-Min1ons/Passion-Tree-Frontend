@@ -34,4 +34,7 @@ abstract class IAlbumRepository {
     required String pathId,
     required String albumId,
   });
+
+  /// Delete a tree
+  Future<Either<Failure, void>> deleteTree(String treeId);
 }

@@ -209,6 +209,17 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
             );
           },
 
+          onDelete: () {
+            if (item.treeId != null) {
+              context.read<AlbumBloc>().add(
+                DeleteTreeEvent(
+                  treeId: item.treeId!,
+                  albumId: widget.albumId,
+                ),
+              );
+            }
+          },
+
           //TODO: ดึงจาก status จริง
           /* onStatusTap: () {
             final status = item.status.toLowerCase().trim();
