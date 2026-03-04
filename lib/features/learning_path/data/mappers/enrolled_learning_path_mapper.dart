@@ -6,14 +6,14 @@ extension EnrolledLearningPathMapper on EnrolledLearningPathApiModel {
     return EnrolledLearningPath(
       pathId: pathId,
       title: title,
-      description: description,
-      instructor: instructor,
+      description: description ?? '',
+      instructor: instructor ?? 'Unknown Instructor',
       rating: rating,
-      coverImgUrl: coverImgUrl,
+      coverImgUrl: coverImgUrl ?? '',
       modules: modules,
       completedNodes: completedNodes,
       progressPercent: progressPercent,
-      progressStatus: progressStatus,
+      progressStatus: progressStatus ?? 'Not Started',
     );
   }
 }

@@ -12,12 +12,13 @@ class _AnsiColors {
 }
 
 /// Log levels with corresponding colors
-enum LogLevel { info, request, response, success, error, warning }
+enum LogLevel { debug, info, request, response, success, error, warning }
 
 /// Custom logger for API and general application logging
 class LogHandler {
   static bool _enabled = kDebugMode;
   static bool _useColors = true;
+  static bool _debugEnabled = false;
 
   /// Enable or disable logging
   static void setEnabled(bool enabled) {
@@ -27,6 +28,12 @@ class LogHandler {
   /// Enable or disable colored output
   static void setUseColors(bool useColors) {
     _useColors = useColors;
+  }
+
+  /// Enable or disable verbose debug logging.
+  /// Set to true when you need detailed step-by-step logs for troubleshooting.
+  static void setDebugEnabled(bool enabled) {
+    _debugEnabled = enabled;
   }
 
   /// Get current timestamp in HH:mm:ss.SSS format
@@ -43,6 +50,8 @@ class LogHandler {
     if (!_useColors) return '';
 
     switch (level) {
+      case LogLevel.debug:
+        return _AnsiColors.magenta;
       case LogLevel.info:
         return _AnsiColors.brightCyan;
       case LogLevel.request:
@@ -56,6 +65,17 @@ class LogHandler {
       case LogLevel.warning:
         return _AnsiColors.brightYellow;
     }
+  }
+
+  /// Log verbose debug message (only shown when debugEnabled is true)
+  static void debug(String message) {
+    if (!_enabled || !_debugEnabled) return;
+
+    final timestamp = _timestamp();
+    final color = _getColor(LogLevel.debug);
+    final reset = _useColors ? _AnsiColors.reset : '';
+
+    debugPrint('$color$timestamp [DEBUG] : $message$reset');
   }
 
   /// Log info message
@@ -106,9 +126,6 @@ class LogHandler {
       '$color$timestamp [RESPONSE] <$statusCode>-[$method] : $url$reset',
     );
 
-    // if (data != null) {
-    //   debugPrint('$color$timestamp Data : ${_prettyJson(data)}$reset');
-    // }
   }
 
   /// Log success message

@@ -1,3 +1,4 @@
+import 'package:passion_tree_frontend/core/network/api_handler.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_remote_data_source.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/register_request.dart';
@@ -15,12 +16,38 @@ import 'package:passion_tree_frontend/features/authentication/domain/repositorie
 class AuthRepositoryImpl implements IAuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final AuthLocalDataSource _localDataSource;
+  final ApiHandler _apiHandler;
 
   AuthRepositoryImpl({
     required AuthRemoteDataSource remoteDataSource,
     required AuthLocalDataSource localDataSource,
-  })  : _remoteDataSource = remoteDataSource,
-        _localDataSource = localDataSource;
+    required ApiHandler apiHandler,
+  }) : _remoteDataSource = remoteDataSource,
+       _localDataSource = localDataSource,
+       _apiHandler = apiHandler {
+    // Inject token refresh logic into the shared ApiHandler
+    _apiHandler.getToken = () => _localDataSource.getToken();
+    _apiHandler.onTokenRefresh = _handleTokenRefresh;
+  }
+
+  /// Handles the silent token refresh flow
+  Future<bool> _handleTokenRefresh() async {
+    try {
+      final refreshToken = await _localDataSource.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) {
+        return false;
+      }
+
+      final response = await _remoteDataSource.refreshToken(refreshToken);
+      await _localDataSource.saveToken(response.accessToken);
+      await _localDataSource.saveRefreshToken(response.refreshToken);
+      return true;
+    } catch (e) {
+      // If refresh fails (e.g., token expired), clear auth to force logout
+      await _localDataSource.clearAuth();
+      return false;
+    }
+  }
 
   @override
   Future<String> register({
@@ -89,18 +116,18 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<UserProfile> getProfile() async {
     final token = await _localDataSource.getToken();
     if (token == null) throw Exception('No token found');
-    
+
     final responseMap = await _remoteDataSource.getProfile(token);
-    
+
     // Use mapper to safely parse response into entity
     final userProfile = AuthMapper.toUserProfileEntity(responseMap);
-    
+
     // Cache user data locally
     await _localDataSource.saveUserId(userProfile.user.userId);
     await _localDataSource.saveUsername(userProfile.user.username);
     await _localDataSource.saveRole(userProfile.user.role);
     await _localDataSource.saveHeartCount(userProfile.user.heartCount);
-    
+
     return userProfile;
   }
 
@@ -109,7 +136,9 @@ class AuthRepositoryImpl implements IAuthRepository {
     final token = await _localDataSource.getToken();
     if (token == null) throw Exception('No token found');
     final request = ChangePasswordRequest(
-        oldPassword: oldPassword, newPassword: newPassword);
+      oldPassword: oldPassword,
+      newPassword: newPassword,
+    );
     await _remoteDataSource.changePassword(token, request);
   }
 

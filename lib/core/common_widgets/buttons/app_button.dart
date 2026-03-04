@@ -40,9 +40,6 @@ class _AppButtonState extends State<AppButton> {
   static const double _iconSize = 16;
   static const double _iconSpacing = 16;
 
-  // ===================================================
-  // Build
-  // ===================================================
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
