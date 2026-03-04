@@ -10,6 +10,11 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enr
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/start_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_learning_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/generate_nodes_with_ai_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_learning_path_by_id_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 
 class LearningPathBlocProvider extends StatelessWidget {
@@ -30,6 +35,13 @@ class LearningPathBlocProvider extends StatelessWidget {
     final startNode = StartNode(repository);
     final completeNode = CompleteNode(repository);
     final deleteLearningPath = DeleteLearningPath(repository);
+    
+    // Teacher usecases
+    final createLearningPathUseCase = CreateLearningPathUseCase(repository);
+    final createNodeUseCase = CreateNodeUseCase(repository);
+    final generateNodesWithAIUseCase = GenerateNodesWithAIUseCase(repository);
+    final getLearningPathByIdUseCase = GetLearningPathByIdUseCase(repository);
+    final updateNodeUseCase = UpdateNodeUseCase(repository);
 
     return BlocProvider(
       create: (_) => LearningPathBloc(
@@ -41,6 +53,11 @@ class LearningPathBlocProvider extends StatelessWidget {
         startNode,
         completeNode,
         deleteLearningPath,
+        createLearningPathUseCase,
+        createNodeUseCase,
+        generateNodesWithAIUseCase,
+        getLearningPathByIdUseCase,
+        updateNodeUseCase,
       ),
       child: child,
     );

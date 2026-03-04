@@ -6,6 +6,7 @@ class CoursePreviewCard extends StatelessWidget {
   final String title;
   final String instructor;
   final String objectives;
+  final String? imageUrl;
   final int? learners;
   final int? modules;
 
@@ -14,6 +15,7 @@ class CoursePreviewCard extends StatelessWidget {
     required this.title,
     required this.instructor,
     required this.objectives,
+    this.imageUrl,
     this.learners,
     this.modules,
   });
@@ -28,10 +30,21 @@ class CoursePreviewCard extends StatelessWidget {
           SizedBox(
             height: 90,
             width: double.infinity,
-            child: Image.asset(
-              'assets/images/placeholders/course_preview.png',
-              fit: BoxFit.cover,
-            ),
+            child: imageUrl != null && imageUrl!.isNotEmpty
+                ? Image.network(
+                    imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Image.asset(
+                        'assets/images/placeholders/course_preview.png',
+                        fit: BoxFit.cover,
+                      );
+                    },
+                  )
+                : Image.asset(
+                    'assets/images/placeholders/course_preview.png',
+                    fit: BoxFit.cover,
+                  ),
           ),
 
           Expanded(

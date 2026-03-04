@@ -51,6 +51,12 @@ dependencies:
   # YouTube player
   youtube_player_flutter: ^9.0.3
   
+  # Image picker
+  image_picker: ^1.0.7
+  
+  # Path utilities
+  path: ^1.9.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

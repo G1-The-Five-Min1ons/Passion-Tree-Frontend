@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
@@ -9,6 +13,11 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/ai_node_review_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/teacher_nodes_overview.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
+import 'package:passion_tree_frontend/features/upload/upload_service.dart';
 
 class CreateLearningPathInputPage extends StatefulWidget {
   const CreateLearningPathInputPage({super.key});
@@ -23,24 +32,168 @@ class _CreateLearningPathInputPageState
   String _title = '';
   String _objectives = '';
   String _description = '';
+  String? _createdPathId; // เก็บ pathId หลังสร้าง
+  bool _isCreatingPath = false;
+  
+  // Image upload states
+  File? _selectedImageFile;
+  bool _isUploadingImage = false;
+  String _uploadedImageUrl = '';
+  
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (image != null) {
+      setState(() {
+        _selectedImageFile = File(image.path);
+        _isUploadingImage = true;
+      });
+
+      try {
+        final uploadService = UploadApiService();
+        final fileName = path.basename(image.path);
+
+        final urls = await uploadService.getPresignedUrl(
+          fileName,
+          'reflect',
+        );
+        await uploadService.uploadFileToBlob(
+          urls['upload_url']!,
+          _selectedImageFile!,
+        );
+
+        setState(() {
+          _uploadedImageUrl = urls['public_url']!;
+          _isUploadingImage = false;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Image uploaded successfully')),
+          );
+        }
+      } catch (e) {
+        setState(() {
+          _selectedImageFile = null;
+          _isUploadingImage = false;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to upload image: $e')),
+          );
+        }
+      }
+    }
+  }
+  
+  void _handleCreateWithAI(BuildContext context) {
+    if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isCreatingPath = true;
+    });
+
+    context.read<LearningPathBloc>().add(
+      CreateLearningPathEvent(
+        title: _title,
+        objective: _objectives,
+        description: _description,
+        creatorId: 'teacher_123', // TODO: ใช้ user ID จริงจาก auth
+        coverImgUrl: _uploadedImageUrl.isNotEmpty ? _uploadedImageUrl : null,
+        publishStatus: 'draft',
+      ),
+    );
+  }
+
+  void _handleCreatePlainPath(BuildContext context) {
+    if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    context.read<LearningPathBloc>().add(
+      CreateLearningPathEvent(
+        title: _title,
+        objective: _objectives,
+        description: _description,
+        creatorId: 'teacher_123', // TODO: ใช้ user ID จริงจาก auth
+        coverImgUrl: _uploadedImageUrl.isNotEmpty ? _uploadedImageUrl : null,
+        publishStatus: 'draft',
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      appBar: AppBarWidget(title: 'Learning Paths', showBackButton: true),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: AppSpacing.xmargin,
-              right: AppSpacing.xmargin,
-              top: AppSpacing.ymargin,
-              bottom: 40,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+    return BlocListener<LearningPathBloc, LearningPathState>(
+      listener: (context, state) {
+        if (state is LearningPathCreated) {
+          _createdPathId = state.pathId;
+          
+          if (_isCreatingPath) {
+            // ถ้ากด AI Create Node ให้ไปหน้า AI Review
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AINodeReviewPage(
+                  objective: _objectives,
+                  pathId: state.pathId,
+                ),
+              ),
+            ).then((_) {
+              setState(() {
+                _isCreatingPath = false;
+              });
+            });
+          } else {
+            // ถ้ากด Create Plain Path ให้ไปหน้า TeacherNodesOverviewPage
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => TeacherNodesOverviewPage(
+                  title: _title,
+                  pathId: state.pathId,
+                  aiNodes: null, // ไม่มี AI nodes
+                ),
+              ),
+            );
+          }
+        } else if (state is LearningPathError) {
+          setState(() {
+            _isCreatingPath = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${state.message}')),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: const AppBarWidget(title: 'Learning Paths', showBackButton: true),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                left: AppSpacing.xmargin,
+                right: AppSpacing.xmargin,
+                top: AppSpacing.ymargin,
+                bottom: 40,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 // ===== HEADER =====
                 SizedBox(
                   height: 120, // เพิ่มความสูงเพื่อรองรับ subtitle
@@ -77,9 +230,9 @@ class _CreateLearningPathInputPageState
                 Center(
                   child: CoursePreviewCard(
                     title: _title,
-                    instructor: 'อ.อะตอม', // ตอนนี้ยัง fix ได้
+                    instructor: 'อ.อะตอม',
                     objectives: _objectives,
-                    
+                    imageUrl: _uploadedImageUrl,
                   ),
                 ),
 
@@ -100,46 +253,88 @@ class _CreateLearningPathInputPageState
                   },
                 ),
 
-
                 const SizedBox(height: 20),
 
-                // ===== UPLOAD COVER : TITLE =====
-               
+                // ===== COVER IMAGE UPLOAD =====
                 Text(
-                  'Upload Cover Image',
-                  style: AppTypography.titleSemiBold.copyWith(
+                  'Cover Image',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onPrimary,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-
-
-                const SizedBox(height: 10),
-
-                PixelBorderContainer(
-                  width: double.infinity,
-                  height: 150,
-                  padding: EdgeInsets.zero,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.add_photo_alternate,
-                          size: 48,
-                          color: AppColors.textSecondary,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Upload Cover Image',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: AppColors.textSecondary.withValues(
-                                  alpha: 0.5,
+                const SizedBox(height: 8),
+                
+                GestureDetector(
+                  onTap: _isUploadingImage ? null : _pickImage,
+                  child: Container(
+                    width: double.infinity,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      border: Border.all(color: colors.primary, width: 2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: _isUploadingImage
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(color: colors.primary),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Uploading...',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: colors.onSurface,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : _selectedImageFile != null
+                        ? Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: Image.file(
+                                  _selectedImageFile!,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  fit: BoxFit.cover,
                                 ),
                               ),
-                        ),
-                      ],
-                    ),
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: IconButton(
+                                  icon: Icon(Icons.close, color: colors.error),
+                                  onPressed: () {
+                                    setState(() {
+                                      _selectedImageFile = null;
+                                      _uploadedImageUrl = '';
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.cloud_upload_outlined,
+                                size: 40,
+                                color: colors.onSurface.withOpacity(0.5),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Upload Cover Image',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppColors.textSecondary.withOpacity(0.5),
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
 
@@ -180,44 +375,48 @@ class _CreateLearningPathInputPageState
 
               // ===== Buttons =====
               //AI CREATE NODE
-                Center(
-                  child: Column(
-                    children: [
-                      AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'AI Create Node',
-                        subText:
-                            'Use AI powered to auto generate nodes for you',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const AINodeReviewPage(),
+                BlocBuilder<LearningPathBloc, LearningPathState>(
+                  builder: (context, state) {
+                    final isLoading = state is LearningPathLoading;
+                    
+                    return Center(
+                      child: Column(
+                        children: [
+                          AppButton(
+                            variant: AppButtonVariant.text,
+                            text: isLoading && _isCreatingPath ? 'Creating...' : 'AI Create Node',
+                            subText: 'Use AI powered to auto generate nodes for you',
+                            onPressed: isLoading ? () {} : () => _handleCreateWithAI(context),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          //or
+                          Text(
+                            'or',
+                            style: AppPixelTypography.smallTitle.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary,
                             ),
-                          );
-                        },
+                          ),
+
+                          // Plain Path
+                          const SizedBox(height: 10),
+                          AppButton(
+                            variant: AppButtonVariant.text,
+                            text: isLoading && !_isCreatingPath ? 'Creating...' : 'Create Plain Path',
+                            subText: 'Create nodes by yourself',
+                            onPressed: isLoading ? () {} : () => _handleCreatePlainPath(context),
+                          ),
+                        ],
                       ),
-
-                      const SizedBox(height: 10),
-
-                      //or
-                      Text('or', style: AppPixelTypography.smallTitle.copyWith(color: Theme.of(context).colorScheme.onPrimary),),
-
-                      // Plain Path
-                      const SizedBox(height: 10),
-                      AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'Create Plain Path',
-                        subText: 'Create nodes by yourself',
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ],
             ),
           ),
         ),
+      ),
       ),
     );
   }

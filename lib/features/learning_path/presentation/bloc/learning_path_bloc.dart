@@ -11,8 +11,15 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enr
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/start_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_learning_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/generate_nodes_with_ai_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_learning_path_by_id_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_node.dart';
 
 class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GetAllLearningPaths getAllLearningPaths;
@@ -23,6 +30,11 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final StartNode startNode;
   final CompleteNode completeNode;
   final DeleteLearningPath deleteLearningPath;
+  final CreateLearningPathUseCase createLearningPathUseCase;
+  final CreateNodeUseCase createNodeUseCase;
+  final GenerateNodesWithAIUseCase generateNodesWithAIUseCase;
+  final GetLearningPathByIdUseCase getLearningPathByIdUseCase;
+  final UpdateNodeUseCase updateNodeUseCase;
 
   LearningPathBloc(
     this.getAllLearningPaths,
@@ -33,6 +45,11 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.startNode,
     this.completeNode,
     this.deleteLearningPath,
+    this.createLearningPathUseCase,
+    this.createNodeUseCase,
+    this.generateNodesWithAIUseCase,
+    this.getLearningPathByIdUseCase,
+    this.updateNodeUseCase,
   ) : super(LearningPathInitial()) {
     
     ///  FETCH ALL LEARNING PATHS
@@ -277,6 +294,121 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           }
         } catch (e) {
           debugPrint('[BLoC] Error deleting learning path: $e');
+          emit(LearningPathError(e.toString()));
+        }
+      },
+      transformer: droppable(),
+    );
+
+    // ===== TEACHER EVENT HANDLERS =====
+
+    on<CreateLearningPathEvent>(
+      (event, emit) async {
+        debugPrint('[BLoC] CreateLearningPathEvent received');
+        emit(LearningPathLoading());
+
+        try {
+          final learningPath = CreateLearningPath(
+            title: event.title,
+            objective: event.objective,
+            description: event.description,
+            creatorId: event.creatorId,
+            coverImgUrl: event.coverImgUrl,
+            publishStatus: event.publishStatus,
+          );
+          
+          debugPrint('Creating learning path...');
+          final pathId = await createLearningPathUseCase(learningPath);
+          debugPrint('[BLoC] Learning path created: $pathId');
+          emit(LearningPathCreated(pathId));
+        } catch (e) {
+          debugPrint('[BLoC] Error creating learning path: $e');
+          emit(LearningPathError(e.toString()));
+        }
+      },
+      transformer: droppable(),
+    );
+
+    on<GenerateNodesWithAIEvent>(
+      (event, emit) async {
+        debugPrint('[BLoC] GenerateNodesWithAIEvent received');
+        debugPrint('Topic: ${event.topic}');
+        emit(LearningPathLoading());
+
+        try {
+          debugPrint('Generating nodes with AI...');
+          final response = await generateNodesWithAIUseCase(event.topic);
+          debugPrint('[BLoC] Generated ${response.nodes.length} nodes');
+          emit(NodesGeneratedWithAI(
+            topic: response.topic,
+            nodes: response.nodes,
+          ));
+        } catch (e) {
+          debugPrint('[BLoC] Error generating nodes: $e');
+          emit(LearningPathError(e.toString()));
+        }
+      },
+      transformer: restartable(),
+    );
+
+    on<CreateNodeEvent>(
+      (event, emit) async {
+        debugPrint('[BLoC] CreateNodeEvent received');
+        emit(LearningPathLoading());
+
+        try {
+          final node = CreateNode(
+            title: event.title,
+            description: event.description,
+            pathId: event.pathId,
+            sequence: event.sequence,
+            linkvdo: event.linkvdo,
+          );
+          
+          debugPrint('Creating node...');
+          final nodeId = await createNodeUseCase(node);
+          debugPrint('[BLoC] Node created: $nodeId');
+          emit(NodeCreated(nodeId));
+        } catch (e) {
+          debugPrint('[BLoC] Error creating node: $e');
+          emit(LearningPathError(e.toString()));
+        }
+      },
+      transformer: droppable(),
+    );
+
+    on<GetLearningPathByIdEvent>(
+      (event, emit) async {
+        debugPrint('[BLoC] GetLearningPathByIdEvent received');
+        debugPrint('Path ID: ${event.pathId}');
+        emit(LearningPathLoading());
+
+        try {
+          debugPrint('Fetching learning path by ID...');
+          final learningPath = await getLearningPathByIdUseCase(event.pathId);
+          debugPrint('[BLoC] Learning path loaded: ${learningPath.id}');
+          emit(LearningPathDetailLoaded(learningPath));
+        } catch (e) {
+          debugPrint('[BLoC] Error fetching learning path: $e');
+          emit(LearningPathError(e.toString()));
+        }
+      },
+      transformer: restartable(),
+    );
+
+    on<UpdateNodeEvent>(
+      (event, emit) async {
+        debugPrint('[BLoC] UpdateNodeEvent received');
+        debugPrint('Node ID: ${event.nodeId}');
+        emit(LearningPathLoading());
+
+        try {
+          debugPrint('Updating node...');
+          await updateNodeUseCase(event.nodeId, event.title, event.description);
+          debugPrint('[BLoC] Node updated: ${event.nodeId}');
+          emit(NodeUpdated(event.nodeId));
+        } catch (e) {
+          debugPrint('[BLoC] Error updating node: $e');
           emit(LearningPathError(e.toString()));
         }
       },

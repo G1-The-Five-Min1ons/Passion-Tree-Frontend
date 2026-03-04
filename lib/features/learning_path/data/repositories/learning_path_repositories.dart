@@ -10,6 +10,12 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/nod
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/learning_node_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/node_detail_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_node.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/ai_generate_response.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/create_learning_path_mapper.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/create_node_mapper.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/ai_generate_response_mapper.dart';
 
 class LearningPathRepositoryImpl implements LearningPathRepository {
   final LearningPathDataSource dataSource;
@@ -74,6 +80,37 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   @override
   Future<void> deleteLearningPath(String pathId) async {
     return await dataSource.deleteLearningPath(pathId);
+  }
+
+  // ===== TEACHER FEATURES =====
+
+  @override
+  Future<String> createLearningPath(CreateLearningPath learningPath) async {
+    final apiModel = learningPath.toApiModel();
+    return await dataSource.createLearningPath(apiModel);
+  }
+
+  @override
+  Future<String> createNode(CreateNode node) async {
+    final apiModel = node.toApiModel();
+    return await dataSource.createNode(apiModel);
+  }
+
+  @override
+  Future<AIGenerateResponse> generateNodesWithAI(String topic) async {
+    final apiModel = await dataSource.generateNodesWithAI(topic);
+    return apiModel.toEntity();
+  }
+
+  @override
+  Future<LearningPath> getLearningPathById(String pathId) async {
+    final model = await dataSource.getLearningPathById(pathId);
+    return model.toEntity();
+  }
+
+  @override
+  Future<void> updateNode(String nodeId, String title, String description) async {
+    return await dataSource.updateNode(nodeId, title, description);
   }
 }
 

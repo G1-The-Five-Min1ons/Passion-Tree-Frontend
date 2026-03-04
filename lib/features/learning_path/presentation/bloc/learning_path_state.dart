@@ -1,6 +1,7 @@
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/generated_node.dart';
 
 abstract class LearningPathState {}
 
@@ -63,4 +64,40 @@ class LearningPathError extends LearningPathState {
   final String message;
 
   LearningPathError(this.message);
+}
+
+// ===== TEACHER STATES =====
+
+class LearningPathCreated extends LearningPathState {
+  final String pathId;
+  
+  LearningPathCreated(this.pathId);
+}
+
+class NodesGeneratedWithAI extends LearningPathState {
+  final String topic;
+  final List<GeneratedNode> nodes;
+  
+  NodesGeneratedWithAI({
+    required this.topic,
+    required this.nodes,
+  });
+}
+
+class NodeCreated extends LearningPathState {
+  final String nodeId;
+  
+  NodeCreated(this.nodeId);
+}
+
+class LearningPathDetailLoaded extends LearningPathState {
+  final LearningPath learningPath;
+  
+  LearningPathDetailLoaded(this.learningPath);
+}
+
+class NodeUpdated extends LearningPathState {
+  final String nodeId;
+  
+  NodeUpdated(this.nodeId);
 }

@@ -48,3 +48,63 @@ class DeleteLearningPathEvent extends LearningPathEvent {
   DeleteLearningPathEvent({required this.pathId, this.userId});
 }
 
+// ===== TEACHER EVENTS =====
+
+class CreateLearningPathEvent extends LearningPathEvent {
+  final String title;
+  final String objective;
+  final String description;
+  final String creatorId;
+  final String? coverImgUrl;
+  final String publishStatus;
+
+  CreateLearningPathEvent({
+    required this.title,
+    required this.objective,
+    required this.description,
+    required this.creatorId,
+    this.coverImgUrl,
+    this.publishStatus = 'draft',
+  });
+}
+
+class GenerateNodesWithAIEvent extends LearningPathEvent {
+  final String topic;
+  
+  GenerateNodesWithAIEvent({required this.topic});
+}
+
+class CreateNodeEvent extends LearningPathEvent {
+  final String title;
+  final String description;
+  final String pathId;
+  final String sequence;
+  final String linkvdo;
+  
+  CreateNodeEvent({
+    required this.title,
+    this.description = '',
+    required this.pathId,
+    required this.sequence,
+    this.linkvdo = '',
+  });
+}
+
+class GetLearningPathByIdEvent extends LearningPathEvent {
+  final String pathId;
+  
+  GetLearningPathByIdEvent({required this.pathId});
+}
+
+class UpdateNodeEvent extends LearningPathEvent {
+  final String nodeId;
+  final String title;
+  final String description;
+  
+  UpdateNodeEvent({
+    required this.nodeId,
+    required this.title,
+    required this.description,
+  });
+}
+
