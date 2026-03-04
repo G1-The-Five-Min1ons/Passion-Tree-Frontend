@@ -26,7 +26,7 @@ class CommentRemoteDataSource {
 
   Future<List<CommentApiModel>> getNodeComments(String nodeId) async {
     try {
-      LogHandler.info('[DataSource] Fetching comments for node $nodeId...');
+      LogHandler.debug('[DataSource] GET /learningpaths/nodes/$nodeId/comments');
 
       final response = await client.get(
         Uri.parse(
@@ -35,7 +35,7 @@ class CommentRemoteDataSource {
         headers: await _getHeaders(),
       );
 
-      LogHandler.info('Response Status: ${response.statusCode}');
+      LogHandler.debug('Response Status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -50,8 +50,37 @@ class CommentRemoteDataSource {
         );
       }
     } catch (e) {
-      LogHandler.info('Exception in getNodeComments: $e');
+      LogHandler.error('Exception in getNodeComments: $e');
       throw Exception('Failed to fetch comments: $e');
+    }
+  }
+
+  Future<List<CommentApiModel>> getPathComments(String pathId) async {
+    try {
+      LogHandler.debug('[DataSource] GET /learningpaths/$pathId/comments');
+
+      final response = await client.get(
+        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths/$pathId/comments'),
+        headers: await _getHeaders(),
+      );
+
+      LogHandler.debug('Response Status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final comments = data['data'] as List?;
+
+        if (comments == null || comments.isEmpty) return [];
+
+        return comments.map((json) => CommentApiModel.fromJson(json)).toList();
+      } else {
+        throw Exception(
+          'Failed to get path comments (Status ${response.statusCode})',
+        );
+      }
+    } catch (e) {
+      LogHandler.error('Exception in getPathComments: $e');
+      throw Exception('Failed to fetch path comments: $e');
     }
   }
 
@@ -61,7 +90,7 @@ class CommentRemoteDataSource {
     String? parentId,
   }) async {
     try {
-      LogHandler.info('[DataSource] Creating comment for node $nodeId...');
+      LogHandler.debug('[DataSource] POST /learningpaths/nodes/$nodeId/comments');
 
       final response = await client.post(
         Uri.parse(
@@ -75,20 +104,55 @@ class CommentRemoteDataSource {
         }),
       );
 
-      LogHandler.info('Response Status: ${response.statusCode}');
+      LogHandler.debug('Response Status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         return CommentApiModel.fromJson(data['data']);
       } else {
-        LogHandler.info('Create Comment Error Body: ${response.body}');
+        LogHandler.error('Create Comment Error (Status ${response.statusCode})');
         throw Exception(
           'Failed to create comment (Status ${response.statusCode})',
         );
       }
     } catch (e) {
-      LogHandler.info('Exception in createComment: $e');
+      LogHandler.error('Exception in createComment: $e');
       throw Exception('Failed to create comment: $e');
+    }
+  }
+
+  Future<CommentApiModel> createPathComment(
+    String pathId,
+    String message, {
+    String? parentId,
+  }) async {
+    try {
+      LogHandler.debug('[DataSource] POST /learningpaths/$pathId/comments');
+
+      final response = await client.post(
+        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths/$pathId/comments'),
+        headers: await _getHeaders(),
+        body: jsonEncode({
+          'path_id': pathId,
+          'message': message,
+          if (parentId != null) 'parent_id': parentId,
+        }),
+      );
+
+      LogHandler.debug('Response Status: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return CommentApiModel.fromJson(data['data']);
+      } else {
+        LogHandler.error('Create Path Comment Error (Status ${response.statusCode})');
+        throw Exception(
+          'Failed to create path comment (Status ${response.statusCode})',
+        );
+      }
+    } catch (e) {
+      LogHandler.error('Exception in createPathComment: $e');
+      throw Exception('Failed to create path comment: $e');
     }
   }
 
@@ -97,7 +161,7 @@ class CommentRemoteDataSource {
     String message,
   ) async {
     try {
-      LogHandler.info('[DataSource] Updating comment $commentId...');
+      LogHandler.debug('[DataSource] PUT /learningpaths/comments/$commentId');
 
       final response = await client.put(
         Uri.parse(
@@ -107,7 +171,7 @@ class CommentRemoteDataSource {
         body: jsonEncode({'message': message}),
       );
 
-      LogHandler.info('Response Status: ${response.statusCode}');
+      LogHandler.debug('Response Status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -118,14 +182,14 @@ class CommentRemoteDataSource {
         );
       }
     } catch (e) {
-      LogHandler.info('Exception in updateComment: $e');
+      LogHandler.error('Exception in updateComment: $e');
       throw Exception('Failed to update comment: $e');
     }
   }
 
   Future<void> deleteComment(String commentId) async {
     try {
-      LogHandler.info('[DataSource] Deleting comment $commentId...');
+      LogHandler.debug('[DataSource] DELETE /learningpaths/comments/$commentId');
 
       final response = await client.delete(
         Uri.parse(
@@ -140,14 +204,14 @@ class CommentRemoteDataSource {
         );
       }
     } catch (e) {
-      LogHandler.info('Exception in deleteComment: $e');
+      LogHandler.error('Exception in deleteComment: $e');
       throw Exception('Failed to delete comment: $e');
     }
   }
 
   Future<void> addReaction(String commentId, String reactionType) async {
     try {
-      LogHandler.info('[DataSource] Adding reaction to comment $commentId...');
+      LogHandler.debug('[DataSource] POST /learningpaths/comments/$commentId/reactions');
 
       final response = await client.post(
         Uri.parse(
@@ -157,7 +221,7 @@ class CommentRemoteDataSource {
         body: jsonEncode({'reaction_type': reactionType}),
       );
 
-      LogHandler.info('Response Status: ${response.statusCode}');
+      LogHandler.debug('Response Status: ${response.statusCode}');
 
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception(
@@ -165,7 +229,7 @@ class CommentRemoteDataSource {
         );
       }
     } catch (e) {
-      LogHandler.info('Exception in addReaction: $e');
+      LogHandler.error('Exception in addReaction: $e');
       throw Exception('Failed to add reaction: $e');
     }
   }

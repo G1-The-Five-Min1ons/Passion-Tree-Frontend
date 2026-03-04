@@ -8,7 +8,8 @@ class CommentApiModel extends Comment {
     required super.message,
     required super.createdAt,
     super.editAt,
-    required super.nodeId,
+    super.nodeId,
+    super.pathId,
     super.parentId,
     super.reactions = const [],
     super.mentions = const [],
@@ -24,7 +25,8 @@ class CommentApiModel extends Comment {
           ? DateTime.parse(json['create_at'])
           : DateTime.now(),
       editAt: json['edit_at'] != null ? DateTime.parse(json['edit_at']) : null,
-      nodeId: json['node_id'] ?? '',
+      nodeId: json['node_id'],
+      pathId: json['path_id'],
       parentId: json['parent_id'],
       reactions:
           (json['reactions'] as List<dynamic>?)
@@ -51,6 +53,7 @@ class CommentReactionApiModel extends CommentReaction {
     required super.reactionId,
     required super.reactionType,
     required super.commentId,
+    super.userId,
   });
 
   factory CommentReactionApiModel.fromJson(Map<String, dynamic> json) {
@@ -58,6 +61,7 @@ class CommentReactionApiModel extends CommentReaction {
       reactionId: json['reaction_id'] ?? '',
       reactionType: json['reaction_type'] ?? '',
       commentId: json['comment_id'] ?? '',
+      userId: json['user_id'],
     );
   }
 }

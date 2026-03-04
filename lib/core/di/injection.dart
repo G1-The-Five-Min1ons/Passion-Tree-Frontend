@@ -26,7 +26,9 @@ import 'package:passion_tree_frontend/features/learning_path/data/datasources/co
 import 'package:passion_tree_frontend/features/learning_path/data/repositories/comment_repository_impl.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/repositories/comment_repository.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/get_node_comments.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/get_path_comments.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/create_comment.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/create_path_comment.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/update_comment.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/delete_comment.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/add_comment_reaction.dart';
@@ -153,8 +155,14 @@ Future<void> initializeDependencies() async {
   getIt.registerFactory<GetNodeComments>(
     () => GetNodeComments(getIt<CommentRepository>()),
   );
+  getIt.registerFactory<GetPathComments>(
+    () => GetPathComments(getIt<CommentRepository>()),
+  );
   getIt.registerFactory<CreateComment>(
     () => CreateComment(getIt<CommentRepository>()),
+  );
+  getIt.registerFactory<CreatePathComment>(
+    () => CreatePathComment(getIt<CommentRepository>()),
   );
   getIt.registerFactory<UpdateComment>(
     () => UpdateComment(getIt<CommentRepository>()),
@@ -169,7 +177,9 @@ Future<void> initializeDependencies() async {
   getIt.registerFactory<CommentBloc>(
     () => CommentBloc(
       getNodeComments: getIt<GetNodeComments>(),
+      getPathComments: getIt<GetPathComments>(),
       createComment: getIt<CreateComment>(),
+      createPathComment: getIt<CreatePathComment>(),
       updateComment: getIt<UpdateComment>(),
       deleteComment: getIt<DeleteComment>(),
       addCommentReaction: getIt<AddCommentReaction>(),

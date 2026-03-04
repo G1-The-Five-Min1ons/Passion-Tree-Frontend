@@ -13,6 +13,11 @@ class CommentRepositoryImpl implements CommentRepository {
   }
 
   @override
+  Future<List<Comment>> getPathComments(String pathId) async {
+    return await remoteDataSource.getPathComments(pathId);
+  }
+
+  @override
   Future<Comment> createComment(
     String nodeId,
     String message, {
@@ -20,6 +25,19 @@ class CommentRepositoryImpl implements CommentRepository {
   }) async {
     return await remoteDataSource.createComment(
       nodeId,
+      message,
+      parentId: parentId,
+    );
+  }
+
+  @override
+  Future<Comment> createPathComment(
+    String pathId,
+    String message, {
+    String? parentId,
+  }) async {
+    return await remoteDataSource.createPathComment(
+      pathId,
       message,
       parentId: parentId,
     );

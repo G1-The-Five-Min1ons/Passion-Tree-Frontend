@@ -5,7 +5,8 @@ class Comment {
   final String message;
   final DateTime createdAt;
   final DateTime? editAt;
-  final String nodeId;
+  final String? nodeId;
+  final String? pathId;
   final String? parentId;
   final List<CommentReaction> reactions;
   final List<CommentMention> mentions;
@@ -17,7 +18,8 @@ class Comment {
     required this.message,
     required this.createdAt,
     this.editAt,
-    required this.nodeId,
+    this.nodeId,
+    this.pathId,
     this.parentId,
     this.reactions = const [],
     this.mentions = const [],
@@ -28,11 +30,13 @@ class CommentReaction {
   final String reactionId;
   final String reactionType;
   final String commentId;
+  final String? userId;
 
   const CommentReaction({
     required this.reactionId,
     required this.reactionType,
     required this.commentId,
+    this.userId,
   });
 }
 

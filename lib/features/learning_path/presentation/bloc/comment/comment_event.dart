@@ -7,66 +7,75 @@ abstract class CommentEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class FetchNodeComments extends CommentEvent {
-  final String nodeId;
+class FetchComments extends CommentEvent {
+  final String? nodeId;
+  final String? pathId;
 
-  const FetchNodeComments(this.nodeId);
+  const FetchComments({this.nodeId, this.pathId})
+    : assert(nodeId != null || pathId != null);
 
   @override
-  List<Object> get props => [nodeId];
+  List<Object?> get props => [nodeId, pathId];
 }
 
 class AddComment extends CommentEvent {
-  final String nodeId;
+  final String? nodeId;
+  final String? pathId;
   final String message;
   final String? parentId;
 
   const AddComment({
-    required this.nodeId,
+    this.nodeId,
+    this.pathId,
     required this.message,
     this.parentId,
-  });
+  }) : assert(nodeId != null || pathId != null);
 
   @override
-  List<Object?> get props => [nodeId, message, parentId];
+  List<Object?> get props => [nodeId, pathId, message, parentId];
 }
 
 class EditComment extends CommentEvent {
   final String commentId;
   final String message;
-  final String nodeId;
+  final String? nodeId;
+  final String? pathId;
 
   const EditComment({
     required this.commentId,
     required this.message,
-    required this.nodeId,
+    this.nodeId,
+    this.pathId,
   });
 
   @override
-  List<Object> get props => [commentId, message, nodeId];
+  List<Object?> get props => [commentId, message, nodeId, pathId];
 }
 
 class RemoveComment extends CommentEvent {
   final String commentId;
-  final String nodeId;
+  final String? nodeId;
+  final String? pathId;
 
-  const RemoveComment({required this.commentId, required this.nodeId});
+  const RemoveComment({required this.commentId, this.nodeId, this.pathId});
 
   @override
-  List<Object> get props => [commentId, nodeId];
+  List<Object?> get props => [commentId, nodeId, pathId];
 }
 
 class AddReaction extends CommentEvent {
   final String commentId;
   final String reactionType;
-  final String nodeId;
+  final String? nodeId;
+  final String? pathId;
 
   const AddReaction({
     required this.commentId,
     required this.reactionType,
-    required this.nodeId,
+    this.nodeId,
+    this.pathId,
   });
 
   @override
-  List<Object> get props => [commentId, reactionType, nodeId];
+  List<Object?> get props => [commentId, reactionType, nodeId, pathId];
 }

@@ -106,7 +106,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
                       const SizedBox(height: 32),
 
                       /// ===== COMMENTS =====
-                      NodeCommentsSection(nodeId: widget.nodeId),
+                      CommentsSection(nodeId: widget.nodeId),
                     ],
                   ),
                 ),

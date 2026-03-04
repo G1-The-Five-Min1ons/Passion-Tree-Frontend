@@ -37,7 +37,6 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
   void initState() {
     super.initState();
 
-    LogHandler.info('[UI] LearningCoursePage - Fetching nodes for preview');
     const userId =
         'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // TODO: Get from auth
 
@@ -52,21 +51,13 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
 
     // If not enrolled yet, enroll first
     if (widget.enrolledPath == null) {
-      LogHandler.info('[UI] ========== START ENROLLMENT ==========');
-      LogHandler.info('[UI] Not enrolled yet, enrolling user in path...');
-      LogHandler.info('[UI] Path ID: ${widget.course.id}');
-      LogHandler.info('[UI] Path Title: ${widget.course.title}');
-      LogHandler.info('[UI] User ID: $userId');
       setState(() => _isEnrolling = true);
 
       context.read<LearningPathBloc>().add(
         EnrollPathEvent(pathId: widget.course.id, userId: userId),
       );
-      LogHandler.info('[UI] EnrollPathEvent dispatched');
     } else {
       // Already enrolled, navigate directly
-      LogHandler.info('[UI] Already enrolled, navigating to nodes overview');
-      LogHandler.info('[UI] Enrolled Path ID: ${widget.enrolledPath!.pathId}');
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -77,9 +68,6 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
         ),
       ).then((_) {
         // Refetch overview data when returning (in case user completes a course)
-        LogHandler.info(
-          '[UI] Returned from nodes overview, refetching overview data...',
-        );
         context.read<LearningPathBloc>().add(
           FetchLearningPathOverview(userId: userId),
         );
@@ -94,29 +82,10 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
       body: SafeArea(
         child: BlocListener<LearningPathBloc, LearningPathState>(
           listener: (context, state) {
-            LogHandler.info(
-              '[UI] BlocListener - State changed: ${state.runtimeType}',
-            );
-            LogHandler.info('[UI] Current _isEnrolling: $_isEnrolling');
-
             // Handle enrollment success
-            if (state is PathEnrolled) {
-              LogHandler.info('[UI] State is PathEnrolled!');
-              LogHandler.info('[UI] state.pathId: ${state.pathId}');
-              LogHandler.info('[UI] widget.course.id: ${widget.course.id}');
-              LogHandler.info(
-                '[UI] Matches: ${state.pathId == widget.course.id}',
-              );
-            }
-
             if (state is PathEnrolled &&
                 state.pathId == widget.course.id &&
                 _isEnrolling) {
-              LogHandler.info('[UI] ========== ENROLLMENT SUCCESS ==========');
-              LogHandler.info('[UI] Enrollment successful!');
-              LogHandler.info('[UI] Enrolled Path ID: ${state.pathId}');
-              LogHandler.info('[UI] User ID: ${state.userId}');
-              LogHandler.info('[UI] Navigating to nodes overview...');
               setState(() => _isEnrolling = false);
 
               Navigator.push(
@@ -129,24 +98,16 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                 ),
               ).then((_) {
                 // Refetch overview data when returning from nodes overview
-                LogHandler.info(
-                  '[UI] Returned from nodes overview, refetching overview data...',
-                );
                 const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc';
                 context.read<LearningPathBloc>().add(
                   FetchLearningPathOverview(userId: userId),
                 );
               });
-              LogHandler.info('[UI] Navigation completed');
             }
 
             // Handle enrollment error
             if (state is LearningPathError && _isEnrolling) {
-              LogHandler.info('[UI] ========== ENROLLMENT FAILED ==========');
-              LogHandler.info('[UI] Enrollment failed!');
-              LogHandler.info('[UI] Error: ${state.message}');
-              LogHandler.info('[UI] Path ID: ${widget.course.id}');
-              LogHandler.info('[UI] _isEnrolling: $_isEnrolling');
+              LogHandler.error('[UI] Enrollment failed: ${state.message}');
               setState(() => _isEnrolling = false);
 
               ScaffoldMessenger.of(context).showSnackBar(
@@ -187,9 +148,9 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                         onStartJourney: () => _handleStartJourney(context),
                       ),
 
-                      if (nodes != null && nodes.isNotEmpty) ...[
+                      if (nodes != null) ...[
                         const SizedBox(height: 32),
-                        NodeCommentsSection(nodeId: nodes.first.nodeId),
+                        CommentsSection(pathId: widget.course.id),
                       ],
                     ],
                   ),

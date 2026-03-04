@@ -1,15 +1,15 @@
 class EnrolledLearningPathApiModel {
   final String pathId;
   final String title;
-  final String description;
-  final String instructor;
+  final String? description;
+  final String? instructor;
   final double rating;
-  final String coverImgUrl;
-  final String enrollmentStatus;
+  final String? coverImgUrl;
+  final String? enrollmentStatus;
   final int modules;
   final int completedNodes;
   final double progressPercent;
-  final String progressStatus;
+  final String? progressStatus;
 
   EnrolledLearningPathApiModel({
     required this.pathId,
