@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
@@ -14,6 +15,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 
 class LearningCoursePage extends StatefulWidget {
   final LearningPath course;
@@ -32,22 +34,28 @@ class LearningCoursePage extends StatefulWidget {
 class _LearningCoursePageState extends State<LearningCoursePage> {
   List<NodeDetail>? _cachedNodes;
   bool _isEnrolling = false;
+  String? _userId;
 
   @override
   void initState() {
     super.initState();
+    _loadUserAndFetchNodes();
+  }
 
-    const userId =
-        'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // TODO: Get from auth
-
-    context.read<LearningPathBloc>().add(
-      FetchNodesForPath(pathId: widget.course.id, userId: userId),
-    );
+  Future<void> _loadUserAndFetchNodes() async {
+    final storedUserId = await getIt<IAuthRepository>().getUserId();
+    if (!mounted) return;
+    setState(() => _userId = storedUserId ?? '');
+    if (storedUserId != null && storedUserId.isNotEmpty) {
+      context.read<LearningPathBloc>().add(
+        FetchNodesForPath(pathId: widget.course.id, userId: storedUserId),
+      );
+    }
   }
 
   void _handleStartJourney(BuildContext context) {
-    const userId =
-        'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // TODO: Get from auth
+    final userId = _userId ?? '';
+    if (userId.isEmpty) return;
 
     // If not enrolled yet, enroll first
     if (widget.enrolledPath == null) {
@@ -63,7 +71,10 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
         MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: context.read<LearningPathBloc>(),
-            child: StudentNodesOverviewPage(course: widget.course),
+            child: StudentNodesOverviewPage(
+              course: widget.course,
+              enrolledPath: widget.enrolledPath,
+            ),
           ),
         ),
       ).then((_) {
@@ -93,15 +104,20 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                 MaterialPageRoute(
                   builder: (_) => BlocProvider.value(
                     value: context.read<LearningPathBloc>(),
-                    child: StudentNodesOverviewPage(course: widget.course),
+                    child: StudentNodesOverviewPage(
+                      course: widget.course,
+                      enrolledPath: widget.enrolledPath,
+                    ),
                   ),
                 ),
               ).then((_) {
                 // Refetch overview data when returning from nodes overview
-                const userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc';
-                context.read<LearningPathBloc>().add(
-                  FetchLearningPathOverview(userId: userId),
-                );
+                final userId = _userId ?? '';
+                if (userId.isNotEmpty) {
+                  context.read<LearningPathBloc>().add(
+                    FetchLearningPathOverview(userId: userId),
+                  );
+                }
               });
             }
 

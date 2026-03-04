@@ -27,16 +27,16 @@ class EnrolledLearningPathApiModel {
 
   factory EnrolledLearningPathApiModel.fromJson(Map<String, dynamic> json) {
     return EnrolledLearningPathApiModel(
-      pathId: json['path_id'],
-      title: json['title'],
+      pathId: json['path_id'] ?? '',
+      title: json['title'] ?? '',
       description: json['description'],
       instructor: json['instructor'],
-      rating: (json['rating'] as num).toDouble(),
+      rating: ((json['rating'] ?? 0) as num).toDouble(),
       coverImgUrl: json['cover_img_url'],
       enrollmentStatus: json['enrollment_status'],
-      modules: json['modules'],
-      completedNodes: json['completed_nodes'],
-      progressPercent: (json['progress_percent'] as num).toDouble(),
+      modules: json['modules'] ?? 0,
+      completedNodes: json['completed_nodes'] ?? 0,
+      progressPercent: ((json['progress_percent'] ?? 0) as num).toDouble(),
       progressStatus: json['progress_status'],
     );
   }

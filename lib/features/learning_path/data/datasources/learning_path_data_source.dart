@@ -139,11 +139,11 @@ class LearningPathDataSource {
     String userId,
   ) async {
     try {
-      LogHandler.debug('[DataSource] GET /user/learningpaths/history');
+      LogHandler.debug('[DataSource] GET /learningpaths/user/enroll');
 
       final response = await client.get(
         Uri.parse(
-          '${ApiConfig.apiBackendUrl}/user/learningpaths/history?user_id=$userId',
+          '${ApiConfig.apiBackendUrl}/learningpaths/user/enroll',
         ),
         headers: await _getHeaders(),
       );
@@ -384,11 +384,12 @@ class LearningPathDataSource {
       } else {
         try {
           final error = jsonDecode(response.body);
-          LogHandler.error('Failed to start node: ${error['message']}');
-          throw Exception(error['message'] ?? 'Failed to start node');
+          final msg = error['error'] ?? error['message'] ?? 'Failed to start node (${response.statusCode})';
+          LogHandler.error('Failed to start node: $msg (Status ${response.statusCode}): ${response.body}');
+          throw Exception(msg);
         } on FormatException {
           LogHandler.error(
-            'Failed to start node (Status ${response.statusCode})',
+            'Failed to start node (Status ${response.statusCode}): ${response.body}',
           );
           throw Exception(
             'Failed to start node (Status ${response.statusCode})',
@@ -430,11 +431,12 @@ class LearningPathDataSource {
       } else {
         try {
           final error = jsonDecode(response.body);
-          LogHandler.error('Failed to complete node: ${error['message']}');
-          throw Exception(error['message'] ?? 'Failed to complete node');
+          final msg = error['error'] ?? error['message'] ?? 'Failed to complete node (${response.statusCode})';
+          LogHandler.error('Failed to complete node: $msg (Status ${response.statusCode}): ${response.body}');
+          throw Exception(msg);
         } on FormatException {
           LogHandler.error(
-            'Failed to complete node (Status ${response.statusCode})',
+            'Failed to complete node (Status ${response.statusCode}): ${response.body}',
           );
           throw Exception(
             'Failed to complete node (Status ${response.statusCode})',

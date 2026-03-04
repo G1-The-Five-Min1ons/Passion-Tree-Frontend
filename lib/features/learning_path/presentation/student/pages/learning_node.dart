@@ -7,6 +7,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/studen
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/node_comments_section.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 
 class LearningNodePage extends StatefulWidget {
@@ -37,6 +38,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
         'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
 
     // Start node when page loads
+    LogHandler.info('Action: User joined learning node ${widget.nodeId}');
     context.read<LearningPathBloc>().add(
       StartNodeEvent(nodeId: widget.nodeId, userId: userId),
     );
