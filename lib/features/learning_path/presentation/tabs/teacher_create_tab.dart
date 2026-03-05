@@ -116,12 +116,11 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
             itemCount: inProgressCourses.length < inProgressShown
                 ? inProgressCourses.length
                 : inProgressShown,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 220,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
-              childAspectRatio:
-                  BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
+              childAspectRatio: 0.692, // 180/260 for larger card height
             ),
 
             itemBuilder: (context, index) {
@@ -214,12 +213,11 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
             itemCount: completedCourses.length < completedShown
                 ? completedCourses.length
                 : completedShown,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 220,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
-              childAspectRatio:
-                  BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
+              childAspectRatio: 0.692, // 180/260 for larger card height
             ),
             itemBuilder: (context, index) {
               return PixelCourseCard(
