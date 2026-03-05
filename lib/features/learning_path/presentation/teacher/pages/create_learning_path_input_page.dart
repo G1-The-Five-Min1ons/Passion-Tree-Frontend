@@ -171,15 +171,19 @@ class _CreateLearningPathInputPageState
       listener: (context, state) {
         if (state is LearningPathCreated) {
           _createdPathId = state.pathId;
+          final bloc = context.read<LearningPathBloc>();
           
           if (_isCreatingPath) {
             // ถ้ากด AI Create Node ให้ไปหน้า AI Review
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => AINodeReviewPage(
-                  objective: _objectives,
-                  pathId: state.pathId,
+                builder: (_) => BlocProvider.value(
+                  value: bloc,
+                  child: AINodeReviewPage(
+                    objective: _objectives,
+                    pathId: state.pathId,
+                  ),
                 ),
               ),
             ).then((_) {
@@ -192,10 +196,13 @@ class _CreateLearningPathInputPageState
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => TeacherNodesOverviewPage(
-                  title: _title,
-                  pathId: state.pathId,
-                  aiNodes: null, // ไม่มี AI nodes
+                builder: (_) => BlocProvider.value(
+                  value: bloc,
+                  child: TeacherNodesOverviewPage(
+                    title: _title,
+                    pathId: state.pathId,
+                    aiNodes: null, // ไม่มี AI nodes
+                  ),
                 ),
               ),
             );

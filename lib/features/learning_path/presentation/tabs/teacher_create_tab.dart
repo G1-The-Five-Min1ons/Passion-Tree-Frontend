@@ -55,10 +55,14 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
             variant: AppButtonVariant.iconOnly,
             icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
             onPressed: () {
+              final bloc = context.read<LearningPathBloc>();
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const CreateLearningPathInputPage(),
+                  builder: (_) => BlocProvider.value(
+                    value: bloc,
+                    child: const CreateLearningPathInputPage(),
+                  ),
                 ),
               );
             },

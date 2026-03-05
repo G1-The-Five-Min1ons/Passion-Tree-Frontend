@@ -1,6 +1,6 @@
 class ApiConfig {
-  //static const String apiBaseUrl = 'http://10.0.2.2:8080'; 
-  static const String apiBaseUrl = 'http://localhost:8080'; // For web development, use localhost
+  //static const String apiBaseUrl = 'http://10.0.2.2:500'; 
+  static const String apiBaseUrl = 'http://localhost:5000'; // For web development, use localhost
   static const String _devAIUrl = 'http://localhost:8000'; 
   
   // Auto-detect environment (or use --dart-define for build)

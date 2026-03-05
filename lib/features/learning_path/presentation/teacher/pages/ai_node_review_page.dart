@@ -221,13 +221,17 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                         variant: AppButtonVariant.text,
                         text: 'Save',
                         onPressed: () {
+                          final bloc = context.read<LearningPathBloc>();
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => TeacherNodesOverviewPage(
-                                title: widget.objective,
-                                aiNodes: _nodes,
-                                pathId: widget.pathId,
+                              builder: (_) => BlocProvider.value(
+                                value: bloc,
+                                child: TeacherNodesOverviewPage(
+                                  title: widget.objective,
+                                  aiNodes: _nodes,
+                                  pathId: widget.pathId,
+                                ),
                               ),
                             ),
                           );
