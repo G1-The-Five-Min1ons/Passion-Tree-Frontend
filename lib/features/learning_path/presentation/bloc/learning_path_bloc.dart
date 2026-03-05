@@ -273,7 +273,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
     on<CreateLearningPathEvent>(
       (event, emit) async {
-        debugPrint('[BLoC] CreateLearningPathEvent received');
+        LogHandler.debug('[BLoC] CreateLearningPathEvent received');
         emit(LearningPathLoading());
 
         try {
@@ -286,12 +286,12 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             publishStatus: event.publishStatus,
           );
           
-          debugPrint('Creating learning path...');
+          LogHandler.debug('Creating learning path...');
           final pathId = await createLearningPathUseCase(learningPath);
-          debugPrint('[BLoC] Learning path created: $pathId');
+          LogHandler.debug('[BLoC] Learning path created: $pathId');
           emit(LearningPathCreated(pathId));
         } catch (e) {
-          debugPrint('[BLoC] Error creating learning path: $e');
+          LogHandler.error('[BLoC] Error creating learning path: $e');
           emit(LearningPathError(e.toString()));
         }
       },
@@ -300,20 +300,20 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
     on<GenerateNodesWithAIEvent>(
       (event, emit) async {
-        debugPrint('[BLoC] GenerateNodesWithAIEvent received');
-        debugPrint('Topic: ${event.topic}');
+        LogHandler.debug('[BLoC] GenerateNodesWithAIEvent received');
+        LogHandler.debug('Topic: ${event.topic}');
         emit(LearningPathLoading());
 
         try {
-          debugPrint('Generating nodes with AI...');
+          LogHandler.debug('Generating nodes with AI...');
           final response = await generateNodesWithAIUseCase(event.topic);
-          debugPrint('[BLoC] Generated ${response.nodes.length} nodes');
+          LogHandler.debug('[BLoC] Generated ${response.nodes.length} nodes');
           emit(NodesGeneratedWithAI(
             topic: response.topic,
             nodes: response.nodes,
           ));
         } catch (e) {
-          debugPrint('[BLoC] Error generating nodes: $e');
+          LogHandler.error('[BLoC] Error generating nodes: $e');
           emit(LearningPathError(e.toString()));
         }
       },
@@ -322,7 +322,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
     on<CreateNodeEvent>(
       (event, emit) async {
-        debugPrint('[BLoC] CreateNodeEvent received');
+        LogHandler.debug('[BLoC] CreateNodeEvent received');
         emit(LearningPathLoading());
 
         try {
@@ -334,12 +334,12 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             linkvdo: event.linkvdo,
           );
           
-          debugPrint('Creating node...');
+          LogHandler.debug('Creating node...');
           final nodeId = await createNodeUseCase(node);
-          debugPrint('[BLoC] Node created: $nodeId');
+          LogHandler.debug('[BLoC] Node created: $nodeId');
           emit(NodeCreated(nodeId));
         } catch (e) {
-          debugPrint('[BLoC] Error creating node: $e');
+          LogHandler.error('[BLoC] Error creating node: $e');
           emit(LearningPathError(e.toString()));
         }
       },
@@ -348,17 +348,17 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
     on<GetLearningPathByIdEvent>(
       (event, emit) async {
-        debugPrint('[BLoC] GetLearningPathByIdEvent received');
-        debugPrint('Path ID: ${event.pathId}');
+        LogHandler.debug('[BLoC] GetLearningPathByIdEvent received');
+        LogHandler.debug('Path ID: ${event.pathId}');
         emit(LearningPathLoading());
 
         try {
-          debugPrint('Fetching learning path by ID...');
+          LogHandler.debug('Fetching learning path by ID...');
           final learningPath = await getLearningPathByIdUseCase(event.pathId);
-          debugPrint('[BLoC] Learning path loaded: ${learningPath.id}');
+          LogHandler.debug('[BLoC] Learning path loaded: ${learningPath.id}');
           emit(LearningPathDetailLoaded(learningPath));
         } catch (e) {
-          debugPrint('[BLoC] Error fetching learning path: $e');
+          LogHandler.error('[BLoC] Error fetching learning path: $e');
           emit(LearningPathError(e.toString()));
         }
       },
@@ -367,17 +367,17 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
     on<UpdateNodeEvent>(
       (event, emit) async {
-        debugPrint('[BLoC] UpdateNodeEvent received');
-        debugPrint('Node ID: ${event.nodeId}');
+        LogHandler.debug('[BLoC] UpdateNodeEvent received');
+        LogHandler.debug('Node ID: ${event.nodeId}');
         emit(LearningPathLoading());
 
         try {
-          debugPrint('Updating node...');
+          LogHandler.debug('Updating node...');
           await updateNodeUseCase(event.nodeId, event.title, event.description);
-          debugPrint('[BLoC] Node updated: ${event.nodeId}');
+          LogHandler.debug('[BLoC] Node updated: ${event.nodeId}');
           emit(NodeUpdated(event.nodeId));
         } catch (e) {
-          debugPrint('[BLoC] Error updating node: $e');
+          LogHandler.error('[BLoC] Error updating node: $e');
           emit(LearningPathError(e.toString()));
         }
       },

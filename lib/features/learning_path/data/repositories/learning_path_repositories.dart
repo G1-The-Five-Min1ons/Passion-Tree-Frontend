@@ -10,6 +10,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/nod
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/learning_node_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/node_detail_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/quiz_question_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_node.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/ai_generate_response.dart';

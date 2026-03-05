@@ -26,6 +26,8 @@ class EditNodeModal extends StatefulWidget {
 }
 
 class _EditNodeModalState extends State<EditNodeModal> {
+  String _title = '';
+  String _description = '';
   String _linkInput = '';
   final List<String> _links = []; //ส่วนเพิ่มlink
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
@@ -130,8 +132,8 @@ class _EditNodeModalState extends State<EditNodeModal> {
                     // ===== INFO + MATERIALS =====
                     NodeInfoSection(
                       // ===== NODE INFO =====
-                      onTitleChanged: (v) => _title = v,
-                      onDescriptionChanged: (v) => _description = v,
+                      onTitleChanged: (v) => setState(() => _title = v),
+                      onDescriptionChanged: (v) => setState(() => _description = v),
 
                       // ===== LINKS =====
                       links: _links,

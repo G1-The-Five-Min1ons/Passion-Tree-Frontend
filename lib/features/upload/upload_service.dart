@@ -9,7 +9,7 @@ class UploadApiService {
   
   // 1. ขอ Presigned URL จาก Backend
   Future<Map<String, String>> getPresignedUrl(String filename, String folder) async {
-    final url = Uri.parse('${ApiConfig.apiBaseUrl}/upload/presignedimg-url');
+    final url = Uri.parse('${ApiConfig.apiBackendUrl}/upload/presignedimg-url');
     
     final response = await http.post(
       url,

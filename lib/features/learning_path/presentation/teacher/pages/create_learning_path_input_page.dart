@@ -18,6 +18,8 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/upload/upload_service.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 class CreateLearningPathInputPage extends StatefulWidget {
   const CreateLearningPathInputPage({super.key});
@@ -34,11 +36,24 @@ class _CreateLearningPathInputPageState
   String _description = '';
   String? _createdPathId; // เก็บ pathId หลังสร้าง
   bool _isCreatingPath = false;
+  String? _userId;
   
   // Image upload states
   File? _selectedImageFile;
   bool _isUploadingImage = false;
   String _uploadedImageUrl = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    final storedUserId = await getIt<IAuthRepository>().getUserId();
+    if (!mounted) return;
+    setState(() => _userId = storedUserId);
+  }
   
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -98,6 +113,13 @@ class _CreateLearningPathInputPageState
       return;
     }
 
+    if (_userId == null || _userId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not authenticated')),
+      );
+      return;
+    }
+
     setState(() {
       _isCreatingPath = true;
     });
@@ -107,7 +129,7 @@ class _CreateLearningPathInputPageState
         title: _title,
         objective: _objectives,
         description: _description,
-        creatorId: 'teacher_123', // TODO: ใช้ user ID จริงจาก auth
+        creatorId: _userId!,
         coverImgUrl: _uploadedImageUrl.isNotEmpty ? _uploadedImageUrl : null,
         publishStatus: 'draft',
       ),
@@ -122,12 +144,19 @@ class _CreateLearningPathInputPageState
       return;
     }
 
+    if (_userId == null || _userId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not authenticated')),
+      );
+      return;
+    }
+
     context.read<LearningPathBloc>().add(
       CreateLearningPathEvent(
         title: _title,
         objective: _objectives,
         description: _description,
-        creatorId: 'teacher_123', // TODO: ใช้ user ID จริงจาก auth
+        creatorId: _userId!,
         coverImgUrl: _uploadedImageUrl.isNotEmpty ? _uploadedImageUrl : null,
         publishStatus: 'draft',
       ),

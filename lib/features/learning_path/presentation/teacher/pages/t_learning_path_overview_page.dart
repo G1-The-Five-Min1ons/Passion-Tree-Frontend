@@ -10,6 +10,8 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/tabs/t
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 enum TeacherLearningView { main, status }
 
@@ -31,8 +33,7 @@ class _TeacherLearningPathOverviewPageState
   int _activeTab = 0; // 0 = Learning, 1 = Create
   TeacherLearningView _learningView = TeacherLearningView.main;
 
-  static const String? mockUserId =
-      "8049de4b-ec43-40f8-b429-6fa5dcfd4351"; // Teacher user ID
+  String? _userId;
 
   // Cache overview data
   LearningPathOverviewLoaded? _cachedOverview;
@@ -40,10 +41,18 @@ class _TeacherLearningPathOverviewPageState
   @override
   void initState() {
     super.initState();
+    _loadOverviewData();
+  }
 
+  Future<void> _loadOverviewData() async {
+    final storedUserId = await getIt<IAuthRepository>().getUserId();
+    if (!mounted) return;
+    
+    setState(() => _userId = storedUserId);
+    
     // Fetch overview data from backend
     context.read<LearningPathBloc>().add(
-      FetchLearningPathOverview(userId: mockUserId),
+      FetchLearningPathOverview(userId: storedUserId),
     );
   }
 
@@ -141,7 +150,7 @@ class _TeacherLearningPathOverviewPageState
                       ] else ...[
                         TeacherCreateTab(
                           allPaths: overviewData.allPaths,
-                          userId: mockUserId,
+                          userId: _userId,
                         ),
                       ],
 
