@@ -400,7 +400,11 @@ class _CreateLearningPathInputPageState
                   labelColor: Theme.of(context).colorScheme.onPrimary,
                   hintText: 'Describe this learning path in detail',
                   height: 150,
-                  onChanged: (value) {},
+                  onChanged: (value) {
+                    setState(() {
+                      _description = value;
+                    });
+                  },
                 ),
 
                 const SizedBox(height: 30),

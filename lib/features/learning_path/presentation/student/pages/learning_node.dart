@@ -29,23 +29,21 @@ class LearningNodePage extends StatefulWidget {
 }
 
 class _LearningNodePageState extends State<LearningNodePage> {
+  static const String _userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
+
   @override
   void initState() {
     super.initState();
 
-    // TODO: Get userId from authentication service
-    const userId =
-        'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
-
     // Start node when page loads
     LogHandler.info('Action: User joined learning node ${widget.nodeId}');
     context.read<LearningPathBloc>().add(
-      StartNodeEvent(nodeId: widget.nodeId, userId: userId),
+      StartNodeEvent(nodeId: widget.nodeId, userId: _userId),
     );
 
     // Fetch node detail when page loads
     context.read<LearningPathBloc>().add(
-      FetchNodeDetail(nodeId: widget.nodeId, userId: userId),
+      FetchNodeDetail(nodeId: widget.nodeId, userId: _userId),
     );
   }
 
@@ -85,12 +83,13 @@ class _LearningNodePageState extends State<LearningNodePage> {
                         materials: nodeDetail.materials,
                         status: nodeDetail.status,
                         videoUrl: nodeDetail.linkVdo,
-                        onTakeQuiz: () {
-                          Navigator.push(
+                        onTakeQuiz: () async {
+                          final bloc = context.read<LearningPathBloc>();
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => BlocProvider.value(
-                                value: context.read<LearningPathBloc>(),
+                                value: bloc,
                                 child: LearningPathQuizPage(
                                   nodeId: widget.nodeId,
                                   title: nodeDetail.title,
@@ -102,6 +101,13 @@ class _LearningNodePageState extends State<LearningNodePage> {
                               ),
                             ),
                           );
+                          // Refetch node detail after returning from quiz
+                          if (mounted) {
+                            bloc.add(FetchNodeDetail(
+                              nodeId: widget.nodeId,
+                              userId: _userId,
+                            ));
+                          }
                         },
                       ),
 

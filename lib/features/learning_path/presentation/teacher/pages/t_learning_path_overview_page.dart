@@ -79,8 +79,24 @@ class _TeacherLearningPathOverviewPageState
             : null,
       ),
       body: SafeArea(
-        child: BlocBuilder<LearningPathBloc, LearningPathState>(
-          builder: (context, state) {
+        child: BlocListener<LearningPathBloc, LearningPathState>(
+          listener: (context, state) {
+            // Refetch overview when learning path or node is created/updated
+            if (state is LearningPathCreated || state is NodeCreated || state is NodeUpdated) {
+              if (_userId != null && _userId!.isNotEmpty) {
+                // Add a small delay to ensure backend is updated
+                Future.delayed(const Duration(milliseconds: 500), () {
+                  if (mounted) {
+                    context.read<LearningPathBloc>().add(
+                      FetchLearningPathOverview(userId: _userId),
+                    );
+                  }
+                });
+              }
+            }
+          },
+          child: BlocBuilder<LearningPathBloc, LearningPathState>(
+            builder: (context, state) {
             // Cache overview data when loaded
             if (state is LearningPathOverviewLoaded) {
               _cachedOverview = state;
@@ -163,6 +179,7 @@ class _TeacherLearningPathOverviewPageState
 
             return const SizedBox();
           },
+        ),
         ),
       ),
     );

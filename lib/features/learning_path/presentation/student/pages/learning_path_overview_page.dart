@@ -92,8 +92,24 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
         onSearch: (q) => setState(() => _searchQuery = q),
       ),
       body: SafeArea(
-        child: BlocBuilder<LearningPathBloc, LearningPathState>(
-          builder: (context, state) {
+        child: BlocListener<LearningPathBloc, LearningPathState>(
+          listener: (context, state) {
+            // Refetch overview when node is completed or path is enrolled
+            if (state is NodeDetailLoaded || state is PathEnrolled) {
+              if (userId != null && userId!.isNotEmpty) {
+                // Add a small delay to ensure backend is updated
+                Future.delayed(const Duration(milliseconds: 500), () {
+                  if (mounted) {
+                    context.read<LearningPathBloc>().add(
+                      FetchLearningPathOverview(userId: userId),
+                    );
+                  }
+                });
+              }
+            }
+          },
+          child: BlocBuilder<LearningPathBloc, LearningPathState>(
+            builder: (context, state) {
             // Cache overview data when loaded
             if (state is LearningPathOverviewLoaded) {
               _cachedOverview = state;
@@ -173,16 +189,21 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                               height: 30,
                               child: NavigationButton(
                                 direction: NavigationDirection.right,
-                                onPressed: () {
-                                  Navigator.push(
+                                onPressed: () async {
+                                  final bloc = context.read<LearningPathBloc>();
+                                  await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) => BlocProvider.value(
-                                        value: context.read<LearningPathBloc>(),
+                                        value: bloc,
                                         child: const LearningPathStatusPage(),
                                       ),
                                     ),
                                   );
+                                  // Refetch overview data when returning
+                                  if (mounted && userId != null) {
+                                    bloc.add(FetchLearningPathOverview(userId: userId));
+                                  }
                                 },
                               ),
                             ),
@@ -366,6 +387,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
 
             return const SizedBox();
           },
+        ),
         ),
       ),
     );
