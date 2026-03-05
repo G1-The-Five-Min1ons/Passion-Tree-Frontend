@@ -10,6 +10,7 @@ class EditTreePopUp extends StatefulWidget {
   final String initialName;
   final String initialPath;
   final List<String> pathOptions;
+  final Function(String newTitle, String selectedAlbum)? onSave;
 
   const EditTreePopUp({
     super.key,
@@ -17,6 +18,7 @@ class EditTreePopUp extends StatefulWidget {
     required this.initialName,
     required this.initialPath,
     required this.pathOptions,
+    this.onSave,
   });
 
   @override
@@ -28,6 +30,7 @@ class EditTreePopUp extends StatefulWidget {
     required String initialName,
     required String initialPath,
     required List<String> pathOptions,
+    Function(String newTitle, String selectedAlbum)? onSave,
   }) {
     showDialog(
       context: context,
@@ -36,6 +39,7 @@ class EditTreePopUp extends StatefulWidget {
         initialName: initialName,
         initialPath: initialPath,
         pathOptions: pathOptions,
+        onSave: onSave,
       ),
     );
   }
@@ -103,7 +107,7 @@ class _EditTreePopUpState extends State<EditTreePopUp> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: SearchDropdown(
-                      label: "Select Path",
+                      label: "Select Album",
                       options: widget.pathOptions,
                       controller: _pathController,
                       onSelected: (selected) {
@@ -122,8 +126,11 @@ class _EditTreePopUpState extends State<EditTreePopUp> {
               SaveCancel(
                 onCancel: () => Navigator.pop(context),
                 onSave: () {
-                  debugPrint("New Name: ${_nameController.text}");
-                  debugPrint("New Path: ${_pathController.text}");
+                  final newTitle = _nameController.text.trim();
+                  final selectedAlbum = _pathController.text.trim();
+                  if (newTitle.isNotEmpty && widget.onSave != null) {
+                    widget.onSave!(newTitle, selectedAlbum);
+                  }
                   Navigator.pop(context);
                 },
               ),

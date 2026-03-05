@@ -145,6 +145,10 @@ Future<void> initializeDependencies() async {
     () => CreateTreeUseCase(getIt<IAlbumRepository>()),
   );
 
+  getIt.registerFactory<UpdateTreeUseCase>(
+    () => UpdateTreeUseCase(getIt<IAlbumRepository>()),
+  );
+
   getIt.registerFactory<DeleteTreeUseCase>(
     () => DeleteTreeUseCase(getIt<IAlbumRepository>()),
   );

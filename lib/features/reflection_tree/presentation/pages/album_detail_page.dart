@@ -33,13 +33,15 @@ class AlbumDetailPage extends StatefulWidget {
 }
 
 class _AlbumDetailPageState extends State<AlbumDetailPage> {
-  String? _pendingTreeId;
-
+  List<String> _availableAlbumNames = [];
+  List<Album> _availableAlbums = [];
+  
   @override
   void initState() {
     super.initState();
     // Load album data when page opens
     context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
+    context.read<AlbumBloc>().add(const LoadAlbumsEvent());
   }
 
   @override
@@ -53,68 +55,65 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
         ), 
         body: BlocListener<AlbumBloc, AlbumState>(
           listener: (context, state) {
-            if (state is AlbumDetailLoaded && _pendingTreeId != null) {
-              final album = state.album;
-              if (album.items != null && album.items!.isNotEmpty) {
-                final newTree = album.items!.first;
-                
-                final treeToNavigate = newTree;
-                setState(() {
-                  _pendingTreeId = null;
-                });
-                
-                Future.microtask(() {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TreeDetailPage(item: treeToNavigate),
-                    ),
-                  );
-                });
-              }
+            if (state is AlbumsLoaded) {
+              setState(() {
+                _availableAlbumNames = state.albums.map((album) => album.title).toList();
+                _availableAlbums = state.albums;
+              });
+              context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
             }
-          },
-          child: BlocBuilder<AlbumBloc, AlbumState>(
-          builder: (context, state) {
-            if (state is AlbumLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (state is AlbumError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Error: ${state.message}',
-                      style: AppTypography.bodyRegular.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    AppButton(
-                      variant: AppButtonVariant.text,
-                      text: 'Retry',
-                      onPressed: () {
-                        context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
-                      },
-                    ),
-                  ],
+            
+            if (state is AlbumDetailLoaded && state.message != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message!),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 2),
                 ),
               );
             }
-
-            if (state is AlbumDetailLoaded) {
-              final album = state.album;
-              return _buildAlbumContent(context, album);
-            }
-
-            return const SizedBox.shrink();
           },
+          child: BlocBuilder<AlbumBloc, AlbumState>(
+            builder: (context, state) {
+              if (state is AlbumLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (state is AlbumError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Error: ${state.message}',
+                        style: AppTypography.bodyRegular.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      AppButton(
+                        variant: AppButtonVariant.text,
+                        text: 'Retry',
+                        onPressed: () {
+                          context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (state is AlbumDetailLoaded) {
+                final album = state.album;
+                return _buildAlbumContent(context, album);
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
         ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildAlbumContent(BuildContext context, Album album) {
@@ -140,7 +139,7 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
                 icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
                 onPressed: () async {
                   final albumBloc = BlocProvider.of<AlbumBloc>(context);
-                  final result = await Navigator.push(
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => LearningPathBlocProvider(
@@ -151,10 +150,7 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
                       ),
                     ),
                   );
-                  if (mounted && result != null) {
-                    setState(() {
-                      _pendingTreeId = result as String;
-                    });
+                  if (mounted) {
                     context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
                   }
                 },
@@ -167,11 +163,15 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
           else
             _buildEmptyState(context),   
 
-          GestureDetector(
-            onTap: () {
-              RecommendPopup.show(context);
-            },
-          ),             
+          // GestureDetector(
+          //   onTap: () {
+          //     RecommendPopup.show(context);
+          //   },
+          //   child: Container(
+          //     height: 50,
+          //     child: Text('Show Recommendations'),
+          //   ),
+          // ),             
         ],
       ),
     );
@@ -199,6 +199,10 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
           statusColor: item.statusColor,
           treeStatus: item.overallStatus,
           currentAlbumname: album.title,
+          albumOptions: _availableAlbumNames,
+          availableAlbums: _availableAlbums,
+          treeId: item.treeId ?? '',
+          albumId: album.albumId,
           resumeOn: item.resumeOn,
           dataDisplay: const SizedBox.shrink(),
 

@@ -12,6 +12,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
   final UpdateAlbumUseCase updateAlbum;
   final DeleteAlbumUseCase deleteAlbum;
   final CreateTreeUseCase createTree;
+  final UpdateTreeUseCase updateTree;
   final DeleteTreeUseCase deleteTree;
 
   AlbumBloc({
@@ -21,6 +22,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     required this.updateAlbum,
     required this.deleteAlbum,
     required this.createTree,
+    required this.updateTree,
     required this.deleteTree,
   }) : super(AlbumInitial()) {
     on<LoadAlbumsEvent>(_onLoadAlbums);
@@ -31,6 +33,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     on<RefreshAlbumsEvent>(_onRefreshAlbums);
     on<ClearAlbumErrorEvent>(_onClearAlbumError);
     on<CreateTreeEvent>(_onCreateTree);
+    on<UpdateTreeEvent>(_onUpdateTree);
     on<DeleteTreeEvent>(_onDeleteTree);
   }
 
@@ -269,6 +272,40 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
         albumResult.fold(
           (failure) => emit(AlbumError(failure.message)),
           (album) => emit(AlbumDetailLoaded(album)),
+        );
+      },
+    );
+  }
+
+  Future<void> _onUpdateTree(
+    UpdateTreeEvent event,
+    Emitter<AlbumState> emit,
+  ) async {
+    emit(AlbumOperationLoading());
+    
+    final updateResult = await updateTree(
+      treeId: event.treeId,
+      title: event.title,
+      albumId: event.newAlbumId,
+    );
+    
+    await updateResult.fold(
+      (failure) {
+        LogHandler.error('Failed to update tree: ${failure.message}');
+        emit(AlbumError(failure.message));
+      },
+      (_) async {
+        LogHandler.success('Tree updated: ${event.treeId}');
+        
+        final albumResult = await getAlbumById(event.albumId);
+        albumResult.fold(
+          (failure) => emit(AlbumError(failure.message)),
+          (album) {
+            final message = (event.newAlbumId != null && event.newAlbumId != event.albumId)
+                ? 'Tree moved successfully'
+                : null;
+            emit(AlbumDetailLoaded(album, message: message));
+          },
         );
       },
     );

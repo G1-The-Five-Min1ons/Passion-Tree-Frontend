@@ -106,3 +106,21 @@ class DeleteTreeEvent extends AlbumEvent {
   @override
   List<Object?> get props => [treeId, albumId];
 }
+
+/// Event to update a tree
+class UpdateTreeEvent extends AlbumEvent {
+  final String treeId;
+  final String albumId;
+  final String title;
+  final String? newAlbumId;
+
+  const UpdateTreeEvent({
+    required this.treeId,
+    required this.albumId,
+    required this.title,
+    this.newAlbumId,
+  });
+
+  @override
+  List<Object?> get props => [treeId, albumId, title, newAlbumId];
+}

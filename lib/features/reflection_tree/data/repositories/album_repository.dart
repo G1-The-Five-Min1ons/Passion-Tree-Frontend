@@ -296,4 +296,31 @@ class AlbumRepository implements IAlbumRepository {
       ));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> updateTree({
+    required String treeId,
+    required String title,
+    String? albumId,
+  }) async {
+    try {
+      final tokenResult = await _getValidToken();
+      return tokenResult.fold(
+        (failure) => Left(failure),
+        (token) async {
+          await dataSource.updateTree(treeId, title, albumId, token);
+          LogHandler.success('Tree updated successfully');
+          return const Right(null);
+        },
+      );
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository: update tree failed', error: e);
+      return Left(UnknownFailure(
+        message: 'Failed to update tree',
+        technicalMessage: e.toString(),
+      ));
+    }
+  }
 }

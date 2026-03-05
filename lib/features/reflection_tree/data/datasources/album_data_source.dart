@@ -151,8 +151,13 @@ class AlbumDataSource {
 
     if (response.isSuccess && response.statusCode == 201) {
       LogHandler.success('Tree created successfully');
+            if (response.data == null) {
+        LogHandler.error('Response data is null');
+        throw createExceptionFromStatusCode(500, 'Server returned null data');
+      }
+      
       final data = response.data as Map<String, dynamic>;
-      return TreeApiModel.fromJson(data['tree']);
+      return TreeApiModel.fromJson(data);
     }
 
     final msg = response.error ?? response.message ?? 'Failed to create tree';
@@ -177,6 +182,33 @@ class AlbumDataSource {
 
     final msg = response.error ?? response.message ?? 'Failed to delete tree';
     LogHandler.error('Delete tree failed: $msg');
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
+  }
+
+  /// Update a tree
+  Future<void> updateTree(String treeId, String title, String? albumId, String token) async {
+    LogHandler.separator(title: 'TREE · UPDATE');
+    
+    final Map<String, dynamic> requestBody = {'title': title};
+    if (albumId != null && albumId.isNotEmpty) {
+      requestBody['album_id'] = albumId;
+    }
+    
+    final response = await _apiHandler.put(
+      url: ApiConfig.treeById(treeId),
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode(requestBody),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (response.isSuccess) {
+      LogHandler.success('Tree updated: $treeId');
+      return;
+    }
+
+    final msg = response.error ?? response.message ?? 'Failed to update tree';
+    LogHandler.error('Update tree failed: $msg');
     final statusCode = response.statusCode;
     throw createExceptionFromStatusCode(statusCode, msg);
   }

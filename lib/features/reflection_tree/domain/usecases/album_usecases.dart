@@ -122,3 +122,22 @@ class DeleteTreeUseCase {
     return await repository.deleteTree(treeId);
   }
 }
+
+/// Use case for updating a tree
+class UpdateTreeUseCase {
+  final IAlbumRepository repository;
+
+  UpdateTreeUseCase(this.repository);
+
+  Future<Either<Failure, void>> call({
+    required String treeId,
+    required String title,
+    String? albumId,
+  }) async {
+    return await repository.updateTree(
+      treeId: treeId,
+      title: title,
+      albumId: albumId,
+    );
+  }
+}

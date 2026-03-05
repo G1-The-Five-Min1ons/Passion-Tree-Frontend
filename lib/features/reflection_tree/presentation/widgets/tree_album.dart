@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
@@ -7,6 +8,9 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/edit_tree_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/resume_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 
 
 class TreeAlbumCard extends StatelessWidget {
@@ -17,6 +21,10 @@ class TreeAlbumCard extends StatelessWidget {
   final Widget dataDisplay;
   final String treeStatus;
   final String currentAlbumname;
+  final List<String> albumOptions;
+  final List<Album> availableAlbums;
+  final String treeId;
+  final String albumId;
   final VoidCallback? onStatusTap;
   final VoidCallback? onCardTap;
   final VoidCallback? onDelete;
@@ -31,6 +39,10 @@ class TreeAlbumCard extends StatelessWidget {
     required this.dataDisplay,
     required this.treeStatus,
     required this.currentAlbumname,
+    required this.albumOptions,
+    required this.availableAlbums,
+    required this.treeId,
+    required this.albumId,
     this.onStatusTap,
     this.onCardTap,
     this.onDelete,
@@ -60,12 +72,32 @@ class TreeAlbumCard extends StatelessWidget {
                   context,
                   initialName: title,
                   initialPath: currentAlbumname,
-                  pathOptions: [
-                    'Biology 101', //TODO : เดี๋ยวค่อยถึงมาจาก db จริง
-                    'Genetics',
-                    'Microbiology',
-                    'Criminal Law',
-                  ],
+                  pathOptions: albumOptions.isEmpty 
+                      ? ['No albums available'] 
+                      : albumOptions,
+                  onSave: (newTitle, selectedAlbumName) {
+                    String? newAlbumId;
+                    if (selectedAlbumName != currentAlbumname && availableAlbums.isNotEmpty) {
+                      try {
+                        final selectedAlbum = availableAlbums.firstWhere(
+                          (album) => album.title == selectedAlbumName,
+                        );
+                        newAlbumId = selectedAlbum.albumId;
+                      } catch (e) {
+                        // If not found, don't change album
+                        newAlbumId = null;
+                      }
+                    }
+                    
+                    context.read<AlbumBloc>().add(
+                      UpdateTreeEvent(
+                        treeId: treeId,
+                        albumId: albumId,
+                        title: newTitle,
+                        newAlbumId: newAlbumId,
+                      ),
+                    );
+                  },
                 );
               },
               onDelete: () {

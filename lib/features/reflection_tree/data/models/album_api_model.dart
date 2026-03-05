@@ -158,8 +158,8 @@ class TreeApiModel {
         status: json['status'] ?? 'active',
         isPause: json['is_pause'] ?? false,
         nodeCount: json['node_count'] ?? 0,
-        createdAt: json['create_at'] != null
-            ? DateTime.parse(json['create_at'])
+        createdAt: json['created_at'] != null
+            ? DateTime.parse(json['created_at'])
             : DateTime.now(),
         lastUpdate: json['last_update'] != null
             ? DateTime.parse(json['last_update'])

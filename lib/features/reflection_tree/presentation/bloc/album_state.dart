@@ -28,11 +28,12 @@ class AlbumsLoaded extends AlbumState {
 /// State when a single album is loaded
 class AlbumDetailLoaded extends AlbumState {
   final Album album;
+  final String? message;
 
-  const AlbumDetailLoaded(this.album);
+  const AlbumDetailLoaded(this.album, {this.message});
 
   @override
-  List<Object?> get props => [album];
+  List<Object?> get props => [album, message];
 }
 
 /// Error state

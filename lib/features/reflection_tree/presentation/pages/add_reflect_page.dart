@@ -15,6 +15,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/tree_information_page.dart';
 
 class AddReflectPage extends StatefulWidget{
   
@@ -33,6 +34,8 @@ class _AddReflectPageState extends State<AddReflectPage>{
   String _selectedDifficulty = 'Easy';
   String? _selectedPathId;
   String? _selectedAlbumId;
+  List<String> _availableAlbumNames = [];
+  List<dynamic> _availableAlbums = [];
 
   @override
   void initState() {
@@ -60,6 +63,13 @@ class _AddReflectPageState extends State<AddReflectPage>{
       ), 
       body: BlocListener<AlbumBloc, AlbumState>(
         listener: (context, state) {
+          if (state is AlbumsLoaded) {
+            setState(() {
+              _availableAlbumNames = state.albums.map((album) => album.title).toList();
+              _availableAlbums = state.albums;
+            });
+          }
+          
           if (state is TreeCreated) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -68,7 +78,23 @@ class _AddReflectPageState extends State<AddReflectPage>{
                 duration: const Duration(seconds: 1),
               ),
             );
-            Navigator.pop(context, state.treeId);
+            final albumBloc = context.read<AlbumBloc>();
+            final albumId = _selectedAlbumId!;
+            
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BlocProvider.value(
+                    value: albumBloc,
+                    child: TreeDetailPage(
+                      treeId: state.treeId,
+                      albumId: albumId,
+                    ),
+                  ),
+                ),
+              );
+            });
           } else if (state is AlbumError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -80,11 +106,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
         },
         child: BlocBuilder<AlbumBloc, AlbumState>(
         builder: (context, albumState) {
-          final List<String> albumNames = albumState is AlbumsLoaded
-              ? albumState.albums.map((album) => album.title).toList()
-              : [];
-          
-          final albums = albumState is AlbumsLoaded ? albumState.albums : [];
+          final bool isLoadingAlbums = albumState is AlbumLoading;
 
           return BlocBuilder<LearningPathBloc, LearningPathState>(
             builder: (context, learningPathState) {
@@ -167,7 +189,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
-                          child: albumState is AlbumLoading
+                          child: isLoadingAlbums
                               ? const Center(
                                   child: Padding(
                                     padding: EdgeInsets.all(16.0),
@@ -175,17 +197,17 @@ class _AddReflectPageState extends State<AddReflectPage>{
                                   ),
                                 )
                               : SearchDropdown(
-                                  options: albumNames.isEmpty 
+                                  options: _availableAlbumNames.isEmpty 
                                       ? ['No albums found'] 
-                                      : albumNames,
+                                      : _availableAlbumNames,
                                   label: "Select Album",
                                   controller: _albumController,
                                   onSelected: (selectedItem) {
                                     // Find the selected album ID
-                                    if (albums.isEmpty) return;
+                                    if (_availableAlbums.isEmpty) return;
                                     
                                     try {
-                                      final selectedAlbum = albums.firstWhere(
+                                      final selectedAlbum = _availableAlbums.firstWhere(
                                         (album) => album.title == selectedItem,
                                       );
                                       setState(() {
