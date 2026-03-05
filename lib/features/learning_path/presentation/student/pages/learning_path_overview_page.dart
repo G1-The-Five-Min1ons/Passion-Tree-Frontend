@@ -146,8 +146,8 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                 return true;
               }).toList();
 
-              // Filter out enrolled paths from recommended section and all paths
-              final enrolledPathIds = filteredEnrolled
+              // Filter out ALL enrolled paths (use original data to ensure complete filtering)
+              final enrolledPathIds = overviewData.enrolledPaths
                   .map((e) => e.pathId)
                   .toSet();
               final filteredRecommended = filteredAll

@@ -35,10 +35,12 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
   List<NodeDetail>? _cachedNodes;
   bool _isEnrolling = false;
   String? _userId;
+  EnrolledLearningPath? _enrolledPath; // Cache enrolled path after enrollment
 
   @override
   void initState() {
     super.initState();
+    _enrolledPath = widget.enrolledPath; // Initialize with widget value
     _loadUserAndFetchNodes();
   }
 
@@ -58,7 +60,7 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
     if (userId.isEmpty) return;
 
     // If not enrolled yet, enroll first
-    if (widget.enrolledPath == null) {
+    if (_enrolledPath == null) {
       setState(() => _isEnrolling = true);
 
       context.read<LearningPathBloc>().add(
@@ -73,7 +75,7 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
             value: context.read<LearningPathBloc>(),
             child: StudentNodesOverviewPage(
               course: widget.course,
-              enrolledPath: widget.enrolledPath,
+              enrolledPath: _enrolledPath,
             ),
           ),
         ),
@@ -97,7 +99,22 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
             if (state is PathEnrolled &&
                 state.pathId == widget.course.id &&
                 _isEnrolling) {
-              setState(() => _isEnrolling = false);
+              setState(() {
+                _isEnrolling = false;
+                // Create enrolled path object from course data
+                _enrolledPath = EnrolledLearningPath(
+                  pathId: widget.course.id,
+                  title: widget.course.title,
+                  description: widget.course.description,
+                  instructor: widget.course.instructor,
+                  rating: widget.course.rating,
+                  coverImgUrl: widget.course.coverImageUrl,
+                  modules: widget.course.modules,
+                  completedNodes: 0,
+                  progressPercent: 0.0,
+                  progressStatus: 'In Progress',
+                );
+              });
 
               Navigator.push(
                 context,
@@ -106,7 +123,7 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                     value: context.read<LearningPathBloc>(),
                     child: StudentNodesOverviewPage(
                       course: widget.course,
-                      enrolledPath: widget.enrolledPath,
+                      enrolledPath: _enrolledPath,
                     ),
                   ),
                 ),
@@ -155,11 +172,11 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                       /// ===== COURSE CONTENT =====
                       LearningCourseContent(
                         title:
-                            widget.enrolledPath?.title ?? widget.course.title,
+                            _enrolledPath?.title ?? widget.course.title,
                         description:
-                            widget.enrolledPath?.description ??
+                            _enrolledPath?.description ??
                             widget.course.description,
-                        isEnrolled: widget.enrolledPath != null,
+                        isEnrolled: _enrolledPath != null,
                         nodes: nodes,
                         onStartJourney: () => _handleStartJourney(context),
                       ),

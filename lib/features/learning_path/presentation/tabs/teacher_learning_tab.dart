@@ -89,7 +89,16 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
 
     final filteredAll = _filterCourses(widget.allPaths);
     final filteredEnrolled = _filterEnrolledCourses(widget.enrolledPaths);
-    final shownAllCourses = filteredAll.take(_allListShownCount).toList();
+    
+    // Filter out ALL enrolled paths from "All Learning Paths" and "Recommended"
+    final enrolledPathIds = widget.enrolledPaths
+        .map((e) => e.pathId)
+        .toSet();
+    final filteredNonEnrolled = filteredAll
+        .where((path) => !enrolledPathIds.contains(path.id))
+        .toList();
+    
+    final shownAllCourses = filteredNonEnrolled.take(_allListShownCount).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,7 +162,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
 
         SizedBox(
           height: BaseCourseCard.defaultHeight,
-          child: filteredAll.isEmpty
+          child: filteredNonEnrolled.isEmpty
               ? Center(
                   child: Text(
                     'No recommended paths found',
@@ -164,11 +173,11 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
                 )
               : ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: filteredAll.length,
+                  itemCount: filteredNonEnrolled.length,
                   separatorBuilder: (context, index) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     return PixelCourseCard(
-                      course: filteredAll[index],
+                      course: filteredNonEnrolled[index],
                     );
                   },
                 ),
@@ -210,33 +219,34 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
             },
           ),
 
-        const SizedBox(height: 40),
-
         // ===== MORE =====
-        Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'More',
-                style: AppPixelTypography.smallTitle.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
+        if (_allListShownCount < filteredNonEnrolled.length) ...[
+          const SizedBox(height: 40),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'More',
+                  style: AppPixelTypography.smallTitle.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 5),
-              NavigationButton(
-                direction: NavigationDirection.down,
-                onPressed: () {
-                  setState(() {
-                    _allListShownCount += 4;
-                  });
-                },
-              ),
-            ],
+                const SizedBox(height: 5),
+                NavigationButton(
+                  direction: NavigationDirection.down,
+                  onPressed: () {
+                    setState(() {
+                      _allListShownCount += 4;
+                    });
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-
-        const SizedBox(height: 40),
+          const SizedBox(height: 40),
+        ] else
+          const SizedBox(height: 40),
       ],
     );
   }
