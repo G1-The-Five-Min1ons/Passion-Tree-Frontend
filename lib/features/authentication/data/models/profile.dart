@@ -30,17 +30,17 @@ class Profile {
   factory Profile.fromJson(Map<String, dynamic> json) {
     try {
       return Profile(
-        profileId: json['profile_id'] as String,
+        profileId: json['profile_id'] as String? ?? '',
         avatarUrl: json['avatar_url'] as String?,
         rankName: json['rank_name'] as String?,
-        learningStreak: json['learning_streak'] as int,
-        learningCount: json['learning_count'] as int,
+        learningStreak: (json['learning_streak'] as int?) ?? 0,
+        learningCount: (json['learning_count'] as int?) ?? 0,
         location: json['location'] as String?,
         bio: json['bio'] as String?,
-        level: json['level'] as int,
-        xp: json['xp'] as int,
-        hourLearned: json['hour_learned'] as int,
-        userId: json['user_id'] as String,
+        level: (json['level'] as int?) ?? 0,
+        xp: (json['xp'] as int?) ?? 0,
+        hourLearned: (json['hour_learned'] as int?) ?? 0,
+        userId: json['user_id'] as String? ?? '',
       );
     } catch (e) {
       throw ParseException(

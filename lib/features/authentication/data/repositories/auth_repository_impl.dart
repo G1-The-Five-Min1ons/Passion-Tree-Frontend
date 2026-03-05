@@ -13,6 +13,7 @@ import 'package:passion_tree_frontend/features/authentication/data/models/change
 import 'package:passion_tree_frontend/features/authentication/data/models/select_role_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/mappers/auth_mapper.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/entities/user.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 
 /// Google OAuth Web Client ID for verifying tokens on backend
@@ -187,7 +188,30 @@ class AuthRepositoryImpl implements IAuthRepository {
     await _localDataSource.saveUserId(response.userId);
     await _localDataSource.saveUsername(response.username);
     await _localDataSource.saveRole(response.role);
-    return await getProfile();
+
+    // Try to fetch full profile, but don't let it block login
+    try {
+      return await getProfile();
+    } catch (e) {
+      LogHandler.error(
+        'AuthRepository: getProfile failed after Google sign-in (non-fatal): $e',
+      );
+      final now = DateTime.now();
+      return UserProfile(
+        user: User(
+          userId: response.userId,
+          username: response.username,
+          email: '',
+          firstName: '',
+          lastName: '',
+          role: response.role,
+          heartCount: 0,
+          isEmailVerified: true,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
   }
 
   @override
@@ -199,11 +223,43 @@ class AuthRepositoryImpl implements IAuthRepository {
     LogHandler.success(
       'AuthRepository: Backend returned success. Setting Discord session...',
     );
+
+    LogHandler.info('AuthRepository: Saving token to secure storage...');
     await _localDataSource.saveToken(response.token);
+    LogHandler.info('AuthRepository: Token saved successfully.');
+
     await _localDataSource.saveUserId(response.userId);
     await _localDataSource.saveUsername(response.username);
     await _localDataSource.saveRole(response.role);
-    return await getProfile();
+
+    // Try to fetch full profile, but don't let it block login
+    try {
+      LogHandler.info('AuthRepository: Fetching user profile...');
+      final profile = await getProfile();
+      LogHandler.success('AuthRepository: Profile fetched successfully.');
+      return profile;
+    } catch (e) {
+      LogHandler.error(
+        'AuthRepository: getProfile failed after Discord sign-in (non-fatal): $e',
+      );
+      // Return a minimal UserProfile from the sign-in response data
+      // The token and basic user data are already saved locally
+      final now = DateTime.now();
+      return UserProfile(
+        user: User(
+          userId: response.userId,
+          username: response.username,
+          email: response.email,
+          firstName: response.firstName,
+          lastName: response.lastName,
+          role: response.role,
+          heartCount: 0,
+          isEmailVerified: true,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
   }
 
   @override

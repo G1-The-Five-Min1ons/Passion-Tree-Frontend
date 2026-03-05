@@ -37,7 +37,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final ApiHandler _apiHandler;
 
   AuthRemoteDataSourceImpl({ApiHandler? apiHandler})
-      : _apiHandler = apiHandler ?? ApiHandler();
+    : _apiHandler = apiHandler ?? ApiHandler();
 
   @override
   Future<RegisterResponse> register(RegisterRequest request) async {
@@ -118,7 +118,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> resendVerificationEmail(ResendVerificationRequest request) async {
+  Future<void> resendVerificationEmail(
+    ResendVerificationRequest request,
+  ) async {
     LogHandler.separator(title: 'AUTH REMOTE · RESEND VERIFICATION');
     final response = await _apiHandler.post(
       url: ApiConfig.authResendVerification,
@@ -185,7 +187,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> changePassword(String token, ChangePasswordRequest request) async {
+  Future<void> changePassword(
+    String token,
+    ChangePasswordRequest request,
+  ) async {
     LogHandler.separator(title: 'AUTH REMOTE · CHANGE PASSWORD');
     final response = await _apiHandler.put(
       url: ApiConfig.authChangePassword,
@@ -226,12 +231,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
     if (response.isSuccess) {
       try {
-        final data = _parseMap(response.data, 'response.data');
+        // Backend returns token and user at ROOT level (not under 'data'):
+        // { "success": true, "message": "...", "token": "...", "user": {...} }
+        final fullBody = _parseMap(response.rawBody, 'rawBody');
         LogHandler.success('Google sign-in successful');
         final raw = <String, dynamic>{
           'success': response.success,
-          'token': _parseString(data['token'], 'token'),
-          'user': data['user'],
+          'token': _parseString(fullBody['token'], 'token'),
+          'user': fullBody['user'],
         };
         return NativeGoogleSignInResponse.fromJson(raw);
       } catch (e) {
@@ -256,12 +263,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
     if (response.isSuccess) {
       try {
-        final data = _parseMap(response.data, 'response.data');
+        // Backend returns token and user at ROOT level (not under 'data'):
+        // { "success": true, "message": "...", "token": "...", "user": {...} }
+        final fullBody = _parseMap(response.rawBody, 'rawBody');
         LogHandler.success('Discord sign-in successful');
         final raw = <String, dynamic>{
           'success': response.success,
-          'token': _parseString(data['token'], 'token'),
-          'user': data['user'],
+          'token': _parseString(fullBody['token'], 'token'),
+          'user': fullBody['user'],
         };
         return NativeDiscordSignInResponse.fromJson(raw);
       } catch (e) {
@@ -357,7 +366,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
     if (value is! Map<String, dynamic>) {
       throw ParseException(
-        message: 'Expected Map<String, dynamic> for "$fieldName" but received ${value.runtimeType}',
+        message:
+            'Expected Map<String, dynamic> for "$fieldName" but received ${value.runtimeType}',
       );
     }
     return value;
@@ -371,12 +381,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
     if (value is! String) {
       throw ParseException(
-        message: 'Expected String for "$fieldName" but received ${value.runtimeType}',
+        message:
+            'Expected String for "$fieldName" but received ${value.runtimeType}',
       );
     }
     if (value.isEmpty) {
       throw ParseException(
-        message: 'Expected non-empty String for "$fieldName" but received empty string',
+        message:
+            'Expected non-empty String for "$fieldName" but received empty string',
       );
     }
     return value;

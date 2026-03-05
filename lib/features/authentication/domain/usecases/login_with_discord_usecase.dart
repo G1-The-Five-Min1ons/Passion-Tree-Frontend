@@ -48,7 +48,8 @@ class LoginWithDiscordUseCase {
         url: DiscordOAuthConfig.authorizationUrl,
         callbackUrlScheme: DiscordOAuthConfig.callbackUrlScheme,
         options: const FlutterWebAuth2Options(
-          preferEphemeral: true, // Use private/incognito browser session
+          preferEphemeral:
+              false, // Must be false on Android to use CCT and support intent://
           timeout: 120, // 2 minute timeout
         ),
       );
