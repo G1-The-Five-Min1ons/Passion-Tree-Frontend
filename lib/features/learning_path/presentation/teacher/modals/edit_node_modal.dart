@@ -15,10 +15,12 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 
 class EditNodeModal extends StatefulWidget {
   final String nodeId;
+  final bool isNewNode;
   
   const EditNodeModal({
     super.key,
     required this.nodeId,
+    this.isNewNode = false,
   });
 
   @override
@@ -126,7 +128,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const NodeModalHeader(),
+                    NodeModalHeader(isNewNode: widget.isNewNode),
                     const SizedBox(height: 10),
 
                     // ===== INFO + MATERIALS =====

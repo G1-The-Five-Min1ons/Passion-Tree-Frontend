@@ -136,14 +136,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
   void _openEditNodeModal(BuildContext context, {int? index}) {
     String nodeId;
+    bool isNewNode;
 
     // ถ้ามี index (กดที่ node ที่มีอยู่แล้ว)
     if (index != null && _cachedNodes != null && index < _cachedNodes!.length) {
       // แก้ไข node ที่มีอยู่แล้วจาก backend
       nodeId = _cachedNodes![index].nodeId;
+      isNewNode = false;
     } else {
       // สร้าง node ใหม่
       nodeId = 'new_node_${DateTime.now().millisecondsSinceEpoch}';
+      isNewNode = true;
     }
 
     final bloc = context.read<LearningPathBloc>();
@@ -156,6 +159,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         value: bloc,
         child: EditNodeModal(
           nodeId: nodeId,
+          isNewNode: isNewNode,
         ),
       ),
     );
