@@ -73,7 +73,7 @@ class _CreateLearningPathInputPageState
 
         final urls = await uploadService.getPresignedUrl(
           fileName,
-          'reflect',
+          'learning-paths',
         );
         await uploadService.uploadFileToBlob(
           urls['upload_url']!,
