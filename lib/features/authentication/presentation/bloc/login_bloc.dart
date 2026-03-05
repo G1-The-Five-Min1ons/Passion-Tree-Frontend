@@ -125,16 +125,28 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   ) async {
     emit(state.copyWith(status: LoginStatus.loading));
 
+    // initiateOAuth now handles the complete flow:
+    // 1. Opens browser for Discord OAuth
+    // 2. Waits for callback with authorization code
+    // 3. Exchanges code with backend for tokens
     final result = await _loginWithDiscord.initiateOAuth();
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: LoginStatus.failure,
-        errorMessage: failure.message,
-      )),
-      (_) => {
-        // Keep loading state while waiting for callback
+      (failure) {
+        // User cancellation - return to initial state
+        if (failure is CancellationFailure) {
+          emit(state.copyWith(status: LoginStatus.initial));
+        } else {
+          emit(state.copyWith(
+            status: LoginStatus.failure,
+            errorMessage: failure.message,
+          ));
+        }
       },
+      (_) => emit(state.copyWith(
+        status: LoginStatus.success,
+        nextStep: LoginNextStep.complete,
+      )),
     );
   }
 

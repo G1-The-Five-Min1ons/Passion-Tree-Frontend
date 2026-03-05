@@ -1,4 +1,6 @@
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:passion_tree_frontend/core/network/api_handler.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_remote_data_source.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/register_request.dart';
@@ -13,6 +15,10 @@ import 'package:passion_tree_frontend/features/authentication/data/mappers/auth_
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 
+/// Google OAuth Web Client ID for verifying tokens on backend
+const String _googleWebClientId =
+    '1018698126969-ea61vm6q39icnr4vom4p5uot8712r59d.apps.googleusercontent.com';
+
 class AuthRepositoryImpl implements IAuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final AuthLocalDataSource _localDataSource;
@@ -25,6 +31,8 @@ class AuthRepositoryImpl implements IAuthRepository {
   }) : _remoteDataSource = remoteDataSource,
        _localDataSource = localDataSource,
        _apiHandler = apiHandler {
+    // Initialize logic moved to signInWithGoogle method
+
     // Inject token refresh logic into the shared ApiHandler
     _apiHandler.getToken = () => _localDataSource.getToken();
     _apiHandler.onTokenRefresh = _handleTokenRefresh;
@@ -61,6 +69,9 @@ class AuthRepositoryImpl implements IAuthRepository {
     String? location,
     String? avatarUrl,
   }) async {
+    LogHandler.info(
+      'AuthRepository: Attempting manual registration for $email',
+    );
     final request = RegisterRequest(
       username: username,
       email: email,
@@ -73,6 +84,9 @@ class AuthRepositoryImpl implements IAuthRepository {
       avatarUrl: avatarUrl,
     );
     final response = await _remoteDataSource.register(request);
+    LogHandler.success(
+      'AuthRepository: Manual registration successful for user ${response.userId}',
+    );
     return response.userId;
   }
 
@@ -81,8 +95,10 @@ class AuthRepositoryImpl implements IAuthRepository {
     required String identifier,
     required String password,
   }) async {
+    LogHandler.info('AuthRepository: Attempting login for $identifier');
     final request = LoginRequest(identifier: identifier, password: password);
     final response = await _remoteDataSource.login(request);
+    LogHandler.success('AuthRepository: Login successful');
     return response.message;
   }
 
@@ -156,8 +172,14 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
-  Future<void> nativeGoogleSignIn(String idToken) async {
+  Future<UserProfile> nativeGoogleSignIn(String idToken) async {
+    LogHandler.info(
+      'AuthRepository: Starting nativeGoogleSignIn with backend...',
+    );
     final response = await _remoteDataSource.nativeGoogleSignIn(idToken);
+    LogHandler.success(
+      'AuthRepository: Backend returned success. Generating session token for user ${response.userId}...',
+    );
     await _localDataSource.saveToken(response.token);
     // Note: NativeGoogleSignInResponse has user data but not refresh token currently?
     // And what about role?
@@ -165,15 +187,23 @@ class AuthRepositoryImpl implements IAuthRepository {
     await _localDataSource.saveUserId(response.userId);
     await _localDataSource.saveUsername(response.username);
     await _localDataSource.saveRole(response.role);
+    return await getProfile();
   }
 
   @override
-  Future<void> nativeDiscordSignIn(String code) async {
+  Future<UserProfile> nativeDiscordSignIn(String code) async {
+    LogHandler.info(
+      'AuthRepository: Starting nativeDiscordSignIn with backend code...',
+    );
     final response = await _remoteDataSource.nativeDiscordSignIn(code);
+    LogHandler.success(
+      'AuthRepository: Backend returned success. Setting Discord session...',
+    );
     await _localDataSource.saveToken(response.token);
     await _localDataSource.saveUserId(response.userId);
     await _localDataSource.saveUsername(response.username);
     await _localDataSource.saveRole(response.role);
+    return await getProfile();
   }
 
   @override
@@ -233,5 +263,53 @@ class AuthRepositoryImpl implements IAuthRepository {
   @override
   Future<void> clearAuth() async {
     await _localDataSource.clearAuth();
+  }
+
+  @override
+  Future<void> signInWithGoogle() async {
+    try {
+      LogHandler.info(
+        'AuthRepository: Initializing Google Sign-In instance...',
+      );
+      // Initialize Google Sign-In
+      await GoogleSignIn.instance.initialize(
+        serverClientId: _googleWebClientId,
+      );
+
+      LogHandler.info(
+        'AuthRepository: Prompting user with Google Sign-In dialog...',
+      );
+      // Trigger Google Sign-In flow
+      final GoogleSignInAccount account = await GoogleSignIn.instance
+          .authenticate();
+
+      LogHandler.info(
+        'AuthRepository: User selected Google Account. Extracting tokens...',
+      );
+      // Get authentication tokens
+      final GoogleSignInAuthentication auth = account.authentication;
+
+      if (auth.idToken == null) {
+        throw Exception('Failed to get Google ID token');
+      }
+
+      LogHandler.info(
+        'AuthRepository: Google ID token received. Sending to Passion-Tree Backend...',
+      );
+      // Send ID token to backend for verification and login
+      await nativeGoogleSignIn(auth.idToken!);
+    } catch (e) {
+      LogHandler.error('Google Sign-In failed: $e');
+
+      // Sign out from Google to allow re-authentication
+      await GoogleSignIn.instance.signOut();
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> signInWithDiscord(String code) async {
+    // Exchange authorization code with backend for token
+    await nativeDiscordSignIn(code);
   }
 }

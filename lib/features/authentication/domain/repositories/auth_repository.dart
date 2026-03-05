@@ -44,12 +44,6 @@ abstract class IAuthRepository {
   /// Logs out locally and optionally remotely
   Future<void> logout();
 
-  /// Performs Google Sign-In
-  Future<void> nativeGoogleSignIn(String idToken);
-
-  /// Performs Discord Sign-In
-  Future<void> nativeDiscordSignIn(String code);
-
   /// Validates if a role is selected (local check)
   Future<bool> hasSelectedRole();
   
@@ -79,4 +73,21 @@ abstract class IAuthRepository {
 
   /// Clears authentication data (logout)
   Future<void> clearAuth();
+
+  /// Performs Google Sign-In and returns [UserProfile]
+  /// [idToken] is received from Google SDK in Flutter
+  Future<UserProfile> nativeGoogleSignIn(String idToken);
+
+  /// Performs Discord Sign-In and returns [UserProfile]
+  /// [code] is the authorization code from Discord OAuth2
+  Future<UserProfile> nativeDiscordSignIn(String code);
+
+  /// Performs Google Sign-In using google_sign_in package
+  /// Handles the complete flow: Google SDK login -> Backend verification
+  Future<void> signInWithGoogle();
+
+  /// Performs Discord Sign-In using authorization code
+  /// [code] is the authorization code from Discord OAuth2
+  Future<void> signInWithDiscord(String code);
+
 }
