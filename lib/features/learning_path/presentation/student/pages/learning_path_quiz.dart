@@ -27,6 +27,7 @@ class LearningPathQuizPage extends StatefulWidget {
   final String? pathName;
   final int? totalNodes;
   final int? currentNodeSequence;
+  final String userId;
 
   const LearningPathQuizPage({
     super.key,
@@ -35,6 +36,7 @@ class LearningPathQuizPage extends StatefulWidget {
     this.pathName,
     this.totalNodes,
     this.currentNodeSequence,
+    required this.userId,
   });
 
   @override
@@ -262,9 +264,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
   }
 
   void _finishQuiz() {
-    // TODO: Get userId from authentication service
-    const userId =
-        'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
+    final userId = widget.userId;
 
     // Check if this is the last node (sequence starts from 1)
 

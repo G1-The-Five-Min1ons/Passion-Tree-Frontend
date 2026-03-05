@@ -15,6 +15,7 @@ class LearningNodePage extends StatefulWidget {
   final String? pathName;
   final int? totalNodes;
   final int? currentNodeSequence;
+  final String userId;
 
   const LearningNodePage({
     super.key,
@@ -22,6 +23,7 @@ class LearningNodePage extends StatefulWidget {
     this.pathName,
     this.totalNodes,
     this.currentNodeSequence,
+    required this.userId,
   });
 
   @override
@@ -29,8 +31,6 @@ class LearningNodePage extends StatefulWidget {
 }
 
 class _LearningNodePageState extends State<LearningNodePage> {
-  static const String _userId = 'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
-
   @override
   void initState() {
     super.initState();
@@ -38,12 +38,12 @@ class _LearningNodePageState extends State<LearningNodePage> {
     // Start node when page loads
     LogHandler.info('Action: User joined learning node ${widget.nodeId}');
     context.read<LearningPathBloc>().add(
-      StartNodeEvent(nodeId: widget.nodeId, userId: _userId),
+      StartNodeEvent(nodeId: widget.nodeId, userId: widget.userId),
     );
 
     // Fetch node detail when page loads
     context.read<LearningPathBloc>().add(
-      FetchNodeDetail(nodeId: widget.nodeId, userId: _userId),
+      FetchNodeDetail(nodeId: widget.nodeId, userId: widget.userId),
     );
   }
 
@@ -97,6 +97,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
                                   totalNodes: widget.totalNodes,
                                   currentNodeSequence:
                                       widget.currentNodeSequence,
+                                  userId: widget.userId,
                                 ),
                               ),
                             ),
@@ -105,7 +106,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
                           if (mounted) {
                             bloc.add(FetchNodeDetail(
                               nodeId: widget.nodeId,
-                              userId: _userId,
+                              userId: widget.userId,
                             ));
                           }
                         },
@@ -114,7 +115,10 @@ class _LearningNodePageState extends State<LearningNodePage> {
                       const SizedBox(height: 32),
 
                       /// ===== COMMENTS =====
-                      CommentsSection(nodeId: widget.nodeId),
+                      CommentsSection(
+                        nodeId: widget.nodeId,
+                        userId: widget.userId,
+                      ),
                     ],
                   ),
                 ),

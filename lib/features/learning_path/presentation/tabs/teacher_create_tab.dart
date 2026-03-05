@@ -120,7 +120,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
               maxCrossAxisExtent: 220,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
-              childAspectRatio: 0.692, // 180/260 for larger card height
+              childAspectRatio: 0.692,
             ),
 
             itemBuilder: (context, index) {
@@ -217,7 +217,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
               maxCrossAxisExtent: 220,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
-              childAspectRatio: 0.692, // 180/260 for larger card height
+              childAspectRatio: 0.692,
             ),
             itemBuilder: (context, index) {
               return PixelCourseCard(

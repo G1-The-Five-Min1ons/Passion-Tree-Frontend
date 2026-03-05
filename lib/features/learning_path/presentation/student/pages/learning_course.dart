@@ -166,7 +166,10 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
 
                       if (nodes != null) ...[
                         const SizedBox(height: 32),
-                        CommentsSection(pathId: widget.course.id),
+                        CommentsSection(
+                          pathId: widget.course.id,
+                          userId: _userId ?? '',
+                        ),
                       ],
                     ],
                   ),

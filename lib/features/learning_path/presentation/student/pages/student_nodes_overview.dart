@@ -95,19 +95,52 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                     nodes: nodes,
                     onNodeTap: (index) {
                       if (index < nodes.length) {
-                        final nodeId = nodes[index].nodeId;
-                        final currentSequence = nodes[index].sequence;
+                        final currentNode = nodes[index];
+                        final currentSequence = currentNode.sequence;
 
+                        // Check if user can access this node
+                        bool canAccess = true;
+                        String? errorMessage;
+
+                        // Node แรก (sequence = 1) เปิดได้เสมอ
+                        if (currentSequence > 1) {
+                          // หา node ก่อนหน้า
+                          final previousNode = nodes.firstWhere(
+                            (n) => n.sequence == currentSequence - 1,
+                            orElse: () => currentNode,
+                          );
+
+                          // ตรวจสอบว่า node ก่อนหน้าเรียนจบแล้วหรือยัง
+                          if (previousNode.complete.toLowerCase() != 'true') {
+                            canAccess = false;
+                            errorMessage = 'กรุณาเรียนจบ ${previousNode.title} ก่อนค่ะ';
+                          }
+                        }
+
+                        if (!canAccess && errorMessage != null) {
+                          // แสดง snackbar เตือน
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(errorMessage),
+                              backgroundColor: Colors.orange,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                          return;
+                        }
+
+                        // เปิด node ได้
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => BlocProvider.value(
                               value: context.read<LearningPathBloc>(),
                               child: LearningNodePage(
-                                nodeId: nodeId,
+                                nodeId: currentNode.nodeId,
                                 pathName: widget.course.title,
                                 totalNodes: nodes.length,
                                 currentNodeSequence: currentSequence,
+                                userId: _userId ?? '',
                               ),
                             ),
                           ),

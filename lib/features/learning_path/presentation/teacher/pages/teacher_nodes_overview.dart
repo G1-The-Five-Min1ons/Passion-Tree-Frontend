@@ -134,13 +134,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     }
 
     final currentNode = _uiNodes[editIndex];
+    final bloc = context.read<LearningPathBloc>();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => EditNodeModal(
-        nodeId: currentNode.realNodeId ?? 'new_node_$editIndex',
+      builder: (_) => BlocProvider.value(
+        value: bloc,
+        child: EditNodeModal(
+          nodeId: currentNode.realNodeId ?? 'new_node_$editIndex',
+        ),
       ),
     );
   }
