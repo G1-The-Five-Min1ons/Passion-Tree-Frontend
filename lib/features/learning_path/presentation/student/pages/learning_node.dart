@@ -9,6 +9,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 
 class LearningNodePage extends StatefulWidget {
   final String nodeId;
@@ -31,6 +32,8 @@ class LearningNodePage extends StatefulWidget {
 }
 
 class _LearningNodePageState extends State<LearningNodePage> {
+  NodeDetail? _cachedNodeDetail;
+
   @override
   void initState() {
     super.initState();
@@ -54,17 +57,25 @@ class _LearningNodePageState extends State<LearningNodePage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            if (state is LearningPathLoading || state is LearningPathInitial) {
+            // Cache node detail when loaded
+            if (state is NodeDetailLoaded) {
+              _cachedNodeDetail = state.nodeDetail;
+            }
+
+            // Show loading only if no cached data
+            if ((state is LearningPathLoading || state is LearningPathInitial) &&
+                _cachedNodeDetail == null) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is LearningPathError) {
+            if (state is LearningPathError && _cachedNodeDetail == null) {
               return Center(child: Text('Error: ${state.message}'));
             }
 
-            if (state is NodeDetailLoaded) {
-              final nodeDetail = state.nodeDetail;
+            // Use cached node detail
+            final nodeDetail = _cachedNodeDetail;
 
+            if (nodeDetail != null) {
               return SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.only(
@@ -125,7 +136,8 @@ class _LearningNodePageState extends State<LearningNodePage> {
               );
             }
 
-            return const Center(child: Text('Please select a learning path'));
+            // No node detail available
+            return const Center(child: CircularProgressIndicator());
           },
         ),
       ),

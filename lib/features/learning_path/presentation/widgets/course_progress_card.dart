@@ -6,7 +6,7 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/student_nodes_overview.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 
 class CourseProgressCard extends StatelessWidget {
@@ -43,13 +43,13 @@ class CourseProgressCard extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: () {
-        // Navigate directly to nodes overview (user is already enrolled)
+        // Navigate to learning course page first
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => BlocProvider.value(
               value: context.read<LearningPathBloc>(),
-              child: StudentNodesOverviewPage(
+              child: LearningCoursePage(
                 course: course,
                 enrolledPath: data,
               ),

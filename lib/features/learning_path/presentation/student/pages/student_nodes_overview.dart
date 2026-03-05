@@ -33,11 +33,13 @@ class StudentNodesOverviewPage extends StatefulWidget {
 class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
   List<NodeDetail>? _cachedNodes;
   String? _userId;
+  EnrolledLearningPath? _currentEnrolledPath;
 
   @override
   void initState() {
     super.initState();
     _cachedNodes = null;
+    _currentEnrolledPath = widget.enrolledPath;
     _loadUserAndFetchNodes();
   }
 
@@ -66,8 +68,26 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
     return Scaffold(
       appBar: const AppBarWidget(title: 'Learning Paths', showBackButton: true),
       body: SafeArea(
-        child: BlocBuilder<LearningPathBloc, LearningPathState>(
-          builder: (context, state) {
+        child: BlocListener<LearningPathBloc, LearningPathState>(
+          listener: (context, state) {
+            // Update enrolled path when overview is loaded
+            if (state is LearningPathOverviewLoaded) {
+              try {
+                final updatedPath = state.enrolledPaths.firstWhere(
+                  (path) => path.pathId == widget.course.id,
+                );
+                if (mounted) {
+                  setState(() {
+                    _currentEnrolledPath = updatedPath;
+                  });
+                }
+              } catch (e) {
+                // Path not found in enrolled paths, keep current value
+              }
+            }
+          },
+          child: BlocBuilder<LearningPathBloc, LearningPathState>(
+            builder: (context, state) {
             // Update cached nodes when new nodes loaded
             if (state is NodesLoaded && state.pathId == widget.course.id) {
               _cachedNodes = state.nodes;
@@ -113,7 +133,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                           // ตรวจสอบว่า node ก่อนหน้าเรียนจบแล้วหรือยัง
                           if (previousNode.complete.toLowerCase() != 'true') {
                             canAccess = false;
-                            errorMessage = 'กรุณาเรียนจบ ${previousNode.title} ก่อนค่ะ';
+                            errorMessage = 'Please complete "${previousNode.title}" first';
                           }
                         }
 
@@ -122,7 +142,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(errorMessage),
-                              backgroundColor: Colors.orange,
+                              backgroundColor: Theme.of(context).colorScheme.error,
                               duration: const Duration(seconds: 3),
                             ),
                           );
@@ -148,6 +168,10 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                           // Refetch nodes when returning from learning node page
                           if (_userId != null && _userId!.isNotEmpty) {
                             _fetchNodes(_userId!);
+                            // Also refetch overview to update enrolled path progress
+                            context.read<LearningPathBloc>().add(
+                              FetchLearningPathOverview(userId: _userId),
+                            );
                           }
                         });
                       }
@@ -166,7 +190,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                           title: widget.course.title,
                           showAddButton: false,
                         ),
-                        if (widget.enrolledPath != null)
+                        if (_currentEnrolledPath != null)
                           Padding(
                             padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
                             child: Row(
@@ -177,12 +201,12 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                                     horizontal: 8,
                                     vertical: 3,
                                   ),
-                                  color: widget.enrolledPath!.progressStatus ==
+                                  color: _currentEnrolledPath!.progressStatus ==
                                           'Completed'
                                       ? AppColors.status
                                       : AppColors.warning,
                                   child: Text(
-                                    widget.enrolledPath!.progressStatus,
+                                    _currentEnrolledPath!.progressStatus,
                                     style: AppTypography.smallBodyMedium
                                         .copyWith(
                                       color: AppColors.background,
@@ -193,7 +217,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                                 const SizedBox(width: 12),
                                 // Nodes count
                                 Text(
-                                  '${widget.enrolledPath!.completedNodes} / ${widget.enrolledPath!.modules} nodes',
+                                  '${_currentEnrolledPath!.completedNodes} / ${_currentEnrolledPath!.modules} nodes',
                                   style: AppTypography.smallBodyMedium
                                       .copyWith(
                                     color: AppColors.textSecondary,
@@ -201,7 +225,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  '(${widget.enrolledPath!.progressPercent.round()}%)',
+                                  '(${_currentEnrolledPath!.progressPercent.round()}%)',
                                   style: AppTypography.smallBodyMedium
                                       .copyWith(
                                     color: AppColors.textSecondary,
@@ -220,6 +244,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
 
             return const Center(child: CircularProgressIndicator());
           },
+        ),
         ),
       ),
     );

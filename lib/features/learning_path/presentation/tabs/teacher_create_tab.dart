@@ -9,6 +9,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/create_learning_path_input_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/teacher_nodes_overview.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
@@ -127,6 +128,21 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
               return PixelCourseCard(
                 course: inProgressCourses[index],
                 showMoreIcon: true,
+                onCardTap: () {
+                  final bloc = context.read<LearningPathBloc>();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: bloc,
+                        child: TeacherNodesOverviewPage(
+                          title: inProgressCourses[index].title,
+                          pathId: inProgressCourses[index].id,
+                        ),
+                      ),
+                    ),
+                  );
+                },
                 onEdit: () {
                   // TODO: Navigate to edit page
                 },
@@ -223,6 +239,21 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
               return PixelCourseCard(
                 course: completedCourses[index],
                 showMoreIcon: true,
+                onCardTap: () {
+                  final bloc = context.read<LearningPathBloc>();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: bloc,
+                        child: TeacherNodesOverviewPage(
+                          title: completedCourses[index].title,
+                          pathId: completedCourses[index].id,
+                        ),
+                      ),
+                    ),
+                  );
+                },
                 onEdit: () {
                   // TODO: Navigate to edit page
                 },
