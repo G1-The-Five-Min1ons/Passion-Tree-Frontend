@@ -7,9 +7,12 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/teache
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_core.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/teacher/confirm_popup.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/generated_node.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 // UI State class สำหรับจัดการ node ใน UI
 class NodeUiState {
@@ -48,10 +51,14 @@ class TeacherNodesOverviewPage extends StatefulWidget {
 class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   late List<NodeUiState> _uiNodes;
   int? _pendingNodeIndex; // เก็บ index ของ node ที่รอ response จาก BLoC
+  String? _userId;
+  List<NodeDetail>? _cachedNodes; // Cache nodes from backend
 
   @override
   void initState() {
     super.initState();
+    _loadUserAndFetchNodes();
+    
     // ถ้ามี AI nodes ให้ใช้ ถ้าไม่มีให้สร้าง default node เปล่าๆ
     if (widget.aiNodes != null && widget.aiNodes!.isNotEmpty) {
       _uiNodes = widget.aiNodes!.map((aiNode) {
@@ -63,7 +70,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         );
       }).toList();
     } else {
-      // Create Plain Path: สร้าง node เปล่าๆ 1 node
+      // Create Plain Path: สร้าง node เปล่าๆ 1 node (ถ้ายังไม่มี nodes จาก backend)
       _uiNodes = [
         NodeUiState(
           title: 'New Node',
@@ -73,6 +80,22 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         ),
       ];
     }
+  }
+
+  Future<void> _loadUserAndFetchNodes() async {
+    final storedUserId = await getIt<IAuthRepository>().getUserId();
+    if (!mounted) return;
+    
+    setState(() => _userId = storedUserId ?? '');
+    _fetchNodes(storedUserId ?? '');
+  }
+
+  void _fetchNodes(String userId) {
+    if (userId.isEmpty) return;
+    // Fetch existing nodes from backend
+    context.read<LearningPathBloc>().add(
+      FetchNodesForPath(pathId: widget.pathId, userId: userId),
+    );
   }
 
   void _handleCreateNode(int index) {
@@ -112,28 +135,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   }
 
   void _openEditNodeModal(BuildContext context, {int? index}) {
-    int editIndex;
+    String nodeId;
 
-    // ถ้าไม่มี index (กดปุ่ม Add) ให้สร้าง node ใหม่
-    if (index == null) {
-      final newSequence = _uiNodes.isEmpty ? 1 : _uiNodes.last.sequence + 1;
-      final newNode = NodeUiState(
-        title: 'New Node',
-        description: '',
-        sequence: newSequence,
-        isCreated: false,
-      );
-
-      setState(() {
-        _uiNodes.add(newNode);
-      });
-
-      editIndex = _uiNodes.length - 1;
+    // ถ้ามี index (กดที่ node ที่มีอยู่แล้ว)
+    if (index != null && _cachedNodes != null && index < _cachedNodes!.length) {
+      // แก้ไข node ที่มีอยู่แล้วจาก backend
+      nodeId = _cachedNodes![index].nodeId;
     } else {
-      editIndex = index;
+      // สร้าง node ใหม่
+      nodeId = 'new_node_${DateTime.now().millisecondsSinceEpoch}';
     }
 
-    final currentNode = _uiNodes[editIndex];
     final bloc = context.read<LearningPathBloc>();
 
     showModalBottomSheet(
@@ -143,7 +155,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       builder: (_) => BlocProvider.value(
         value: bloc,
         child: EditNodeModal(
-          nodeId: currentNode.realNodeId ?? 'new_node_$editIndex',
+          nodeId: nodeId,
         ),
       ),
     );
@@ -186,6 +198,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
     return BlocListener<LearningPathBloc, LearningPathState>(
       listener: (context, state) {
+        // Update cached nodes when loaded from backend
+        if (state is NodesLoaded && state.pathId == widget.pathId) {
+          setState(() {
+            _cachedNodes = state.nodes;
+          });
+        }
+        
         if (state is NodeCreated && _pendingNodeIndex != null) {
           // Node ถูกสร้างสำเร็จ อัพเดท UI state
           setState(() {
@@ -193,6 +212,11 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             _uiNodes[_pendingNodeIndex!].isCreated = true;
             _pendingNodeIndex = null;
           });
+          
+          // Refetch nodes to update display
+          if (_userId != null && _userId!.isNotEmpty) {
+            _fetchNodes(_userId!);
+          }
           
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Node created successfully')),
@@ -202,6 +226,11 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           setState(() {
             _pendingNodeIndex = null;
           });
+          
+          // Refetch nodes to update display
+          if (_userId != null && _userId!.isNotEmpty) {
+            _fetchNodes(_userId!);
+          }
           
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Node updated successfully')),
@@ -224,6 +253,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
               /// ===== CORE =====
               NodesOverviewCore(
                 isEditable: true,
+                nodes: _cachedNodes, // ส่ง nodes จาก backend
                 onNodeTap: (index) {
                   _openEditNodeModal(context, index: index);
                 },
