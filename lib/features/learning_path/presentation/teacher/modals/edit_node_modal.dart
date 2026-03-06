@@ -16,11 +16,15 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 class EditNodeModal extends StatefulWidget {
   final String nodeId;
   final bool isNewNode;
+  final String? pathId;
+  final String? sequence;
   
   const EditNodeModal({
     super.key,
     required this.nodeId,
     this.isNewNode = false,
+    this.pathId,
+    this.sequence,
   });
 
   @override
@@ -83,13 +87,34 @@ class _EditNodeModalState extends State<EditNodeModal> {
       return;
     }
 
-    context.read<LearningPathBloc>().add(
-      UpdateNodeEvent(
-        nodeId: widget.nodeId,
-        title: _title,
-        description: _description,
-      ),
-    );
+    if (widget.isNewNode) {
+      // สร้าง node ใหม่
+      if (widget.pathId == null || widget.sequence == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Missing path ID or sequence')),
+        );
+        return;
+      }
+
+      context.read<LearningPathBloc>().add(
+        CreateNodeEvent(
+          title: _title,
+          description: _description,
+          pathId: widget.pathId!,
+          sequence: widget.sequence!,
+          linkvdo: '',
+        ),
+      );
+    } else {
+      // อัปเดต node เดิม
+      context.read<LearningPathBloc>().add(
+        UpdateNodeEvent(
+          nodeId: widget.nodeId,
+          title: _title,
+          description: _description,
+        ),
+      );
+    }
   }
 
   @override
@@ -101,6 +126,11 @@ class _EditNodeModalState extends State<EditNodeModal> {
         if (state is NodeUpdated) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Node updated successfully')),
+          );
+          Navigator.pop(context);
+        } else if (state is NodeCreated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Node created successfully')),
           );
           Navigator.pop(context);
         } else if (state is LearningPathError) {
