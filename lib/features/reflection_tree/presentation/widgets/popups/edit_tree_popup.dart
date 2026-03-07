@@ -46,20 +46,17 @@ class EditTreePopUp extends StatefulWidget {
 }
 
 class _EditTreePopUpState extends State<EditTreePopUp> {
-  late TextEditingController _nameController;
   late SearchController _pathController;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.initialName);
     _pathController = SearchController();
     _pathController.text = widget.initialPath;
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
     _pathController.dispose();
     super.dispose();
   }
@@ -89,9 +86,11 @@ class _EditTreePopUpState extends State<EditTreePopUp> {
               ),
               const SizedBox(height: 16),
 
-              PixelTextField(
-                controller: _nameController,
-                height: 38,
+              Text(
+                "Path   :  ${widget.initialName}",
+                style: AppTypography.titleRegular.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
 
               const SizedBox(height: 10),
@@ -126,10 +125,9 @@ class _EditTreePopUpState extends State<EditTreePopUp> {
               SaveCancel(
                 onCancel: () => Navigator.pop(context),
                 onSave: () {
-                  final newTitle = _nameController.text.trim();
                   final selectedAlbum = _pathController.text.trim();
-                  if (newTitle.isNotEmpty && widget.onSave != null) {
-                    widget.onSave!(newTitle, selectedAlbum);
+                  if (widget.onSave != null) {
+                    widget.onSave!(widget.initialName, selectedAlbum);
                   }
                   Navigator.pop(context);
                 },

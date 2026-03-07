@@ -10,7 +10,6 @@ import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/a
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/add_reflect_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/tree_information_page.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/heart_status.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/recommend_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/tree_album.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
@@ -76,6 +75,10 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
           child: BlocBuilder<AlbumBloc, AlbumState>(
             builder: (context, state) {
               if (state is AlbumLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (state is AlbumOperationLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
 
@@ -151,7 +154,7 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
                     ),
                   );
                   if (mounted) {
-                    context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
+                    albumBloc.add(LoadAlbumByIdEvent(widget.albumId));
                   }
                 },
               ),
