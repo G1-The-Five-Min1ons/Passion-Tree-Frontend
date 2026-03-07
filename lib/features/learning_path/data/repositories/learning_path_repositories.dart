@@ -17,6 +17,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/ai_
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/create_learning_path_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/create_node_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/ai_generate_response_mapper.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
 
 class LearningPathRepositoryImpl implements LearningPathRepository {
   final LearningPathDataSource dataSource;
@@ -110,8 +111,21 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   }
 
   @override
-  Future<void> updateNode(String nodeId, String title, String description) async {
-    return await dataSource.updateNode(nodeId, title, description);
+  @override
+  Future<void> updateNode(
+    String nodeId,
+    String title,
+    String description, {
+    String? linkvdo,
+    List<CreateMaterial>? materials,
+  }) async {
+    return await dataSource.updateNode(
+      nodeId,
+      title,
+      description,
+      linkvdo: linkvdo,
+      materials: materials,
+    );
   }
 }
 

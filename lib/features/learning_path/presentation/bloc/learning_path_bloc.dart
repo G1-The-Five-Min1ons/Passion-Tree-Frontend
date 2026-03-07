@@ -374,7 +374,13 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
         try {
           LogHandler.debug('Updating node...');
-          await updateNodeUseCase(event.nodeId, event.title, event.description);
+          await updateNodeUseCase(
+            event.nodeId,
+            event.title,
+            event.description,
+            linkvdo: event.linkvdo,
+            materials: event.materials,
+          );
           LogHandler.debug('[BLoC] Node updated: ${event.nodeId}');
           emit(NodeUpdated(event.nodeId));
         } catch (e) {

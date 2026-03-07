@@ -154,13 +154,56 @@ class _EditNodeModalState extends State<EditNodeModal> {
       }
     } else {
       // อัปเดต node เดิม
-      context.read<LearningPathBloc>().add(
-        UpdateNodeEvent(
-          nodeId: widget.nodeId,
-          title: _title,
-          description: _description,
-        ),
-      );
+      setState(() => _isUploading = true);
+
+      try {
+        // Upload files และรวม materials
+        List<CreateMaterial> materials = [];
+        
+        // เพิ่ม links
+        for (final link in _links) {
+          materials.add(CreateMaterial(type: 'link', url: link));
+        }
+        
+        // Upload files และเพิ่ม URLs
+        if (_files.isNotEmpty) {
+          final uploadService = UploadApiService();
+          
+          for (final fileItem in _files) {
+            final path = fileItem.path;
+            if (path != null && path.isNotEmpty) {
+              final file = File(path);
+              final publicUrl = await uploadService.uploadImage(
+                file,
+                'learning-materials',
+              );
+              materials.add(CreateMaterial(type: 'file', url: publicUrl));
+            }
+          }
+        }
+
+        if (!mounted) return;
+
+        context.read<LearningPathBloc>().add(
+          UpdateNodeEvent(
+            nodeId: widget.nodeId,
+            title: _title,
+            description: _description,
+            linkvdo: _videoUrl.isNotEmpty ? _videoUrl : null,
+            materials: materials.isNotEmpty ? materials : null,
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload files: $e')),
+        );
+      } finally {
+        if (mounted) {
+          setState(() => _isUploading = false);
+        }
+      }
     }
   }
 

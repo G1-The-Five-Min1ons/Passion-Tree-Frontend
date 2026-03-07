@@ -6,6 +6,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/qui
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_node.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/ai_generate_response.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
 
 abstract class LearningPathRepository {
   Future<List<LearningPath>> getAllLearningPaths();
@@ -27,5 +28,11 @@ abstract class LearningPathRepository {
   Future<String> createNode(CreateNode node);
   Future<AIGenerateResponse> generateNodesWithAI(String topic);
   Future<LearningPath> getLearningPathById(String pathId);
-  Future<void> updateNode(String nodeId, String title, String description);
+  Future<void> updateNode(
+    String nodeId,
+    String title,
+    String description, {
+    String? linkvdo,
+    List<CreateMaterial>? materials,
+  });
 }

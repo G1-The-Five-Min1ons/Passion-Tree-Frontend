@@ -16,6 +16,8 @@ import 'package:passion_tree_frontend/features/learning_path/data/models/create_
 import 'package:passion_tree_frontend/features/learning_path/data/models/ai_generate_response_api_model.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/create_material_request_api_model.dart';
 
 class LearningPathDataSource {
   final http.Client client;
@@ -774,18 +776,37 @@ class LearningPathDataSource {
   Future<void> updateNode(
     String nodeId,
     String title,
-    String description,
-  ) async {
+    String description, {
+    String? linkvdo,
+    List<CreateMaterial>? materials,
+  }) async {
     try {
       LogHandler.debug('[DataSource] PUT /learningpaths/nodes/$nodeId');
+
+      final Map<String, dynamic> body = {
+        'title': title,
+        'description': description,
+      };
+
+      // เพิ่ม linkvdo ถ้ามี
+      if (linkvdo != null && linkvdo.isNotEmpty) {
+        body['link_vdo'] = linkvdo;
+      }
+
+      // เพิ่ม materials ถ้ามี
+      if (materials != null && materials.isNotEmpty) {
+        body['material'] = materials
+            .map((m) => CreateMaterialRequestApiModel(
+                  type: m.type,
+                  url: m.url,
+                ).toJson())
+            .toList();
+      }
 
       final response = await client.put(
         Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId'),
         headers: await _getHeaders(),
-        body: jsonEncode({
-          'title': title,
-          'description': description,
-        }),
+        body: jsonEncode(body),
       );
 
       LogHandler.debug('Response Status: ${response.statusCode}');

@@ -104,11 +104,15 @@ class UpdateNodeEvent extends LearningPathEvent {
   final String nodeId;
   final String title;
   final String description;
+  final String? linkvdo;
+  final List<CreateMaterial>? materials;
   
   UpdateNodeEvent({
     required this.nodeId,
     required this.title,
     required this.description,
+    this.linkvdo,
+    this.materials,
   });
 }
 
