@@ -13,9 +13,11 @@ import 'package:passion_tree_frontend/features/authentication/data/models/change
 import 'package:passion_tree_frontend/features/authentication/data/models/select_role_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/update_user_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/update_profile_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/apply_teacher_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/mappers/auth_mapper.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/entities/teacher_verification_status.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 
 /// Google OAuth Web Client ID for verifying tokens on backend
@@ -399,5 +401,31 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<void> signInWithDiscord(String code) async {
     // Exchange authorization code with backend for token
     await nativeDiscordSignIn(code);
+  }
+
+  @override
+  Future<TeacherVerificationStatus> getTeacherVerificationStatus() async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+
+    final model = await _remoteDataSource.getTeacherVerificationStatus(token);
+    return model.toEntity();
+  }
+
+  @override
+  Future<void> applyForTeacher({
+    required String phoneNumber,
+    required String reason,
+    required String teachingHistory,
+  }) async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+
+    final request = ApplyTeacherRequest(
+      phoneNumber: phoneNumber,
+      reason: reason,
+      teachingHistory: teachingHistory,
+    );
+    await _remoteDataSource.applyForTeacher(token, request);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/entities/teacher_verification_status.dart';
 
 abstract class IAuthRepository {
   /// Registers a new user. Returns user ID.
@@ -15,10 +16,7 @@ abstract class IAuthRepository {
   });
 
   /// Logs in and triggers OTP email. Returns success message.
-  Future<String> login({
-    required String identifier,
-    required String password,
-  });
+  Future<String> login({required String identifier, required String password});
 
   /// Verifies email OTP and saves tokens. Returns formatted message or user data if available.
   Future<void> verifyEmail(String code);
@@ -56,16 +54,16 @@ abstract class IAuthRepository {
 
   /// Validates if a role is selected (local check)
   Future<bool> hasSelectedRole();
-  
+
   /// Marks role as selected
   Future<void> markRoleSelected();
-  
+
   /// Saves the user role locally
   Future<void> saveUserRole(String role);
 
   /// Selects a role for the user via API and saves locally
   Future<void> selectRole(String role);
-  
+
   /// Checks if user is logged in
   Future<bool> isLoggedIn();
 
@@ -100,4 +98,13 @@ abstract class IAuthRepository {
   /// [code] is the authorization code from Discord OAuth2
   Future<void> signInWithDiscord(String code);
 
+  /// Gets current teacher verification status for account gating.
+  Future<TeacherVerificationStatus> getTeacherVerificationStatus();
+
+  /// Submits teacher verification application with phone binding.
+  Future<void> applyForTeacher({
+    required String phoneNumber,
+    required String reason,
+    required String teachingHistory,
+  });
 }

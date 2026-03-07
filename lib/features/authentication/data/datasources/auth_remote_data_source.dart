@@ -18,6 +18,8 @@ import 'package:passion_tree_frontend/features/authentication/data/models/native
 import 'package:passion_tree_frontend/features/authentication/data/models/select_role_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/update_user_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/update_profile_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/apply_teacher_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/teacher_verification_status_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<RegisterResponse> register(RegisterRequest request);
@@ -35,6 +37,10 @@ abstract class AuthRemoteDataSource {
   Future<NativeDiscordSignInResponse> nativeDiscordSignIn(String code);
   Future<VerifyEmailResponse> refreshToken(String refreshTokenValue);
   Future<void> selectRole(String token, SelectRoleRequest request);
+  Future<TeacherVerificationStatusModel> getTeacherVerificationStatus(
+    String token,
+  );
+  Future<void> applyForTeacher(String token, ApplyTeacherRequest request);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -373,6 +379,43 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return;
     }
     throw _handleError(response, 'selectRole');
+  }
+
+  @override
+  Future<TeacherVerificationStatusModel> getTeacherVerificationStatus(
+    String token,
+  ) async {
+    LogHandler.separator(title: 'AUTH REMOTE · TEACHER VERIFICATION STATUS');
+    final response = await _apiHandler.get(
+      url: ApiConfig.authTeacherVerificationStatus,
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (response.isSuccess) {
+      final data = _parseMap(response.data, 'response.data');
+      return TeacherVerificationStatusModel.fromJson(data);
+    }
+
+    throw _handleError(response, 'getTeacherVerificationStatus');
+  }
+
+  @override
+  Future<void> applyForTeacher(
+    String token,
+    ApplyTeacherRequest request,
+  ) async {
+    LogHandler.separator(title: 'AUTH REMOTE · APPLY TEACHER');
+    final response = await _apiHandler.post(
+      url: ApiConfig.authApplyTeacher,
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode(request.toJson()),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (!response.isSuccess) {
+      throw _handleError(response, 'applyForTeacher');
+    }
   }
 
   String _getUserFriendlyMessage(String backendError, String context) {
