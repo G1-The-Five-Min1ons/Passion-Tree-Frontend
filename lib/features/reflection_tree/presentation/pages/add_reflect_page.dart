@@ -16,6 +16,8 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/tree_information_page.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 class AddReflectPage extends StatefulWidget{
   
@@ -42,8 +44,19 @@ class _AddReflectPageState extends State<AddReflectPage>{
     super.initState();
     //Load user's albums
     context.read<AlbumBloc>().add(const LoadAlbumsEvent());
-    //Load learning paths from database
-    context.read<LearningPathBloc>().add(FetchLearningPaths());
+    //Load enrolled learning paths
+    _loadLearningPaths();
+  }
+
+  Future<void> _loadLearningPaths() async {
+    final storedUserId = await getIt<IAuthRepository>().getUserId();
+    if (!mounted) return;
+
+    if (storedUserId != null && storedUserId.isNotEmpty) {
+      context.read<LearningPathBloc>().add(
+        FetchLearningPathStatus(userId: storedUserId),
+      );
+    }
   }
 
   @override
@@ -113,7 +126,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
               final List<String> learningPathTitles;
               final bool isLoadingPaths;
               
-              if (learningPathState is LearningPathLoaded) {
+              if (learningPathState is LearningPathStatusLoaded) {
                 learningPathTitles = learningPathState.paths
                     .map((path) => path.title)
                     .toList();
@@ -126,7 +139,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
                 isLoadingPaths = false;
               }
               
-              final learningPaths = learningPathState is LearningPathLoaded 
+              final learningPaths = learningPathState is LearningPathStatusLoaded 
                   ? learningPathState.paths 
                   : [];
 
@@ -152,7 +165,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
                           )
                         : SearchDropdown(
                             options: learningPathTitles.isEmpty 
-                                ? ['No Learning Paths found'] 
+                                ? ['No Enrolled Learning Paths found'] 
                                 : learningPathTitles,
                             header: "Learning Path",
                             label: "Select Learning Path",
@@ -166,7 +179,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
                                   (path) => path.title == selectedItem,
                                 );
                                 setState(() {
-                                  _selectedPathId = selectedPath.id;
+                                  _selectedPathId = selectedPath.pathId;
                                 });
                               } catch (e) {
                                 // If not found, just ignore
