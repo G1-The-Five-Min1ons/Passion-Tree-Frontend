@@ -13,10 +13,6 @@ class NodeInfoSection extends StatelessWidget {
    final ValueChanged<String> onTitleChanged;
   final ValueChanged<String> onDescriptionChanged;
 
-  // Video URL
-  final ValueChanged<String> onVideoUrlChanged;
-  final String videoUrlValue;
-
   // Links
   final ValueChanged<String> onLinkChanged;
   final VoidCallback onAddLink;
@@ -33,8 +29,6 @@ class NodeInfoSection extends StatelessWidget {
     super.key,
     required this.onTitleChanged,
     required this.onDescriptionChanged,
-    required this.onVideoUrlChanged,
-    required this.videoUrlValue,
     required this.onLinkChanged,
     required this.onAddLink,
     required this.links,
@@ -73,17 +67,6 @@ class NodeInfoSection extends StatelessWidget {
 
         const SizedBox(height: 12),
 
-        // ===== VIDEO URL =====
-        PixelTextField(
-          label: 'Video URL (Optional)',
-          hintText: 'Enter YouTube video URL',
-          height: 38,
-          value: videoUrlValue,
-          onChanged: onVideoUrlChanged,
-        ),
-
-        const SizedBox(height: 12),
-
         // ===== MATERIALS =====
         Text(
           'Add Learning Materials',
@@ -100,8 +83,8 @@ class NodeInfoSection extends StatelessWidget {
           children: [
             Expanded(
               child: PixelTextField(
-                label: 'Link (Optional)',
-                hintText: 'e.g. Youtube link / Google Drive',
+                label: 'VIDEO Link (Optional)',
+                hintText: 'Enter YouTube video URL',
                 height: 40,
                 value: linkValue,
                 onChanged: onLinkChanged,

@@ -37,11 +37,17 @@ class EditNodeModal extends StatefulWidget {
 class _EditNodeModalState extends State<EditNodeModal> {
   String _title = '';
   String _description = '';
-  String _videoUrl = '';
   String _linkInput = '';
-  final List<String> _links = []; //ส่วนเพิ่มlink
+  final List<String> _links = []; //ส่วนเพิ่มlink (วีดีโอ URL และ materials)
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
   bool _isUploading = false;
+
+  // ฟังก์ชันตรวจจับ YouTube URL
+  bool _isYouTubeUrl(String url) {
+    return url.contains('youtube.com') || 
+           url.contains('youtu.be') ||
+           url.contains('youtube');
+  }
 
   // ===== LINK FUNCTIONS =====
   void _addLink() {
@@ -106,10 +112,17 @@ class _EditNodeModalState extends State<EditNodeModal> {
       try {
         // Upload files และรวม materials
         List<CreateMaterial> materials = [];
+        String? videoUrl;
         
-        // เพิ่ม links
+        // แยก YouTube URL และ links อื่นๆ
         for (final link in _links) {
-          materials.add(CreateMaterial(type: 'link', url: link));
+          if (_isYouTubeUrl(link) && videoUrl == null) {
+            // Link แรกที่เป็น YouTube จะเป็น video URL หลัก
+            videoUrl = link;
+          } else {
+            // Links อื่นๆ เป็น materials
+            materials.add(CreateMaterial(type: 'link', url: link));
+          }
         }
         
         // Upload files และเพิ่ม URLs
@@ -137,7 +150,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             description: _description,
             pathId: widget.pathId!,
             sequence: widget.sequence!,
-            linkvdo: _videoUrl,
+            linkvdo: videoUrl ?? '',
             materials: materials.isNotEmpty ? materials : null,
           ),
         );
@@ -159,10 +172,17 @@ class _EditNodeModalState extends State<EditNodeModal> {
       try {
         // Upload files และรวม materials
         List<CreateMaterial> materials = [];
+        String? videoUrl;
         
-        // เพิ่ม links
+        // แยก YouTube URL และ links อื่นๆ
         for (final link in _links) {
-          materials.add(CreateMaterial(type: 'link', url: link));
+          if (_isYouTubeUrl(link) && videoUrl == null) {
+            // Link แรกที่เป็น YouTube จะเป็น video URL หลัก
+            videoUrl = link;
+          } else {
+            // Links อื่นๆ เป็น materials
+            materials.add(CreateMaterial(type: 'link', url: link));
+          }
         }
         
         // Upload files และเพิ่ม URLs
@@ -189,7 +209,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             nodeId: widget.nodeId,
             title: _title,
             description: _description,
-            linkvdo: _videoUrl.isNotEmpty ? _videoUrl : null,
+            linkvdo: videoUrl,
             materials: materials.isNotEmpty ? materials : null,
           ),
         );
@@ -257,11 +277,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                       onTitleChanged: (v) => setState(() => _title = v),
                       onDescriptionChanged: (v) => setState(() => _description = v),
 
-                      // ===== VIDEO URL =====
-                      videoUrlValue: _videoUrl,
-                      onVideoUrlChanged: (v) => setState(() => _videoUrl = v),
-
-                      // ===== LINKS =====
+                      // ===== LINKS (วีดีโอ + materials) =====
                       links: _links,
                       linkValue: _linkInput,
                       onLinkChanged: (v) => setState(() => _linkInput = v),
