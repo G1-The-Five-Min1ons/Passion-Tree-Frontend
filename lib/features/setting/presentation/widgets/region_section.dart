@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/config/account_preference_defaults.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
@@ -19,9 +20,15 @@ class RegionSection extends StatelessWidget {
             style: AppTypography.titleSemiBold.copyWith(color: AppColors.title),
           ),
           const SizedBox(height: 12),
-          _buildInfoPair('Time Zone', '(GMT+7) Bangkok, Hanoi, Jakarta'),
+          _buildInfoPair(
+            'Time Zone',
+            AccountPreferenceDefaults.timeZoneDisplay,
+          ),
           const Divider(color: AppColors.cardBorder, height: 20),
-          _buildInfoPair('Date Format', 'DD/MM/YYYY'),
+          _buildInfoPair(
+            'Date Format',
+            AccountPreferenceDefaults.dateFormatDisplay,
+          ),
         ],
       ),
     );
@@ -33,12 +40,16 @@ class RegionSection extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTypography.subtitleMedium.copyWith(color: AppColors.textPrimary),
+          style: AppTypography.subtitleMedium.copyWith(
+            color: AppColors.textPrimary,
+          ),
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: AppTypography.bodyRegular.copyWith(color: AppColors.textSecondary),
+          style: AppTypography.bodyRegular.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
       ],
     );

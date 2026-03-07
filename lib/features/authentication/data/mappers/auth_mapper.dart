@@ -1,7 +1,9 @@
 import 'package:passion_tree_frontend/core/error/exceptions.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
-import 'package:passion_tree_frontend/features/authentication/data/models/user.dart' as model;
-import 'package:passion_tree_frontend/features/authentication/data/models/profile.dart' as modelProfile;
+import 'package:passion_tree_frontend/features/authentication/data/models/user.dart'
+    as model;
+import 'package:passion_tree_frontend/features/authentication/data/models/profile.dart'
+    as modelProfile;
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/profile.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
@@ -31,13 +33,13 @@ class AuthMapper {
       learningCount: profileModel.learningCount,
       location: profileModel.location,
       bio: profileModel.bio,
+      phoneNumber: profileModel.phoneNumber,
       level: profileModel.level,
       xp: profileModel.xp,
       hourLearned: profileModel.hourLearned,
       userId: profileModel.userId,
     );
   }
-
 
   static UserProfile toUserProfileEntity(Map<String, dynamic> responseMap) {
     try {
@@ -51,7 +53,8 @@ class AuthMapper {
       final data = responseMap['data'];
       if (data is! Map<String, dynamic>) {
         throw ParseException(
-          message: 'Expected Map<String, dynamic> for "data" but got ${data.runtimeType}',
+          message:
+              'Expected Map<String, dynamic> for "data" but got ${data.runtimeType}',
         );
       }
 
@@ -65,7 +68,8 @@ class AuthMapper {
       final userJson = data['user'];
       if (userJson is! Map<String, dynamic>) {
         throw ParseException(
-          message: 'Expected Map<String, dynamic> for "user" but got ${userJson.runtimeType}',
+          message:
+              'Expected Map<String, dynamic> for "user" but got ${userJson.runtimeType}',
         );
       }
 

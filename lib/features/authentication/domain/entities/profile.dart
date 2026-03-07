@@ -8,6 +8,7 @@ class Profile extends Equatable {
   final int learningCount;
   final String? location;
   final String? bio;
+  final String? phoneNumber;
   final int level;
   final int xp;
   final int hourLearned;
@@ -21,6 +22,7 @@ class Profile extends Equatable {
     required this.learningCount,
     this.location,
     this.bio,
+    this.phoneNumber,
     required this.level,
     required this.xp,
     required this.hourLearned,
@@ -29,18 +31,19 @@ class Profile extends Equatable {
 
   @override
   List<Object?> get props => [
-        profileId,
-        avatarUrl,
-        rankName,
-        learningStreak,
-        learningCount,
-        location,
-        bio,
-        level,
-        xp,
-        hourLearned,
-        userId,
-      ];
+    profileId,
+    avatarUrl,
+    rankName,
+    learningStreak,
+    learningCount,
+    location,
+    bio,
+    phoneNumber,
+    level,
+    xp,
+    hourLearned,
+    userId,
+  ];
 
   Profile copyWith({
     String? profileId,
@@ -50,6 +53,7 @@ class Profile extends Equatable {
     int? learningCount,
     String? location,
     String? bio,
+    String? phoneNumber,
     int? level,
     int? xp,
     int? hourLearned,
@@ -63,6 +67,7 @@ class Profile extends Equatable {
       learningCount: learningCount ?? this.learningCount,
       location: location ?? this.location,
       bio: bio ?? this.bio,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
       level: level ?? this.level,
       xp: xp ?? this.xp,
       hourLearned: hourLearned ?? this.hourLearned,

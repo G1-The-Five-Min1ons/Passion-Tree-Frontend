@@ -160,6 +160,7 @@ class AuthRepositoryImpl implements IAuthRepository {
     required String location,
     required String bio,
     String? avatarUrl,
+    String? phoneNumber,
   }) async {
     final token = await _localDataSource.getToken();
     if (token == null) throw Exception('No token found');
@@ -174,6 +175,7 @@ class AuthRepositoryImpl implements IAuthRepository {
       location: location,
       bio: bio,
       avatarUrl: avatarUrl,
+      phoneNumber: phoneNumber,
     );
 
     await _remoteDataSource.updateUser(token, userRequest);

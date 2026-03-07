@@ -15,6 +15,8 @@ class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
   bool _notifyPlatform = true;
   bool _notifyWeekly = true;
   bool _notifyDaily = true;
+  bool _notifyCourseRecommendations = true;
+  bool _notifyPathComments = true;
   bool _notifyWebPush = false;
 
   @override
@@ -52,6 +54,22 @@ class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
                 "Stay on track – get a gentle reminder if you miss your daily practice session.",
             value: _notifyDaily,
             onChanged: (v) => setState(() => _notifyDaily = v),
+          ),
+          const Divider(color: AppColors.cardBorder, height: 20),
+          _buildToggleRow(
+            title: 'Course recommendations for me',
+            subtitle:
+                'Get personalized course suggestions based on your goals and recent activity.',
+            value: _notifyCourseRecommendations,
+            onChanged: (v) => setState(() => _notifyCourseRecommendations = v),
+          ),
+          const Divider(color: AppColors.cardBorder, height: 20),
+          _buildToggleRow(
+            title: 'New comments on my learning paths',
+            subtitle:
+                'Receive alerts when learners leave comments or questions on your learning paths.',
+            value: _notifyPathComments,
+            onChanged: (v) => setState(() => _notifyPathComments = v),
           ),
           const Divider(color: AppColors.cardBorder, height: 20),
           _buildToggleRow(

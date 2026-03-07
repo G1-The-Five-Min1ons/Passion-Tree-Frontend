@@ -41,6 +41,7 @@ abstract class IAuthRepository {
     required String location,
     required String bio,
     String? avatarUrl,
+    String? phoneNumber,
   });
 
   /// Changes password

@@ -8,6 +8,7 @@ class Profile {
   final int learningCount;
   final String? location;
   final String? bio;
+  final String? phoneNumber;
   final int level;
   final int xp;
   final int hourLearned;
@@ -21,6 +22,7 @@ class Profile {
     required this.learningCount,
     this.location,
     this.bio,
+    this.phoneNumber,
     required this.level,
     required this.xp,
     required this.hourLearned,
@@ -37,6 +39,7 @@ class Profile {
         learningCount: (json['learning_count'] as int?) ?? 0,
         location: json['location'] as String?,
         bio: json['bio'] as String?,
+        phoneNumber: json['phone_number'] as String?,
         level: (json['level'] as int?) ?? 0,
         xp: (json['xp'] as int?) ?? 0,
         hourLearned: (json['hour_learned'] as int?) ?? 0,
@@ -58,6 +61,7 @@ class Profile {
     'learning_count': learningCount,
     'location': location,
     'bio': bio,
+    'phone_number': phoneNumber,
     'level': level,
     'xp': xp,
     'hour_learned': hourLearned,
