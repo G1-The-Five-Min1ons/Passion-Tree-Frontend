@@ -111,7 +111,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         description: node.description,
         pathId: widget.pathId,
         sequence: node.sequence.toString(),
-        linkvdo: '', // TODO: เพิ่ม link vdo ถ้ามี
+        linkvdo: '',
+        materials: null, // Materials จะถูกเพิ่มผ่าน EditNodeModal
       ),
     );
   }

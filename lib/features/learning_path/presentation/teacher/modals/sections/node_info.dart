@@ -7,10 +7,15 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/uploaded_file.dart';
+
 class NodeInfoSection extends StatelessWidget {
 
    final ValueChanged<String> onTitleChanged;
   final ValueChanged<String> onDescriptionChanged;
+
+  // Video URL
+  final ValueChanged<String> onVideoUrlChanged;
+  final String videoUrlValue;
 
   // Links
   final ValueChanged<String> onLinkChanged;
@@ -28,6 +33,8 @@ class NodeInfoSection extends StatelessWidget {
     super.key,
     required this.onTitleChanged,
     required this.onDescriptionChanged,
+    required this.onVideoUrlChanged,
+    required this.videoUrlValue,
     required this.onLinkChanged,
     required this.onAddLink,
     required this.links,
@@ -62,6 +69,17 @@ class NodeInfoSection extends StatelessWidget {
           hintText: 'Enter node description',
           height: 38,
           onChanged: onDescriptionChanged,
+        ),
+
+        const SizedBox(height: 12),
+
+        // ===== VIDEO URL =====
+        PixelTextField(
+          label: 'Video URL (Optional)',
+          hintText: 'Enter YouTube video URL',
+          height: 38,
+          value: videoUrlValue,
+          onChanged: onVideoUrlChanged,
         ),
 
         const SizedBox(height: 12),

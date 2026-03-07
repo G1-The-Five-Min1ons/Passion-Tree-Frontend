@@ -1,3 +1,5 @@
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
+
 abstract class LearningPathEvent {}
 
 class FetchLearningPaths extends LearningPathEvent {}
@@ -80,6 +82,7 @@ class CreateNodeEvent extends LearningPathEvent {
   final String pathId;
   final String sequence;
   final String linkvdo;
+  final List<CreateMaterial>? materials;
   
   CreateNodeEvent({
     required this.title,
@@ -87,6 +90,7 @@ class CreateNodeEvent extends LearningPathEvent {
     required this.pathId,
     required this.sequence,
     this.linkvdo = '',
+    this.materials,
   });
 }
 

@@ -332,6 +332,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             pathId: event.pathId,
             sequence: event.sequence,
             linkvdo: event.linkvdo,
+            materials: event.materials,
           );
           
           LogHandler.debug('Creating node...');
