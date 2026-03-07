@@ -11,6 +11,8 @@ import 'package:passion_tree_frontend/features/authentication/data/models/forgot
 import 'package:passion_tree_frontend/features/authentication/data/models/reset_password_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/change_password_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/select_role_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/update_user_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/update_profile_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/mappers/auth_mapper.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user.dart';
@@ -146,6 +148,36 @@ class AuthRepositoryImpl implements IAuthRepository {
     await _localDataSource.saveHeartCount(userProfile.user.heartCount);
 
     return userProfile;
+  }
+
+  @override
+  Future<void> updateAccountSettings({
+    required String username,
+    required String firstName,
+    required String lastName,
+    required String location,
+    required String bio,
+    String? avatarUrl,
+  }) async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+
+    final userRequest = UpdateUserRequest(
+      username: username,
+      firstName: firstName,
+      lastName: lastName,
+    );
+
+    final profileRequest = UpdateProfileRequest(
+      location: location,
+      bio: bio,
+      avatarUrl: avatarUrl,
+    );
+
+    await _remoteDataSource.updateUser(token, userRequest);
+    await _remoteDataSource.updateProfile(token, profileRequest);
+
+    await _localDataSource.saveUsername(username);
   }
 
   @override

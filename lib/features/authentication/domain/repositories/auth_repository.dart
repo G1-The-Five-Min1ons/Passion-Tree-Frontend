@@ -35,6 +35,16 @@ abstract class IAuthRepository {
   /// Returns [UserProfile] entity with user and optional profile data
   Future<UserProfile> getProfile();
 
+  /// Updates account settings in both user and profile tables
+  Future<void> updateAccountSettings({
+    required String username,
+    required String firstName,
+    required String lastName,
+    required String location,
+    required String bio,
+    String? avatarUrl,
+  });
+
   /// Changes password
   Future<void> changePassword(String oldPassword, String newPassword);
 

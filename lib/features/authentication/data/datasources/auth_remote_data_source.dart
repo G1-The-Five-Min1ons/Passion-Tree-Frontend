@@ -16,6 +16,8 @@ import 'package:passion_tree_frontend/features/authentication/data/models/change
 import 'package:passion_tree_frontend/features/authentication/data/models/native_google_signin_response.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/native_discord_signin_response.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/select_role_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/update_user_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/update_profile_request.dart';
 
 abstract class AuthRemoteDataSource {
   Future<RegisterResponse> register(RegisterRequest request);
@@ -25,6 +27,8 @@ abstract class AuthRemoteDataSource {
   Future<void> forgotPassword(ForgotPasswordRequest request);
   Future<void> resetPassword(ResetPasswordRequest request);
   Future<Map<String, dynamic>> getProfile(String token);
+  Future<void> updateUser(String token, UpdateUserRequest request);
+  Future<void> updateProfile(String token, UpdateProfileRequest request);
   Future<void> changePassword(String token, ChangePasswordRequest request);
   Future<void> deleteUser(String token);
   Future<NativeGoogleSignInResponse> nativeGoogleSignIn(String idToken);
@@ -184,6 +188,38 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       };
     }
     throw _handleError(response, 'getProfile');
+  }
+
+  @override
+  Future<void> updateUser(String token, UpdateUserRequest request) async {
+    LogHandler.separator(title: 'AUTH REMOTE · UPDATE USER');
+    final response = await _apiHandler.put(
+      url: ApiConfig.authUpdateUser,
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode(request.toJson()),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('User info updated');
+      return;
+    }
+    throw _handleError(response, 'updateUser');
+  }
+
+  @override
+  Future<void> updateProfile(String token, UpdateProfileRequest request) async {
+    LogHandler.separator(title: 'AUTH REMOTE · UPDATE PROFILE');
+    final response = await _apiHandler.put(
+      url: ApiConfig.authUpdateProfile,
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode(request.toJson()),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Profile info updated');
+      return;
+    }
+    throw _handleError(response, 'updateProfile');
   }
 
   @override
