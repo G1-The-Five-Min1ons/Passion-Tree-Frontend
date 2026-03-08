@@ -38,16 +38,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
   String _title = '';
   String _description = '';
   String _linkInput = '';
-  final List<String> _links = []; //ส่วนเพิ่มlink (วีดีโอ URL และ materials)
+  final List<String> _links = []; //ส่วนเพิ่มlink
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
   bool _isUploading = false;
-
-  // ฟังก์ชันตรวจจับ YouTube URL
-  bool _isYouTubeUrl(String url) {
-    return url.contains('youtube.com') || 
-           url.contains('youtu.be') ||
-           url.contains('youtube');
-  }
 
   // ===== LINK FUNCTIONS =====
   void _addLink() {
@@ -112,23 +105,16 @@ class _EditNodeModalState extends State<EditNodeModal> {
       try {
         // Upload files และรวม materials
         List<CreateMaterial> materials = [];
-        String? videoUrl;
-        
-        // แยก YouTube URL และ links อื่นๆ
+
+        // เพิ่ม links
         for (final link in _links) {
-          if (_isYouTubeUrl(link) && videoUrl == null) {
-            // Link แรกที่เป็น YouTube จะเป็น video URL หลัก
-            videoUrl = link;
-          } else {
-            // Links อื่นๆ เป็น materials
-            materials.add(CreateMaterial(type: 'link', url: link));
-          }
+          materials.add(CreateMaterial(type: 'link', url: link));
         }
-        
+
         // Upload files และเพิ่ม URLs
         if (_files.isNotEmpty) {
           final uploadService = UploadApiService();
-          
+
           for (final fileItem in _files) {
             final path = fileItem.path;
             if (path != null && path.isNotEmpty) {
@@ -143,14 +129,14 @@ class _EditNodeModalState extends State<EditNodeModal> {
         }
 
         if (!mounted) return;
-        
+
         context.read<LearningPathBloc>().add(
           CreateNodeEvent(
             title: _title,
             description: _description,
             pathId: widget.pathId!,
             sequence: widget.sequence!,
-            linkvdo: videoUrl ?? '',
+            linkvdo: '',
             materials: materials.isNotEmpty ? materials : null,
           ),
         );
@@ -172,23 +158,16 @@ class _EditNodeModalState extends State<EditNodeModal> {
       try {
         // Upload files และรวม materials
         List<CreateMaterial> materials = [];
-        String? videoUrl;
-        
-        // แยก YouTube URL และ links อื่นๆ
+
+        // เพิ่ม links
         for (final link in _links) {
-          if (_isYouTubeUrl(link) && videoUrl == null) {
-            // Link แรกที่เป็น YouTube จะเป็น video URL หลัก
-            videoUrl = link;
-          } else {
-            // Links อื่นๆ เป็น materials
-            materials.add(CreateMaterial(type: 'link', url: link));
-          }
+          materials.add(CreateMaterial(type: 'link', url: link));
         }
-        
+
         // Upload files และเพิ่ม URLs
         if (_files.isNotEmpty) {
           final uploadService = UploadApiService();
-          
+
           for (final fileItem in _files) {
             final path = fileItem.path;
             if (path != null && path.isNotEmpty) {
@@ -209,7 +188,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             nodeId: widget.nodeId,
             title: _title,
             description: _description,
-            linkvdo: videoUrl,
+            linkvdo: null,
             materials: materials.isNotEmpty ? materials : null,
           ),
         );
