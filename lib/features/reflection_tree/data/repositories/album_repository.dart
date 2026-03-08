@@ -4,6 +4,7 @@ import 'package:path/path.dart' as path;
 import 'package:passion_tree_frontend/core/error/failure_mapper.dart';
 import 'package:passion_tree_frontend/core/error/failures.dart';
 import 'package:passion_tree_frontend/core/services/upload_service.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/utils/error_utils.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/album_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/models/album_api_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/mappers/album_mapper.dart';
@@ -61,7 +62,7 @@ class AlbumRepository implements IAlbumRepository {
     } catch (e) {
       LogHandler.error('Failed to upload image', error: e);
       return Left(ServerFailure(
-        message: 'ไม่สามารถอัพโหลดรูปภาพได้',
+        message: ErrorUtils.extractErrorMessage(e),
         technicalMessage: e.toString(),
       ));
     }
@@ -172,14 +173,15 @@ class AlbumRepository implements IAlbumRepository {
     required String albumId,
     required String title,
     File? coverImage,
+    String? existingImageUrl,
   }) async {
     try {
       final tokenResult = await _getValidToken();
       return tokenResult.fold(
         (failure) => Left(failure),
         (token) async {
-          // Upload image if provided
-          String coverImageUrl = '';
+          // Upload image if provided, otherwise use existing URL
+          String? coverImageUrl;
           if (coverImage != null) {
             final uploadResult = await _uploadImage(coverImage);
             // If upload failed, return the failure immediately
@@ -196,6 +198,8 @@ class AlbumRepository implements IAlbumRepository {
               );
             }
             coverImageUrl = uploadUrlOrFailure;
+          } else {
+            coverImageUrl = existingImageUrl ?? '';
           }
           
           final request = UpdateAlbumRequest(

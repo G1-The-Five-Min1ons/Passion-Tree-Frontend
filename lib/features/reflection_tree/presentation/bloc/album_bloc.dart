@@ -141,6 +141,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
       albumId: event.albumId,
       title: event.title,
       coverImage: event.coverImage,
+      existingImageUrl: event.existingImageUrl,
     );
     
     await updateResult.fold(
@@ -168,34 +169,31 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     DeleteAlbumEvent event,
     Emitter<AlbumState> emit,
   ) async {
-    List<Album>? currentAlbums;
     
-    if (state is AlbumsLoaded) {
-      currentAlbums = (state as AlbumsLoaded).albums.where((a) => a.albumId != event.albumId).toList();
-      emit(AlbumOperationLoading(currentAlbums: currentAlbums));
-    } else {
-      emit(AlbumLoading());
-    }
-
     final deleteResult = await deleteAlbum(event.albumId);
     
-    await deleteResult.fold(
-      (failure) {
+    if (deleteResult.isLeft()) {
+      final failure = deleteResult.fold((l) => l, (r) => null);
+      if (failure != null) {
         LogHandler.error('Failed to delete album: ${failure.message}');
         emit(AlbumError(failure.message));
+      }
+      return;
+    }
+    
+    LogHandler.success('Album deleted: ${event.albumId}');
+    
+    final albumsResult = await getAlbumsByUserId();
+    albumsResult.fold(
+      (failure) {
+        LogHandler.error('Failed to reload albums: ${failure.message}');
+        emit(AlbumError(failure.message));
       },
-      (_) async {
-        LogHandler.success('Album deleted: ${event.albumId}');
-        
-        // Reload albums with success message
-        final albumsResult = await getAlbumsByUserId();
-        albumsResult.fold(
-          (failure) => emit(AlbumError(failure.message)),
-          (albums) => emit(AlbumsLoaded(
-            albums,
-            message: 'Album deleted successfully',
-          )),
-        );
+      (albums) {
+        emit(AlbumsLoaded(
+          albums,
+          message: 'Album deleted successfully',
+        ));
       },
     );
   }

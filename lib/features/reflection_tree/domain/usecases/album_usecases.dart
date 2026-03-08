@@ -71,11 +71,13 @@ class UpdateAlbumUseCase {
     required String albumId,
     required String title,
     File? coverImage,
+    String? existingImageUrl,
   }) async {
     return await repository.updateAlbum(
       albumId: albumId,
       title: title,
       coverImage: coverImage,
+      existingImageUrl: existingImageUrl,
     );
   }
 }

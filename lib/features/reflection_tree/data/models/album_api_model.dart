@@ -77,17 +77,17 @@ class CreateAlbumRequest {
 
 class UpdateAlbumRequest {
   final String albumName;
-  final String coverImageUrl;
+  final String? coverImageUrl;
 
   UpdateAlbumRequest({
     required this.albumName,
-    required this.coverImageUrl,
+    this.coverImageUrl,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'album_name': albumName,
-      'cover_image_url': coverImageUrl,
+      'cover_image_url': coverImageUrl ?? '',
     };
   }
 }

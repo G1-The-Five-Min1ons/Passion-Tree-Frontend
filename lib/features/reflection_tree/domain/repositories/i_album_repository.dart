@@ -22,6 +22,7 @@ abstract class IAlbumRepository {
     required String albumId,
     required String title,
     File? coverImage,
+    String? existingImageUrl,
   });
 
   /// Delete album

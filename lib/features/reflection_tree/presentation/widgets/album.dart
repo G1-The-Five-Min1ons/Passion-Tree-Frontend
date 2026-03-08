@@ -54,7 +54,6 @@ class PixelAlbumCover extends StatelessWidget {
             );
           },
           onDelete: () {
-            Navigator.pop(context);
             context.read<AlbumBloc>().add(DeleteAlbumEvent(albumId));
           },
         );
