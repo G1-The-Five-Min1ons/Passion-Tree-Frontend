@@ -216,12 +216,22 @@ class _EditNodeModalState extends State<EditNodeModal> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Node updated successfully')),
           );
-          Navigator.pop(context);
+          // Delay closing modal to allow parent listeners to process and refetch
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted) {
+              Navigator.pop(context);
+            }
+          });
         } else if (state is NodeCreated) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Node created successfully')),
           );
-          Navigator.pop(context);
+          // Delay closing modal to allow parent listeners to process and refetch
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted) {
+              Navigator.pop(context);
+            }
+          });
         } else if (state is LearningPathError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error: ${state.message}')),

@@ -160,8 +160,9 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       // สร้าง node ใหม่
       nodeId = 'new_node_${DateTime.now().millisecondsSinceEpoch}';
       isNewNode = true;
-      // กำหนด sequence เป็น node ถัดไปจาก _uiNodes
-      sequence = (_uiNodes.length + 1).toString();
+      // กำหนด sequence เป็น node ถัดไปจาก _cachedNodes (ข้อมูลจริงจาก backend)
+      final currentNodeCount = _cachedNodes?.length ?? 0;
+      sequence = (currentNodeCount + 1).toString();
     }
 
     final bloc = context.read<LearningPathBloc>();
@@ -308,32 +309,40 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           });
         }
         
-        if (state is NodeCreated && _pendingNodeIndex != null) {
+        if (state is NodeCreated) {
           // Node ถูกสร้างสำเร็จ อัพเดท UI state
-          setState(() {
-            _uiNodes[_pendingNodeIndex!].realNodeId = state.nodeId;
-            _uiNodes[_pendingNodeIndex!].isCreated = true;
-            _pendingNodeIndex = null;
-          });
-          
-          // Refetch nodes to update display
-          if (_userId != null && _userId!.isNotEmpty) {
-            _fetchNodes(_userId!);
+          if (_pendingNodeIndex != null) {
+            setState(() {
+              _uiNodes[_pendingNodeIndex!].realNodeId = state.nodeId;
+              _uiNodes[_pendingNodeIndex!].isCreated = true;
+              _pendingNodeIndex = null;
+            });
           }
+          
+          // Refetch nodes with a small delay to ensure backend transaction is committed
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted && _userId != null && _userId!.isNotEmpty) {
+              _fetchNodes(_userId!);
+            }
+          });
           
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Node created successfully')),
           );
-        } else if (state is NodeUpdated && _pendingNodeIndex != null) {
+        } else if (state is NodeUpdated) {
           // Node ถูกอัพเดทสำเร็จ
-          setState(() {
-            _pendingNodeIndex = null;
-          });
-          
-          // Refetch nodes to update display
-          if (_userId != null && _userId!.isNotEmpty) {
-            _fetchNodes(_userId!);
+          if (_pendingNodeIndex != null) {
+            setState(() {
+              _pendingNodeIndex = null;
+            });
           }
+          
+          // Refetch nodes with a small delay to ensure backend transaction is committed
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted && _userId != null && _userId!.isNotEmpty) {
+              _fetchNodes(_userId!);
+            }
+          });
           
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Node updated successfully')),
