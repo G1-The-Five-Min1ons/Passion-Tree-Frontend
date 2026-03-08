@@ -129,7 +129,10 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
             // Use cached overview data
             final overviewData = _cachedOverview;
             if (overviewData != null) {
-              final filteredAll = _filterCourses(overviewData.allPaths);
+              // Filter by search query and published status only
+              final filteredAll = _filterCourses(overviewData.allPaths)
+                  .where((path) => path.publishStatus.toLowerCase() == 'published')
+                  .toList();
 
               // Filter and deduplicate enrolled paths
               final filteredEnrolledWithDuplicates = _filterEnrolledCourses(
