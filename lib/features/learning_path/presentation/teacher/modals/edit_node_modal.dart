@@ -121,7 +121,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
               final file = File(path);
               final publicUrl = await uploadService.uploadImage(
                 file,
-                'learning-materials',
+                'materials-nodes',
               );
               materials.add(CreateMaterial(type: 'file', url: publicUrl));
             }
@@ -174,7 +174,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
               final file = File(path);
               final publicUrl = await uploadService.uploadImage(
                 file,
-                'learning-materials',
+                'materials-nodes',
               );
               materials.add(CreateMaterial(type: 'file', url: publicUrl));
             }
