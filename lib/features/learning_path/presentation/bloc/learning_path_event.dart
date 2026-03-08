@@ -1,4 +1,5 @@
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
 
 abstract class LearningPathEvent {}
 
@@ -83,6 +84,7 @@ class CreateNodeEvent extends LearningPathEvent {
   final String sequence;
   final String linkvdo;
   final List<CreateMaterial>? materials;
+  final List<CreateQuestionWithChoices>? questions;
   
   CreateNodeEvent({
     required this.title,
@@ -91,6 +93,7 @@ class CreateNodeEvent extends LearningPathEvent {
     required this.sequence,
     this.linkvdo = '',
     this.materials,
+    this.questions,
   });
 }
 
@@ -106,6 +109,7 @@ class UpdateNodeEvent extends LearningPathEvent {
   final String description;
   final String? linkvdo;
   final List<CreateMaterial>? materials;
+  final List<CreateQuestionWithChoices>? questions;
   
   UpdateNodeEvent({
     required this.nodeId,
@@ -113,6 +117,7 @@ class UpdateNodeEvent extends LearningPathEvent {
     required this.description,
     this.linkvdo,
     this.materials,
+    this.questions,
   });
 }
 

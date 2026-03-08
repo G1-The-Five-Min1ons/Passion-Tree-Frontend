@@ -14,6 +14,11 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
 import 'package:passion_tree_frontend/features/upload/upload_service.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_quiz.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_choice.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
 
 
 class EditNodeModal extends StatefulWidget {
@@ -21,6 +26,7 @@ class EditNodeModal extends StatefulWidget {
   final bool isNewNode;
   final String? pathId;
   final String? sequence;
+  final NodeDetail? initialNode;
   
   const EditNodeModal({
     super.key,
@@ -28,6 +34,7 @@ class EditNodeModal extends StatefulWidget {
     this.isNewNode = false,
     this.pathId,
     this.sequence,
+    this.initialNode,
   });
 
   @override
@@ -40,7 +47,59 @@ class _EditNodeModalState extends State<EditNodeModal> {
   String _linkInput = '';
   final List<String> _links = []; //ส่วนเพิ่มlink
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
+  List<NodeQuiz> _quizzes = []; //ส่วนเพิ่ม quiz
   bool _isUploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // โหลดข้อมูลเดิมถ้าเป็นการแก้ไขโหนด
+    if (widget.initialNode != null) {
+      _title = widget.initialNode!.title;
+      _description = widget.initialNode!.description;
+      
+      // โหลด materials (links และ files ที่มีอยู่แล้ว)
+      for (final material in widget.initialNode!.materials) {
+        if (material.type == 'link') {
+          _links.add(material.url);
+        } else if (material.type == 'file') {
+          // สำหรับไฟล์ที่มีอยู่แล้ว แสดงเป็น URL (ไม่สามารถ edit ได้แต่แสดงให้เห็น)
+          _files.add(
+            UploadedFileItem(
+              name: material.url.split('/').last,
+              size: 0, // ไม่ทราบขนาดไฟล์
+              path: material.url, // เก็บ URL แทน path
+            ),
+          );
+        }
+      }
+
+      // โหลด questions และแปลงเป็น NodeQuiz
+      _quizzes = widget.initialNode!.questions.map((question) {
+        // หา correct choice index
+        int correctIndex = 0;
+        Map<int, String> reasons = {};
+        
+        for (int i = 0; i < question.choices.length; i++) {
+          final choice = question.choices[i];
+          if (choice.isCorrect) {
+            correctIndex = i;
+            if (choice.reasoning.isNotEmpty) {
+              reasons[i] = choice.reasoning;
+            }
+          }
+        }
+
+        return NodeQuiz(
+          question: question.questionText,
+          choices: question.choices.map((c) => c.choiceText).toList(),
+          selectedIndex: correctIndex,
+          reasons: reasons,
+        );
+      }).toList();
+    }
+  }
 
   // ===== LINK FUNCTIONS =====
   void _addLink() {
@@ -81,6 +140,35 @@ class _EditNodeModalState extends State<EditNodeModal> {
     setState(() {
       _files.removeAt(index);
     });
+  }
+
+  // Helper function to convert NodeQuiz to CreateQuestionWithChoices
+  List<CreateQuestionWithChoices>? _convertQuizzesToQuestions() {
+    if (_quizzes.isEmpty) return null;
+
+    // กรองเอาแต่ questions ที่มีข้อความ
+    final validQuizzes = _quizzes.where((q) => q.question.trim().isNotEmpty).toList();
+    if (validQuizzes.isEmpty) return null;
+
+    return validQuizzes.map((quiz) {
+      final choices = quiz.choices
+          .asMap()
+          .entries
+          .where((entry) => entry.value.trim().isNotEmpty)
+          .map((entry) {
+        return CreateChoice(
+          choiceText: entry.value,
+          isCorrect: entry.key == quiz.selectedIndex,
+          reasoning: quiz.reasons[entry.key] ?? '',
+        );
+      }).toList();
+
+      return CreateQuestionWithChoices(
+        questionText: quiz.question,
+        type: 'multiple_choice',
+        choices: choices,
+      );
+    }).toList();
   }
 
   Future<void> _handleUpdate(BuildContext context) async {
@@ -130,6 +218,8 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
         if (!mounted) return;
 
+        final questions = _convertQuizzesToQuestions();
+
         context.read<LearningPathBloc>().add(
           CreateNodeEvent(
             title: _title,
@@ -138,6 +228,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             sequence: widget.sequence!,
             linkvdo: '',
             materials: materials.isNotEmpty ? materials : null,
+            questions: questions,
           ),
         );
       } catch (e) {
@@ -183,6 +274,8 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
         if (!mounted) return;
 
+        final questions = _convertQuizzesToQuestions();
+
         context.read<LearningPathBloc>().add(
           UpdateNodeEvent(
             nodeId: widget.nodeId,
@@ -190,6 +283,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             description: _description,
             linkvdo: null,
             materials: materials.isNotEmpty ? materials : null,
+            questions: questions,
           ),
         );
       } catch (e) {
@@ -263,6 +357,8 @@ class _EditNodeModalState extends State<EditNodeModal> {
                     // ===== INFO + MATERIALS =====
                     NodeInfoSection(
                       // ===== NODE INFO =====
+                      initialTitle: _title.isEmpty ? null : _title,
+                      initialDescription: _description.isEmpty ? null : _description,
                       onTitleChanged: (v) => setState(() => _title = v),
                       onDescriptionChanged: (v) => setState(() => _description = v),
 
@@ -280,7 +376,14 @@ class _EditNodeModalState extends State<EditNodeModal> {
                     ),
                     
                     const SizedBox(height: 14),
-                    NodeQuizSection(),
+                    NodeQuizSection(
+                      initialQuizzes: _quizzes.isNotEmpty ? _quizzes : null,
+                      onQuizzesChanged: (quizzes) {
+                        setState(() {
+                          _quizzes = quizzes;
+                        });
+                      },
+                    ),
 
                     const SizedBox(height: 14),
 

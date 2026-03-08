@@ -4,8 +4,16 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/inline_text_field.dart';
 import 'package:passion_tree_frontend/core/common_widgets/selections/radio.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_quiz.dart';
+
 class NodeQuizSection extends StatefulWidget {
-  const NodeQuizSection({super.key});
+  final List<NodeQuiz>? initialQuizzes;
+  final ValueChanged<List<NodeQuiz>>? onQuizzesChanged;
+
+  const NodeQuizSection({
+    super.key,
+    this.initialQuizzes,
+    this.onQuizzesChanged,
+  });
 
   @override
   State<NodeQuizSection> createState() => _NodeQuizSectionState();
@@ -13,19 +21,34 @@ class NodeQuizSection extends StatefulWidget {
 
 class _NodeQuizSectionState extends State<NodeQuizSection> {
   // ===== STATE =====
-  final List<NodeQuiz> _quizzes = [const NodeQuiz()];
+  late List<NodeQuiz> _quizzes;
+
+  @override
+  void initState() {
+    super.initState();
+    // โหลดข้อมูลเดิมหรือสร้าง default quiz
+    _quizzes = widget.initialQuizzes != null && widget.initialQuizzes!.isNotEmpty
+        ? List<NodeQuiz>.from(widget.initialQuizzes!)
+        : [const NodeQuiz()];
+  }
+
+  void _notifyChange() {
+    widget.onQuizzesChanged?.call(_quizzes);
+  }
 
   // ===== ACTIONS =====
   void _addQuestion() {
     setState(() {
       _quizzes.add(const NodeQuiz());
     });
+    _notifyChange();
   }
 
   void _removeQuestion(int index) {
     setState(() {
       _quizzes.removeAt(index);
     });
+    _notifyChange();
   }
 
   void _addChoice(int qIndex) {
@@ -33,6 +56,7 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
     setState(() {
       _quizzes[qIndex] = quiz.copyWith(choices: [...quiz.choices, '']);
     });
+    _notifyChange();
   }
 
   void _removeChoice(int qIndex, int cIndex) {
@@ -49,6 +73,7 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
             : quiz.selectedIndex,
       );
     });
+    _notifyChange();
   }
 
   @override
@@ -94,6 +119,7 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                             setState(() {
                               _quizzes[qIndex] = quiz.copyWith(question: v);
                             });
+                            _notifyChange();
                           },
                         ),
                       ),
@@ -122,6 +148,7 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                                       selectedIndex: cIndex,
                                     );
                                   });
+                                  _notifyChange();
                                 },
                                 child: PixelRadioButton(
                                   index: cIndex + 1,
@@ -142,6 +169,7 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                                         choices: updatedChoices,
                                       );
                                     });
+                                    _notifyChange();
                                   },
                                 ),
                               ),
@@ -182,6 +210,7 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                                             reasons: newReasons,
                                           );
                                         });
+                                        _notifyChange();
                                       },
                                     ),
                                   ),

@@ -12,6 +12,8 @@ class NodeInfoSection extends StatelessWidget {
 
    final ValueChanged<String> onTitleChanged;
   final ValueChanged<String> onDescriptionChanged;
+  final String? initialTitle;
+  final String? initialDescription;
 
   // Links
   final ValueChanged<String> onLinkChanged;
@@ -29,6 +31,8 @@ class NodeInfoSection extends StatelessWidget {
     super.key,
     required this.onTitleChanged,
     required this.onDescriptionChanged,
+    this.initialTitle,
+    this.initialDescription,
     required this.onLinkChanged,
     required this.onAddLink,
     required this.links,
@@ -52,6 +56,7 @@ class NodeInfoSection extends StatelessWidget {
           label: 'Node Title',
           hintText: 'Enter node title',
           height: 38,
+          value: initialTitle,
           onChanged: onTitleChanged,
         ),
 
@@ -62,6 +67,7 @@ class NodeInfoSection extends StatelessWidget {
           label: 'Node Description',
           hintText: 'Enter node description',
           height: 38,
+          value: initialDescription,
           onChanged: onDescriptionChanged,
         ),
 

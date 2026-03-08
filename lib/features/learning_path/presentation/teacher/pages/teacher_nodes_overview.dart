@@ -149,6 +149,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     String nodeId;
     bool isNewNode;
     String? sequence;
+    NodeDetail? initialNode;
 
     // ถ้ามี index (กดที่ node ที่มีอยู่แล้ว)
     if (index != null && _cachedNodes != null && index < _cachedNodes!.length) {
@@ -156,6 +157,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       nodeId = _cachedNodes![index].nodeId;
       isNewNode = false;
       sequence = null;
+      initialNode = _cachedNodes![index]; // ส่งข้อมูลเดิมไปแสดงใน modal
     } else {
       // สร้าง node ใหม่
       nodeId = 'new_node_${DateTime.now().millisecondsSinceEpoch}';
@@ -163,6 +165,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       // กำหนด sequence เป็น node ถัดไปจาก _cachedNodes (ข้อมูลจริงจาก backend)
       final currentNodeCount = _cachedNodes?.length ?? 0;
       sequence = (currentNodeCount + 1).toString();
+      initialNode = null;
     }
 
     final bloc = context.read<LearningPathBloc>();
@@ -178,6 +181,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           isNewNode: isNewNode,
           pathId: widget.pathId,
           sequence: sequence,
+          initialNode: initialNode, // ส่งข้อมูลเดิมไปยัง modal
         ),
       ),
     );
