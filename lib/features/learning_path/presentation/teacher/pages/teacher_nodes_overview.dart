@@ -204,10 +204,12 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       body: 'Are you sure to save draft',
       confirmText: 'Save',
       onConfirm: () {
-        // สร้าง nodes ที่ยังไม่ได้สร้าง
-        for (int i = 0; i < _uiNodes.length; i++) {
-          if (!_uiNodes[i].isCreated) {
-            _handleCreateNode(i);
+        // สร้าง nodes เฉพาะเมื่อยังไม่มี nodes ใน backend เลย
+        if (_cachedNodes == null || _cachedNodes!.isEmpty) {
+          for (int i = 0; i < _uiNodes.length; i++) {
+            if (!_uiNodes[i].isCreated) {
+              _handleCreateNode(i);
+            }
           }
         }
         
@@ -250,10 +252,12 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       body: 'Are you sure to publish Learning Path',
       confirmText: 'Publish',
       onConfirm: () {
-        // สร้าง nodes ที่ยังไม่ได้สร้าง (ถ้ามี)
-        for (int i = 0; i < _uiNodes.length; i++) {
-          if (!_uiNodes[i].isCreated) {
-            _handleCreateNode(i);
+        // สร้าง nodes เฉพาะเมื่อยังไม่มี nodes ใน backend เลย
+        if (_cachedNodes == null || _cachedNodes!.isEmpty) {
+          for (int i = 0; i < _uiNodes.length; i++) {
+            if (!_uiNodes[i].isCreated) {
+              _handleCreateNode(i);
+            }
           }
         }
         
@@ -291,6 +295,16 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         if (state is NodesLoaded && state.pathId == widget.pathId) {
           setState(() {
             _cachedNodes = state.nodes;
+            // Sync _uiNodes with cached nodes from backend
+            if (state.nodes.isNotEmpty) {
+              _uiNodes = state.nodes.map((node) => NodeUiState(
+                title: node.title,
+                description: node.description,
+                sequence: node.sequence,
+                realNodeId: node.nodeId,
+                isCreated: true, // Nodes from backend are already created
+              )).toList();
+            }
           });
         }
         
