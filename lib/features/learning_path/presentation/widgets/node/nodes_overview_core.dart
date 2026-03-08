@@ -4,6 +4,7 @@ import 'package:passion_tree_frontend/core/common_widgets/node/node_item.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/tree_canvas.dart';
 
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/node_asset.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/node_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 
 class NodesOverviewCore extends StatelessWidget {
