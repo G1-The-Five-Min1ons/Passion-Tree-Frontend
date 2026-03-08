@@ -7,6 +7,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/cre
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_node.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/ai_generate_response.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
 
 abstract class LearningPathRepository {
   Future<List<LearningPath>> getAllLearningPaths();
@@ -21,11 +22,16 @@ abstract class LearningPathRepository {
   Future<void> enrollPath(String pathId, String userId);
   Future<void> startNode(String nodeId, String userId);
   Future<void> completeNode(String nodeId, String userId);
+  Future<void> deleteNode(String nodeId);
   Future<void> deleteLearningPath(String pathId);
   
   // Teacher features
   Future<String> createLearningPath(CreateLearningPath learningPath);
   Future<String> createNode(CreateNode node);
+  Future<void> createNodeQuestions(
+    String nodeId,
+    List<CreateQuestionWithChoices> questions,
+  );
   Future<AIGenerateResponse> generateNodesWithAI(String topic);
   Future<LearningPath> getLearningPathById(String pathId);
   Future<void> updateNode(

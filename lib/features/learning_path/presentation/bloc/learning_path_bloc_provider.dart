@@ -10,8 +10,10 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enr
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/start_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_questions_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/generate_nodes_with_ai_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_learning_path_by_id_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_node_usecase.dart';
@@ -36,10 +38,12 @@ class LearningPathBlocProvider extends StatelessWidget {
     final startNode = StartNode(repository);
     final completeNode = CompleteNode(repository);
     final deleteLearningPath = DeleteLearningPath(repository);
+    final deleteNodeUseCase = DeleteNodeUseCase(repository);
     
     // Teacher usecases
     final createLearningPathUseCase = CreateLearningPathUseCase(repository);
     final createNodeUseCase = CreateNodeUseCase(repository);
+    final createNodeQuestionsUseCase = CreateNodeQuestionsUseCase(repository);
     final generateNodesWithAIUseCase = GenerateNodesWithAIUseCase(repository);
     final getLearningPathByIdUseCase = GetLearningPathByIdUseCase(repository);
     final updateNodeUseCase = UpdateNodeUseCase(repository);
@@ -55,8 +59,10 @@ class LearningPathBlocProvider extends StatelessWidget {
         startNode,
         completeNode,
         deleteLearningPath,
+        deleteNodeUseCase,
         createLearningPathUseCase,
         createNodeUseCase,
+        createNodeQuestionsUseCase,
         generateNodesWithAIUseCase,
         getLearningPathByIdUseCase,
         updateLearningPathUseCase,

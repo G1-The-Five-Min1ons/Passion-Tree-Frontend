@@ -51,6 +51,12 @@ class DeleteLearningPathEvent extends LearningPathEvent {
   DeleteLearningPathEvent({required this.pathId, this.userId});
 }
 
+class DeleteNodeEvent extends LearningPathEvent {
+  final String nodeId;
+
+  DeleteNodeEvent({required this.nodeId});
+}
+
 // ===== TEACHER EVENTS =====
 
 class CreateLearningPathEvent extends LearningPathEvent {

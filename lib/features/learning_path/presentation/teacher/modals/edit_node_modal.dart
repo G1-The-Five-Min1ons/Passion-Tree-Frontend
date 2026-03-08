@@ -19,6 +19,9 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/nod
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_choice.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/datasources/learning_path_data_source.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/repositories/learning_path_repositories.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
 
 
 class EditNodeModal extends StatefulWidget {
@@ -98,6 +101,48 @@ class _EditNodeModalState extends State<EditNodeModal> {
           reasons: reasons,
         );
       }).toList();
+
+      // ดึงคำถามล่าสุดจาก API เฉพาะหน้าแก้ไขโหนด
+      _loadQuestionsFromApi();
+    }
+  }
+
+  Future<void> _loadQuestionsFromApi() async {
+    try {
+      final dataSource = LearningPathDataSource();
+      final repository = LearningPathRepositoryImpl(dataSource);
+      final getNodeQuestions = GetNodeQuestions(repository);
+
+      final questions = await getNodeQuestions(widget.nodeId);
+      if (!mounted) return;
+
+      final quizzesFromApi = questions.map((question) {
+        int correctIndex = 0;
+        final reasons = <int, String>{};
+
+        for (int i = 0; i < question.choices.length; i++) {
+          final choice = question.choices[i];
+          if (choice.isCorrect) {
+            correctIndex = i;
+            if (choice.reasoning.isNotEmpty) {
+              reasons[i] = choice.reasoning;
+            }
+          }
+        }
+
+        return NodeQuiz(
+          question: question.questionText,
+          choices: question.choices.map((c) => c.choiceText).toList(),
+          selectedIndex: correctIndex,
+          reasons: reasons,
+        );
+      }).toList();
+
+      setState(() {
+        _quizzes = quizzesFromApi;
+      });
+    } catch (_) {
+      // ถ้าโหลดคำถามไม่สำเร็จ จะใช้ค่าเดิมจาก initialNode แทน
     }
   }
 
@@ -326,6 +371,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
               Navigator.pop(context);
             }
           });
+        } else if (state is NodeDeleted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Node deleted successfully')),
+          );
+          if (mounted) {
+            Navigator.pop(context);
+          }
         } else if (state is LearningPathError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error: ${state.message}')),
@@ -399,11 +451,14 @@ class _EditNodeModalState extends State<EditNodeModal> {
                               body:
                                   'Are you sure you want to delete?\nThis Process cannot be undone.',
                               onDelete: () {
-                                // TODO: implement delete node API
-                                debugPrint('Node deleted: ${widget.nodeId}');
+                                if (widget.isNewNode) {
+                                  Navigator.pop(context);
+                                  return;
+                                }
 
-                                // ปิด EditNodeModal
-                                Navigator.pop(context);
+                                context.read<LearningPathBloc>().add(
+                                  DeleteNodeEvent(nodeId: widget.nodeId),
+                                );
                               },
                             );
                           },

@@ -12,8 +12,10 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enr
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/start_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_questions_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/generate_nodes_with_ai_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_learning_path_by_id_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_node_usecase.dart';
@@ -32,8 +34,10 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final StartNode startNode;
   final CompleteNode completeNode;
   final DeleteLearningPath deleteLearningPath;
+  final DeleteNodeUseCase deleteNodeUseCase;
   final CreateLearningPathUseCase createLearningPathUseCase;
   final CreateNodeUseCase createNodeUseCase;
+  final CreateNodeQuestionsUseCase createNodeQuestionsUseCase;
   final GenerateNodesWithAIUseCase generateNodesWithAIUseCase;
   final GetLearningPathByIdUseCase getLearningPathByIdUseCase;
   final UpdateNodeUseCase updateNodeUseCase;
@@ -48,8 +52,10 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.startNode,
     this.completeNode,
     this.deleteLearningPath,
+    this.deleteNodeUseCase,
     this.createLearningPathUseCase,
     this.createNodeUseCase,
+    this.createNodeQuestionsUseCase,
     this.generateNodesWithAIUseCase,
     this.getLearningPathByIdUseCase,
     this.updateLearningPathUseCase,
@@ -272,6 +278,23 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
       transformer: droppable(),
     );
 
+    on<DeleteNodeEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] DeleteNodeEvent: ${event.nodeId}');
+        emit(LearningPathLoading());
+
+        try {
+          await deleteNodeUseCase(event.nodeId);
+          LogHandler.info('[BLoC] Deleted node: ${event.nodeId}');
+          emit(NodeDeleted(event.nodeId));
+        } catch (e) {
+          LogHandler.error('[BLoC] Error deleting node: $e');
+          emit(LearningPathError(e.toString()));
+        }
+      },
+      transformer: droppable(),
+    );
+
     // ===== TEACHER EVENT HANDLERS =====
 
     on<CreateLearningPathEvent>(
@@ -336,11 +359,17 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             sequence: event.sequence,
             linkvdo: event.linkvdo,
             materials: event.materials,
-            questions: event.questions,
+            questions: null,
           );
           
           LogHandler.debug('Creating node...');
           final nodeId = await createNodeUseCase(node);
+
+          if (event.questions != null && event.questions!.isNotEmpty) {
+            LogHandler.debug('Creating quiz questions for node...');
+            await createNodeQuestionsUseCase(nodeId, event.questions!);
+          }
+
           LogHandler.debug('[BLoC] Node created: $nodeId');
           emit(NodeCreated(nodeId));
         } catch (e) {

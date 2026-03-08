@@ -18,6 +18,8 @@ import 'package:passion_tree_frontend/features/learning_path/data/mappers/create
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/create_node_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/ai_generate_response_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/create_question_with_choices_mapper.dart';
 
 class LearningPathRepositoryImpl implements LearningPathRepository {
   final LearningPathDataSource dataSource;
@@ -80,6 +82,11 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   }
 
   @override
+  Future<void> deleteNode(String nodeId) async {
+    return await dataSource.deleteNode(nodeId);
+  }
+
+  @override
   Future<void> deleteLearningPath(String pathId) async {
     return await dataSource.deleteLearningPath(pathId);
   }
@@ -96,6 +103,15 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   Future<String> createNode(CreateNode node) async {
     final apiModel = node.toApiModel();
     return await dataSource.createNode(apiModel);
+  }
+
+  @override
+  Future<void> createNodeQuestions(
+    String nodeId,
+    List<CreateQuestionWithChoices> questions,
+  ) async {
+    final apiModels = questions.map((q) => q.toApiModel()).toList();
+    return await dataSource.createNodeQuestions(nodeId, apiModels);
   }
 
   @override

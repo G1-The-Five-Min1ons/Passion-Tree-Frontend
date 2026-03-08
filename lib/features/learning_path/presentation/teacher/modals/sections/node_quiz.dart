@@ -32,6 +32,17 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
         : [const NodeQuiz()];
   }
 
+  @override
+  void didUpdateWidget(NodeQuizSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // อัพเดท _quizzes เมื่อ parent ส่ง initialQuizzes ใหม่มา
+    if (widget.initialQuizzes != oldWidget.initialQuizzes) {
+      _quizzes = widget.initialQuizzes != null && widget.initialQuizzes!.isNotEmpty
+          ? List<NodeQuiz>.from(widget.initialQuizzes!)
+          : [const NodeQuiz()];
+    }
+  }
+
   void _notifyChange() {
     widget.onQuizzesChanged?.call(_quizzes);
   }

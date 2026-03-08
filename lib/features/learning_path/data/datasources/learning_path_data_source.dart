@@ -13,6 +13,8 @@ import 'package:passion_tree_frontend/features/learning_path/data/models/node_de
 import 'package:passion_tree_frontend/features/learning_path/data/models/quiz_question_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/create_path_request_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/create_node_request_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/create_choice_request_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/create_question_with_choices_request_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/ai_generate_response_api_model.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
@@ -196,14 +198,14 @@ class LearningPathDataSource {
 
   Future<List<LearningNodeApiModel>> getNodesForPath(
     String pathId,
-    String userId,
+    String _userId,
   ) async {
     try {
       LogHandler.debug('[DataSource] GET /learningpaths/$pathId/nodes');
 
       final response = await client.get(
         Uri.parse(
-          '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/nodes?user_id=$userId',
+          '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/nodes',
         ),
         headers: await _getHeaders(),
       );
@@ -257,13 +259,13 @@ class LearningPathDataSource {
     }
   }
 
-  Future<NodeDetailApiModel> getNodeDetail(String nodeId, String userId) async {
+  Future<NodeDetailApiModel> getNodeDetail(String nodeId, String _userId) async {
     try {
       LogHandler.debug('[DataSource] GET /learningpaths/nodes/$nodeId');
 
       final response = await client.get(
         Uri.parse(
-          '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId?user_id=$userId',
+          '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId',
         ),
         headers: await _getHeaders(),
       );
@@ -371,13 +373,114 @@ class LearningPathDataSource {
     }
   }
 
-  Future<void> startNode(String nodeId, String userId) async {
+  Future<void> createNodeQuestions(
+    String nodeId,
+    List<CreateQuestionWithChoicesRequestApiModel> questions,
+  ) async {
+    try {
+      if (questions.isEmpty) return;
+
+      for (final question in questions) {
+        LogHandler.debug(
+          '[DataSource] POST /learningpaths/nodes/$nodeId/questions',
+        );
+
+        final questionResponse = await client.post(
+          Uri.parse(
+            '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/questions',
+          ),
+          headers: await _getHeaders(),
+          body: jsonEncode({
+            'question_text': question.questionText,
+            'type': question.type,
+          }),
+        );
+
+        LogHandler.debug('Response Status: ${questionResponse.statusCode}');
+
+        if (questionResponse.statusCode != 200 &&
+            questionResponse.statusCode != 201) {
+          try {
+            final error = jsonDecode(questionResponse.body);
+            throw Exception(
+              error['message'] ?? 'Failed to create question for node',
+            );
+          } on FormatException {
+            throw Exception(
+              'Failed to create question for node (Status ${questionResponse.statusCode})',
+            );
+          }
+        }
+
+        String questionId;
+        try {
+          final data = jsonDecode(questionResponse.body);
+          questionId = data['data']?['question_id'] as String;
+          if (questionId.isEmpty) {
+            throw Exception('Question ID not returned from server');
+          }
+        } catch (e) {
+          throw Exception('Failed to parse created question id: $e');
+        }
+
+        for (final choice in question.choices) {
+          final choiceRequest = CreateChoiceRequestApiModel(
+            choiceText: choice.choiceText,
+            isCorrect: choice.isCorrect,
+            reasoning: choice.reasoning,
+          );
+
+          LogHandler.debug(
+            '[DataSource] POST /learningpaths/questions/$questionId/choices',
+          );
+
+          final choiceResponse = await client.post(
+            Uri.parse(
+              '${ApiConfig.apiBackendUrl}/learningpaths/questions/$questionId/choices',
+            ),
+            headers: await _getHeaders(),
+            body: jsonEncode(choiceRequest.toJson()),
+          );
+
+          LogHandler.debug('Response Status: ${choiceResponse.statusCode}');
+
+          if (choiceResponse.statusCode != 200 &&
+              choiceResponse.statusCode != 201) {
+            try {
+              final error = jsonDecode(choiceResponse.body);
+              throw Exception(
+                error['message'] ?? 'Failed to create choice for question',
+              );
+            } on FormatException {
+              throw Exception(
+                'Failed to create choice for question (Status ${choiceResponse.statusCode})',
+              );
+            }
+          }
+        }
+      }
+    } on SocketException catch (e) {
+      LogHandler.error('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      LogHandler.error('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      LogHandler.error('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
+    } catch (e) {
+      LogHandler.error('Exception in createNodeQuestions: $e');
+      throw Exception('Failed to create node questions: $e');
+    }
+  }
+
+  Future<void> startNode(String nodeId, String _userId) async {
     try {
       LogHandler.debug('[DataSource] PUT /learningpaths/nodes/$nodeId/start');
 
       final response = await client.put(
         Uri.parse(
-          '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/start?user_id=$userId',
+          '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/start',
         ),
         headers: await _getHeaders(),
       );
@@ -416,7 +519,7 @@ class LearningPathDataSource {
     }
   }
 
-  Future<void> completeNode(String nodeId, String userId) async {
+  Future<void> completeNode(String nodeId, String _userId) async {
     try {
       LogHandler.debug(
         '[DataSource] PUT /learningpaths/nodes/$nodeId/complete',
@@ -549,6 +652,48 @@ class LearningPathDataSource {
     } catch (e) {
       LogHandler.error('Exception in deleteLearningPath: $e');
       throw Exception('Failed to delete learning path: $e');
+    }
+  }
+
+  Future<void> deleteNode(String nodeId) async {
+    try {
+      LogHandler.debug('[DataSource] DELETE /learningpaths/nodes/$nodeId');
+
+      final response = await client.delete(
+        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId'),
+        headers: await _getHeaders(),
+      );
+
+      LogHandler.debug('Response Status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        try {
+          final error = jsonDecode(response.body);
+          LogHandler.error('Failed to delete node: ${error['message']}');
+          throw Exception(error['message'] ?? 'Failed to delete node');
+        } on FormatException {
+          LogHandler.error(
+            'Failed to delete node (Status ${response.statusCode})',
+          );
+          throw Exception(
+            'Failed to delete node (Status ${response.statusCode})',
+          );
+        }
+      }
+    } on SocketException catch (e) {
+      LogHandler.error('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      LogHandler.error('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      LogHandler.error('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
+    } catch (e) {
+      LogHandler.error('Exception in deleteNode: $e');
+      throw Exception('Failed to delete node: $e');
     }
   }
 
