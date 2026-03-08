@@ -22,15 +22,16 @@ class NodesOverviewCore extends StatelessWidget {
   Widget build(BuildContext context) {
     // Use provided nodes from backend
     final displayNodes = nodes ?? [];
-    
+
     final nodeCount = displayNodes.length;
     final canvasHeight = (nodeCount * 200.0) + 200.0;
-    
+
     // Find the latest active node (highest sequence number with active status)
     NodeDetail? latestActiveNode;
     for (final node in displayNodes) {
       if (node.status.toLowerCase() == 'active') {
-        if (latestActiveNode == null || node.sequence > latestActiveNode.sequence) {
+        if (latestActiveNode == null ||
+            node.sequence > latestActiveNode.sequence) {
           latestActiveNode = node;
         }
       }
@@ -54,13 +55,18 @@ class NodesOverviewCore extends StatelessWidget {
                       canvasWidth: canvasWidth,
                       nodeBuilder: (index, pos) {
                         final node = displayNodes[index];
-                        // Convert API status to LearningNodeState
-                        final nodeState = NodeAsset.statusToState(node.status);
-                        
+                        // In teacher mode, treat nodes with real content as active.
+                        final hasTeacherContent =
+                            isEditable && _hasNodeContent(node);
+                        final nodeState = hasTeacherContent
+                            ? LearningNodeState.active
+                            : NodeAsset.statusToState(node.status);
+
                         // Check if this is the latest active node
-                        final isLatestActiveNode = latestActiveNode != null && 
-                                                   node.nodeId == latestActiveNode.nodeId;
-                      
+                        final isLatestActiveNode =
+                            latestActiveNode != null &&
+                            node.nodeId == latestActiveNode.nodeId;
+
                         return Positioned(
                           left: pos.dx - 40,
                           top: pos.dy - 40,
@@ -73,7 +79,6 @@ class NodesOverviewCore extends StatelessWidget {
                                 onNodeTap!(index);
                               }
                             },
-
                           ),
                         );
                       },
@@ -87,5 +92,18 @@ class NodesOverviewCore extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  bool _hasNodeContent(NodeDetail node) {
+    final hasDescription = node.description.trim().isNotEmpty;
+    final hasVideoLink = (node.linkVdo ?? '').trim().isNotEmpty;
+    final hasMaterials = node.materials.any((m) => m.url.trim().isNotEmpty);
+    final hasQuestions = node.questions.any(
+      (q) =>
+          q.questionText.trim().isNotEmpty ||
+          q.choices.any((c) => c.choiceText.trim().isNotEmpty),
+    );
+
+    return hasDescription || hasVideoLink || hasMaterials || hasQuestions;
   }
 }
