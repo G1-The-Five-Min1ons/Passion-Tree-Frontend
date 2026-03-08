@@ -32,6 +32,7 @@ class CourseProgressCard extends StatelessWidget {
       id: data.pathId,
       title: data.title,
       description: data.description,
+      objective: '',
       coverImageUrl: data.coverImgUrl,
       rating: data.rating,
       publishStatus: 'Published',

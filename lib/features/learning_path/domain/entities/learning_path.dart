@@ -2,6 +2,7 @@ class LearningPath {
   final String id;
   final String title;
   final String description;
+  final String objective;
   final String coverImageUrl;
   final double rating;
   final String publishStatus;
@@ -13,6 +14,7 @@ class LearningPath {
     required this.id,
     required this.title,
     required this.description,
+    required this.objective,
     required this.coverImageUrl,
     required this.rating,
     required this.publishStatus,

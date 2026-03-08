@@ -35,4 +35,12 @@ abstract class LearningPathRepository {
     String? linkvdo,
     List<CreateMaterial>? materials,
   });
+  Future<void> updateLearningPath(
+    String pathId,
+    String title,
+    String objective,
+    String description,
+    String? coverImgUrl,
+    String publishStatus,
+  );
 }

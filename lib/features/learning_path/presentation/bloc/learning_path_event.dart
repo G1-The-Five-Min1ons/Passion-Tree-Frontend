@@ -116,3 +116,21 @@ class UpdateNodeEvent extends LearningPathEvent {
   });
 }
 
+class UpdateLearningPathEvent extends LearningPathEvent {
+  final String pathId;
+  final String title;
+  final String objective;
+  final String description;
+  final String? coverImgUrl;
+  final String publishStatus;
+
+  UpdateLearningPathEvent({
+    required this.pathId,
+    required this.title,
+    required this.objective,
+    required this.description,
+    this.coverImgUrl,
+    this.publishStatus = 'draft',
+  });
+}
+

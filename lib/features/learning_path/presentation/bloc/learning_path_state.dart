@@ -101,3 +101,9 @@ class NodeUpdated extends LearningPathState {
   
   NodeUpdated(this.nodeId);
 }
+
+class LearningPathUpdated extends LearningPathState {
+  final String pathId;
+  
+  LearningPathUpdated(this.pathId);
+}

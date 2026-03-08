@@ -17,6 +17,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/cre
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/generate_nodes_with_ai_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_learning_path_by_id_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_learning_path.dart';
@@ -36,6 +37,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GenerateNodesWithAIUseCase generateNodesWithAIUseCase;
   final GetLearningPathByIdUseCase getLearningPathByIdUseCase;
   final UpdateNodeUseCase updateNodeUseCase;
+  final UpdateLearningPathUseCase updateLearningPathUseCase;
 
   LearningPathBloc(
     this.getAllLearningPaths,
@@ -50,6 +52,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.createNodeUseCase,
     this.generateNodesWithAIUseCase,
     this.getLearningPathByIdUseCase,
+    this.updateLearningPathUseCase,
     this.updateNodeUseCase,
   ) : super(LearningPathInitial()) {
     
@@ -385,6 +388,32 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           emit(NodeUpdated(event.nodeId));
         } catch (e) {
           LogHandler.error('[BLoC] Error updating node: $e');
+          emit(LearningPathError(e.toString()));
+        }
+      },
+      transformer: droppable(),
+    );
+
+    on<UpdateLearningPathEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] UpdateLearningPathEvent received');
+        LogHandler.debug('Path ID: ${event.pathId}');
+        emit(LearningPathLoading());
+
+        try {
+          LogHandler.debug('Updating learning path...');
+          await updateLearningPathUseCase(
+            event.pathId,
+            event.title,
+            event.objective,
+            event.description,
+            event.coverImgUrl,
+            event.publishStatus,
+          );
+          LogHandler.debug('[BLoC] Learning path updated: ${event.pathId}');
+          emit(LearningPathUpdated(event.pathId));
+        } catch (e) {
+          LogHandler.error('[BLoC] Error updating learning path: $e');
           emit(LearningPathError(e.toString()));
         }
       },

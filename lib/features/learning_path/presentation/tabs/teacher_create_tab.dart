@@ -144,7 +144,18 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                   );
                 },
                 onEdit: () {
-                  // TODO: Navigate to edit page
+                  final bloc = context.read<LearningPathBloc>();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: bloc,
+                        child: CreateLearningPathInputPage(
+                          existingPath: inProgressCourses[index],
+                        ),
+                      ),
+                    ),
+                  );
                 },
                 onDelete: () {
                   context.read<LearningPathBloc>().add(
@@ -255,7 +266,18 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                   );
                 },
                 onEdit: () {
-                  // TODO: Navigate to edit page
+                  final bloc = context.read<LearningPathBloc>();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: bloc,
+                        child: CreateLearningPathInputPage(
+                          existingPath: completedCourses[index],
+                        ),
+                      ),
+                    ),
+                  );
                 },
                 onDelete: () {
                   context.read<LearningPathBloc>().add(

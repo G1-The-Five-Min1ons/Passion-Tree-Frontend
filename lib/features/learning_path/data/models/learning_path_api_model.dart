@@ -2,6 +2,7 @@ class LearningPathApiModel {
   final String id;
   final String title;
   final String description;
+  final String objective;
   final String instructor;
   final int students;
   final int modules;
@@ -13,6 +14,7 @@ class LearningPathApiModel {
     required this.id,
     required this.title,
     required this.description,
+    required this.objective,
     required this.instructor,
     required this.students,
     required this.modules,
@@ -27,6 +29,7 @@ class LearningPathApiModel {
       id: json['PathID'] ?? json['path_id'] ?? '',
       title: json['Title'] ?? json['title'] ?? '',
       description: json['Description'] ?? json['description'] ?? '',
+      objective: json['Objective'] ?? json['objective'] ?? '',
       instructor: json['Instructor'] ?? json['instructor'] ?? '',
       students: json['Students'] ?? json['student'] ?? 0,
       modules: json['Modules'] ?? json['modules'] ?? 0,

@@ -20,9 +20,15 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/upload/upload_service.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 
 class CreateLearningPathInputPage extends StatefulWidget {
-  const CreateLearningPathInputPage({super.key});
+  final LearningPath? existingPath; // For edit mode
+  
+  const CreateLearningPathInputPage({
+    super.key,
+    this.existingPath,
+  });
 
   @override
   State<CreateLearningPathInputPage> createState() =>
@@ -43,16 +49,30 @@ class _CreateLearningPathInputPageState
   bool _isUploadingImage = false;
   String _uploadedImageUrl = '';
 
+  bool get _isEditMode => widget.existingPath != null;
+
   @override
   void initState() {
     super.initState();
     _loadUserId();
+    _loadExistingData();
   }
 
   Future<void> _loadUserId() async {
     final storedUserId = await getIt<IAuthRepository>().getUserId();
     if (!mounted) return;
     setState(() => _userId = storedUserId);
+  }
+
+  void _loadExistingData() {
+    if (widget.existingPath != null) {
+      setState(() {
+        _title = widget.existingPath!.title;
+        _objectives = widget.existingPath!.objective;
+        _description = widget.existingPath!.description;
+        _uploadedImageUrl = widget.existingPath!.coverImageUrl;
+      });
+    }
   }
   
   Future<void> _pickImage() async {
@@ -163,6 +183,37 @@ class _CreateLearningPathInputPageState
     );
   }
 
+  void _handleSave(BuildContext context) {
+    if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    if (!_isEditMode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: Not in edit mode')),
+      );
+      return;
+    }
+
+    context.read<LearningPathBloc>().add(
+      UpdateLearningPathEvent(
+        pathId: widget.existingPath!.id,
+        title: _title,
+        objective: _objectives,
+        description: _description,
+        coverImgUrl: _uploadedImageUrl.isNotEmpty ? _uploadedImageUrl : null,
+        publishStatus: widget.existingPath!.publishStatus,
+      ),
+    );
+  }
+
+  void _handleCancel() {
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -207,6 +258,18 @@ class _CreateLearningPathInputPageState
               ),
             );
           }
+        } else if (state is LearningPathUpdated) {
+          // Refresh the learning paths list
+          if (_userId != null) {
+            context.read<LearningPathBloc>().add(
+              FetchLearningPathOverview(userId: _userId),
+            );
+          }
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Learning path updated successfully')),
+          );
+          Navigator.pop(context);
         } else if (state is LearningPathError) {
           setState(() {
             _isCreatingPath = false;
@@ -217,7 +280,10 @@ class _CreateLearningPathInputPageState
         }
       },
       child: Scaffold(
-        appBar: const AppBarWidget(title: 'Learning Paths', showBackButton: true),
+        appBar: AppBarWidget(
+          title: _isEditMode ? 'Edit Learning Path' : 'Learning Paths',
+          showBackButton: true,
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -238,7 +304,9 @@ class _CreateLearningPathInputPageState
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Create a New \nLearning Path',
+                        _isEditMode
+                            ? 'Edit Learning Path'
+                            : 'Create a New \nLearning Path',
                         style: Theme.of(context).textTheme.displaySmall
                             ?.copyWith(
                               color: Theme.of(context).colorScheme.onPrimary,
@@ -249,7 +317,9 @@ class _CreateLearningPathInputPageState
                       const SizedBox(height: 20), // ระยะห่างตามที่ต้องการ
 
                       Text(
-                        'Fill in details to start a new path for your students',
+                        _isEditMode
+                            ? 'Update the details of your learning path'
+                            : 'Fill in details to start a new path for your students',
                         style: AppTypography.subtitleSemiBold.copyWith(
                           color: Theme.of(
                             context,
@@ -281,6 +351,7 @@ class _CreateLearningPathInputPageState
                   label: 'Path Title',
                   labelColor: Theme.of(context).colorScheme.onPrimary,
                   hintText: 'Enter learning path title',
+                  value: _title,
                   height: 38,
                   onChanged: (value) {
                     setState(() {
@@ -382,6 +453,7 @@ class _CreateLearningPathInputPageState
                   label: 'Path Objectives',
                   labelColor: Theme.of(context).colorScheme.onPrimary,
                   hintText: 'Enter learning path objectives',
+                  value: _objectives,
                   height: 38,
                   onChanged: (value) {
                     setState(() {
@@ -399,6 +471,7 @@ class _CreateLearningPathInputPageState
                   label: 'Path Description',
                   labelColor: Theme.of(context).colorScheme.onPrimary,
                   hintText: 'Describe this learning path in detail',
+                  value: _description,
                   height: 150,
                   onChanged: (value) {
                     setState(() {
@@ -409,51 +482,79 @@ class _CreateLearningPathInputPageState
 
                 const SizedBox(height: 30),
 
-              // ===== Buttons =====
-              //AI CREATE NODE
-                BlocBuilder<LearningPathBloc, LearningPathState>(
-                  builder: (context, state) {
-                    final isLoading = state is LearningPathLoading;
-                    
-                    return Center(
-                      child: Column(
-                        children: [
-                          AppButton(
-                            variant: AppButtonVariant.text,
-                            text: isLoading && _isCreatingPath ? 'Creating...' : 'AI Create Node',
-                            subText: 'Use AI powered to auto generate nodes for you',
-                            onPressed: isLoading ? () {} : () => _handleCreateWithAI(context),
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          //or
-                          Text(
-                            'or',
-                            style: AppPixelTypography.smallTitle.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
+                // ===== Buttons =====
+                if (_isEditMode) ...[
+                  // Edit mode buttons (Save & Cancel)
+                  BlocBuilder<LearningPathBloc, LearningPathState>(
+                    builder: (context, state) {
+                      final isLoading = state is LearningPathLoading;
+                      
+                      return Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AppButton(
+                              variant: AppButtonVariant.text,
+                              text: 'Cancel',
+                              onPressed: isLoading ? () {} : _handleCancel,
                             ),
-                          ),
+                            const SizedBox(width: 20),
+                            AppButton(
+                              variant: AppButtonVariant.text,
+                              text: isLoading ? 'Saving...' : 'Save',
+                              onPressed: isLoading ? () {} : () => _handleSave(context),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ] else ...[
+                  //AI CREATE NODE
+                  BlocBuilder<LearningPathBloc, LearningPathState>(
+                    builder: (context, state) {
+                      final isLoading = state is LearningPathLoading;
+                      
+                      return Center(
+                        child: Column(
+                          children: [
+                            AppButton(
+                              variant: AppButtonVariant.text,
+                              text: isLoading && _isCreatingPath ? 'Creating...' : 'AI Create Node',
+                              subText: 'Use AI powered to auto generate nodes for you',
+                              onPressed: isLoading ? () {} : () => _handleCreateWithAI(context),
+                            ),
 
-                          // Plain Path
-                          const SizedBox(height: 10),
-                          AppButton(
-                            variant: AppButtonVariant.text,
-                            text: isLoading && !_isCreatingPath ? 'Creating...' : 'Create Plain Path',
-                            subText: 'Create nodes by yourself',
-                            onPressed: isLoading ? () {} : () => _handleCreatePlainPath(context),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                            const SizedBox(height: 10),
+
+                            //or
+                            Text(
+                              'or',
+                              style: AppPixelTypography.smallTitle.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+
+                            // Plain Path
+                            const SizedBox(height: 10),
+                            AppButton(
+                              variant: AppButtonVariant.text,
+                              text: isLoading && !_isCreatingPath ? 'Creating...' : 'Create Plain Path',
+                              subText: 'Create nodes by yourself',
+                              onPressed: isLoading ? () {} : () => _handleCreatePlainPath(context),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ],
             ),
           ),
         ),
       ),
-      ),
+    ),
     );
   }
 }

@@ -127,5 +127,24 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
       materials: materials,
     );
   }
+
+  @override
+  Future<void> updateLearningPath(
+    String pathId,
+    String title,
+    String objective,
+    String description,
+    String? coverImgUrl,
+    String publishStatus,
+  ) async {
+    return await dataSource.updateLearningPath(
+      pathId,
+      title,
+      objective,
+      description,
+      coverImgUrl,
+      publishStatus,
+    );
+  }
 }
 

@@ -7,6 +7,7 @@ extension LearningPathMapper on LearningPathApiModel {
       id: id,
       title: title,
       description: description,
+      objective: objective,
       coverImageUrl: coverImgUrl,
       rating: rating,
       publishStatus: publishStatus,

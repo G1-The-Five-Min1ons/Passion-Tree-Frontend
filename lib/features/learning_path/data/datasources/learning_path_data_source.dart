@@ -841,4 +841,65 @@ class LearningPathDataSource {
       throw Exception('Failed to update node: $e');
     }
   }
+
+  Future<void> updateLearningPath(
+    String pathId,
+    String title,
+    String objective,
+    String description,
+    String? coverImgUrl,
+    String publishStatus,
+  ) async {
+    try {
+      LogHandler.debug('[DataSource] PUT /learningpaths/$pathId');
+
+      final Map<String, dynamic> body = {
+        'title': title,
+        'objective': objective,
+        'description': description,
+        'publish_status': publishStatus,
+      };
+
+      if (coverImgUrl != null && coverImgUrl.isNotEmpty) {
+        body['cover_img_url'] = coverImgUrl;
+      }
+
+      final response = await client.put(
+        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths/$pathId'),
+        headers: await _getHeaders(),
+        body: jsonEncode(body),
+      );
+
+      LogHandler.debug('Response Status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        try {
+          final error = jsonDecode(response.body);
+          LogHandler.error('Failed to update learning path: ${error['message']}');
+          throw Exception(error['message'] ?? 'Failed to update learning path');
+        } on FormatException {
+          LogHandler.error(
+            'Failed to update learning path (Status ${response.statusCode})',
+          );
+          throw Exception(
+            'Failed to update learning path (Status ${response.statusCode})',
+          );
+        }
+      }
+    } on SocketException catch (e) {
+      LogHandler.error('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      LogHandler.error('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      LogHandler.error('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
+    } catch (e) {
+      LogHandler.error('Exception in updateLearningPath: $e');
+      throw Exception('Failed to update learning path: $e');
+    }
+  }
 }
