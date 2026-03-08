@@ -47,8 +47,7 @@ class EditNodeModal extends StatefulWidget {
 class _EditNodeModalState extends State<EditNodeModal> {
   String _title = '';
   String _description = '';
-  String _linkInput = '';
-  final List<String> _links = []; //ส่วนเพิ่มlink
+  String _videoUrl = '';
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
   List<NodeQuiz> _quizzes = []; //ส่วนเพิ่ม quiz
   bool _isUploading = false;
@@ -61,12 +60,11 @@ class _EditNodeModalState extends State<EditNodeModal> {
     if (widget.initialNode != null) {
       _title = widget.initialNode!.title;
       _description = widget.initialNode!.description;
+      _videoUrl = widget.initialNode!.linkVdo ?? '';
       
-      // โหลด materials (links และ files ที่มีอยู่แล้ว)
+      // โหลด materials (files ที่มีอยู่แล้ว)
       for (final material in widget.initialNode!.materials) {
-        if (material.type == 'link') {
-          _links.add(material.url);
-        } else if (material.type == 'file') {
+        if (material.type == 'file') {
           // สำหรับไฟล์ที่มีอยู่แล้ว แสดงเป็น URL (ไม่สามารถ edit ได้แต่แสดงให้เห็น)
           _files.add(
             UploadedFileItem(
@@ -146,22 +144,6 @@ class _EditNodeModalState extends State<EditNodeModal> {
     }
   }
 
-  // ===== LINK FUNCTIONS =====
-  void _addLink() {
-    if (_linkInput.trim().isEmpty) return;
-
-    setState(() {
-      _links.add(_linkInput.trim());
-      _linkInput = '';
-    });
-  }
-
-  void _removeLink(int index) {
-    setState(() {
-      _links.removeAt(index);
-    });
-  }
-
   //  ===== FILE FUNCTIONS  =====
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(allowMultiple: true);
@@ -239,11 +221,6 @@ class _EditNodeModalState extends State<EditNodeModal> {
         // Upload files และรวม materials
         List<CreateMaterial> materials = [];
 
-        // เพิ่ม links
-        for (final link in _links) {
-          materials.add(CreateMaterial(type: 'link', url: link));
-        }
-
         // Upload files และเพิ่ม URLs
         if (_files.isNotEmpty) {
           final uploadService = UploadApiService();
@@ -271,7 +248,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             description: _description,
             pathId: widget.pathId!,
             sequence: widget.sequence!,
-            linkvdo: '',
+            linkvdo: _videoUrl,
             materials: materials.isNotEmpty ? materials : null,
             questions: questions,
           ),
@@ -294,11 +271,6 @@ class _EditNodeModalState extends State<EditNodeModal> {
       try {
         // Upload files และรวม materials
         List<CreateMaterial> materials = [];
-
-        // เพิ่ม links
-        for (final link in _links) {
-          materials.add(CreateMaterial(type: 'link', url: link));
-        }
 
         // Upload files และเพิ่ม URLs
         if (_files.isNotEmpty) {
@@ -326,7 +298,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             nodeId: widget.nodeId,
             title: _title,
             description: _description,
-            linkvdo: null,
+            linkvdo: _videoUrl.isNotEmpty ? _videoUrl : null,
             materials: materials.isNotEmpty ? materials : null,
             questions: questions,
           ),
@@ -414,12 +386,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
                       onTitleChanged: (v) => setState(() => _title = v),
                       onDescriptionChanged: (v) => setState(() => _description = v),
 
-                      // ===== LINKS (วีดีโอ + materials) =====
-                      links: _links,
-                      linkValue: _linkInput,
-                      onLinkChanged: (v) => setState(() => _linkInput = v),
-                      onAddLink: _addLink,
-                      onRemoveLink: _removeLink,
+                      // ===== VIDEO URL =====
+                      videoUrlValue: _videoUrl.isEmpty ? null : _videoUrl,
+                      onVideoUrlChanged: (v) => setState(() => _videoUrl = v),
 
                       // ===== FILE UPLOAD =====
                       files: _files,

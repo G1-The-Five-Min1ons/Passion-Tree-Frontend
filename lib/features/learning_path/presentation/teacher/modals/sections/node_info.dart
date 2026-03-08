@@ -15,12 +15,9 @@ class NodeInfoSection extends StatelessWidget {
   final String? initialTitle;
   final String? initialDescription;
 
-  // Links
-  final ValueChanged<String> onLinkChanged;
-  final VoidCallback onAddLink;
-  final List<String> links;
-  final String linkValue;
-  final Function(int) onRemoveLink;
+  // Video URL
+  final String? videoUrlValue;
+  final ValueChanged<String>? onVideoUrlChanged;
 
   // Files
   final VoidCallback onUploadFile;
@@ -33,11 +30,8 @@ class NodeInfoSection extends StatelessWidget {
     required this.onDescriptionChanged,
     this.initialTitle,
     this.initialDescription,
-    required this.onLinkChanged,
-    required this.onAddLink,
-    required this.links,
-    required this.linkValue,
-    required this.onRemoveLink,
+    this.videoUrlValue,
+    this.onVideoUrlChanged,
     required this.onUploadFile,
     required this.files,
     required this.onRemoveFile,
@@ -73,9 +67,20 @@ class NodeInfoSection extends StatelessWidget {
 
         const SizedBox(height: 12),
 
+        // ===== VIDEO URL =====
+        PixelTextField(
+          label: 'Video URL (Optional)',
+          hintText: 'Enter YouTube video URL',
+          height: 38,
+          value: videoUrlValue,
+          onChanged: onVideoUrlChanged ?? (_) {},
+        ),
+
+        const SizedBox(height: 12),
+
         // ===== MATERIALS =====
         Text(
-          'Add Learning Materials',
+          'Upload Learning Materials',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -83,60 +88,7 @@ class NodeInfoSection extends StatelessWidget {
 
         const SizedBox(height: 8),
 
-        // ===== INPUT + ADD BUTTON =====
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: PixelTextField(
-                label: 'VIDEO Link (Optional)',
-                hintText: 'Enter YouTube video URL',
-                height: 40,
-                value: linkValue,
-                onChanged: onLinkChanged,
-              ),
-            ),
-
-            const SizedBox(width: 8),
-            
-            AppButton(
-              variant: AppButtonVariant.text,
-              text: 'Add',
-              onPressed: onAddLink,
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 10),
-        // ===== LINK LIST =====
-        ...List.generate(
-          links.length,
-          (index) => Padding(
-            padding: const EdgeInsets.only(bottom: 8, left: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    links[index],
-                    style: AppTypography.subtitleSemiBold,
-                       
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-                  onPressed: () => onRemoveLink(index),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-
         // ===== UPLOAD FILE =====
-        Text('Upload File', style: AppTypography.titleSemiBold),
-
-        const SizedBox(height: 8),
-
         GestureDetector(
           onTap: onUploadFile,
           child: PixelBorderContainer(
