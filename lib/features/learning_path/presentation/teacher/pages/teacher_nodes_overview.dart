@@ -190,6 +190,14 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       return;
     }
 
+    // ป้องกันการ save draft เมื่อเป็น published แล้ว
+    if (_cachedLearningPath!.publishStatus.toLowerCase() == 'published') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot save as draft. This learning path is already published.')),
+      );
+      return;
+    }
+
     ConfirmPopup.show(
       context,
       title: 'Save Draft\n Confirmation',
@@ -224,6 +232,14 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     if (_cachedLearningPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Loading learning path data...')),
+      );
+      return;
+    }
+
+    // ถ้า published แล้ว ไม่ต้องทำอะไร
+    if (_cachedLearningPath!.publishStatus.toLowerCase() == 'published') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This learning path is already published.')),
       );
       return;
     }
@@ -361,6 +377,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                   builder: (bottomContext) => BottomBar(
                     onSaveDraft: () => _confirmSaveDraft(bottomContext),
                     onPublish: () => _confirmPublish(bottomContext),
+                    isPublished: _cachedLearningPath?.publishStatus.toLowerCase() == 'published',
                   ),
                 ),
               ),
