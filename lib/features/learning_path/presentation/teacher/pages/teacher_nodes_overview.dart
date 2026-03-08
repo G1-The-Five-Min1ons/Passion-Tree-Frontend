@@ -363,7 +363,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                 right: 0,
                 child: HeaderBar(
                   title: widget.title,
-                  showAddButton: true,
+                  showAddButton: _cachedLearningPath?.publishStatus.toLowerCase() != 'published',
                   onPressed: () => _openEditNodeModal(context),
                 ),
               ),
