@@ -39,6 +39,7 @@ class CourseProgressCard extends StatelessWidget {
       instructor: data.instructor,
       students: 0,
       modules: data.modules,
+      creatorId: '', // Not available from EnrolledLearningPath
     );
 
     return InkWell(

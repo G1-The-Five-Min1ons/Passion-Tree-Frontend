@@ -14,6 +14,7 @@ extension LearningPathMapper on LearningPathApiModel {
       instructor: instructor,
       students: students,
       modules: modules,
+      creatorId: creatorId,
     );
   }
 

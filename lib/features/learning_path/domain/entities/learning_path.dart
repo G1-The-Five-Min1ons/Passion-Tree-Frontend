@@ -9,6 +9,7 @@ class LearningPath {
   final String instructor;
   final int students;
   final int modules;
+  final String creatorId;
 
   const LearningPath({
     required this.id,
@@ -21,5 +22,6 @@ class LearningPath {
     required this.instructor,
     required this.students,
     required this.modules,
+    required this.creatorId,
   });
 }

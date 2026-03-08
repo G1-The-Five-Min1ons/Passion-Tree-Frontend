@@ -9,6 +9,7 @@ class LearningPathApiModel {
   final double rating;
   final String coverImgUrl;
   final String publishStatus;
+  final String creatorId;
 
   LearningPathApiModel({
     required this.id,
@@ -21,6 +22,7 @@ class LearningPathApiModel {
     required this.rating,
     required this.coverImgUrl,
     required this.publishStatus,
+    required this.creatorId,
   });
   
   //รับทั้ง Get All Learning Paths และ Get Learning Path Detail
@@ -36,6 +38,7 @@ class LearningPathApiModel {
       rating: (json['Rating'] ?? json['avg_rating'] ?? 0).toDouble(),
       coverImgUrl: json['CoverImgURL'] ?? json['cover_img_url'] ?? '',
       publishStatus: json['PublishStatus'] ?? json['publish_status'] ?? '',
+      creatorId: json['CreatorID'] ?? json['creator_id'] ?? '',
       
     );
   }

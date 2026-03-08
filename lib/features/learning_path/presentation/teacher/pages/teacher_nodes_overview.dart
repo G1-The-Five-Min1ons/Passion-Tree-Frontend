@@ -8,6 +8,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/teacher/confirm_popup.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/generated_node.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
@@ -53,6 +54,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   int? _pendingNodeIndex; // เก็บ index ของ node ที่รอ response จาก BLoC
   String? _userId;
   List<NodeDetail>? _cachedNodes; // Cache nodes from backend
+  LearningPath? _cachedLearningPath; // Cache learning path details for updating
 
   @override
   void initState() {
@@ -88,6 +90,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     
     setState(() => _userId = storedUserId ?? '');
     _fetchNodes(storedUserId ?? '');
+    _fetchLearningPathDetail();
   }
 
   void _fetchNodes(String userId) {
@@ -95,6 +98,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     // Fetch existing nodes from backend
     context.read<LearningPathBloc>().add(
       FetchNodesForPath(pathId: widget.pathId, userId: userId),
+    );
+  }
+
+  void _fetchLearningPathDetail() {
+    // Fetch learning path details for updating publish status
+    context.read<LearningPathBloc>().add(
+      GetLearningPathByIdEvent(pathId: widget.pathId),
     );
   }
 
@@ -173,6 +183,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   }
 
   void _confirmSaveDraft(BuildContext context) {
+    if (_cachedLearningPath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Loading learning path data...')),
+      );
+      return;
+    }
+
     ConfirmPopup.show(
       context,
       title: 'Save Draft\n Confirmation',
@@ -185,19 +202,57 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             _handleCreateNode(i);
           }
         }
-        debugPrint('Saving draft nodes...');
+        
+        // อัปเดต publish status เป็น draft
+        context.read<LearningPathBloc>().add(
+          UpdateLearningPathEvent(
+            pathId: widget.pathId,
+            title: _cachedLearningPath!.title,
+            objective: _cachedLearningPath!.objective,
+            description: _cachedLearningPath!.description,
+            coverImgUrl: _cachedLearningPath!.coverImageUrl,
+            publishStatus: 'draft',
+          ),
+        );
+        
+        debugPrint('Saving draft...');
       },
     );
   }
 
   void _confirmPublish(BuildContext context) {
+    if (_cachedLearningPath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Loading learning path data...')),
+      );
+      return;
+    }
+
     ConfirmPopup.show(
       context,
       title: 'Publish\n Confirmation',
       body: 'Are you sure to publish Learning Path',
       confirmText: 'Publish',
       onConfirm: () {
-        // TODO: เรียก API publish learning path
+        // สร้าง nodes ที่ยังไม่ได้สร้าง (ถ้ามี)
+        for (int i = 0; i < _uiNodes.length; i++) {
+          if (!_uiNodes[i].isCreated) {
+            _handleCreateNode(i);
+          }
+        }
+        
+        // อัปเดต publish status เป็น published
+        context.read<LearningPathBloc>().add(
+          UpdateLearningPathEvent(
+            pathId: widget.pathId,
+            title: _cachedLearningPath!.title,
+            objective: _cachedLearningPath!.objective,
+            description: _cachedLearningPath!.description,
+            coverImgUrl: _cachedLearningPath!.coverImageUrl,
+            publishStatus: 'published',
+          ),
+        );
+        
         debugPrint('Publishing learning path: ${widget.pathId}');
       },
     );
@@ -209,6 +264,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
     return BlocListener<LearningPathBloc, LearningPathState>(
       listener: (context, state) {
+        // Update cached learning path when loaded
+        if (state is LearningPathDetailLoaded) {
+          setState(() {
+            _cachedLearningPath = state.learningPath;
+          });
+        }
+        
         // Update cached nodes when loaded from backend
         if (state is NodesLoaded && state.pathId == widget.pathId) {
           setState(() {
@@ -246,6 +308,14 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Node updated successfully')),
           );
+        } else if (state is LearningPathUpdated) {
+          // Learning path updated successfully
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Learning path updated successfully')),
+          );
+          
+          // Navigate back to previous page - the parent page will handle refetch
+          Navigator.pop(context);
         } else if (state is LearningPathError) {
           setState(() {
             _pendingNodeIndex = null;

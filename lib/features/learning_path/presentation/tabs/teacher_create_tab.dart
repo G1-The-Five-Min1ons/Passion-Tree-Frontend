@@ -38,12 +38,16 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
 
     final colors = Theme.of(context).colorScheme;
     
-    // Filter paths by publishStatus
-    final inProgressCourses = widget.allPaths
-        .where((path) => path.publishStatus == "draft")
+    // Filter paths by creatorId (only show user's own paths) and publishStatus
+    final userPaths = widget.userId != null
+        ? widget.allPaths.where((path) => path.creatorId == widget.userId).toList()
+        : <LearningPath>[];
+    
+    final inProgressCourses = userPaths
+        .where((path) => path.publishStatus.toLowerCase() == "draft")
         .toList();
-    final completedCourses = widget.allPaths
-        .where((path) => path.publishStatus == "Published")
+    final completedCourses = userPaths
+        .where((path) => path.publishStatus.toLowerCase() == "published")
         .toList();
   
     return Column(

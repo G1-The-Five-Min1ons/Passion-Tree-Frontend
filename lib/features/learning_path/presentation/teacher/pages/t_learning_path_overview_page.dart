@@ -82,7 +82,10 @@ class _TeacherLearningPathOverviewPageState
         child: BlocListener<LearningPathBloc, LearningPathState>(
           listener: (context, state) {
             // Refetch overview when learning path or node is created/updated
-            if (state is LearningPathCreated || state is NodeCreated || state is NodeUpdated) {
+            if (state is LearningPathCreated || 
+                state is NodeCreated || 
+                state is NodeUpdated ||
+                state is LearningPathUpdated) {
               if (_userId != null && _userId!.isNotEmpty) {
                 // Add a small delay to ensure backend is updated
                 Future.delayed(const Duration(milliseconds: 500), () {
