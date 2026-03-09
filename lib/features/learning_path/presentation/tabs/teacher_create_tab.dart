@@ -76,6 +76,43 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
         .toList();
   }
 
+  Future<void> _confirmDeletePath(LearningPath path) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Learning Path'),
+          content: Text(
+            'Are you sure you want to delete "${path.title}"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true) return;
+
+    if (!mounted) return;
+    context.read<LearningPathBloc>().add(
+      DeleteLearningPathEvent(
+        pathId: path.id,
+        userId: widget.userId,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -197,12 +234,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                   );
                 },
                 onDelete: () {
-                  context.read<LearningPathBloc>().add(
-                    DeleteLearningPathEvent(
-                      pathId: inProgressCourses[index].id,
-                      userId: widget.userId,
-                    ),
-                  );
+                  _confirmDeletePath(inProgressCourses[index]);
                 },
               );
             },
@@ -319,12 +351,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                   );
                 },
                 onDelete: () {
-                  context.read<LearningPathBloc>().add(
-                    DeleteLearningPathEvent(
-                      pathId: completedCourses[index].id,
-                      userId: widget.userId,
-                    ),
-                  );
+                  _confirmDeletePath(completedCourses[index]);
                 },
               );
             },
