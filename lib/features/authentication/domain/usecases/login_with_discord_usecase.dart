@@ -2,13 +2,14 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:passion_tree_frontend/core/config/api_config.dart';
 import 'package:passion_tree_frontend/core/error/failures.dart';
+import 'package:passion_tree_frontend/core/utils/error_message_helper.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 
 /// Discord OAuth Configuration
 /// Client ID is loaded from config.json or environment
 class DiscordOAuthConfig {
   /// Discord Client ID (public - stored in app)
-  static const String clientId = '1478856105281982544';
+  static String get clientId => ApiConfig.discordClientId;
 
   /// Callback URL scheme - must match Android manifest and iOS Info.plist
   /// flutter_web_auth_2 listens for redirects with this scheme
@@ -73,40 +74,23 @@ class LoginWithDiscordUseCase {
       // Exchange code for token via backend
       return await authenticateWithCode(code);
     } catch (e) {
-      final errorString = e.toString().toLowerCase();
-      final originalErrorString = e.toString();
+      final errorString = e.toString();
 
-      if (errorString.contains('canceled') ||
-          errorString.contains('cancelled') ||
-          errorString.contains('user_cancelled')) {
+      // Check for user cancellation
+      if (ErrorMessageHelper.isCancellation(errorString)) {
         return const Left(
           CancellationFailure(message: 'User cancelled Discord login'),
         );
-      } else if (errorString.contains('timeout')) {
+      }
+      
+      // Check for timeout
+      if (ErrorMessageHelper.isTimeout(errorString)) {
         return const Left(AuthFailure(message: 'Discord login timed out'));
       }
 
-      // Check for specific backend errors and clean them up for the UI
-      if (errorString.contains('account with this email already exists')) {
-        return const Left(
-          AuthFailure(
-            message:
-                'An account with this email already exists. Please use web login to link accounts.',
-          ),
-        );
-      }
-
-      // Clean up generic AuthException prefix if present
-      String cleanMessage = originalErrorString;
-      if (cleanMessage.startsWith('AuthException')) {
-        // Find the actual message after the colon
-        final colonIndex = cleanMessage.indexOf(':');
-        if (colonIndex != -1 && colonIndex < cleanMessage.length - 1) {
-          cleanMessage = cleanMessage.substring(colonIndex + 1).trim();
-        }
-      }
-
-      return Left(AuthFailure(message: 'Discord login failed: $cleanMessage'));
+      // Get user-friendly error message
+      final message = ErrorMessageHelper.getOAuthErrorMessage(errorString, 'Discord');
+      return Left(AuthFailure(message: message));
     }
   }
 
@@ -117,9 +101,8 @@ class LoginWithDiscordUseCase {
       await _repository.signInWithDiscord(code);
       return const Right(null);
     } catch (e) {
-      return Left(
-        AuthFailure(message: 'Discord authentication failed: ${e.toString()}'),
-      );
+      final message = ErrorMessageHelper.getOAuthErrorMessage(e.toString(), 'Discord');
+      return Left(AuthFailure(message: message));
     }
   }
 

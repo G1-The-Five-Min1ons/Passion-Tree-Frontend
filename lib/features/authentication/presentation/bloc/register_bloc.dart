@@ -1,3 +1,4 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_event.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_state.dart';
@@ -196,14 +197,12 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     emit(const RegisterState());
   }
 
-  Future<void> _onRegisterWithGoogle(
-    RegisterWithGoogle event,
+  /// Helper method to handle OAuth authentication result
+  /// Handles both success and failure cases with appropriate state emissions
+  void _handleOAuthResult(
+    Either<Failure, void> result,
     Emitter<RegisterState> emit,
-  ) async {
-    emit(state.copyWith(status: RegisterStatus.loading));
-
-    final result = await loginWithGoogleUseCase.execute();
-
+  ) {
     result.fold(
       (failure) {
         if (failure is CancellationFailure) {
@@ -222,29 +221,21 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     );
   }
 
+  Future<void> _onRegisterWithGoogle(
+    RegisterWithGoogle event,
+    Emitter<RegisterState> emit,
+  ) async {
+    emit(state.copyWith(status: RegisterStatus.loading));
+    final result = await loginWithGoogleUseCase.execute();
+    _handleOAuthResult(result, emit);
+  }
+
   Future<void> _onRegisterWithDiscord(
     RegisterWithDiscord event,
     Emitter<RegisterState> emit,
   ) async {
     emit(state.copyWith(status: RegisterStatus.loading));
-
     final result = await loginWithDiscordUseCase.initiateOAuth();
-
-    result.fold(
-      (failure) {
-        if (failure is CancellationFailure) {
-          emit(state.copyWith(status: RegisterStatus.initial));
-        } else {
-          emit(state.copyWith(
-            status: RegisterStatus.failure,
-            errorMessage: failure.message,
-          ));
-        }
-      },
-      (_) => emit(state.copyWith(
-        status: RegisterStatus.success,
-        nextStep: RegisterNextStep.oauthComplete,
-      )),
-    );
+    _handleOAuthResult(result, emit);
   }
 }

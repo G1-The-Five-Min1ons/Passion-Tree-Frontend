@@ -1,4 +1,5 @@
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:passion_tree_frontend/core/config/api_config.dart';
 import 'package:passion_tree_frontend/core/network/api_handler.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
@@ -15,10 +16,6 @@ import 'package:passion_tree_frontend/features/authentication/data/mappers/auth_
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
-
-/// Google OAuth Web Client ID for verifying tokens on backend
-const String _googleWebClientId =
-    '1018698126969-ea61vm6q39icnr4vom4p5uot8712r59d.apps.googleusercontent.com';
 
 class AuthRepositoryImpl implements IAuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
@@ -55,6 +52,50 @@ class AuthRepositoryImpl implements IAuthRepository {
       // If refresh fails (e.g., token expired), clear auth to force logout
       await _localDataSource.clearAuth();
       return false;
+    }
+  }
+
+  /// Generic helper method for OAuth login operations
+  Future<UserProfile> _handleOAuthLogin({
+    required String token,
+    required String userId,
+    required String username,
+    required String role,
+    required String email,
+    required String firstName,
+    required String lastName,
+    required String logContext,
+  }) async {
+    LogHandler.info('$logContext: Saving authentication data...');
+    await _localDataSource.saveToken(token);
+    await _localDataSource.saveUserId(userId);
+    await _localDataSource.saveUsername(username);
+    await _localDataSource.saveRole(role);
+
+    // Try to fetch full profile, but don't let it block login
+    try {
+      LogHandler.info('$logContext: Fetching user profile...');
+      final profile = await getProfile();
+      LogHandler.success('$logContext: Profile fetched successfully');
+      return profile;
+    } catch (e) {
+      LogHandler.error('$logContext: getProfile failed (non-fatal): $e');
+      // Return a minimal UserProfile from the sign-in response data
+      final now = DateTime.now();
+      return UserProfile(
+        user: User(
+          userId: userId,
+          username: username,
+          email: email,
+          firstName: firstName,
+          lastName: lastName,
+          role: role,
+          heartCount: 0,
+          isEmailVerified: true,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
     }
   }
 
@@ -134,10 +175,15 @@ class AuthRepositoryImpl implements IAuthRepository {
     final token = await _localDataSource.getToken();
     if (token == null) throw Exception('No token found');
 
-    final responseMap = await _remoteDataSource.getProfile(token);
+    final profileResponse = await _remoteDataSource.getProfile(token);
 
-    // Use mapper to safely parse response into entity
-    final userProfile = AuthMapper.toUserProfileEntity(responseMap);
+    // Convert models to entities
+    final user = AuthMapper.toUserEntity(profileResponse.user);
+    final profile = profileResponse.profile != null
+        ? AuthMapper.toProfileEntity(profileResponse.profile!)
+        : null;
+
+    final userProfile = UserProfile(user: user, profile: profile);
 
     // Cache user data locally
     await _localDataSource.saveUserId(userProfile.user.userId);
@@ -174,92 +220,38 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<UserProfile> nativeGoogleSignIn(String idToken) async {
-    LogHandler.info(
-      'AuthRepository: Starting nativeGoogleSignIn with backend...',
-    );
+    LogHandler.info('AuthRepository: Starting nativeGoogleSignIn with backend...');
     final response = await _remoteDataSource.nativeGoogleSignIn(idToken);
-    LogHandler.success(
-      'AuthRepository: Backend returned success. Generating session token for user ${response.userId}...',
+    LogHandler.success('AuthRepository: Backend returned success');
+    
+    return _handleOAuthLogin(
+      token: response.token,
+      userId: response.userId,
+      username: response.username,
+      role: response.role,
+      email: '',
+      firstName: '',
+      lastName: '',
+      logContext: 'AuthRepository (Google)',
     );
-    await _localDataSource.saveToken(response.token);
-    // Note: NativeGoogleSignInResponse has user data but not refresh token currently?
-    // And what about role?
-    // We should save what we can.
-    await _localDataSource.saveUserId(response.userId);
-    await _localDataSource.saveUsername(response.username);
-    await _localDataSource.saveRole(response.role);
-
-    // Try to fetch full profile, but don't let it block login
-    try {
-      return await getProfile();
-    } catch (e) {
-      LogHandler.error(
-        'AuthRepository: getProfile failed after Google sign-in (non-fatal): $e',
-      );
-      final now = DateTime.now();
-      return UserProfile(
-        user: User(
-          userId: response.userId,
-          username: response.username,
-          email: '',
-          firstName: '',
-          lastName: '',
-          role: response.role,
-          heartCount: 0,
-          isEmailVerified: true,
-          createdAt: now,
-          updatedAt: now,
-        ),
-      );
-    }
   }
 
   @override
   Future<UserProfile> nativeDiscordSignIn(String code) async {
-    LogHandler.info(
-      'AuthRepository: Starting nativeDiscordSignIn with backend code...',
-    );
+    LogHandler.info('AuthRepository: Starting nativeDiscordSignIn with backend code...');
     final response = await _remoteDataSource.nativeDiscordSignIn(code);
-    LogHandler.success(
-      'AuthRepository: Backend returned success. Setting Discord session...',
+    LogHandler.success('AuthRepository: Backend returned success');
+
+    return _handleOAuthLogin(
+      token: response.token,
+      userId: response.userId,
+      username: response.username,
+      role: response.role,
+      email: response.email,
+      firstName: response.firstName,
+      lastName: response.lastName,
+      logContext: 'AuthRepository (Discord)',
     );
-
-    LogHandler.info('AuthRepository: Saving token to secure storage...');
-    await _localDataSource.saveToken(response.token);
-    LogHandler.info('AuthRepository: Token saved successfully.');
-
-    await _localDataSource.saveUserId(response.userId);
-    await _localDataSource.saveUsername(response.username);
-    await _localDataSource.saveRole(response.role);
-
-    // Try to fetch full profile, but don't let it block login
-    try {
-      LogHandler.info('AuthRepository: Fetching user profile...');
-      final profile = await getProfile();
-      LogHandler.success('AuthRepository: Profile fetched successfully.');
-      return profile;
-    } catch (e) {
-      LogHandler.error(
-        'AuthRepository: getProfile failed after Discord sign-in (non-fatal): $e',
-      );
-      // Return a minimal UserProfile from the sign-in response data
-      // The token and basic user data are already saved locally
-      final now = DateTime.now();
-      return UserProfile(
-        user: User(
-          userId: response.userId,
-          username: response.username,
-          email: response.email,
-          firstName: response.firstName,
-          lastName: response.lastName,
-          role: response.role,
-          heartCount: 0,
-          isEmailVerified: true,
-          createdAt: now,
-          updatedAt: now,
-        ),
-      );
-    }
   }
 
   @override
@@ -329,7 +321,7 @@ class AuthRepositoryImpl implements IAuthRepository {
       );
       // Initialize Google Sign-In
       await GoogleSignIn.instance.initialize(
-        serverClientId: _googleWebClientId,
+        serverClientId: ApiConfig.googleWebClientId,
       );
 
       LogHandler.info(

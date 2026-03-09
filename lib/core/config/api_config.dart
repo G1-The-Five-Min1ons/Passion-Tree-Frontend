@@ -13,6 +13,17 @@ class ApiConfig {
     defaultValue: _devAIUrl,
   );
   
+  // OAuth Configuration
+  static const String googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '1018698126969-ea61vm6q39icnr4vom4p5uot8712r59d.apps.googleusercontent.com',
+  );
+  
+  static const String discordClientId = String.fromEnvironment(
+    'DISCORD_CLIENT_ID',
+    defaultValue: '1478856105281982544',
+  );
+  
   // API version
   static const String apiVersion = '/api/v1';
   static String get apiBackendUrl => '$backendBaseUrl$apiVersion';
