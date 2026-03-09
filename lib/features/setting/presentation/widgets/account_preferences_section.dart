@@ -4,7 +4,9 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_profile_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_user_role_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/update_account_settings_usecase.dart';
 import 'package:passion_tree_frontend/features/setting/presentation/pages/teacher_verification_page.dart';
 
 class AccountPreferencesSection extends StatefulWidget {
@@ -16,7 +18,10 @@ class AccountPreferencesSection extends StatefulWidget {
 }
 
 class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
-  final IAuthRepository _authRepository = getIt<IAuthRepository>();
+  final GetProfileUseCase _getProfileUseCase = getIt<GetProfileUseCase>();
+  final GetUserRoleUseCase _getUserRoleUseCase = getIt<GetUserRoleUseCase>();
+  final UpdateAccountSettingsUseCase _updateAccountSettingsUseCase =
+      getIt<UpdateAccountSettingsUseCase>();
 
   bool _autoSave = true;
   bool _isLoading = true;
@@ -41,23 +46,31 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
   }
 
   Future<void> _loadPreferenceData() async {
-    try {
-      final profile = await _authRepository.getProfile();
-      final role = await _authRepository.getUserRole();
+    final profileResult = await _getProfileUseCase.execute();
+    final roleResult = await _getUserRoleUseCase.execute();
 
-      if (!mounted) return;
-      setState(() {
-        _userProfile = profile;
-        _role = (role == null || role.trim().isEmpty)
-            ? profile.user.role
-            : role;
-        _phoneController.text = profile.profile?.phoneNumber ?? '';
-        _isLoading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-    }
+    if (!mounted) return;
+
+    profileResult.fold(
+      (failure) {
+        setState(() => _isLoading = false);
+      },
+      (profile) {
+        final role = roleResult.fold(
+          (failure) => profile.user.role,
+          (role) => (role == null || role.trim().isEmpty)
+              ? profile.user.role
+              : role,
+        );
+
+        setState(() {
+          _userProfile = profile;
+          _role = role;
+          _phoneController.text = profile.profile?.phoneNumber ?? '';
+          _isLoading = false;
+        });
+      },
+    );
   }
 
   Future<void> _openTeacherVerification() async {
@@ -70,48 +83,53 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
   Future<void> _saveStudentPhone() async {
     final phone = _phoneController.text.trim();
 
-    if (phone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your phone number.')),
+    // Get profile if not already loaded
+    UserProfile profile = _userProfile!;
+    if (_userProfile == null) {
+      final profileResult = await _getProfileUseCase.execute();
+      profileResult.fold(
+        (failure) {
+          _showErrorMessage('Failed to load profile: ${failure.message}');
+          return;
+        },
+        (loadedProfile) => profile = loadedProfile,
       );
-      return;
     }
-
-    if (!RegExp(r'^[0-9+]{9,15}$').hasMatch(phone)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Phone number format is invalid.')),
-      );
-      return;
-    }
-
-    final profile = _userProfile ?? await _authRepository.getProfile();
 
     setState(() => _isSavingPhone = true);
-    try {
-      await _authRepository.updateAccountSettings(
-        username: profile.user.username,
-        firstName: profile.user.firstName,
-        lastName: profile.user.lastName,
-        location: profile.profile?.location ?? '',
-        bio: profile.profile?.bio ?? '',
-        avatarUrl: profile.profile?.avatarUrl,
-        phoneNumber: phone,
-      );
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Phone number updated successfully.')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update phone number: $e')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isSavingPhone = false);
-      }
-    }
+    final result = await _updateAccountSettingsUseCase.execute(
+      username: profile.user.username,
+      firstName: profile.user.firstName,
+      lastName: profile.user.lastName,
+      location: profile.profile?.location,
+      bio: profile.profile?.bio,
+      avatarUrl: profile.profile?.avatarUrl,
+      phoneNumber: phone,
+    );
+
+    if (!mounted) return;
+
+    setState(() => _isSavingPhone = false);
+
+    result.fold(
+      (failure) => _showErrorMessage(failure.message),
+      (_) => _showSuccessMessage('Phone number updated successfully.'),
+    );
+  }
+
+  void _showErrorMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  void _showSuccessMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override

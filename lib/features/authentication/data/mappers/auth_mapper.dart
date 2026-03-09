@@ -43,52 +43,9 @@ class AuthMapper {
 
   static UserProfile toUserProfileEntity(Map<String, dynamic> responseMap) {
     try {
-      // Validate response structure
-      if (!responseMap.containsKey('data') || responseMap['data'] == null) {
-        throw ParseException(
-          message: 'Missing or null "data" field in getProfile response',
-        );
-      }
-
-      final data = responseMap['data'];
-      if (data is! Map<String, dynamic>) {
-        throw ParseException(
-          message:
-              'Expected Map<String, dynamic> for "data" but got ${data.runtimeType}',
-        );
-      }
-
-      // Parse user (required)
-      if (!data.containsKey('user') || data['user'] == null) {
-        throw ParseException(
-          message: 'Missing or null "user" field in response data',
-        );
-      }
-
-      final userJson = data['user'];
-      if (userJson is! Map<String, dynamic>) {
-        throw ParseException(
-          message:
-              'Expected Map<String, dynamic> for "user" but got ${userJson.runtimeType}',
-        );
-      }
-
-      final userModel = model.User.fromJson(userJson);
-      final user = toUserEntity(userModel);
-
-      // Parse profile (optional)
-      Profile? profile;
-      if (data.containsKey('profile') && data['profile'] != null) {
-        final profileJson = data['profile'];
-        if (profileJson is Map<String, dynamic>) {
-          try {
-            final profileModel = modelProfile.Profile.fromJson(profileJson);
-            profile = toProfileEntity(profileModel);
-          } catch (e) {
-            LogHandler.error('Failed to parse profile data. Error: $e');
-          }
-        }
-      }
+      final data = _extractDataField(responseMap);
+      final user = _parseUser(data);
+      final profile = _parseProfile(data);
 
       return UserProfile(user: user, profile: profile);
     } catch (e) {
@@ -97,6 +54,61 @@ class AuthMapper {
         message: 'Failed to parse UserProfile from response: $e',
         originalError: e,
       );
+    }
+  }
+
+  static Map<String, dynamic> _extractDataField(Map<String, dynamic> response) {
+    if (!response.containsKey('data') || response['data'] == null) {
+      throw ParseException(
+        message: 'Missing or null "data" field in getProfile response',
+      );
+    }
+
+    final data = response['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ParseException(
+        message: 'Expected Map<String, dynamic> for "data" but got ${data.runtimeType}',
+      );
+    }
+
+    return data;
+  }
+
+  static User _parseUser(Map<String, dynamic> data) {
+    if (!data.containsKey('user') || data['user'] == null) {
+      throw ParseException(
+        message: 'Missing or null "user" field in response data',
+      );
+    }
+
+    final userJson = data['user'];
+    if (userJson is! Map<String, dynamic>) {
+      throw ParseException(
+        message: 'Expected Map<String, dynamic> for "user" but got ${userJson.runtimeType}',
+      );
+    }
+
+    final userModel = model.User.fromJson(userJson);
+    return toUserEntity(userModel);
+  }
+
+  static Profile? _parseProfile(Map<String, dynamic> data) {
+    if (!data.containsKey('profile') || data['profile'] == null) {
+      return null;
+    }
+
+    final profileJson = data['profile'];
+    if (profileJson is! Map<String, dynamic>) {
+      LogHandler.error('Expected Map<String, dynamic> for profile but got ${profileJson.runtimeType}');
+      return null;
+    }
+
+    try {
+      final profileModel = modelProfile.Profile.fromJson(profileJson);
+      return toProfileEntity(profileModel);
+    } catch (e) {
+      LogHandler.error('Failed to parse profile data. Error: $e');
+      return null;
     }
   }
 }

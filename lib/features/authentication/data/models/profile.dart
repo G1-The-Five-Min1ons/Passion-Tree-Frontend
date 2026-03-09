@@ -31,26 +31,59 @@ class Profile {
 
   factory Profile.fromJson(Map<String, dynamic> json) {
     try {
+      // Validate required fields
+      final profileId = json['profile_id'] as String?;
+      final userId = json['user_id'] as String?;
+
+      if (profileId == null || profileId.isEmpty) {
+        throw ParseException(
+          message: 'Profile ID is required but was null or empty',
+        );
+      }
+
+      if (userId == null || userId.isEmpty) {
+        throw ParseException(
+          message: 'User ID is required but was null or empty',
+        );
+      }
+
       return Profile(
-        profileId: json['profile_id'] as String? ?? '',
+        profileId: profileId,
         avatarUrl: json['avatar_url'] as String?,
         rankName: json['rank_name'] as String?,
-        learningStreak: (json['learning_streak'] as int?) ?? 0,
-        learningCount: (json['learning_count'] as int?) ?? 0,
+        learningStreak: _parseIntField(json, 'learning_streak'),
+        learningCount: _parseIntField(json, 'learning_count'),
         location: json['location'] as String?,
         bio: json['bio'] as String?,
         phoneNumber: json['phone_number'] as String?,
-        level: (json['level'] as int?) ?? 0,
-        xp: (json['xp'] as int?) ?? 0,
-        hourLearned: (json['hour_learned'] as int?) ?? 0,
-        userId: json['user_id'] as String? ?? '',
+        level: _parseIntField(json, 'level'),
+        xp: _parseIntField(json, 'xp'),
+        hourLearned: _parseIntField(json, 'hour_learned'),
+        userId: userId,
       );
     } catch (e) {
+      if (e is ParseException) rethrow;
       throw ParseException(
         message: 'Failed to parse Profile',
         originalError: e,
       );
     }
+  }
+
+  static int _parseIntField(Map<String, dynamic> json, String fieldName) {
+    final value = json[fieldName];
+    if (value == null) return 0;
+
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) {
+      final parsed = int.tryParse(value);
+      if (parsed != null) return parsed;
+    }
+
+    throw ParseException(
+      message: 'Invalid type for $fieldName: expected int but got ${value.runtimeType}',
+    );
   }
 
   Map<String, dynamic> toJson() => {
