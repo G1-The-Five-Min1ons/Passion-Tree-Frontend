@@ -27,58 +27,76 @@ class LearningPathDataSource {
   LearningPathDataSource({http.Client? client})
     : client = client ?? http.Client();
 
+  /// Get headers with token, checking for expiry
   Future<Map<String, String>> _getHeaders() async {
     try {
       final token = await getIt<AuthLocalDataSource>().getToken();
       if (token != null && token.isNotEmpty) {
+        // Check if token is expired
+        if (_isTokenExpired(token)) {
+          LogHandler.warning('[DataSource] Token is expired');
+          // Clear expired token
+          await getIt<AuthLocalDataSource>().clearAuth();
+          return ApiConfig.defaultHeaders;
+        }
         return ApiConfig.getAuthHeaders(token);
       }
-    } catch (_) {}
+    } catch (e) {
+      LogHandler.error('[DataSource] Error getting headers: $e');
+    }
     return ApiConfig.defaultHeaders;
   }
 
-  Future<List<LearningPathApiModel>> getAllLearningPaths() async {
+  /// Check if JWT token is expired
+  bool _isTokenExpired(String token) {
     try {
-      LogHandler.debug('[DataSource] GET /learningpaths');
+      final parts = token.split('.');
+      if (parts.length != 3) return true;
+
+      // Decode payload (second part)
+      final payload = parts[1];
+      // Add padding if needed
+      final normalized = base64.normalize(payload);
+      final decoded = utf8.decode(base64.decode(normalized));
+      final Map<String, dynamic> payloadMap = jsonDecode(decoded);
+
+      // Check expiration
+      if (payloadMap.containsKey('exp')) {
+        final exp = payloadMap['exp'] as int;
+        final expiryDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+        final now = DateTime.now();
+        // Add 1 minute buffer
+        return now.isAfter(expiryDate.subtract(const Duration(minutes: 1)));
+      }
+      return false;
+    } catch (e) {
+      LogHandler.error('[DataSource] Error checking token expiry: $e');
+      return true; // Consider invalid tokens as expired
+    }
+  }
+
+  /// Generic GET request handler
+  Future<T> _makeGetRequest<T>({
+    required String endpoint,
+    required T Function(Map<String, dynamic>) fromJson,
+    String? errorMessage,
+  }) async {
+    try {
+      LogHandler.debug('[DataSource] GET $endpoint');
 
       final response = await client.get(
-        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths'),
+        Uri.parse('${ApiConfig.apiBackendUrl}$endpoint'),
         headers: await _getHeaders(),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       LogHandler.debug('Response Status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        try {
-          final data = jsonDecode(response.body);
-          final paths = data['data'] as List?;
-
-          if (paths == null || paths.isEmpty) {
-            return [];
-          }
-
-          return paths
-              .map((path) => LearningPathApiModel.fromJson(path))
-              .toList();
-        } on FormatException catch (e) {
-          LogHandler.error('Failed to parse JSON response: $e');
-          throw Exception(
-            'Server returned invalid JSON response (possibly HTML error page)',
-          );
-        }
+        final data = jsonDecode(response.body);
+        return fromJson(data);
       } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error('Failed to get learning paths: ${error['message']}');
-          throw Exception(error['message'] ?? 'Failed to get learning paths');
-        } on FormatException {
-          LogHandler.error(
-            'Failed to get learning paths (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to get learning paths (Status ${response.statusCode})',
-          );
-        }
+        final error = _parseError(response);
+        throw Exception(error ?? errorMessage ?? 'Request failed');
       }
     } on SocketException catch (e) {
       LogHandler.error('No internet connection: $e');
@@ -90,384 +108,281 @@ class LearningPathDataSource {
       LogHandler.error('HTTP error: $e');
       throw Exception('Network error. Please try again.');
     } catch (e) {
-      LogHandler.error('Exception in getAllLearningPaths: $e');
-      throw Exception('Failed to fetch learning paths: $e');
+      LogHandler.error('Exception in GET $endpoint: $e');
+      rethrow;
     }
+  }
+
+  /// Generic POST request handler
+  Future<T> _makePostRequest<T>({
+    required String endpoint,
+    required Map<String, dynamic> body,
+    required T Function(Map<String, dynamic>) fromJson,
+    String? errorMessage,
+  }) async {
+    try {
+      LogHandler.debug('[DataSource] POST $endpoint');
+
+      final response = await client.post(
+        Uri.parse('${ApiConfig.apiBackendUrl}$endpoint'),
+        headers: await _getHeaders(),
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 30));
+
+      LogHandler.debug('Response Status: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return fromJson(data);
+      } else {
+        final error = _parseError(response);
+        throw Exception(error ?? errorMessage ?? 'Request failed');
+      }
+    } on SocketException catch (e) {
+      LogHandler.error('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      LogHandler.error('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      LogHandler.error('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
+    } catch (e) {
+      LogHandler.error('Exception in POST $endpoint: $e');
+      rethrow;
+    }
+  }
+
+  /// Generic PUT request handler
+  Future<void> _makePutRequest({
+    required String endpoint,
+    Map<String, dynamic>? body,
+    String? errorMessage,
+  }) async {
+    try {
+      LogHandler.debug('[DataSource] PUT $endpoint');
+
+      final response = await client.put(
+        Uri.parse('${ApiConfig.apiBackendUrl}$endpoint'),
+        headers: await _getHeaders(),
+        body: body != null ? jsonEncode(body) : null,
+      ).timeout(const Duration(seconds: 30));
+
+      LogHandler.debug('Response Status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        final error = _parseError(response);
+        throw Exception(error ?? errorMessage ?? 'Request failed');
+      }
+    } on SocketException catch (e) {
+      LogHandler.error('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      LogHandler.error('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      LogHandler.error('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
+    } catch (e) {
+      LogHandler.error('Exception in PUT $endpoint: $e');
+      rethrow;
+    }
+  }
+
+  /// Generic DELETE request handler
+  Future<void> _makeDeleteRequest({
+    required String endpoint,
+    String? errorMessage,
+  }) async {
+    try {
+      LogHandler.debug('[DataSource] DELETE $endpoint');
+
+      final response = await client.delete(
+        Uri.parse('${ApiConfig.apiBackendUrl}$endpoint'),
+        headers: await _getHeaders(),
+      ).timeout(const Duration(seconds: 30));
+
+      LogHandler.debug('Response Status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        final error = _parseError(response);
+        throw Exception(error ?? errorMessage ?? 'Request failed');
+      }
+    } on SocketException catch (e) {
+      LogHandler.error('No internet connection: $e');
+      throw Exception('No internet connection. Please check your network.');
+    } on TimeoutException catch (e) {
+      LogHandler.error('Connection timeout: $e');
+      throw Exception('Connection timeout. Please try again.');
+    } on HttpException catch (e) {
+      LogHandler.error('HTTP error: $e');
+      throw Exception('Network error. Please try again.');
+    } catch (e) {
+      LogHandler.error('Exception in DELETE $endpoint: $e');
+      rethrow;
+    }
+  }
+
+  /// Parse error from response
+  String? _parseError(http.Response response) {
+    try {
+      final error = jsonDecode(response.body);
+      return error['message'] ?? error['error'];
+    } on FormatException {
+      return 'Request failed (Status ${response.statusCode})';
+    }
+  }
+
+  Future<List<LearningPathApiModel>> getAllLearningPaths() async {
+    return await _makeGetRequest(
+      endpoint: '/learningpaths',
+      fromJson: (data) {
+        final paths = data['data'] as List?;
+        if (paths == null || paths.isEmpty) return [];
+        return paths.map((path) => LearningPathApiModel.fromJson(path)).toList();
+      },
+      errorMessage: 'Failed to get learning paths',
+    );
   }
 
   Future<LearningPathProgressApiModel> getLearningPathProgress(
     String pathId,
     String userId,
   ) async {
-    try {
-      LogHandler.debug('[DataSource] GET /user/learningpaths/$pathId/progress');
-
-      final response = await client.get(
-        Uri.parse(
-          '${ApiConfig.apiBackendUrl}/user/learningpaths/$pathId/progress?user_id=$userId',
-        ),
-        headers: await _getHeaders(),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        try {
-          final data = jsonDecode(response.body);
-          return LearningPathProgressApiModel.fromJson(data['data']);
-        } on FormatException catch (e) {
-          LogHandler.error('Failed to parse progress JSON: $e');
-          throw Exception(
-            'Server returned invalid JSON response (possibly HTML error page)',
-          );
-        }
-      } else {
-        LogHandler.error(
-          'Failed to load progress (Status ${response.statusCode})',
-        );
-        throw Exception('Failed to load progress');
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in getLearningPathProgress: $e');
-      rethrow;
-    }
+    return await _makeGetRequest(
+      endpoint: '/user/learningpaths/$pathId/progress?user_id=$userId',
+      fromJson: (data) => LearningPathProgressApiModel.fromJson(data['data']),
+      errorMessage: 'Failed to load progress',
+    );
   }
 
   Future<List<EnrolledLearningPathApiModel>> getEnrolledPaths(
     String userId,
   ) async {
-    try {
-      LogHandler.debug('[DataSource] GET /learningpaths/user/enroll');
-
-      final response = await client.get(
-        Uri.parse(
-          '${ApiConfig.apiBackendUrl}/learningpaths/user/enroll',
-        ),
-        headers: await _getHeaders(),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        try {
-          final data = jsonDecode(response.body);
-          final list = data['data'] as List?;
-
-          if (list == null || list.isEmpty) {
-            return [];
-          }
-
-          return list
-              .map((e) => EnrolledLearningPathApiModel.fromJson(e))
-              .toList();
-        } on FormatException catch (e) {
-          LogHandler.error('Failed to parse enrolled paths JSON: $e');
-          throw Exception(
-            'Server returned invalid JSON response (possibly HTML error page)',
-          );
-        }
-      } else {
-        LogHandler.error(
-          'Failed to load enrolled paths (Status ${response.statusCode})',
-        );
-        throw Exception('Failed to load enrolled paths: ${response.body}');
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in getEnrolledPaths: $e');
-      rethrow;
-    }
+    return await _makeGetRequest(
+      endpoint: '/learningpaths/user/enroll',
+      fromJson: (data) {
+        final list = data['data'] as List?;
+        if (list == null || list.isEmpty) return [];
+        return list.map((e) => EnrolledLearningPathApiModel.fromJson(e)).toList();
+      },
+      errorMessage: 'Failed to load enrolled paths',
+    );
   }
 
   Future<List<LearningNodeApiModel>> getNodesForPath(
     String pathId,
     String _userId,
   ) async {
-    try {
-      LogHandler.debug('[DataSource] GET /learningpaths/$pathId/nodes');
-
-      final response = await client.get(
-        Uri.parse(
-          '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/nodes',
-        ),
-        headers: await _getHeaders(),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        try {
-          final data = jsonDecode(response.body);
-          final nodes = data['data'] as List?;
-
-          if (nodes == null || nodes.isEmpty) {
-            return [];
-          }
-
-          return nodes
-              .map((node) => LearningNodeApiModel.fromJson(node))
-              .toList();
-        } on FormatException catch (e) {
-          LogHandler.error('Failed to parse nodes JSON: $e');
-          throw Exception(
-            'Server returned invalid JSON response (possibly HTML error page)',
-          );
-        }
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error('Failed to get nodes: ${error['message']}');
-          throw Exception(error['message'] ?? 'Failed to get nodes');
-        } on FormatException {
-          LogHandler.error(
-            'Failed to get nodes (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to get nodes (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in getNodesForPath: $e');
-      throw Exception('Failed to fetch nodes: $e');
-    }
+    return await _makeGetRequest(
+      endpoint: '/learningpaths/$pathId/nodes',
+      fromJson: (data) {
+        final nodes = data['data'] as List?;
+        if (nodes == null || nodes.isEmpty) return [];
+        return nodes.map((node) => LearningNodeApiModel.fromJson(node)).toList();
+      },
+      errorMessage: 'Failed to load nodes',
+    );
   }
 
   Future<NodeDetailApiModel> getNodeDetail(String nodeId, String _userId) async {
-    try {
-      LogHandler.debug('[DataSource] GET /learningpaths/nodes/$nodeId');
-
-      final response = await client.get(
-        Uri.parse(
-          '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId',
-        ),
-        headers: await _getHeaders(),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        try {
-          final data = jsonDecode(response.body);
-          return NodeDetailApiModel.fromJson(data['data']);
-        } on FormatException catch (e) {
-          LogHandler.error('Failed to parse node detail JSON: $e');
-          throw Exception(
-            'Server returned invalid JSON response (possibly HTML error page)',
-          );
-        }
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error('Failed to get node detail: ${error['message']}');
-          throw Exception(error['message'] ?? 'Failed to get node detail');
-        } on FormatException {
-          LogHandler.error(
-            'Failed to get node detail (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to get node detail (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in getNodeDetail: $e');
-      throw Exception('Failed to fetch node detail: $e');
-    }
+    return await _makeGetRequest(
+      endpoint: '/learningpaths/nodes/$nodeId',
+      fromJson: (data) => NodeDetailApiModel.fromJson(data['data']),
+      errorMessage: 'Failed to load node detail',
+    );
   }
 
   Future<List<QuizQuestionApiModel>> getNodeQuestions(String nodeId) async {
-    try {
-      LogHandler.debug(
-        '[DataSource] GET /learningpaths/nodes/$nodeId/questions',
-      );
-
-      final response = await client.get(
-        Uri.parse(
-          '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/questions',
-        ),
-        headers: await _getHeaders(),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        try {
-          final data = jsonDecode(response.body);
-          final questions = data['data'] as List?;
-
-          if (questions == null || questions.isEmpty) {
-            return [];
-          }
-
-          return questions
-              .map((question) => QuizQuestionApiModel.fromJson(question))
-              .toList();
-        } on FormatException catch (e) {
-          LogHandler.error('Failed to parse questions JSON: $e');
-          throw Exception(
-            'Server returned invalid JSON response (possibly HTML error page)',
-          );
-        }
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error('Failed to get questions: ${error['message']}');
-          throw Exception(error['message'] ?? 'Failed to get questions');
-        } on FormatException {
-          LogHandler.error(
-            'Failed to get questions (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to get questions (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in getNodeQuestions: $e');
-      throw Exception('Failed to fetch questions: $e');
-    }
+    return await _makeGetRequest(
+      endpoint: '/learningpaths/nodes/$nodeId/questions',
+      fromJson: (data) {
+        final questions = data['data'] as List?;
+        if (questions == null || questions.isEmpty) return [];
+        return questions.map((q) => QuizQuestionApiModel.fromJson(q)).toList();
+      },
+      errorMessage: 'Failed to load questions',
+    );
   }
 
   Future<void> createNodeQuestions(
     String nodeId,
     List<CreateQuestionWithChoicesRequestApiModel> questions,
   ) async {
+    if (questions.isEmpty) return;
+
+    // Try batch endpoint first to solve N+1 problem
     try {
-      if (questions.isEmpty) return;
+      LogHandler.debug(
+        '[DataSource] POST /learningpaths/nodes/$nodeId/questions/batch (N=${questions.length})',
+      );
 
-      for (final question in questions) {
-        LogHandler.debug(
-          '[DataSource] POST /learningpaths/nodes/$nodeId/questions',
-        );
+      await _makePostRequest(
+        endpoint: '/learningpaths/nodes/$nodeId/questions/batch',
+        body: {
+          'questions': questions.map((q) => {
+            'question_text': q.questionText,
+            'type': q.type,
+            'choices': q.choices.map((c) => {
+              'choice_text': c.choiceText,
+              'is_correct': c.isCorrect,
+              'reasoning': c.reasoning,
+            }).toList(),
+          }).toList(),
+        },
+        fromJson: (_) => null,
+        errorMessage: 'Failed to create questions in batch',
+      );
+      
+      LogHandler.info('Successfully created ${questions.length} questions using batch endpoint');
+      return;
+    } catch (e) {
+      LogHandler.warning('Batch endpoint failed: $e, falling back to parallel creation');
+    }
 
-        final questionResponse = await client.post(
-          Uri.parse(
-            '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/questions',
-          ),
-          headers: await _getHeaders(),
-          body: jsonEncode({
+    // Fallback: parallel execution to reduce time (N+N*M calls, but in parallel)
+    try {
+      final futures = questions.map((question) async {
+        // Create question
+        final questionId = await _makePostRequest<String>(
+          endpoint: '/learningpaths/nodes/$nodeId/questions',
+          body: {
             'question_text': question.questionText,
             'type': question.type,
-          }),
+          },
+          fromJson: (data) {
+            final id = data['data']?['question_id'] as String?;
+            if (id == null || id.isEmpty) {
+              throw Exception('Question ID not returned from server');
+            }
+            return id;
+          },
+          errorMessage: 'Failed to create question',
         );
 
-        LogHandler.debug('Response Status: ${questionResponse.statusCode}');
-
-        if (questionResponse.statusCode != 200 &&
-            questionResponse.statusCode != 201) {
-          try {
-            final error = jsonDecode(questionResponse.body);
-            throw Exception(
-              error['message'] ?? 'Failed to create question for node',
-            );
-          } on FormatException {
-            throw Exception(
-              'Failed to create question for node (Status ${questionResponse.statusCode})',
-            );
-          }
-        }
-
-        String questionId;
-        try {
-          final data = jsonDecode(questionResponse.body);
-          questionId = data['data']?['question_id'] as String;
-          if (questionId.isEmpty) {
-            throw Exception('Question ID not returned from server');
-          }
-        } catch (e) {
-          throw Exception('Failed to parse created question id: $e');
-        }
-
-        for (final choice in question.choices) {
-          final choiceRequest = CreateChoiceRequestApiModel(
-            choiceText: choice.choiceText,
-            isCorrect: choice.isCorrect,
-            reasoning: choice.reasoning,
+        // Create all choices for this question in parallel
+        final choiceFutures = question.choices.map((choice) async {
+          await _makePostRequest(
+            endpoint: '/learningpaths/questions/$questionId/choices',
+            body: {
+              'choice_text': choice.choiceText,
+              'is_correct': choice.isCorrect,
+              'reasoning': choice.reasoning,
+            },
+            fromJson: (_) => null,
+            errorMessage: 'Failed to create choice',
           );
+        });
 
-          LogHandler.debug(
-            '[DataSource] POST /learningpaths/questions/$questionId/choices',
-          );
+        await Future.wait(choiceFutures);
+      });
 
-          final choiceResponse = await client.post(
-            Uri.parse(
-              '${ApiConfig.apiBackendUrl}/learningpaths/questions/$questionId/choices',
-            ),
-            headers: await _getHeaders(),
-            body: jsonEncode(choiceRequest.toJson()),
-          );
-
-          LogHandler.debug('Response Status: ${choiceResponse.statusCode}');
-
-          if (choiceResponse.statusCode != 200 &&
-              choiceResponse.statusCode != 201) {
-            try {
-              final error = jsonDecode(choiceResponse.body);
-              throw Exception(
-                error['message'] ?? 'Failed to create choice for question',
-              );
-            } on FormatException {
-              throw Exception(
-                'Failed to create choice for question (Status ${choiceResponse.statusCode})',
-              );
-            }
-          }
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
+      await Future.wait(futures);
+      LogHandler.info('Created ${questions.length} questions using parallel fallback');
     } catch (e) {
       LogHandler.error('Exception in createNodeQuestions: $e');
       throw Exception('Failed to create node questions: $e');
@@ -475,447 +390,89 @@ class LearningPathDataSource {
   }
 
   Future<void> startNode(String nodeId, String _userId) async {
-    try {
-      LogHandler.debug('[DataSource] PUT /learningpaths/nodes/$nodeId/start');
-
-      final response = await client.put(
-        Uri.parse(
-          '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/start',
-        ),
-        headers: await _getHeaders(),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        return;
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          final msg = error['error'] ?? error['message'] ?? 'Failed to start node (${response.statusCode})';
-          LogHandler.error('Failed to start node: $msg (Status ${response.statusCode}): ${response.body}');
-          throw Exception(msg);
-        } on FormatException {
-          LogHandler.error(
-            'Failed to start node (Status ${response.statusCode}): ${response.body}',
-          );
-          throw Exception(
-            'Failed to start node (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in startNode: $e');
-      throw Exception('Failed to start node: $e');
-    }
+    await _makePutRequest(
+      endpoint: '/learningpaths/nodes/$nodeId/start',
+      errorMessage: 'Failed to start node',
+    );
   }
 
   Future<void> completeNode(String nodeId, String _userId) async {
-    try {
-      LogHandler.debug(
-        '[DataSource] PUT /learningpaths/nodes/$nodeId/complete',
-      );
-
-      final response = await client.put(
-        Uri.parse(
-          '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/complete',
-        ),
-        headers: await _getHeaders(),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        return;
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          final msg = error['error'] ?? error['message'] ?? 'Failed to complete node (${response.statusCode})';
-          LogHandler.error('Failed to complete node: $msg (Status ${response.statusCode}): ${response.body}');
-          throw Exception(msg);
-        } on FormatException {
-          LogHandler.error(
-            'Failed to complete node (Status ${response.statusCode}): ${response.body}',
-          );
-          throw Exception(
-            'Failed to complete node (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in completeNode: $e');
-      throw Exception('Failed to complete node: $e');
-    }
+    await _makePutRequest(
+      endpoint: '/learningpaths/nodes/$nodeId/complete',
+      errorMessage: 'Failed to complete node',
+    );
   }
 
   Future<void> enrollPath(String pathId, String userId) async {
-    try {
-      LogHandler.debug('[DataSource] POST /learningpaths/$pathId/start');
-
-      final response = await client.post(
-        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths/$pathId/start'),
-        headers: await _getHeaders(),
-        body: jsonEncode({'user_id': userId}),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return;
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error('[DataSource] Enroll failed: ${error['message']}');
-          throw Exception(
-            error['message'] ?? 'Failed to enroll in learning path',
-          );
-        } catch (e) {
-          LogHandler.error(
-            '[DataSource] Enroll failed (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to enroll (Status ${response.statusCode}): ${response.body}',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('[DataSource] No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('[DataSource] Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('[DataSource] HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('[DataSource] Exception in enrollPath: $e');
-      rethrow;
-    }
+    await _makePostRequest(
+      endpoint: '/learningpaths/$pathId/start',
+      body: {'user_id': userId},
+      fromJson: (_) => null,
+      errorMessage: 'Failed to enroll in learning path',
+    );
   }
 
   Future<void> deleteLearningPath(String pathId) async {
-    try {
-      LogHandler.debug('[DataSource] DELETE /learningpaths/$pathId');
-
-      final response = await client.delete(
-        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths/$pathId'),
-        headers: await _getHeaders(),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        return;
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error(
-            'Failed to delete learning path: ${error['message']}',
-          );
-          throw Exception(error['message'] ?? 'Failed to delete learning path');
-        } on FormatException {
-          LogHandler.error(
-            'Failed to delete learning path (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to delete learning path (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in deleteLearningPath: $e');
-      throw Exception('Failed to delete learning path: $e');
-    }
+    await _makeDeleteRequest(
+      endpoint: '/learningpaths/$pathId',
+      errorMessage: 'Failed to delete learning path',
+    );
   }
 
   Future<void> deleteNode(String nodeId) async {
-    try {
-      LogHandler.debug('[DataSource] DELETE /learningpaths/nodes/$nodeId');
-
-      final response = await client.delete(
-        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId'),
-        headers: await _getHeaders(),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        return;
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error('Failed to delete node: ${error['message']}');
-          throw Exception(error['message'] ?? 'Failed to delete node');
-        } on FormatException {
-          LogHandler.error(
-            'Failed to delete node (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to delete node (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in deleteNode: $e');
-      throw Exception('Failed to delete node: $e');
-    }
+    await _makeDeleteRequest(
+      endpoint: '/learningpaths/nodes/$nodeId',
+      errorMessage: 'Failed to delete node',
+    );
   }
 
   // TEACHER FEATURES
 
   Future<String> createLearningPath(CreatePathRequestApiModel request) async {
-    try {
-      LogHandler.debug('[DataSource] POST /learningpaths');
-
-      final response = await client.post(
-        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths'),
-        headers: await _getHeaders(),
-        body: jsonEncode(request.toJson()),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        try {
-          final data = jsonDecode(response.body);
-          final pathId = data['data']['path_id'] as String?;
-          if (pathId == null || pathId.isEmpty) {
-            throw Exception('Path ID not returned from server');
-          }
-          return pathId;
-        } on FormatException catch (e) {
-          LogHandler.error('Failed to parse JSON response: $e');
-          throw Exception(
-            'Server returned invalid JSON response (possibly HTML error page)',
-          );
+    return await _makePostRequest(
+      endpoint: '/learningpaths',
+      body: request.toJson(),
+      fromJson: (data) {
+        final pathId = data['data']['path_id'] as String?;
+        if (pathId == null || pathId.isEmpty) {
+          throw Exception('Path ID not returned from server');
         }
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error(
-            'Failed to create learning path: ${error['message']}',
-          );
-          throw Exception(
-            error['message'] ?? 'Failed to create learning path',
-          );
-        } on FormatException {
-          LogHandler.error(
-            'Failed to create learning path (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to create learning path (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in createLearningPath: $e');
-      throw Exception('Failed to create learning path: $e');
-    }
+        return pathId;
+      },
+      errorMessage: 'Failed to create learning path',
+    );
   }
 
   Future<String> createNode(CreateNodeRequestApiModel request) async {
-    try {
-      LogHandler.debug(
-        '[DataSource] POST /learningpaths/${request.pathId}/nodes',
-      );
-
-      final response = await client.post(
-        Uri.parse(
-          '${ApiConfig.apiBackendUrl}/learningpaths/${request.pathId}/nodes',
-        ),
-        headers: await _getHeaders(),
-        body: jsonEncode(request.toJson()),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        try {
-          final data = jsonDecode(response.body);
-          final nodeId = data['data']['node_id'] as String?;
-          if (nodeId == null || nodeId.isEmpty) {
-            throw Exception('Node ID not returned from server');
-          }
-          return nodeId;
-        } on FormatException catch (e) {
-          LogHandler.error('Failed to parse JSON response: $e');
-          throw Exception(
-            'Server returned invalid JSON response (possibly HTML error page)',
-          );
+    return await _makePostRequest(
+      endpoint: '/learningpaths/${request.pathId}/nodes',
+      body: request.toJson(),
+      fromJson: (data) {
+        final nodeId = data['data']['node_id'] as String?;
+        if (nodeId == null || nodeId.isEmpty) {
+          throw Exception('Node ID not returned from server');
         }
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error('Failed to create node: ${error['message']}');
-          throw Exception(error['message'] ?? 'Failed to create node');
-        } on FormatException {
-          LogHandler.error(
-            'Failed to create node (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to create node (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in createNode: $e');
-      throw Exception('Failed to create node: $e');
-    }
+        return nodeId;
+      },
+      errorMessage: 'Failed to create node',
+    );
   }
 
   Future<AIGenerateResponseApiModel> generateNodesWithAI(String topic) async {
-    try {
-      LogHandler.debug('[DataSource] POST /learningpaths/generate');
-
-      final response = await client.post(
-        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths/generate'),
-        headers: await _getHeaders(),
-        body: jsonEncode({'topic': topic}),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        try {
-          final data = jsonDecode(response.body);
-          return AIGenerateResponseApiModel.fromJson(data['data']);
-        } on FormatException catch (e) {
-          LogHandler.error('Failed to parse JSON response: $e');
-          throw Exception(
-            'Server returned invalid JSON response (possibly HTML error page)',
-          );
-        }
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error('Failed to generate nodes: ${error['message']}');
-          throw Exception(error['message'] ?? 'Failed to generate nodes');
-        } on FormatException {
-          LogHandler.error(
-            'Failed to generate nodes (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to generate nodes (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in generateNodesWithAI: $e');
-      throw Exception('Failed to generate nodes with AI: $e');
-    }
+    return await _makePostRequest(
+      endpoint: '/learningpaths/generate',
+      body: {'topic': topic},
+      fromJson: (data) => AIGenerateResponseApiModel.fromJson(data['data']),
+      errorMessage: 'Failed to generate nodes with AI',
+    );
   }
 
   Future<LearningPathApiModel> getLearningPathById(String pathId) async {
-    try {
-      LogHandler.debug('[DataSource] GET /learningpaths/$pathId');
-
-      final response = await client.get(
-        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths/$pathId'),
-        headers: await _getHeaders(),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        try {
-          final data = jsonDecode(response.body);
-          return LearningPathApiModel.fromJson(data['data']);
-        } on FormatException catch (e) {
-          LogHandler.error('Failed to parse JSON response: $e');
-          throw Exception(
-            'Server returned invalid JSON response (possibly HTML error page)',
-          );
-        }
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error('Failed to get learning path: ${error['message']}');
-          throw Exception(error['message'] ?? 'Failed to get learning path');
-        } on FormatException {
-          LogHandler.error(
-            'Failed to get learning path (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to get learning path (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in getLearningPathById: $e');
-      throw Exception('Failed to get learning path: $e');
-    }
+    return await _makeGetRequest(
+      endpoint: '/learningpaths/$pathId',
+      fromJson: (data) => LearningPathApiModel.fromJson(data['data']),
+      errorMessage: 'Failed to get learning path',
+    );
   }
 
   Future<void> updateNode(
@@ -925,66 +482,29 @@ class LearningPathDataSource {
     String? linkvdo,
     List<CreateMaterial>? materials,
   }) async {
-    try {
-      LogHandler.debug('[DataSource] PUT /learningpaths/nodes/$nodeId');
+    final Map<String, dynamic> body = {
+      'title': title,
+      'description': description,
+    };
 
-      final Map<String, dynamic> body = {
-        'title': title,
-        'description': description,
-      };
-
-      // เพิ่ม linkvdo ถ้ามี
-      if (linkvdo != null && linkvdo.isNotEmpty) {
-        body['link_vdo'] = linkvdo;
-      }
-
-      // เพิ่ม materials ถ้ามี
-      if (materials != null && materials.isNotEmpty) {
-        body['material'] = materials
-            .map((m) => CreateMaterialRequestApiModel(
-                  type: m.type,
-                  url: m.url,
-                ).toJson())
-            .toList();
-      }
-
-      final response = await client.put(
-        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId'),
-        headers: await _getHeaders(),
-        body: jsonEncode(body),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        return;
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error('Failed to update node: ${error['message']}');
-          throw Exception(error['message'] ?? 'Failed to update node');
-        } on FormatException {
-          LogHandler.error(
-            'Failed to update node (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to update node (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in updateNode: $e');
-      throw Exception('Failed to update node: $e');
+    if (linkvdo != null && linkvdo.isNotEmpty) {
+      body['link_vdo'] = linkvdo;
     }
+
+    if (materials != null && materials.isNotEmpty) {
+      body['material'] = materials
+          .map((m) => CreateMaterialRequestApiModel(
+                type: m.type,
+                url: m.url,
+              ).toJson())
+          .toList();
+    }
+
+    await _makePutRequest(
+      endpoint: '/learningpaths/nodes/$nodeId',
+      body: body,
+      errorMessage: 'Failed to update node',
+    );
   }
 
   Future<void> updateLearningPath(
@@ -995,56 +515,21 @@ class LearningPathDataSource {
     String? coverImgUrl,
     String publishStatus,
   ) async {
-    try {
-      LogHandler.debug('[DataSource] PUT /learningpaths/$pathId');
+    final Map<String, dynamic> body = {
+      'title': title,
+      'objective': objective,
+      'description': description,
+      'publish_status': publishStatus,
+    };
 
-      final Map<String, dynamic> body = {
-        'title': title,
-        'objective': objective,
-        'description': description,
-        'publish_status': publishStatus,
-      };
-
-      if (coverImgUrl != null && coverImgUrl.isNotEmpty) {
-        body['cover_img_url'] = coverImgUrl;
-      }
-
-      final response = await client.put(
-        Uri.parse('${ApiConfig.apiBackendUrl}/learningpaths/$pathId'),
-        headers: await _getHeaders(),
-        body: jsonEncode(body),
-      );
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        return;
-      } else {
-        try {
-          final error = jsonDecode(response.body);
-          LogHandler.error('Failed to update learning path: ${error['message']}');
-          throw Exception(error['message'] ?? 'Failed to update learning path');
-        } on FormatException {
-          LogHandler.error(
-            'Failed to update learning path (Status ${response.statusCode})',
-          );
-          throw Exception(
-            'Failed to update learning path (Status ${response.statusCode})',
-          );
-        }
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in updateLearningPath: $e');
-      throw Exception('Failed to update learning path: $e');
+    if (coverImgUrl != null && coverImgUrl.isNotEmpty) {
+      body['cover_img_url'] = coverImgUrl;
     }
+
+    await _makePutRequest(
+      endpoint: '/learningpaths/$pathId',
+      body: body,
+      errorMessage: 'Failed to update learning path',
+    );
   }
 }
