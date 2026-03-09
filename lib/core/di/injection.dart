@@ -141,6 +141,17 @@ Future<void> initializeDependencies() async {
     () => DeleteAlbumUseCase(getIt<IAlbumRepository>()),
   );
 
+  getIt.registerFactory<CreateTreeUseCase>(
+    () => CreateTreeUseCase(getIt<IAlbumRepository>()),
+  );
+
+  getIt.registerFactory<UpdateTreeUseCase>(
+    () => UpdateTreeUseCase(getIt<IAlbumRepository>()),
+  );
+
+  getIt.registerFactory<DeleteTreeUseCase>(
+    () => DeleteTreeUseCase(getIt<IAlbumRepository>()),
+  );
   // Comment Feature
   getIt.registerLazySingleton<CommentRemoteDataSource>(
     () => CommentRemoteDataSource(),

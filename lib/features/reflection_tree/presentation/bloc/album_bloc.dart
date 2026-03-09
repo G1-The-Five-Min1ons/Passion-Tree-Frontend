@@ -11,6 +11,9 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
   final CreateAlbumUseCase createAlbum;
   final UpdateAlbumUseCase updateAlbum;
   final DeleteAlbumUseCase deleteAlbum;
+  final CreateTreeUseCase createTree;
+  final UpdateTreeUseCase updateTree;
+  final DeleteTreeUseCase deleteTree;
 
   AlbumBloc({
     required this.getAlbumsByUserId,
@@ -18,6 +21,9 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     required this.createAlbum,
     required this.updateAlbum,
     required this.deleteAlbum,
+    required this.createTree,
+    required this.updateTree,
+    required this.deleteTree,
   }) : super(AlbumInitial()) {
     on<LoadAlbumsEvent>(_onLoadAlbums);
     on<LoadAlbumByIdEvent>(_onLoadAlbumById);
@@ -26,6 +32,9 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     on<DeleteAlbumEvent>(_onDeleteAlbum);
     on<RefreshAlbumsEvent>(_onRefreshAlbums);
     on<ClearAlbumErrorEvent>(_onClearAlbumError);
+    on<CreateTreeEvent>(_onCreateTree);
+    on<UpdateTreeEvent>(_onUpdateTree);
+    on<DeleteTreeEvent>(_onDeleteTree);
   }
 
   Future<void> _onLoadAlbums(
@@ -132,6 +141,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
       albumId: event.albumId,
       title: event.title,
       coverImage: event.coverImage,
+      existingImageUrl: event.existingImageUrl,
     );
     
     await updateResult.fold(
@@ -159,34 +169,31 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     DeleteAlbumEvent event,
     Emitter<AlbumState> emit,
   ) async {
-    List<Album>? currentAlbums;
     
-    if (state is AlbumsLoaded) {
-      currentAlbums = (state as AlbumsLoaded).albums.where((a) => a.albumId != event.albumId).toList();
-      emit(AlbumOperationLoading(currentAlbums: currentAlbums));
-    } else {
-      emit(AlbumLoading());
-    }
-
     final deleteResult = await deleteAlbum(event.albumId);
     
-    await deleteResult.fold(
-      (failure) {
+    if (deleteResult.isLeft()) {
+      final failure = deleteResult.fold((l) => l, (r) => null);
+      if (failure != null) {
         LogHandler.error('Failed to delete album: ${failure.message}');
         emit(AlbumError(failure.message));
+      }
+      return;
+    }
+    
+    LogHandler.success('Album deleted: ${event.albumId}');
+    
+    final albumsResult = await getAlbumsByUserId();
+    albumsResult.fold(
+      (failure) {
+        LogHandler.error('Failed to reload albums: ${failure.message}');
+        emit(AlbumError(failure.message));
       },
-      (_) async {
-        LogHandler.success('Album deleted: ${event.albumId}');
-        
-        // Reload albums with success message
-        final albumsResult = await getAlbumsByUserId();
-        albumsResult.fold(
-          (failure) => emit(AlbumError(failure.message)),
-          (albums) => emit(AlbumsLoaded(
-            albums,
-            message: 'Album deleted successfully',
-          )),
-        );
+      (albums) {
+        emit(AlbumsLoaded(
+          albums,
+          message: 'Album deleted successfully',
+        ));
       },
     );
   }
@@ -215,5 +222,90 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
   ) {
     LogHandler.info('Clearing album error state');
     emit(AlbumInitial());
+  }
+
+  Future<void> _onCreateTree(
+    CreateTreeEvent event,
+    Emitter<AlbumState> emit,
+  ) async {
+    emit(AlbumOperationLoading());
+    
+    final result = await createTree(
+      title: event.title,
+      difficulties: event.difficulties,
+      pathId: event.pathId,
+      albumId: event.albumId,
+    );
+    
+    result.fold(
+      (failure) {
+        LogHandler.error('Failed to create tree: ${failure.message}');
+        emit(AlbumError(failure.message));
+      },
+      (treeId) {
+        LogHandler.success('Tree created: $treeId');
+        emit(TreeCreated(treeId: treeId));
+      },
+    );
+  }
+
+  Future<void> _onDeleteTree(
+    DeleteTreeEvent event,
+    Emitter<AlbumState> emit,
+  ) async {
+    emit(AlbumOperationLoading());
+    
+    final deleteResult = await deleteTree(event.treeId);
+    
+    await deleteResult.fold(
+      (failure) {
+        LogHandler.error('Failed to delete tree: ${failure.message}');
+        emit(AlbumError(failure.message));
+      },
+      (_) async {
+        LogHandler.success('Tree deleted: ${event.treeId}');
+        
+        // Reload the album to update the tree list
+        final albumResult = await getAlbumById(event.albumId);
+        albumResult.fold(
+          (failure) => emit(AlbumError(failure.message)),
+          (album) => emit(AlbumDetailLoaded(album)),
+        );
+      },
+    );
+  }
+
+  Future<void> _onUpdateTree(
+    UpdateTreeEvent event,
+    Emitter<AlbumState> emit,
+  ) async {
+    emit(AlbumOperationLoading());
+    
+    final updateResult = await updateTree(
+      treeId: event.treeId,
+      title: event.title,
+      albumId: event.newAlbumId,
+    );
+    
+    await updateResult.fold(
+      (failure) {
+        LogHandler.error('Failed to update tree: ${failure.message}');
+        emit(AlbumError(failure.message));
+      },
+      (_) async {
+        LogHandler.success('Tree updated: ${event.treeId}');
+        
+        final albumResult = await getAlbumById(event.albumId);
+        albumResult.fold(
+          (failure) => emit(AlbumError(failure.message)),
+          (album) {
+            final message = (event.newAlbumId != null && event.newAlbumId != event.albumId)
+                ? 'Tree moved successfully'
+                : null;
+            emit(AlbumDetailLoaded(album, message: message));
+          },
+        );
+      },
+    );
   }
 }

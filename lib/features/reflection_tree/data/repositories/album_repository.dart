@@ -4,9 +4,11 @@ import 'package:path/path.dart' as path;
 import 'package:passion_tree_frontend/core/error/failure_mapper.dart';
 import 'package:passion_tree_frontend/core/error/failures.dart';
 import 'package:passion_tree_frontend/core/services/upload_service.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/utils/error_utils.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/album_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/models/album_api_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/mappers/album_mapper.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/mappers/tree_mapper.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/repositories/i_album_repository.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
@@ -44,7 +46,6 @@ class AlbumRepository implements IAlbumRepository {
   }
 
   /// Upload image to blob storage and return public URL
-  /// Returns Either<Failure, String> where String is the public URL
   Future<Either<Failure, String>> _uploadImage(File imageFile) async {
     try {
       LogHandler.info('Uploading album cover image...');
@@ -61,7 +62,7 @@ class AlbumRepository implements IAlbumRepository {
     } catch (e) {
       LogHandler.error('Failed to upload image', error: e);
       return Left(ServerFailure(
-        message: 'ไม่สามารถอัพโหลดรูปภาพได้',
+        message: ErrorUtils.extractErrorMessage(e),
         technicalMessage: e.toString(),
       ));
     }
@@ -126,8 +127,12 @@ class AlbumRepository implements IAlbumRepository {
       return tokenResult.fold(
         (failure) => Left(failure),
         (token) async {
-          final apiModel = await dataSource.getAlbumById(albumId, token);
-          return Right(AlbumMapper.toAlbum(apiModel));
+          final albumApiModel = await dataSource.getAlbumById(albumId, token);
+          final treesApiModels = await dataSource.getTreesByAlbumId(albumId, token);
+          
+          final items = TreeMapper.toAlbumItemList(treesApiModels);
+          
+          return Right(AlbumMapper.toAlbumWithItems(albumApiModel, items));
         },
       );
     } on AppException catch (e) {
@@ -168,14 +173,15 @@ class AlbumRepository implements IAlbumRepository {
     required String albumId,
     required String title,
     File? coverImage,
+    String? existingImageUrl,
   }) async {
     try {
       final tokenResult = await _getValidToken();
       return tokenResult.fold(
         (failure) => Left(failure),
         (token) async {
-          // Upload image if provided
-          String coverImageUrl = '';
+          // Upload image if provided, otherwise use existing URL
+          String? coverImageUrl;
           if (coverImage != null) {
             final uploadResult = await _uploadImage(coverImage);
             // If upload failed, return the failure immediately
@@ -192,6 +198,8 @@ class AlbumRepository implements IAlbumRepository {
               );
             }
             coverImageUrl = uploadUrlOrFailure;
+          } else {
+            coverImageUrl = existingImageUrl ?? '';
           }
           
           final request = UpdateAlbumRequest(
@@ -230,6 +238,91 @@ class AlbumRepository implements IAlbumRepository {
       LogHandler.error('Repository: delete album failed', error: e);
       return Left(UnknownFailure(
         message: 'Failed to delete album',
+        technicalMessage: e.toString(),
+      ));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> createTree({
+    required String title,
+    required String difficulties,
+    required String pathId,
+    required String albumId,
+  }) async {
+    try {
+      final tokenResult = await _getValidToken();
+      return tokenResult.fold(
+        (failure) => Left(failure),
+        (token) async {
+          final request = CreateTreeRequest(
+            title: title,
+            difficulties: difficulties,
+            pathId: pathId,
+            albumId: albumId,
+          );
+          
+          final tree = await dataSource.createTree(request, token);
+          LogHandler.success('Tree created with ID: ${tree.treeId}');
+          
+          return Right(tree.treeId);
+        },
+      );
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository: create tree failed', error: e);
+      return Left(UnknownFailure(
+        message: 'Failed to create tree',
+        technicalMessage: e.toString(),
+      ));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteTree(String treeId) async {
+    try {
+      final tokenResult = await _getValidToken();
+      return tokenResult.fold(
+        (failure) => Left(failure),
+        (token) async {
+          await dataSource.deleteTree(treeId, token);
+          return const Right(null);
+        },
+      );
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository: delete tree failed', error: e);
+      return Left(UnknownFailure(
+        message: 'Failed to delete tree',
+        technicalMessage: e.toString(),
+      ));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateTree({
+    required String treeId,
+    required String title,
+    String? albumId,
+  }) async {
+    try {
+      final tokenResult = await _getValidToken();
+      return tokenResult.fold(
+        (failure) => Left(failure),
+        (token) async {
+          await dataSource.updateTree(treeId, title, albumId, token);
+          LogHandler.success('Tree updated successfully');
+          return const Right(null);
+        },
+      );
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository: update tree failed', error: e);
+      return Left(UnknownFailure(
+        message: 'Failed to update tree',
         technicalMessage: e.toString(),
       ));
     }

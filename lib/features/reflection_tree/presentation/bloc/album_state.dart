@@ -28,11 +28,12 @@ class AlbumsLoaded extends AlbumState {
 /// State when a single album is loaded
 class AlbumDetailLoaded extends AlbumState {
   final Album album;
+  final String? message;
 
-  const AlbumDetailLoaded(this.album);
+  const AlbumDetailLoaded(this.album, {this.message});
 
   @override
-  List<Object?> get props => [album];
+  List<Object?> get props => [album, message];
 }
 
 /// Error state
@@ -63,4 +64,17 @@ class ImageUploading extends AlbumState {
 
   @override
   List<Object?> get props => [currentAlbums];
+}
+
+class TreeCreated extends AlbumState {
+  final String treeId;
+  final String message;
+
+  const TreeCreated({
+    required this.treeId,
+    this.message = 'Tree created successfully',
+  });
+
+  @override
+  List<Object?> get props => [treeId, message];
 }

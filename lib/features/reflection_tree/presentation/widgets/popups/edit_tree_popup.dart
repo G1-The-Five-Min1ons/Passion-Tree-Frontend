@@ -10,6 +10,7 @@ class EditTreePopUp extends StatefulWidget {
   final String initialName;
   final String initialPath;
   final List<String> pathOptions;
+  final Function(String newTitle, String selectedAlbum)? onSave;
 
   const EditTreePopUp({
     super.key,
@@ -17,6 +18,7 @@ class EditTreePopUp extends StatefulWidget {
     required this.initialName,
     required this.initialPath,
     required this.pathOptions,
+    this.onSave,
   });
 
   @override
@@ -28,6 +30,7 @@ class EditTreePopUp extends StatefulWidget {
     required String initialName,
     required String initialPath,
     required List<String> pathOptions,
+    Function(String newTitle, String selectedAlbum)? onSave,
   }) {
     showDialog(
       context: context,
@@ -36,26 +39,24 @@ class EditTreePopUp extends StatefulWidget {
         initialName: initialName,
         initialPath: initialPath,
         pathOptions: pathOptions,
+        onSave: onSave,
       ),
     );
   }
 }
 
 class _EditTreePopUpState extends State<EditTreePopUp> {
-  late TextEditingController _nameController;
   late SearchController _pathController;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.initialName);
     _pathController = SearchController();
     _pathController.text = widget.initialPath;
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
     _pathController.dispose();
     super.dispose();
   }
@@ -85,9 +86,11 @@ class _EditTreePopUpState extends State<EditTreePopUp> {
               ),
               const SizedBox(height: 16),
 
-              PixelTextField(
-                controller: _nameController,
-                height: 38,
+              Text(
+                "Path   :  ${widget.initialName}",
+                style: AppTypography.titleRegular.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
 
               const SizedBox(height: 10),
@@ -103,7 +106,7 @@ class _EditTreePopUpState extends State<EditTreePopUp> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: SearchDropdown(
-                      label: "Select Path",
+                      label: "Select Album",
                       options: widget.pathOptions,
                       controller: _pathController,
                       onSelected: (selected) {
@@ -122,8 +125,10 @@ class _EditTreePopUpState extends State<EditTreePopUp> {
               SaveCancel(
                 onCancel: () => Navigator.pop(context),
                 onSave: () {
-                  debugPrint("New Name: ${_nameController.text}");
-                  debugPrint("New Path: ${_pathController.text}");
+                  final selectedAlbum = _pathController.text.trim();
+                  if (widget.onSave != null) {
+                    widget.onSave!(widget.initialName, selectedAlbum);
+                  }
                   Navigator.pop(context);
                 },
               ),

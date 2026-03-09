@@ -74,3 +74,53 @@ class RefreshAlbumsEvent extends AlbumEvent {
 class ClearAlbumErrorEvent extends AlbumEvent {
   const ClearAlbumErrorEvent();
 }
+
+/// Event to create a new tree
+class CreateTreeEvent extends AlbumEvent {
+  final String title;
+  final String difficulties;
+  final String pathId;
+  final String albumId;
+
+  const CreateTreeEvent({
+    required this.title,
+    required this.difficulties,
+    required this.pathId,
+    required this.albumId,
+  });
+
+  @override
+  List<Object?> get props => [title, difficulties, pathId, albumId];
+}
+
+/// Event to delete a tree
+class DeleteTreeEvent extends AlbumEvent {
+  final String treeId;
+  final String albumId;
+
+  const DeleteTreeEvent({
+    required this.treeId,
+    required this.albumId,
+  });
+
+  @override
+  List<Object?> get props => [treeId, albumId];
+}
+
+/// Event to update a tree
+class UpdateTreeEvent extends AlbumEvent {
+  final String treeId;
+  final String albumId;
+  final String title;
+  final String? newAlbumId;
+
+  const UpdateTreeEvent({
+    required this.treeId,
+    required this.albumId,
+    required this.title,
+    this.newAlbumId,
+  });
+
+  @override
+  List<Object?> get props => [treeId, albumId, title, newAlbumId];
+}

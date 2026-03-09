@@ -77,17 +77,145 @@ class CreateAlbumRequest {
 
 class UpdateAlbumRequest {
   final String albumName;
-  final String coverImageUrl;
+  final String? coverImageUrl;
 
   UpdateAlbumRequest({
     required this.albumName,
-    required this.coverImageUrl,
+    this.coverImageUrl,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'album_name': albumName,
-      'cover_image_url': coverImageUrl,
+      'cover_image_url': coverImageUrl ?? '',
     };
+  }
+}
+
+class CreateTreeRequest {
+  final String title;
+  final String difficulties;
+  final String pathId;
+  final String albumId;
+
+  CreateTreeRequest({
+    required this.title,
+    required this.difficulties,
+    required this.pathId,
+    required this.albumId,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'difficulties': difficulties,
+      'path_id': pathId,
+      'album_id': albumId,
+    };
+  }
+}
+
+class TreeApiModel {
+  final String treeId;
+  final String title;
+  final String difficulties;
+  final String pathId;
+  final String status;
+  final bool isPause;
+  final int nodeCount;
+  final DateTime createdAt;
+  final DateTime lastUpdate;
+  final String albumId;
+  final List<TreeNodeApiModel>? nodes;
+
+  TreeApiModel({
+    required this.treeId,
+    required this.title,
+    required this.difficulties,
+    required this.pathId,
+    required this.status,
+    required this.isPause,
+    required this.nodeCount,
+    required this.createdAt,
+    required this.lastUpdate,
+    required this.albumId,
+    this.nodes,
+  });
+
+  factory TreeApiModel.fromJson(Map<String, dynamic> json) {
+    try {
+      List<TreeNodeApiModel>? nodesList;
+      if (json['nodes'] != null) {
+        final nodesJson = json['nodes'] as List;
+        nodesList = nodesJson.map((node) => TreeNodeApiModel.fromJson(node)).toList();
+      }
+
+      return TreeApiModel(
+        treeId: json['tree_id'] ?? '',
+        title: json['title'] ?? '',
+        difficulties: json['difficulties'] ?? '',
+        pathId: json['path_id'] ?? '',
+        status: json['status'] ?? 'active',
+        isPause: json['is_pause'] ?? false,
+        nodeCount: json['node_count'] ?? 0,
+        createdAt: json['created_at'] != null
+            ? DateTime.parse(json['created_at'])
+            : DateTime.now(),
+        lastUpdate: json['last_update'] != null
+            ? DateTime.parse(json['last_update'])
+            : DateTime.now(),
+        albumId: json['album_id'] ?? '',
+        nodes: nodesList,
+      );
+    } catch (e) {
+      throw ParseException(
+        message: 'Failed to parse TreeApiModel',
+        originalError: e,
+      );
+    }
+  }
+}
+
+class TreeNodeApiModel {
+  final String treeNodeId;
+  final String nodeTitle;
+  final String nodeId;
+  final double? nodeScore;
+  final DateTime createdAt;
+  final String treeId;
+  final String? childNode;
+  final int sequence;
+
+  TreeNodeApiModel({
+    required this.treeNodeId,
+    required this.nodeTitle,
+    required this.nodeId,
+    this.nodeScore,
+    required this.createdAt,
+    required this.treeId,
+    this.childNode,
+    required this.sequence,
+  });
+
+  factory TreeNodeApiModel.fromJson(Map<String, dynamic> json) {
+    try {
+      return TreeNodeApiModel(
+        treeNodeId: json['tree_node_id'] ?? '',
+        nodeTitle: json['node_title'] ?? '',
+        nodeId: json['node_id'] ?? '',
+        nodeScore: json['node_score'] != null ? (json['node_score'] as num).toDouble() : null,
+        createdAt: json['created_at'] != null
+            ? DateTime.parse(json['created_at'])
+            : DateTime.now(),
+        treeId: json['tree_id'] ?? '',
+        childNode: json['child_node'],
+        sequence: json['sequence'] ?? 0,
+      );
+    } catch (e) {
+      throw ParseException(
+        message: 'Failed to parse TreeNodeApiModel',
+        originalError: e,
+      );
+    }
   }
 }
