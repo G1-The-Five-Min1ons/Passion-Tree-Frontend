@@ -55,6 +55,7 @@ class LoginState extends Equatable {
         password,
         rememberMe,
         status,
+        errorMessage,
         nextStep,
       ];
 }

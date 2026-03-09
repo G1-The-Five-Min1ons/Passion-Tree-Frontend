@@ -10,7 +10,6 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/lea
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/create_learning_path_input_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/teacher_nodes_overview.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
@@ -202,7 +201,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
         const SizedBox(height: 60),
 
         // =====================================================
-        // My Learning Paths - Completed
+        // My Learning Paths - Published
         // =====================================================
         Text(
           'My Learning Paths',
@@ -231,7 +230,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
         if (completedCourses.isEmpty)
           Center(
             child: Text(
-              'No completed paths found',
+              'No published paths found',
               style: AppTypography.subtitleSemiBold.copyWith(
                 color: colors.onPrimary,
               ),
