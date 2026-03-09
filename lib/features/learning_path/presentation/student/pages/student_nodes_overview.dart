@@ -122,13 +122,10 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                         bool canAccess = true;
                         String? errorMessage;
 
-                        // Node แรก (sequence = 1) เปิดได้เสมอ
-                        if (currentSequence > 1) {
-                          // หา node ก่อนหน้า
-                          final previousNode = nodes.firstWhere(
-                            (n) => n.sequence == currentSequence - 1,
-                            orElse: () => currentNode,
-                          );
+                        // Node แรก (index = 0) เปิดได้เสมอ
+                        if (index > 0) {
+                          // หา node ก่อนหน้าจาก index ในลิสต์
+                          final previousNode = nodes[index - 1];
 
                           // ตรวจสอบว่า node ก่อนหน้าเรียนจบแล้วหรือยัง
                           if (previousNode.complete.toLowerCase() != 'true') {
