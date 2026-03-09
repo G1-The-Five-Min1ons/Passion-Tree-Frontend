@@ -131,7 +131,11 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
             if (overviewData != null) {
               // Filter by search query and published status only
               final filteredAll = _filterCourses(overviewData.allPaths)
-                  .where((path) => path.publishStatus.toLowerCase() == 'published')
+                  .where((path) {
+                    final status = path.publishStatus.toLowerCase().trim();
+                    // Only show explicitly published paths, exclude draft, empty, or null
+                    return status == 'published' && status.isNotEmpty && status != 'null';
+                  })
                   .toList();
 
               // Filter and deduplicate enrolled paths
