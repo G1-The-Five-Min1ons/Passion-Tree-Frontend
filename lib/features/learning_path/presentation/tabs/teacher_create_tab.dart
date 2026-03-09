@@ -31,23 +31,59 @@ class TeacherCreateTab extends StatefulWidget {
 class _TeacherCreateTabState extends State<TeacherCreateTab> {
   int inProgressShown = 2;
   int completedShown = 2;
+  
+  // Cached filtered lists to avoid re-filtering on every build
+  List<LearningPath> _draftPaths = [];
+  List<LearningPath> _publishedPaths = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _updateFilteredPaths();
+  }
+
+  @override
+  void didUpdateWidget(TeacherCreateTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Re-filter only when data actually changes
+    if (oldWidget.allPaths != widget.allPaths ||
+        oldWidget.userId != widget.userId) {
+      _updateFilteredPaths();
+    }
+  }
+
+  /// Filter paths by userId and publishStatus
+  /// Called only when data changes, not on every build
+  void _updateFilteredPaths() {
+    if (widget.userId == null) {
+      _draftPaths = [];
+      _publishedPaths = [];
+      return;
+    }
+
+    // Filter paths by creatorId (only show user's own paths)
+    final userPaths = widget.allPaths
+        .where((path) => path.creatorId == widget.userId)
+        .toList();
+
+    // Separate by publish status
+    _draftPaths = userPaths
+        .where((path) => path.publishStatus.toLowerCase() == "draft")
+        .toList();
+    
+    _publishedPaths = userPaths
+        .where((path) => path.publishStatus.toLowerCase() == "published")
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
 
     final colors = Theme.of(context).colorScheme;
     
-    // Filter paths by creatorId (only show user's own paths) and publishStatus
-    final userPaths = widget.userId != null
-        ? widget.allPaths.where((path) => path.creatorId == widget.userId).toList()
-        : <LearningPath>[];
-    
-    final inProgressCourses = userPaths
-        .where((path) => path.publishStatus.toLowerCase() == "draft")
-        .toList();
-    final completedCourses = userPaths
-        .where((path) => path.publishStatus.toLowerCase() == "published")
-        .toList();
+    // Use cached filtered lists instead of filtering on every build
+    final inProgressCourses = _draftPaths;
+    final completedCourses = _publishedPaths;
   
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

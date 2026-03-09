@@ -39,6 +39,46 @@ class TeacherLearningTab extends StatefulWidget {
 class _TeacherLearningTabState extends State<TeacherLearningTab> {
   int _allListShownCount = 4;
 
+  // Cached filtered lists to avoid re-filtering on every build
+  List<LearningPath> _filteredAll = [];
+  List<EnrolledLearningPath> _filteredEnrolled = [];
+  List<LearningPath> _filteredNonEnrolled = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _updateFilteredPaths();
+  }
+
+  @override
+  void didUpdateWidget(TeacherLearningTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Re-filter only when data or filter criteria actually change
+    if (oldWidget.allPaths != widget.allPaths ||
+        oldWidget.enrolledPaths != widget.enrolledPaths ||
+        oldWidget.searchQuery != widget.searchQuery ||
+        oldWidget.selectedCategory != widget.selectedCategory ||
+        oldWidget.ratingRange != widget.ratingRange ||
+        oldWidget.maxModules != widget.maxModules) {
+      _updateFilteredPaths();
+    }
+  }
+
+  /// Update all filtered lists
+  /// Called only when data or filter criteria change, not on every build
+  void _updateFilteredPaths() {
+    _filteredAll = _filterCourses(widget.allPaths);
+    _filteredEnrolled = _filterEnrolledCourses(widget.enrolledPaths);
+    
+    // Filter out ALL enrolled paths from "All Learning Paths" and "Recommended"
+    final enrolledPathIds = widget.enrolledPaths
+        .map((e) => e.pathId)
+        .toSet();
+    _filteredNonEnrolled = _filteredAll
+        .where((path) => !enrolledPathIds.contains(path.id))
+        .toList();
+  }
+
   List<LearningPath> _filterCourses(List<LearningPath> courses) {
     return courses.where((c) {
       final query = widget.searchQuery.trim().toLowerCase();
@@ -87,16 +127,10 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    final filteredAll = _filterCourses(widget.allPaths);
-    final filteredEnrolled = _filterEnrolledCourses(widget.enrolledPaths);
-    
-    // Filter out ALL enrolled paths from "All Learning Paths" and "Recommended"
-    final enrolledPathIds = widget.enrolledPaths
-        .map((e) => e.pathId)
-        .toSet();
-    final filteredNonEnrolled = filteredAll
-        .where((path) => !enrolledPathIds.contains(path.id))
-        .toList();
+    // Use cached filtered lists instead of filtering on every build
+    final filteredAll = _filteredAll;
+    final filteredEnrolled = _filteredEnrolled;
+    final filteredNonEnrolled = _filteredNonEnrolled;
     
     final shownAllCourses = filteredNonEnrolled.take(_allListShownCount).toList();
 
