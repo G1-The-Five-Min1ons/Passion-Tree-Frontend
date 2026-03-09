@@ -81,46 +81,52 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
 
   List<LearningPath> _filterCourses(List<LearningPath> courses) {
     return courses.where((c) {
-      final query = widget.searchQuery.trim().toLowerCase();
-
-      final matchesSearch =
-          query.isEmpty ||
-          c.title.toLowerCase().contains(query) ||
-          c.description.toLowerCase().contains(query) ||
-          c.instructor.toLowerCase().contains(query);
-
-      final matchesRating =
-          widget.ratingRange == null ||
-          (c.rating >= widget.ratingRange!.start &&
-              c.rating <= widget.ratingRange!.end);
-
-      final matchesModules =
-          widget.maxModules == null || c.modules <= widget.maxModules!;
-
-      return matchesSearch && matchesRating && matchesModules;
+      return _matchesCommonFilters(
+        title: c.title,
+        description: c.description,
+        instructor: c.instructor,
+        rating: c.rating,
+        modules: c.modules,
+      );
     }).toList();
   }
 
   List<EnrolledLearningPath> _filterEnrolledCourses(List<EnrolledLearningPath> courses) {
     return courses.where((c) {
-      final query = widget.searchQuery.trim().toLowerCase();
-
-      final matchesSearch =
-          query.isEmpty ||
-          c.title.toLowerCase().contains(query) ||
-          c.description.toLowerCase().contains(query) ||
-          c.instructor.toLowerCase().contains(query);
-
-      final matchesRating =
-          widget.ratingRange == null ||
-          (c.rating >= widget.ratingRange!.start &&
-              c.rating <= widget.ratingRange!.end);
-
-      final matchesModules =
-          widget.maxModules == null || c.modules <= widget.maxModules!;
-
-      return matchesSearch && matchesRating && matchesModules;
+      return _matchesCommonFilters(
+        title: c.title,
+        description: c.description,
+        instructor: c.instructor,
+        rating: c.rating,
+        modules: c.modules,
+      );
     }).toList();
+  }
+
+  bool _matchesCommonFilters({
+    required String title,
+    required String description,
+    required String instructor,
+    required double rating,
+    required int modules,
+  }) {
+    final query = widget.searchQuery.trim().toLowerCase();
+
+    final matchesSearch =
+        query.isEmpty ||
+        title.toLowerCase().contains(query) ||
+        description.toLowerCase().contains(query) ||
+        instructor.toLowerCase().contains(query);
+
+    final matchesRating =
+        widget.ratingRange == null ||
+        (rating >= widget.ratingRange!.start &&
+            rating <= widget.ratingRange!.end);
+
+    final matchesModules =
+        widget.maxModules == null || modules <= widget.maxModules!;
+
+    return matchesSearch && matchesRating && matchesModules;
   }
 
   @override
