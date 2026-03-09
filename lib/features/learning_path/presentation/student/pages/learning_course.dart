@@ -101,19 +101,8 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                 _isEnrolling) {
               setState(() {
                 _isEnrolling = false;
-                // Create enrolled path object from course data
-                _enrolledPath = EnrolledLearningPath(
-                  pathId: widget.course.id,
-                  title: widget.course.title,
-                  description: widget.course.description,
-                  instructor: widget.course.instructor,
-                  rating: widget.course.rating,
-                  coverImgUrl: widget.course.coverImageUrl,
-                  modules: widget.course.modules,
-                  completedNodes: 0,
-                  progressPercent: 0.0,
-                  progressStatus: 'In Progress',
-                );
+                // Use enrolled path data from backend
+                _enrolledPath = state.enrolledPath;
               });
 
               Navigator.push(

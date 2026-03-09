@@ -93,8 +93,13 @@ class NodeDetailLoaded extends LearningPathState {
 class PathEnrolled extends LearningPathState {
   final String pathId;
   final String userId;
+  final EnrolledLearningPath enrolledPath;
 
-  PathEnrolled({required this.pathId, required this.userId});
+  PathEnrolled({
+    required this.pathId,
+    required this.userId,
+    required this.enrolledPath,
+  });
 }
 
 class LearningPathDeleted extends LearningPathState {

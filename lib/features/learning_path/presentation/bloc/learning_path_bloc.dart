@@ -237,9 +237,25 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(EnrollingPath(event.pathId));
         
         await _safeExecute(emit, 'enroll path', () async {
+          // Step 1: Enroll in the path
           await enrollPath(event.pathId, event.userId);
           LogHandler.info('[BLoC] Enrolled in path: ${event.pathId}');
-          emit(PathEnrolled(pathId: event.pathId, userId: event.userId));
+          
+          // Step 2: Fetch updated enrolled paths to get the enrolled data
+          final enrolledPaths = await getLearningPathStatus(event.userId);
+          
+          // Step 3: Find the newly enrolled path
+          final enrolledPath = enrolledPaths.firstWhere(
+            (path) => path.pathId == event.pathId,
+            orElse: () => throw Exception('Enrolled path not found after enrollment'),
+          );
+          
+          LogHandler.debug('[BLoC] Fetched enrolled path data: ${enrolledPath.title}');
+          emit(PathEnrolled(
+            pathId: event.pathId,
+            userId: event.userId,
+            enrolledPath: enrolledPath,
+          ));
         });
       },
       transformer: droppable(),
