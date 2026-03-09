@@ -333,6 +333,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   String _getUserFriendlyMessage(String backendError, String context) {
     final errorLower = backendError.toLowerCase();
     if (context == 'login') {
+      if (errorLower.contains('verification_required') ||
+          errorLower.contains('6-digit code') ||
+          errorLower.contains('otp')) {
+        return backendError;
+      }
       if (errorLower.contains('invalid') ||
           errorLower.contains('password') ||
           errorLower.contains('incorrect') ||
