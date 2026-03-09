@@ -62,6 +62,33 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.updateNodeUseCase,
   ) : super(LearningPathInitial()) {
     
+    // ===== HELPER METHODS =====
+    
+    /// Helper method to handle errors consistently
+    void _handleError(
+      Emitter<LearningPathState> emit,
+      String operation,
+      dynamic error,
+    ) {
+      LogHandler.error('[BLoC] Error in $operation: $error');
+      emit(LearningPathError(error.toString()));
+    }
+    
+    /// Helper method to execute async operations with error handling
+    Future<void> _safeExecute(
+      Emitter<LearningPathState> emit,
+      String operation,
+      Future<void> Function() action,
+    ) async {
+      try {
+        await action();
+      } catch (e) {
+        _handleError(emit, operation, e);
+      }
+    }
+    
+    // ===== EVENT HANDLERS =====
+    
     ///  FETCH ALL LEARNING PATHS
     
     on<FetchLearningPaths>(
@@ -189,17 +216,15 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     on<StartNodeEvent>(
       (event, emit) async {
         LogHandler.debug('[BLoC] StartNodeEvent: ${event.nodeId}');
+        emit(StartingNode(event.nodeId));
         
-        try {
+        await _safeExecute(emit, 'start node', () async {
           await startNode(event.nodeId, event.userId);
           // Refetch node detail to get updated status
           final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
           LogHandler.debug('[BLoC] Node started successfully');
           emit(NodeDetailLoaded(nodeDetail));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error starting node: $e');
-          emit(LearningPathError(e.toString()));
-        }
+        });
       },
       transformer: droppable(),
     );
@@ -209,15 +234,13 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     on<EnrollPathEvent>(
       (event, emit) async {
         LogHandler.debug('[BLoC] EnrollPathEvent: ${event.pathId}');
+        emit(EnrollingPath(event.pathId));
         
-        try {
+        await _safeExecute(emit, 'enroll path', () async {
           await enrollPath(event.pathId, event.userId);
           LogHandler.info('[BLoC] Enrolled in path: ${event.pathId}');
           emit(PathEnrolled(pathId: event.pathId, userId: event.userId));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error enrolling in path: $e');
-          emit(LearningPathError(e.toString()));
-        }
+        });
       },
       transformer: droppable(),
     );
@@ -227,17 +250,15 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     on<CompleteNodeEvent>(
       (event, emit) async {
         LogHandler.debug('[BLoC] CompleteNodeEvent: ${event.nodeId}');
+        emit(CompletingNode(event.nodeId));
         
-        try {
+        await _safeExecute(emit, 'complete node', () async {
           await completeNode(event.nodeId, event.userId);
           // Refetch node detail to get updated status
           final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
           LogHandler.debug('[BLoC] Node completed successfully');
           emit(NodeDetailLoaded(nodeDetail));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error completing node: $e');
-          emit(LearningPathError(e.toString()));
-        }
+        });
       },
       transformer: droppable(),
     );
@@ -247,8 +268,9 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     on<DeleteLearningPathEvent>(
       (event, emit) async {
         LogHandler.debug('[BLoC] DeleteLearningPathEvent: ${event.pathId}');
+        emit(DeletingLearningPath(event.pathId));
         
-        try {
+        await _safeExecute(emit, 'delete learning path', () async {
           await deleteLearningPath(event.pathId);
           LogHandler.info('[BLoC] Deleted path: ${event.pathId}');
           
@@ -270,10 +292,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           } else {
             emit(LearningPathDeleted('Learning path deleted successfully'));
           }
-        } catch (e) {
-          LogHandler.error('[BLoC] Error deleting learning path: $e');
-          emit(LearningPathError(e.toString()));
-        }
+        });
       },
       transformer: droppable(),
     );
@@ -281,16 +300,13 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     on<DeleteNodeEvent>(
       (event, emit) async {
         LogHandler.debug('[BLoC] DeleteNodeEvent: ${event.nodeId}');
-        emit(LearningPathLoading());
+        emit(DeletingNode(event.nodeId));
 
-        try {
+        await _safeExecute(emit, 'delete node', () async {
           await deleteNodeUseCase(event.nodeId);
           LogHandler.info('[BLoC] Deleted node: ${event.nodeId}');
           emit(NodeDeleted(event.nodeId));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error deleting node: $e');
-          emit(LearningPathError(e.toString()));
-        }
+        });
       },
       transformer: droppable(),
     );
@@ -300,9 +316,9 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     on<CreateLearningPathEvent>(
       (event, emit) async {
         LogHandler.debug('[BLoC] CreateLearningPathEvent received');
-        emit(LearningPathLoading());
+        emit(CreatingLearningPath());
 
-        try {
+        await _safeExecute(emit, 'create learning path', () async {
           final learningPath = CreateLearningPath(
             title: event.title,
             objective: event.objective,
@@ -316,10 +332,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           final pathId = await createLearningPathUseCase(learningPath);
           LogHandler.debug('[BLoC] Learning path created: $pathId');
           emit(LearningPathCreated(pathId));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error creating learning path: $e');
-          emit(LearningPathError(e.toString()));
-        }
+        });
       },
       transformer: droppable(),
     );
@@ -328,9 +341,9 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
       (event, emit) async {
         LogHandler.debug('[BLoC] GenerateNodesWithAIEvent received');
         LogHandler.debug('Topic: ${event.topic}');
-        emit(LearningPathLoading());
+        emit(GeneratingNodesWithAI());
 
-        try {
+        await _safeExecute(emit, 'generate nodes with AI', () async {
           LogHandler.debug('Generating nodes with AI...');
           final response = await generateNodesWithAIUseCase(event.topic);
           LogHandler.debug('[BLoC] Generated ${response.nodes.length} nodes');
@@ -338,10 +351,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             topic: response.topic,
             nodes: response.nodes,
           ));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error generating nodes: $e');
-          emit(LearningPathError(e.toString()));
-        }
+        });
       },
       transformer: restartable(),
     );
@@ -349,9 +359,9 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     on<CreateNodeEvent>(
       (event, emit) async {
         LogHandler.debug('[BLoC] CreateNodeEvent received');
-        emit(LearningPathLoading());
+        emit(CreatingNode());
 
-        try {
+        await _safeExecute(emit, 'create node', () async {
           final node = CreateNode(
             title: event.title,
             description: event.description,
@@ -372,10 +382,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
           LogHandler.debug('[BLoC] Node created: $nodeId');
           emit(NodeCreated(nodeId));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error creating node: $e');
-          emit(LearningPathError(e.toString()));
-        }
+        });
       },
       transformer: droppable(),
     );
@@ -403,9 +410,9 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
       (event, emit) async {
         LogHandler.debug('[BLoC] UpdateNodeEvent received');
         LogHandler.debug('Node ID: ${event.nodeId}');
-        emit(LearningPathLoading());
+        emit(UpdatingNode(event.nodeId));
 
-        try {
+        await _safeExecute(emit, 'update node', () async {
           LogHandler.debug('Updating node...');
           await updateNodeUseCase(
             event.nodeId,
@@ -416,10 +423,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           );
           LogHandler.debug('[BLoC] Node updated: ${event.nodeId}');
           emit(NodeUpdated(event.nodeId));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error updating node: $e');
-          emit(LearningPathError(e.toString()));
-        }
+        });
       },
       transformer: droppable(),
     );
@@ -428,9 +432,9 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
       (event, emit) async {
         LogHandler.debug('[BLoC] UpdateLearningPathEvent received');
         LogHandler.debug('Path ID: ${event.pathId}');
-        emit(LearningPathLoading());
+        emit(UpdatingLearningPath(event.pathId));
 
-        try {
+        await _safeExecute(emit, 'update learning path', () async {
           LogHandler.debug('Updating learning path...');
           await updateLearningPathUseCase(
             event.pathId,
@@ -442,10 +446,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           );
           LogHandler.debug('[BLoC] Learning path updated: ${event.pathId}');
           emit(LearningPathUpdated(event.pathId));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error updating learning path: $e');
-          emit(LearningPathError(e.toString()));
-        }
+        });
       },
       transformer: droppable(),
     );

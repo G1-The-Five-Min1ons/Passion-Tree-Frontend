@@ -7,7 +7,50 @@ abstract class LearningPathState {}
 
 class LearningPathInitial extends LearningPathState {}
 
+/// Global loading state - use only when necessary
 class LearningPathLoading extends LearningPathState {}
+
+/// Operation-specific loading states
+class DeletingLearningPath extends LearningPathState {
+  final String pathId;
+  DeletingLearningPath(this.pathId);
+}
+
+class DeletingNode extends LearningPathState {
+  final String nodeId;
+  DeletingNode(this.nodeId);
+}
+
+class EnrollingPath extends LearningPathState {
+  final String pathId;
+  EnrollingPath(this.pathId);
+}
+
+class StartingNode extends LearningPathState {
+  final String nodeId;
+  StartingNode(this.nodeId);
+}
+
+class CompletingNode extends LearningPathState {
+  final String nodeId;
+  CompletingNode(this.nodeId);
+}
+
+class CreatingLearningPath extends LearningPathState {}
+
+class CreatingNode extends LearningPathState {}
+
+class UpdatingNode extends LearningPathState {
+  final String nodeId;
+  UpdatingNode(this.nodeId);
+}
+
+class UpdatingLearningPath extends LearningPathState {
+  final String pathId;
+  UpdatingLearningPath(this.pathId);
+}
+
+class GeneratingNodesWithAI extends LearningPathState {}
 
 class LearningPathLoaded extends LearningPathState {
   final List<LearningPath> paths;
