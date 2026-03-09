@@ -94,10 +94,8 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
       body: SafeArea(
         child: BlocListener<LearningPathBloc, LearningPathState>(
           listener: (context, state) {
-            // Refetch overview when node is completed, path is enrolled, or path is updated/published
-            if (state is NodeDetailLoaded || 
-                state is PathEnrolled || 
-                state is LearningPathUpdated) {
+            // Refetch overview when node is completed or path is enrolled
+            if (state is NodeDetailLoaded || state is PathEnrolled) {
               if (userId != null && userId!.isNotEmpty) {
                 // Add a small delay to ensure backend is updated
                 Future.delayed(const Duration(milliseconds: 500), () {
