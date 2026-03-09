@@ -42,19 +42,11 @@ class AuthMapper {
   }
 
   static UserProfile toUserProfileEntity(Map<String, dynamic> responseMap) {
-    try {
-      final data = _extractDataField(responseMap);
-      final user = _parseUser(data);
-      final profile = _parseProfile(data);
+    final data = _extractDataField(responseMap);
+    final user = _parseUser(data);
+    final profile = _parseProfile(data);
 
-      return UserProfile(user: user, profile: profile);
-    } catch (e) {
-      if (e is ParseException) rethrow;
-      throw ParseException(
-        message: 'Failed to parse UserProfile from response: $e',
-        originalError: e,
-      );
-    }
+    return UserProfile(user: user, profile: profile);
   }
 
   static Map<String, dynamic> _extractDataField(Map<String, dynamic> response) {

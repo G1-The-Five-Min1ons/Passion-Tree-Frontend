@@ -10,7 +10,8 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/core/services/upload_service.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_profile_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/update_account_settings_usecase.dart';
 
 class AccountSettingsSection extends StatefulWidget {
   const AccountSettingsSection({super.key});
@@ -33,7 +34,9 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
   bool _isSaving = false;
   bool _isEditing = false;
 
-  final IAuthRepository _authRepository = getIt<IAuthRepository>();
+  final GetProfileUseCase _getProfileUseCase = getIt<GetProfileUseCase>();
+  final UpdateAccountSettingsUseCase _updateAccountSettingsUseCase =
+      getIt<UpdateAccountSettingsUseCase>();
   final UploadApiService _uploadService = getIt<UploadApiService>();
   final ImagePicker _imagePicker = ImagePicker();
   File? _selectedAvatarFile;
@@ -71,37 +74,40 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
 
   Future<void> _loadAccountSettings() async {
     LogHandler.separator(title: 'SETTINGS · LOAD ACCOUNT');
-    try {
-      final userProfile = await _authRepository.getProfile();
+    
+    final result = await _getProfileUseCase.execute();
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      setState(() {
-        _firstName = userProfile.user.firstName;
-        _lastName = userProfile.user.lastName;
-        _username = userProfile.user.username;
-        _email = userProfile.user.email;
-        _location = userProfile.profile?.location ?? '';
-        _bio = userProfile.profile?.bio ?? '';
-        _avatarUrl = userProfile.profile?.avatarUrl ?? '';
+    result.fold(
+      (failure) {
+        setState(() => _isLoading = false);
+        LogHandler.error('Failed to load account settings: ${failure.message}');
+      },
+      (userProfile) {
+        setState(() {
+          _firstName = userProfile.user.firstName;
+          _lastName = userProfile.user.lastName;
+          _username = userProfile.user.username;
+          _email = userProfile.user.email;
+          _location = userProfile.profile?.location ?? '';
+          _bio = userProfile.profile?.bio ?? '';
+          _avatarUrl = userProfile.profile?.avatarUrl ?? '';
 
-        _firstNameCtrl.text = _firstName;
-        _lastNameCtrl.text = _lastName;
-        _usernameCtrl.text = _username;
-        _emailCtrl.text = _email;
-        _locationCtrl.text = _location;
-        _bioCtrl.text = _bio;
+          _firstNameCtrl.text = _firstName;
+          _lastNameCtrl.text = _lastName;
+          _usernameCtrl.text = _username;
+          _emailCtrl.text = _email;
+          _locationCtrl.text = _location;
+          _bioCtrl.text = _bio;
 
-        _isLoading = false;
-      });
+          _isLoading = false;
+        });
 
-      LogHandler.info('Account settings loaded from backend');
-      LogHandler.success('SETTINGS · LOAD ACCOUNT completed');
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      LogHandler.error('Failed to load account settings: $e');
-    }
+        LogHandler.info('Account settings loaded from backend');
+        LogHandler.success('SETTINGS · LOAD ACCOUNT completed');
+      },
+    );
   }
 
   Future<void> _save() async {
@@ -124,41 +130,57 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
         LogHandler.success('SETTINGS · Avatar uploaded successfully');
       }
 
-      await _authRepository.updateAccountSettings(
+      final locationValue = _locationCtrl.text.trim();
+      final bioValue = _bioCtrl.text.trim();
+
+      final result = await _updateAccountSettingsUseCase.execute(
         username: _usernameCtrl.text.trim(),
         firstName: _firstNameCtrl.text.trim(),
         lastName: _lastNameCtrl.text.trim(),
-        location: _locationCtrl.text.trim(),
-        bio: _bioCtrl.text.trim(),
-        avatarUrl: uploadedAvatarUrl ?? _avatarUrl,
+        location: locationValue.isNotEmpty ? locationValue : null,
+        bio: bioValue.isNotEmpty ? bioValue : null,
+        avatarUrl: uploadedAvatarUrl ?? (_avatarUrl.isNotEmpty ? _avatarUrl : null),
       );
 
       if (!mounted) return;
 
-      setState(() {
-        _firstName = _firstNameCtrl.text.trim();
-        _lastName = _lastNameCtrl.text.trim();
-        _username = _usernameCtrl.text.trim();
-        _location = _locationCtrl.text.trim();
-        _bio = _bioCtrl.text.trim();
-        _avatarUrl = uploadedAvatarUrl ?? _avatarUrl;
-        _selectedAvatarFile = null;
-        _isEditing = false;
-        _isSaving = false;
-      });
+      result.fold(
+        (failure) {
+          setState(() => _isSaving = false);
+          LogHandler.error('Failed to update account settings: ${failure.message}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update settings: ${failure.message}'),
+              backgroundColor: AppColors.cancel,
+            ),
+          );
+        },
+        (_) {
+          setState(() {
+            _firstName = _firstNameCtrl.text.trim();
+            _lastName = _lastNameCtrl.text.trim();
+            _username = _usernameCtrl.text.trim();
+            _location = locationValue;
+            _bio = bioValue;
+            _avatarUrl = uploadedAvatarUrl ?? _avatarUrl;
+            _selectedAvatarFile = null;
+            _isEditing = false;
+            _isSaving = false;
+          });
 
-      LogHandler.info(
-        'Account settings updated from settings page: '
-        'firstName=$_firstName, lastName=$_lastName, '
-        'username=$_username, location=$_location, bio=$_bio, avatar=$_avatarUrl',
-      );
-      LogHandler.success('SETTINGS · SAVE ACCOUNT completed');
+          LogHandler.info(
+            'Account settings updated from settings page: '
+            'firstName=$_firstName, lastName=$_lastName, '
+            'username=$_username, location=$_location, bio=$_bio, avatar=$_avatarUrl',
+          );
+          LogHandler.success('SETTINGS · SAVE ACCOUNT completed');
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Settings updated successfully'),
-        ),
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Settings updated successfully'),
+            ),
+          );
+        },
       );
     } catch (e) {
       if (!mounted) return;

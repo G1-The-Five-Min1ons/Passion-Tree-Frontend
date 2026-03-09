@@ -43,8 +43,8 @@ class UpdateAccountSettingsUseCase {
         username: username,
         firstName: firstName,
         lastName: lastName,
-        location: location ?? '',
-        bio: bio ?? '',
+        location: location,
+        bio: bio,
         avatarUrl: avatarUrl,
         phoneNumber: phoneNumber,
       );

@@ -157,8 +157,8 @@ class AuthRepositoryImpl implements IAuthRepository {
     required String username,
     required String firstName,
     required String lastName,
-    required String location,
-    required String bio,
+    String? location,
+    String? bio,
     String? avatarUrl,
     String? phoneNumber,
   }) async {

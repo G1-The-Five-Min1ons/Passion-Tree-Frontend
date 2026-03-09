@@ -79,10 +79,15 @@ class Profile {
     if (value is String) {
       final parsed = int.tryParse(value);
       if (parsed != null) return parsed;
+      
+      // If parsing fails, throw descriptive error
+      throw ParseException(
+        message: 'Cannot parse "$value" as int for field $fieldName',
+      );
     }
 
     throw ParseException(
-      message: 'Invalid type for $fieldName: expected int but got ${value.runtimeType}',
+      message: 'Invalid type for $fieldName: expected int/double/String but got ${value.runtimeType}',
     );
   }
 
