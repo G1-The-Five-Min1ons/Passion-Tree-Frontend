@@ -29,10 +29,11 @@ class TeacherCreateTab extends StatefulWidget {
 class _TeacherCreateTabState extends State<TeacherCreateTab> {
   int inProgressShown = 2;
   int completedShown = 2;
-  
+
   // Cached filtered lists to avoid re-filtering on every build
   List<LearningPath> _draftPaths = [];
   List<LearningPath> _publishedPaths = [];
+  final IAuthRepository _authRepository = getIt<IAuthRepository>();
 
   @override
   void initState() {
@@ -62,7 +63,17 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     // Filter paths by creatorId (only show user's own paths)
     final userPaths = widget.allPaths
         .where((path) => path.creatorId == widget.userId)
-  final IAuthRepository _authRepository = getIt<IAuthRepository>();
+        .toList();
+
+    // Separate by publish status
+    _draftPaths = userPaths
+        .where((path) => path.publishStatus.toLowerCase() == 'draft')
+        .toList();
+
+    _publishedPaths = userPaths
+        .where((path) => path.publishStatus.toLowerCase() == 'published')
+        .toList();
+  }
 
   Future<void> _onCreatePressed() async {
     try {
@@ -93,25 +104,6 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
-    // Filter paths by publishStatus
-    final inProgressCourses = widget.allPaths
-        .where((path) => path.publishStatus == "draft")
-        .toList();
-
-    // Separate by publish status
-    _draftPaths = userPaths
-        .where((path) => path.publishStatus.toLowerCase() == "draft")
-        .toList();
-    
-    _publishedPaths = userPaths
-        .where((path) => path.publishStatus.toLowerCase() == "published")
-        .toList();
-  }
-
   Future<void> _confirmDeletePath(LearningPath path) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
@@ -120,17 +112,6 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
           title: const Text('Delete Learning Path'),
           content: Text(
             'Are you sure you want to delete "${path.title}"?',
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ===== Add button (top right) =====
-        Align(
-          alignment: Alignment.centerRight,
-          child: AppButton(
-            variant: AppButtonVariant.iconOnly,
-            icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
-            onPressed: _onCreatePressed,
           ),
           actions: [
             TextButton(
@@ -290,13 +271,12 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
 
   @override
   Widget build(BuildContext context) {
-
     final colors = Theme.of(context).colorScheme;
-    
+
     // Use cached filtered lists instead of filtering on every build
     final inProgressCourses = _draftPaths;
     final completedCourses = _publishedPaths;
-  
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -306,18 +286,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
           child: AppButton(
             variant: AppButtonVariant.iconOnly,
             icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
-            onPressed: () {
-              final bloc = context.read<LearningPathBloc>();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BlocProvider.value(
-                    value: bloc,
-                    child: const CreateLearningPathInputPage(),
-                  ),
-                ),
-              );
-            },
+            onPressed: _onCreatePressed,
           ),
         ),
 
@@ -354,7 +323,6 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
           },
           emptyMessage: 'No published paths found',
         ),
-
       ],
     );
   }
