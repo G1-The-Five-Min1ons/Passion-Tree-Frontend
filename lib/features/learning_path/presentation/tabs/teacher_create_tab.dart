@@ -113,6 +113,134 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     );
   }
 
+  /// Build section header with title and status
+  Widget _buildSectionHeader(String status, Color statusColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'My Learning Paths',
+          style: AppPixelTypography.title.copyWith(
+            color: Theme.of(context).colorScheme.onPrimary,
+          ),
+        ),
+        const SizedBox(height: 20),
+        RichText(
+          text: TextSpan(
+            style: AppPixelTypography.smallTitle.copyWith(
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
+            children: [
+              const TextSpan(text: 'Status : '),
+              TextSpan(
+                text: status,
+                style: TextStyle(color: statusColor),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 40),
+      ],
+    );
+  }
+
+  /// Build path grid with empty state and show more button
+  Widget _buildPathGrid({
+    required List<LearningPath> paths,
+    required int shownCount,
+    required VoidCallback onShowMore,
+    required String emptyMessage,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+
+    if (paths.isEmpty) {
+      return Center(
+        child: Text(
+          emptyMessage,
+          style: AppTypography.subtitleSemiBold.copyWith(
+            color: colors.onPrimary,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: paths.length < shownCount ? paths.length : shownCount,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 220,
+            mainAxisSpacing: 35,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.692,
+          ),
+          itemBuilder: (context, index) {
+            return PixelCourseCard(
+              course: paths[index],
+              showMoreIcon: true,
+              onCardTap: () {
+                final bloc = context.read<LearningPathBloc>();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: bloc,
+                      child: TeacherNodesOverviewPage(
+                        title: paths[index].title,
+                        pathId: paths[index].id,
+                      ),
+                    ),
+                  ),
+                );
+              },
+              onEdit: () {
+                final bloc = context.read<LearningPathBloc>();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: bloc,
+                      child: CreateLearningPathInputPage(
+                        existingPath: paths[index],
+                      ),
+                    ),
+                  ),
+                );
+              },
+              onDelete: () {
+                _confirmDeletePath(paths[index]);
+              },
+            );
+          },
+        ),
+        if (shownCount < paths.length)
+          Padding(
+            padding: const EdgeInsets.only(top: 40),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'More',
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: colors.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  NavigationButton(
+                    direction: NavigationDirection.down,
+                    onPressed: onShowMore,
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -151,238 +279,34 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
         // =====================================================
         // My Learning Paths - Drafts
         // =====================================================
-        Text(
-          'My Learning Paths',
-          style: AppPixelTypography.title.copyWith(color: colors.onPrimary),
+        _buildSectionHeader('Drafts', colors.secondary),
+        _buildPathGrid(
+          paths: inProgressCourses,
+          shownCount: inProgressShown,
+          onShowMore: () {
+            setState(() {
+              inProgressShown += 2;
+            });
+          },
+          emptyMessage: 'No in-progress paths found',
         ),
 
-        const SizedBox(height: 20),
-
-        RichText(
-          text: TextSpan(
-            style: AppPixelTypography.smallTitle.copyWith(
-              color: colors.onPrimary,
-            ),
-            children: [
-              const TextSpan(text: 'Status : '),
-              TextSpan(
-                text: 'Drafts',
-                style: AppPixelTypography.smallTitle.copyWith(
-                  color: colors.secondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 40),
-
-        if (inProgressCourses.isEmpty)
-          Center(
-            child: Text(
-              'No in-progress paths found',
-              style: AppTypography.subtitleSemiBold.copyWith(
-                color: colors.onPrimary,
-              ),
-            ),
-          )
-        else
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: inProgressCourses.length < inProgressShown
-                ? inProgressCourses.length
-                : inProgressShown,
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 220,
-              mainAxisSpacing: 35,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.692,
-            ),
-
-            itemBuilder: (context, index) {
-              return PixelCourseCard(
-                course: inProgressCourses[index],
-                showMoreIcon: true,
-                onCardTap: () {
-                  final bloc = context.read<LearningPathBloc>();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: bloc,
-                        child: TeacherNodesOverviewPage(
-                          title: inProgressCourses[index].title,
-                          pathId: inProgressCourses[index].id,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                onEdit: () {
-                  final bloc = context.read<LearningPathBloc>();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: bloc,
-                        child: CreateLearningPathInputPage(
-                          existingPath: inProgressCourses[index],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                onDelete: () {
-                  _confirmDeletePath(inProgressCourses[index]);
-                },
-              );
-            },
-          ),
-
-        if (inProgressShown < inProgressCourses.length)
-          Padding(
-            padding: const EdgeInsets.only(top: 40),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'More',
-                    style: AppPixelTypography.smallTitle.copyWith(
-                      color: colors.onPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  NavigationButton(
-                    direction: NavigationDirection.down,
-                    onPressed: () {
-                      setState(() {
-                        inProgressShown += 2;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
         const SizedBox(height: 60),
 
         // =====================================================
         // My Learning Paths - Published
         // =====================================================
-        Text(
-          'My Learning Paths',
-          style: AppPixelTypography.title.copyWith(color: colors.onPrimary),
+        _buildSectionHeader('Published', AppColors.status),
+        _buildPathGrid(
+          paths: completedCourses,
+          shownCount: completedShown,
+          onShowMore: () {
+            setState(() {
+              completedShown += 2;
+            });
+          },
+          emptyMessage: 'No published paths found',
         ),
-
-        const SizedBox(height: 20),
-
-        RichText(
-          text: TextSpan(
-            style: AppPixelTypography.smallTitle.copyWith(
-              color: colors.onPrimary,
-            ),
-            children: const [
-              TextSpan(text: 'Status : '),
-              TextSpan(
-                text: 'Published',
-                style: TextStyle(color: AppColors.status),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 40),
-
-        if (completedCourses.isEmpty)
-          Center(
-            child: Text(
-              'No published paths found',
-              style: AppTypography.subtitleSemiBold.copyWith(
-                color: colors.onPrimary,
-              ),
-            ),
-          )
-        else
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: completedCourses.length < completedShown
-                ? completedCourses.length
-                : completedShown,
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 220,
-              mainAxisSpacing: 35,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.692,
-            ),
-            itemBuilder: (context, index) {
-              return PixelCourseCard(
-                course: completedCourses[index],
-                showMoreIcon: true,
-                onCardTap: () {
-                  final bloc = context.read<LearningPathBloc>();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: bloc,
-                        child: TeacherNodesOverviewPage(
-                          title: completedCourses[index].title,
-                          pathId: completedCourses[index].id,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                onEdit: () {
-                  final bloc = context.read<LearningPathBloc>();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: bloc,
-                        child: CreateLearningPathInputPage(
-                          existingPath: completedCourses[index],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                onDelete: () {
-                  _confirmDeletePath(completedCourses[index]);
-                },
-              );
-            },
-          ),
-
-        if (completedShown < completedCourses.length)
-          Padding(
-            padding: const EdgeInsets.only(top: 40),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'More',
-                    style: AppPixelTypography.smallTitle.copyWith(
-                      color: colors.onPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  NavigationButton(
-                    direction: NavigationDirection.down,
-                    onPressed: () {
-                      setState(() {
-                        completedShown += 2;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
 
       ],
     );
