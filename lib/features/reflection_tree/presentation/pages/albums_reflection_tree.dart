@@ -72,8 +72,13 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
             );
           }
         },
-        builder: (context, state) {
+        builder: (context, state) {        
+          final key = state is AlbumsLoaded 
+              ? ValueKey('albums_${state.albums.length}_${state.albums.map((a) => a.albumId).join('_')}')
+              : const ValueKey('no_albums');
+          
           return CustomScrollView(
+            key: key,
             slivers: [
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xmargin)
@@ -142,7 +147,14 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
       if (state.currentAlbums != null && state.currentAlbums!.isNotEmpty) {
         return _buildAlbumList(context, state.currentAlbums!);
       } else {
-        return _buildEmptyState(context);
+        return SliverFillRemaining(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(50.0),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        );
       }
     }
 

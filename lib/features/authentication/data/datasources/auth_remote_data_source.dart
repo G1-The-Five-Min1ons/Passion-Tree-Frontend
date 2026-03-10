@@ -16,6 +16,10 @@ import 'package:passion_tree_frontend/features/authentication/data/models/change
 import 'package:passion_tree_frontend/features/authentication/data/models/native_google_signin_response.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/native_discord_signin_response.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/select_role_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/update_user_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/update_profile_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/apply_teacher_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/teacher_verification_status_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<RegisterResponse> register(RegisterRequest request);
@@ -25,19 +29,25 @@ abstract class AuthRemoteDataSource {
   Future<void> forgotPassword(ForgotPasswordRequest request);
   Future<void> resetPassword(ResetPasswordRequest request);
   Future<Map<String, dynamic>> getProfile(String token);
+  Future<void> updateUser(String token, UpdateUserRequest request);
+  Future<void> updateProfile(String token, UpdateProfileRequest request);
   Future<void> changePassword(String token, ChangePasswordRequest request);
   Future<void> deleteUser(String token);
   Future<NativeGoogleSignInResponse> nativeGoogleSignIn(String idToken);
   Future<NativeDiscordSignInResponse> nativeDiscordSignIn(String code);
   Future<VerifyEmailResponse> refreshToken(String refreshTokenValue);
   Future<void> selectRole(String token, SelectRoleRequest request);
+  Future<TeacherVerificationStatusModel> getTeacherVerificationStatus(
+    String token,
+  );
+  Future<void> applyForTeacher(String token, ApplyTeacherRequest request);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final ApiHandler _apiHandler;
 
   AuthRemoteDataSourceImpl({ApiHandler? apiHandler})
-      : _apiHandler = apiHandler ?? ApiHandler();
+    : _apiHandler = apiHandler ?? ApiHandler();
 
   @override
   Future<RegisterResponse> register(RegisterRequest request) async {
@@ -118,7 +128,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> resendVerificationEmail(ResendVerificationRequest request) async {
+  Future<void> resendVerificationEmail(
+    ResendVerificationRequest request,
+  ) async {
     LogHandler.separator(title: 'AUTH REMOTE · RESEND VERIFICATION');
     final response = await _apiHandler.post(
       url: ApiConfig.authResendVerification,
@@ -185,7 +197,42 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> changePassword(String token, ChangePasswordRequest request) async {
+  Future<void> updateUser(String token, UpdateUserRequest request) async {
+    LogHandler.separator(title: 'AUTH REMOTE · UPDATE USER');
+    final response = await _apiHandler.put(
+      url: ApiConfig.authUpdateUser,
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode(request.toJson()),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('User info updated');
+      return;
+    }
+    throw _handleError(response, 'updateUser');
+  }
+
+  @override
+  Future<void> updateProfile(String token, UpdateProfileRequest request) async {
+    LogHandler.separator(title: 'AUTH REMOTE · UPDATE PROFILE');
+    final response = await _apiHandler.put(
+      url: ApiConfig.authUpdateProfile,
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode(request.toJson()),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Profile info updated');
+      return;
+    }
+    throw _handleError(response, 'updateProfile');
+  }
+
+  @override
+  Future<void> changePassword(
+    String token,
+    ChangePasswordRequest request,
+  ) async {
     LogHandler.separator(title: 'AUTH REMOTE · CHANGE PASSWORD');
     final response = await _apiHandler.put(
       url: ApiConfig.authChangePassword,
@@ -226,12 +273,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
     if (response.isSuccess) {
       try {
-        final data = _parseMap(response.data, 'response.data');
+        // Backend returns token and user at ROOT level (not under 'data'):
+        // { "success": true, "message": "...", "token": "...", "user": {...} }
+        final fullBody = _parseMap(response.rawBody, 'rawBody');
         LogHandler.success('Google sign-in successful');
         final raw = <String, dynamic>{
           'success': response.success,
-          'token': _parseString(data['token'], 'token'),
-          'user': data['user'],
+          'token': _parseString(fullBody['token'], 'token'),
+          'user': fullBody['user'],
         };
         return NativeGoogleSignInResponse.fromJson(raw);
       } catch (e) {
@@ -256,12 +305,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
     if (response.isSuccess) {
       try {
-        final data = _parseMap(response.data, 'response.data');
+        // Backend returns token and user at ROOT level (not under 'data'):
+        // { "success": true, "message": "...", "token": "...", "user": {...} }
+        final fullBody = _parseMap(response.rawBody, 'rawBody');
         LogHandler.success('Discord sign-in successful');
         final raw = <String, dynamic>{
           'success': response.success,
-          'token': _parseString(data['token'], 'token'),
-          'user': data['user'],
+          'token': _parseString(fullBody['token'], 'token'),
+          'user': fullBody['user'],
         };
         return NativeDiscordSignInResponse.fromJson(raw);
       } catch (e) {
@@ -330,6 +381,43 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     throw _handleError(response, 'selectRole');
   }
 
+  @override
+  Future<TeacherVerificationStatusModel> getTeacherVerificationStatus(
+    String token,
+  ) async {
+    LogHandler.separator(title: 'AUTH REMOTE · TEACHER VERIFICATION STATUS');
+    final response = await _apiHandler.get(
+      url: ApiConfig.authTeacherVerificationStatus,
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (response.isSuccess) {
+      final data = _parseMap(response.data, 'response.data');
+      return TeacherVerificationStatusModel.fromJson(data);
+    }
+
+    throw _handleError(response, 'getTeacherVerificationStatus');
+  }
+
+  @override
+  Future<void> applyForTeacher(
+    String token,
+    ApplyTeacherRequest request,
+  ) async {
+    LogHandler.separator(title: 'AUTH REMOTE · APPLY TEACHER');
+    final response = await _apiHandler.post(
+      url: ApiConfig.authApplyTeacher,
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode(request.toJson()),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (!response.isSuccess) {
+      throw _handleError(response, 'applyForTeacher');
+    }
+  }
+
   String _getUserFriendlyMessage(String backendError, String context) {
     final errorLower = backendError.toLowerCase();
     if (context == 'login') {
@@ -362,7 +450,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
     if (value is! Map<String, dynamic>) {
       throw ParseException(
-        message: 'Expected Map<String, dynamic> for "$fieldName" but received ${value.runtimeType}',
+        message:
+            'Expected Map<String, dynamic> for "$fieldName" but received ${value.runtimeType}',
       );
     }
     return value;
@@ -376,12 +465,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
     if (value is! String) {
       throw ParseException(
-        message: 'Expected String for "$fieldName" but received ${value.runtimeType}',
+        message:
+            'Expected String for "$fieldName" but received ${value.runtimeType}',
       );
     }
     if (value.isEmpty) {
       throw ParseException(
-        message: 'Expected non-empty String for "$fieldName" but received empty string',
+        message:
+            'Expected non-empty String for "$fieldName" but received empty string',
       );
     }
     return value;

@@ -27,23 +27,28 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     try {
+      // Go backend uses 'create_at'/'update_at', but standard JSON may use 'created_at'/'updated_at'
+      final createdAtRaw = json['created_at'] ?? json['create_at'];
+      final updatedAtRaw = json['updated_at'] ?? json['update_at'];
+
       return User(
         userId: json['user_id'] as String,
         username: json['username'] as String,
         email: json['email'] as String,
-        firstName: json['first_name'] as String,
-        lastName: json['last_name'] as String,
-        role: json['role'] as String,
-        heartCount: json['heart_count'] as int,
-        isEmailVerified: json['is_email_verified'] as bool,
-        createdAt: DateTime.parse(json['created_at'] as String),
-        updatedAt: DateTime.parse(json['updated_at'] as String),
+        firstName: json['first_name'] as String? ?? '',
+        lastName: json['last_name'] as String? ?? '',
+        role: json['role'] as String? ?? 'pending',
+        heartCount: (json['heart_count'] as int?) ?? 0,
+        isEmailVerified: json['is_email_verified'] as bool? ?? false,
+        createdAt: createdAtRaw != null
+            ? DateTime.tryParse(createdAtRaw as String) ?? DateTime.now()
+            : DateTime.now(),
+        updatedAt: updatedAtRaw != null
+            ? DateTime.tryParse(updatedAtRaw as String) ?? DateTime.now()
+            : DateTime.now(),
       );
     } catch (e) {
-      throw ParseException(
-        message: 'Failed to parse User',
-        originalError: e,
-      );
+      throw ParseException(message: 'Failed to parse User', originalError: e);
     }
   }
 

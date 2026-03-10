@@ -33,11 +33,20 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   final FlutterSecureStorage _secureStorage;
 
   AuthLocalDataSourceImpl({FlutterSecureStorage? secureStorage})
-      : _secureStorage = secureStorage ?? const FlutterSecureStorage();
+    : _secureStorage =
+          secureStorage ??
+          const FlutterSecureStorage(
+            aOptions: AndroidOptions(encryptedSharedPreferences: true),
+            iOptions: IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock,
+            ),
+          );
 
   @override
   Future<void> saveToken(String token) async {
+    print('AuthLocalDataSourceImpl: Writing token to secure storage...');
     await _secureStorage.write(key: _tokenKey, value: token);
+    print('AuthLocalDataSourceImpl: Finished writing token to secure storage.');
   }
 
   @override
@@ -126,7 +135,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
     // Clear sensitive tokens from secure storage
     await _secureStorage.delete(key: _tokenKey);
     await _secureStorage.delete(key: _refreshTokenKey);
-    
+
     // Clear general user data from SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userIdKey);
@@ -139,7 +148,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   Future<void> clearAll() async {
     // Clear all secure storage
     await _secureStorage.deleteAll();
-    
+
     // Clear all SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
@@ -13,16 +12,15 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/teache
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/features/setting/presentation/pages/teacher_verification_page.dart';
 
 class TeacherCreateTab extends StatefulWidget {
   final List<LearningPath> allPaths;
   final String? userId;
 
-  const TeacherCreateTab({
-    super.key,
-    required this.allPaths,
-    this.userId,
-  });
+  const TeacherCreateTab({super.key, required this.allPaths, this.userId});
 
   @override
   State<TeacherCreateTab> createState() => _TeacherCreateTabState();
@@ -64,6 +62,44 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     // Filter paths by creatorId (only show user's own paths)
     final userPaths = widget.allPaths
         .where((path) => path.creatorId == widget.userId)
+  final IAuthRepository _authRepository = getIt<IAuthRepository>();
+
+  Future<void> _onCreatePressed() async {
+    try {
+      final status = await _authRepository.getTeacherVerificationStatus();
+      if (!mounted) return;
+
+      if (!status.isVerified) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const TeacherVerificationPage(),
+          ),
+        );
+        return;
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const CreateLearningPathInputPage(),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to check verification status: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    // Filter paths by publishStatus
+    final inProgressCourses = widget.allPaths
+        .where((path) => path.publishStatus == "draft")
         .toList();
 
     // Separate by publish status
@@ -84,6 +120,17 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
           title: const Text('Delete Learning Path'),
           content: Text(
             'Are you sure you want to delete "${path.title}"?',
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ===== Add button (top right) =====
+        Align(
+          alignment: Alignment.centerRight,
+          child: AppButton(
+            variant: AppButtonVariant.iconOnly,
+            icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
+            onPressed: _onCreatePressed,
           ),
           actions: [
             TextButton(

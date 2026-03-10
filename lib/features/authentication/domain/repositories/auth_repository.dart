@@ -1,4 +1,5 @@
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/entities/teacher_verification_status.dart';
 
 abstract class IAuthRepository {
   /// Registers a new user. Returns user ID.
@@ -15,10 +16,7 @@ abstract class IAuthRepository {
   });
 
   /// Logs in and triggers OTP email. Returns success message.
-  Future<String> login({
-    required String identifier,
-    required String password,
-  });
+  Future<String> login({required String identifier, required String password});
 
   /// Verifies email OTP and saves tokens. Returns formatted message or user data if available.
   Future<void> verifyEmail(String code);
@@ -35,6 +33,17 @@ abstract class IAuthRepository {
   /// Returns [UserProfile] entity with user and optional profile data
   Future<UserProfile> getProfile();
 
+  /// Updates account settings in both user and profile tables
+  Future<void> updateAccountSettings({
+    required String username,
+    required String firstName,
+    required String lastName,
+    String? location,
+    String? bio,
+    String? avatarUrl,
+    String? phoneNumber,
+  });
+
   /// Changes password
   Future<void> changePassword(String oldPassword, String newPassword);
 
@@ -44,24 +53,18 @@ abstract class IAuthRepository {
   /// Logs out locally and optionally remotely
   Future<void> logout();
 
-  /// Performs Google Sign-In
-  Future<void> nativeGoogleSignIn(String idToken);
-
-  /// Performs Discord Sign-In
-  Future<void> nativeDiscordSignIn(String code);
-
   /// Validates if a role is selected (local check)
   Future<bool> hasSelectedRole();
-  
+
   /// Marks role as selected
   Future<void> markRoleSelected();
-  
+
   /// Saves the user role locally
   Future<void> saveUserRole(String role);
 
   /// Selects a role for the user via API and saves locally
   Future<void> selectRole(String role);
-  
+
   /// Checks if user is logged in
   Future<bool> isLoggedIn();
 
@@ -79,4 +82,30 @@ abstract class IAuthRepository {
 
   /// Clears authentication data (logout)
   Future<void> clearAuth();
+
+  /// Performs Google Sign-In and returns [UserProfile]
+  /// [idToken] is received from Google SDK in Flutter
+  Future<UserProfile> nativeGoogleSignIn(String idToken);
+
+  /// Performs Discord Sign-In and returns [UserProfile]
+  /// [code] is the authorization code from Discord OAuth2
+  Future<UserProfile> nativeDiscordSignIn(String code);
+
+  /// Performs Google Sign-In using google_sign_in package
+  /// Handles the complete flow: Google SDK login -> Backend verification
+  Future<void> signInWithGoogle();
+
+  /// Performs Discord Sign-In using authorization code
+  /// [code] is the authorization code from Discord OAuth2
+  Future<void> signInWithDiscord(String code);
+
+  /// Gets current teacher verification status for account gating.
+  Future<TeacherVerificationStatus> getTeacherVerificationStatus();
+
+  /// Submits teacher verification application with phone binding.
+  Future<void> applyForTeacher({
+    required String phoneNumber,
+    required String reason,
+    required String teachingHistory,
+  });
 }
