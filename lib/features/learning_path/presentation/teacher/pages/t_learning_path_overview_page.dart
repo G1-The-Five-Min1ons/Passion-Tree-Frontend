@@ -10,6 +10,8 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/tabs/t
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 enum TeacherLearningView { main, status }
 
@@ -31,8 +33,7 @@ class _TeacherLearningPathOverviewPageState
   int _activeTab = 0; // 0 = Learning, 1 = Create
   TeacherLearningView _learningView = TeacherLearningView.main;
 
-  static const String? mockUserId =
-      "8049de4b-ec43-40f8-b429-6fa5dcfd4351"; // Teacher user ID
+  String? _userId;
 
   // Cache overview data
   LearningPathOverviewLoaded? _cachedOverview;
@@ -40,10 +41,18 @@ class _TeacherLearningPathOverviewPageState
   @override
   void initState() {
     super.initState();
+    _loadOverviewData();
+  }
 
+  Future<void> _loadOverviewData() async {
+    final storedUserId = await getIt<IAuthRepository>().getUserId();
+    if (!mounted) return;
+    
+    setState(() => _userId = storedUserId);
+    
     // Fetch overview data from backend
     context.read<LearningPathBloc>().add(
-      FetchLearningPathOverview(userId: mockUserId),
+      FetchLearningPathOverview(userId: storedUserId),
     );
   }
 
@@ -70,8 +79,27 @@ class _TeacherLearningPathOverviewPageState
             : null,
       ),
       body: SafeArea(
-        child: BlocBuilder<LearningPathBloc, LearningPathState>(
-          builder: (context, state) {
+        child: BlocListener<LearningPathBloc, LearningPathState>(
+          listener: (context, state) {
+            // Refetch overview when learning path or node is created/updated
+            if (state is LearningPathCreated || 
+                state is NodeCreated || 
+                state is NodeUpdated ||
+                state is LearningPathUpdated) {
+              if (_userId != null && _userId!.isNotEmpty) {
+                // Add a small delay to ensure backend is updated
+                Future.delayed(const Duration(milliseconds: 500), () {
+                  if (mounted) {
+                    context.read<LearningPathBloc>().add(
+                      FetchLearningPathOverview(userId: _userId),
+                    );
+                  }
+                });
+              }
+            }
+          },
+          child: BlocBuilder<LearningPathBloc, LearningPathState>(
+            builder: (context, state) {
             // Cache overview data when loaded
             if (state is LearningPathOverviewLoaded) {
               _cachedOverview = state;
@@ -122,7 +150,10 @@ class _TeacherLearningPathOverviewPageState
                       if (_activeTab == 0) ...[
                         if (_learningView == TeacherLearningView.main)
                           TeacherLearningTab(
-                            allPaths: overviewData.allPaths,
+                            allPaths: overviewData.allPaths.where((path) {
+                              final status = path.publishStatus.toLowerCase().trim();
+                              return status == 'published' && status.isNotEmpty && status != 'null';
+                            }).toList(),
                             enrolledPaths: overviewData.enrolledPaths,
                             searchQuery: _searchQuery,
                             selectedCategory: null,
@@ -141,7 +172,7 @@ class _TeacherLearningPathOverviewPageState
                       ] else ...[
                         TeacherCreateTab(
                           allPaths: overviewData.allPaths,
-                          userId: mockUserId,
+                          userId: _userId,
                         ),
                       ],
 
@@ -154,6 +185,7 @@ class _TeacherLearningPathOverviewPageState
 
             return const SizedBox();
           },
+        ),
         ),
       ),
     );

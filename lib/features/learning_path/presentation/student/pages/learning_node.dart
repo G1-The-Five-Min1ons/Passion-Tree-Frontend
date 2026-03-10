@@ -9,12 +9,14 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 
 class LearningNodePage extends StatefulWidget {
   final String nodeId;
   final String? pathName;
   final int? totalNodes;
   final int? currentNodeSequence;
+  final String userId;
 
   const LearningNodePage({
     super.key,
@@ -22,6 +24,7 @@ class LearningNodePage extends StatefulWidget {
     this.pathName,
     this.totalNodes,
     this.currentNodeSequence,
+    required this.userId,
   });
 
   @override
@@ -29,23 +32,21 @@ class LearningNodePage extends StatefulWidget {
 }
 
 class _LearningNodePageState extends State<LearningNodePage> {
+  NodeDetail? _cachedNodeDetail;
+
   @override
   void initState() {
     super.initState();
 
-    // TODO: Get userId from authentication service
-    const userId =
-        'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
-
     // Start node when page loads
     LogHandler.info('Action: User joined learning node ${widget.nodeId}');
     context.read<LearningPathBloc>().add(
-      StartNodeEvent(nodeId: widget.nodeId, userId: userId),
+      StartNodeEvent(nodeId: widget.nodeId, userId: widget.userId),
     );
 
     // Fetch node detail when page loads
     context.read<LearningPathBloc>().add(
-      FetchNodeDetail(nodeId: widget.nodeId, userId: userId),
+      FetchNodeDetail(nodeId: widget.nodeId, userId: widget.userId),
     );
   }
 
@@ -56,17 +57,25 @@ class _LearningNodePageState extends State<LearningNodePage> {
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            if (state is LearningPathLoading || state is LearningPathInitial) {
+            // Cache node detail when loaded
+            if (state is NodeDetailLoaded) {
+              _cachedNodeDetail = state.nodeDetail;
+            }
+
+            // Show loading only if no cached data
+            if ((state is LearningPathLoading || state is LearningPathInitial) &&
+                _cachedNodeDetail == null) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is LearningPathError) {
+            if (state is LearningPathError && _cachedNodeDetail == null) {
               return Center(child: Text('Error: ${state.message}'));
             }
 
-            if (state is NodeDetailLoaded) {
-              final nodeDetail = state.nodeDetail;
+            // Use cached node detail
+            final nodeDetail = _cachedNodeDetail;
 
+            if (nodeDetail != null) {
               return SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.only(
@@ -85,12 +94,13 @@ class _LearningNodePageState extends State<LearningNodePage> {
                         materials: nodeDetail.materials,
                         status: nodeDetail.status,
                         videoUrl: nodeDetail.linkVdo,
-                        onTakeQuiz: () {
-                          Navigator.push(
+                        onTakeQuiz: () async {
+                          final bloc = context.read<LearningPathBloc>();
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => BlocProvider.value(
-                                value: context.read<LearningPathBloc>(),
+                                value: bloc,
                                 child: LearningPathQuizPage(
                                   nodeId: widget.nodeId,
                                   title: nodeDetail.title,
@@ -98,24 +108,36 @@ class _LearningNodePageState extends State<LearningNodePage> {
                                   totalNodes: widget.totalNodes,
                                   currentNodeSequence:
                                       widget.currentNodeSequence,
+                                  userId: widget.userId,
                                 ),
                               ),
                             ),
                           );
+                          // Refetch node detail after returning from quiz
+                          if (mounted) {
+                            bloc.add(FetchNodeDetail(
+                              nodeId: widget.nodeId,
+                              userId: widget.userId,
+                            ));
+                          }
                         },
                       ),
 
                       const SizedBox(height: 32),
 
                       /// ===== COMMENTS =====
-                      CommentsSection(nodeId: widget.nodeId),
+                      CommentsSection(
+                        nodeId: widget.nodeId,
+                        userId: widget.userId,
+                      ),
                     ],
                   ),
                 ),
               );
             }
 
-            return const Center(child: Text('Please select a learning path'));
+            // No node detail available
+            return const Center(child: CircularProgressIndicator());
           },
         ),
       ),

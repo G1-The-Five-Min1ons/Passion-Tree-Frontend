@@ -80,6 +80,7 @@ class FailureMapper {
         );
       case 403:
         return AuthFailure.forbidden(
+          message: exception.message,
           technicalMessage: exception.toString(),
         );
       default:
