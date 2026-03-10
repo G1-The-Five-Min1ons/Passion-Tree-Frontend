@@ -40,43 +40,43 @@ class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
   }
 
   List<NotificationPreference> get _notificationItems => [
-        NotificationPreference(
-          title: 'Platform updates',
-          subtitle:
-              'Get notified when new features, improvements, or important announcements are released.',
-          value: _notifications['platform'] ?? false,
-        ),
-        NotificationPreference(
-          title: 'My weekly progress report is ready',
-          subtitle:
-              'Receive a summary of your weekly performance and progress directly to your inbox.',
-          value: _notifications['weekly'] ?? false,
-        ),
-        NotificationPreference(
-          title: 'Daily reminders when I forgot to practice',
-          subtitle:
-              "Stay on track – get a gentle reminder if you miss your daily practice session.",
-          value: _notifications['daily'] ?? false,
-        ),
-        NotificationPreference(
-          title: 'Course recommendations for me',
-          subtitle:
-              'Get personalized course suggestions based on your goals and recent activity.',
-          value: _notifications['recommendations'] ?? false,
-        ),
-        NotificationPreference(
-          title: 'New comments on my learning paths',
-          subtitle:
-              'Receive alerts when learners leave comments or questions on your learning paths.',
-          value: _notifications['comments'] ?? false,
-        ),
-        NotificationPreference(
-          title: 'Enable web push notifications',
-          subtitle:
-              "Receive instant notifications from your browser, even when the website isn't open.",
-          value: _notifications['webPush'] ?? false,
-        ),
-      ];
+    NotificationPreference(
+      title: 'Platform updates',
+      subtitle:
+          'Get notified when new features, improvements, or important announcements are released.',
+      value: _notifications['platform'] ?? false,
+    ),
+    NotificationPreference(
+      title: 'My weekly progress report is ready',
+      subtitle:
+          'Receive a summary of your weekly performance and progress directly to your inbox.',
+      value: _notifications['weekly'] ?? false,
+    ),
+    NotificationPreference(
+      title: 'Daily reminders when I forgot to practice',
+      subtitle:
+          "Stay on track – get a gentle reminder if you miss your daily practice session.",
+      value: _notifications['daily'] ?? false,
+    ),
+    NotificationPreference(
+      title: 'Course recommendations for me',
+      subtitle:
+          'Get personalized course suggestions based on your goals and recent activity.',
+      value: _notifications['recommendations'] ?? false,
+    ),
+    NotificationPreference(
+      title: 'New comments on my learning paths',
+      subtitle:
+          'Receive alerts when learners leave comments or questions on your learning paths.',
+      value: _notifications['comments'] ?? false,
+    ),
+    NotificationPreference(
+      title: 'Enable web push notifications',
+      subtitle:
+          "Receive instant notifications from your browser, even when the website isn't open.",
+      value: _notifications['webPush'] ?? false,
+    ),
+  ];
 
   void _updateNotification(int index, bool value) {
     final key = _notifications.keys.elementAt(index);
@@ -85,20 +85,25 @@ class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
 
   @override
   Widget build(BuildContext context) {
-    return PixelBorderContainer(
-      pixelSize: 4,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Email Notifications',
-            style: AppTypography.titleSemiBold.copyWith(color: AppColors.title),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Email Notifications',
+          style: AppTypography.titleSemiBold.copyWith(
+            color: AppColors.textPrimary,
           ),
-          const SizedBox(height: 12),
-          ..._buildNotificationsList(),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+        PixelBorderContainer(
+          pixelSize: 4,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [..._buildNotificationsList()],
+          ),
+        ),
+      ],
     );
   }
 

@@ -33,13 +33,17 @@ class DangerZoneSection extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: AppTypography.h3SemiBold.copyWith(color: AppColors.textPrimary),
+                style: AppTypography.h3SemiBold.copyWith(
+                  color: AppColors.textPrimary,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 message,
-                style: AppTypography.bodyRegular.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.bodyRegular.copyWith(
+                  color: AppColors.textSecondary,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -74,7 +78,8 @@ class DangerZoneSection extends StatelessWidget {
     final confirm = await _showConfirmDialog(
       context,
       title: 'Sign out all devices',
-      message: 'This will revoke all active sessions and tokens. You will be signed out everywhere.',
+      message:
+          'This will revoke all active sessions and tokens. You will be signed out everywhere.',
       confirmLabel: 'Sign out all',
       confirmColor: AppColors.cancel,
     );
@@ -93,7 +98,8 @@ class DangerZoneSection extends StatelessWidget {
     await _showConfirmDialog(
       context,
       title: 'Deactivate account',
-      message: 'Temporarily disable your account. It can be reactivated within 14 days.',
+      message:
+          'Temporarily disable your account. It can be reactivated within 14 days.',
       confirmLabel: 'Deactivate',
       confirmColor: AppColors.warning,
     );
@@ -103,7 +109,8 @@ class DangerZoneSection extends StatelessWidget {
     await _showConfirmDialog(
       context,
       title: 'Delete account',
-      message: 'Permanently delete your account and all data. This cannot be undone.',
+      message:
+          'Permanently delete your account and all data. This cannot be undone.',
       confirmLabel: 'Delete',
       confirmColor: AppColors.cancel,
     );
@@ -111,53 +118,52 @@ class DangerZoneSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.cancel, width: 2),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Danger Zone',
-            style: AppTypography.titleSemiBold.copyWith(color: AppColors.cancel),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Danger Zone',
+          style: AppTypography.titleSemiBold.copyWith(color: AppColors.cancel),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.cancel, width: 2),
+            borderRadius: BorderRadius.circular(4),
           ),
-          const SizedBox(height: 16),
-          _buildDangerRow(
-            title: 'Export data',
-            subtitle: 'Download all your account data and learning progress',
-            buttonLabel: 'Export',
-            buttonColor: AppColors.primaryBrand,
-            onTap: () {},
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Divider(color: AppColors.cardBorder, height: 20),
+              _buildDangerRow(
+                title: 'Sign out all devices',
+                subtitle: 'Revoke all active sessions and tokens',
+                buttonLabel: 'sign-out all',
+                buttonColor: AppColors.surface,
+                onTap: () => _handleSignOutAll(context),
+              ),
+              const Divider(color: AppColors.cardBorder, height: 20),
+              _buildDangerRow(
+                title: 'Deactivate account',
+                subtitle:
+                    'Temporarily disable your account (can be reactivated within 14 days)',
+                buttonLabel: 'Deactivate',
+                buttonColor: AppColors.surface,
+                onTap: () => _handleDeactivate(context),
+              ),
+              const Divider(color: AppColors.cardBorder, height: 20),
+              _buildDangerRow(
+                title: 'Delete account',
+                subtitle: 'Permanently delete your account and all data',
+                buttonLabel: 'Delete',
+                buttonColor: AppColors.cancel,
+                onTap: () => _handleDelete(context),
+              ),
+            ],
           ),
-          const Divider(color: AppColors.cardBorder, height: 20),
-          _buildDangerRow(
-            title: 'Sign out all devices',
-            subtitle: 'Revoke all active sessions and tokens',
-            buttonLabel: 'sign-out all',
-            buttonColor: AppColors.surface,
-            onTap: () => _handleSignOutAll(context),
-          ),
-          const Divider(color: AppColors.cardBorder, height: 20),
-          _buildDangerRow(
-            title: 'Deactivate account',
-            subtitle: 'Temporarily disable your account (can be reactivated within 14 days)',
-            buttonLabel: 'Deactivate',
-            buttonColor: AppColors.surface,
-            onTap: () => _handleDeactivate(context),
-          ),
-          const Divider(color: AppColors.cardBorder, height: 20),
-          _buildDangerRow(
-            title: 'Delete account',
-            subtitle: 'Permanently delete your account and all data',
-            buttonLabel: 'Delete',
-            buttonColor: AppColors.cancel,
-            onTap: () => _handleDelete(context),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -177,12 +183,16 @@ class DangerZoneSection extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: AppTypography.subtitleMedium.copyWith(color: AppColors.cancel),
+                style: AppTypography.subtitleMedium.copyWith(
+                  color: AppColors.cancel,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: AppTypography.smallBodyRegular.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.smallBodyRegular.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
           ),

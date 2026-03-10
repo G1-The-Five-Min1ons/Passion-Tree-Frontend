@@ -58,9 +58,8 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
       (profile) {
         final role = roleResult.fold(
           (failure) => profile.user.role,
-          (role) => (role == null || role.trim().isEmpty)
-              ? profile.user.role
-              : role,
+          (role) =>
+              (role == null || role.trim().isEmpty) ? profile.user.role : role,
         );
 
         setState(() {
@@ -88,13 +87,10 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
     if (profile == null) {
       final profileResult = await _getProfileUseCase.execute();
       var failed = false;
-      profileResult.fold(
-        (failure) {
-          _showErrorMessage('Failed to load profile: ${failure.message}');
-          failed = true;
-        },
-        (loadedProfile) => profile = loadedProfile,
-      );
+      profileResult.fold((failure) {
+        _showErrorMessage('Failed to load profile: ${failure.message}');
+        failed = true;
+      }, (loadedProfile) => profile = loadedProfile);
 
       if (failed || profile == null) return;
     }
@@ -126,54 +122,61 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
 
   void _showErrorMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _showSuccessMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
-    return PixelBorderContainer(
-      pixelSize: 4,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Account Preferences',
-            style: AppTypography.titleSemiBold.copyWith(color: AppColors.title),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Account Preferences',
+          style: AppTypography.titleSemiBold.copyWith(
+            color: AppColors.textPrimary,
           ),
-          const SizedBox(height: 12),
-          if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_isTeacher)
-            _buildActionRow(
-              title: 'Verify Teacher Account',
-              subtitle:
-                  'Bind phone number, reason to teach, and teaching history.',
-              onTap: _openTeacherVerification,
-            )
-          else
-            _buildStudentPhoneRow(),
-          const Divider(color: AppColors.cardBorder, height: 20),
-          _buildToggleRow(
-            title: 'Auto-Save progress',
-            subtitle: 'Automatically save your progress',
-            value: _autoSave,
-            onChanged: (v) => setState(() => _autoSave = v),
+        ),
+        const SizedBox(height: 12),
+        PixelBorderContainer(
+          pixelSize: 4,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_isTeacher)
+                _buildActionRow(
+                  title: 'Verify Teacher Account',
+                  subtitle:
+                      'Bind phone number, reason to teach, and teaching history.',
+                  onTap: _openTeacherVerification,
+                )
+              else
+                _buildStudentPhoneRow(),
+              const Divider(color: AppColors.cardBorder, height: 20),
+              _buildToggleRow(
+                title: 'Auto-Save progress',
+                subtitle: 'Automatically save your progress',
+                value: _autoSave,
+                onChanged: (v) => setState(() => _autoSave = v),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
