@@ -19,9 +19,8 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/nod
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_choice.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/datasources/learning_path_data_source.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/repositories/learning_path_repositories.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 
 class EditNodeModal extends StatefulWidget {
@@ -107,10 +106,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
   Future<void> _loadQuestionsFromApi() async {
     try {
-      final dataSource = LearningPathDataSource();
-      final repository = LearningPathRepositoryImpl(dataSource);
-      final getNodeQuestions = GetNodeQuestions(repository);
-
+      final getNodeQuestions = getIt<GetNodeQuestions>();
       final questions = await getNodeQuestions(widget.nodeId);
       if (!mounted) return;
 

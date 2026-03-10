@@ -12,12 +12,11 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/congrats_popups.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/rating_popup.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/datasources/learning_path_data_source.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/repositories/learning_path_repositories.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 enum QuizViewState { loading, answering, result, error }
 
@@ -61,10 +60,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
     });
 
     try {
-      final dataSource = LearningPathDataSource();
-      final repository = LearningPathRepositoryImpl(dataSource);
-      final getNodeQuestions = GetNodeQuestions(repository);
-
+      final getNodeQuestions = getIt<GetNodeQuestions>();
       final questions = await getNodeQuestions(widget.nodeId);
 
       setState(() {
