@@ -48,7 +48,10 @@ abstract class IAuthRepository {
   Future<void> changePassword(String oldPassword, String newPassword);
 
   /// Deletes account
-  Future<void> deleteUser();
+  Future<void> deleteUser(String password);
+
+  /// Deactivates account temporarily and revokes active sessions
+  Future<void> deactivateAccount();
 
   /// Logs out locally and optionally remotely
   Future<void> logout();

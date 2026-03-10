@@ -30,6 +30,8 @@ class ApiConfig {
   static String get authUpdateUser => '$apiBackendUrl/auth/user';
   static String get authChangePassword => '$apiBackendUrl/auth/change-password';
   static String get authDeleteUser => '$apiBackendUrl/auth/user';
+  static String get authLogout => '$apiBackendUrl/auth/logout';
+  static String get authDeactivate => '$apiBackendUrl/auth/deactivate';
   static String get authNativeGoogleSignIn =>
       '$apiBackendUrl/auth/native/google';
   static String get authNativeDiscordSignIn =>

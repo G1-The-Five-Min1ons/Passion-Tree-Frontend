@@ -269,17 +269,24 @@ class ApiHandler {
   Future<ApiResponse<T>> delete<T>({
     required String url,
     Map<String, String>? headers,
+    dynamic body,
     T Function(dynamic)? fromJson,
     Duration timeout = const Duration(seconds: 30),
   }) async {
-    LogHandler.request(method: 'DELETE', url: url);
+    LogHandler.request(method: 'DELETE', url: url, body: body);
     return _requestWithRetry<T>(
       method: 'DELETE',
       url: url,
       headers: headers,
       fromJson: fromJson,
       performRequest: (reqHeaders) =>
-          _client.delete(Uri.parse(url), headers: reqHeaders).timeout(timeout),
+          _client
+              .delete(
+                Uri.parse(url),
+                headers: reqHeaders,
+                body: body is String ? body : jsonEncode(body),
+              )
+              .timeout(timeout),
     );
   }
 

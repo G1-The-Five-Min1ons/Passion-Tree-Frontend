@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
+import 'package:passion_tree_frontend/features/setting/domain/usecases/get_settings_usecase.dart';
+import 'package:passion_tree_frontend/features/setting/domain/usecases/update_setting_usecase.dart';
 
 class NotificationPreference {
   final String title;
@@ -24,7 +28,26 @@ class EmailNotificationsSection extends StatefulWidget {
 }
 
 class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
+  static const String _platformKey = 'email_notify_platform_updates';
+  static const String _weeklyKey = 'email_notify_weekly_progress';
+  static const String _dailyKey = 'email_notify_daily_reminder';
+  static const String _recommendationKey = 'email_notify_course_recommendations';
+  static const String _commentsKey = 'email_notify_learning_path_comments';
+
+  final GetSettingsUseCase _getSettingsUseCase = getIt<GetSettingsUseCase>();
+  final UpdateSettingUseCase _updateSettingUseCase = getIt<UpdateSettingUseCase>();
+
   late Map<String, bool> _notifications;
+  bool _isLoading = true;
+  final Set<String> _updatingKeys = <String>{};
+
+  static const Map<String, String> _settingKeyMap = {
+    'platform': _platformKey,
+    'weekly': _weeklyKey,
+    'daily': _dailyKey,
+    'recommendations': _recommendationKey,
+    'comments': _commentsKey,
+  };
 
   @override
   void initState() {
@@ -35,8 +58,39 @@ class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
       'daily': true,
       'recommendations': true,
       'comments': true,
-      'webPush': false,
     };
+    _loadNotificationPreferences();
+  }
+
+  Future<void> _loadNotificationPreferences() async {
+    setState(() => _isLoading = true);
+
+    final result = await _getSettingsUseCase.execute();
+    if (!mounted) return;
+
+    result.fold(
+      (failure) {
+        LogHandler.warning(
+          'SETTING UI · EMAIL NOTIFICATIONS load fallback to defaults: ${failure.message}',
+        );
+        setState(() => _isLoading = false);
+      },
+      (settings) {
+        final map = {for (final s in settings) s.key: s.value};
+        setState(() {
+          _notifications = {
+            for (final entry in _notifications.entries)
+              entry.key:
+                  (map[_settingKeyMap[entry.key] ?? '']?.toLowerCase() == 'true')
+                      ? true
+                      : (map.containsKey(_settingKeyMap[entry.key])
+                            ? false
+                            : entry.value),
+          };
+          _isLoading = false;
+        });
+      },
+    );
   }
 
   List<NotificationPreference> get _notificationItems => [
@@ -70,17 +124,45 @@ class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
           'Receive alerts when learners leave comments or questions on your learning paths.',
       value: _notifications['comments'] ?? false,
     ),
-    NotificationPreference(
-      title: 'Enable web push notifications',
-      subtitle:
-          "Receive instant notifications from your browser, even when the website isn't open.",
-      value: _notifications['webPush'] ?? false,
-    ),
   ];
 
-  void _updateNotification(int index, bool value) {
+  Future<void> _updateNotification(int index, bool value) async {
     final key = _notifications.keys.elementAt(index);
-    setState(() => _notifications[key] = value);
+    final settingKey = _settingKeyMap[key];
+    if (settingKey == null) return;
+
+    final previous = _notifications[key] ?? false;
+    setState(() {
+      _notifications[key] = value;
+      _updatingKeys.add(key);
+    });
+
+    final result = await _updateSettingUseCase.execute(
+      key: settingKey,
+      value: value.toString(),
+    );
+
+    if (!mounted) return;
+
+    result.fold(
+      (failure) {
+        LogHandler.error(
+          'SETTING UI · EMAIL NOTIFICATIONS update failed key=$settingKey: ${failure.message}',
+        );
+        setState(() {
+          _notifications[key] = previous;
+          _updatingKeys.remove(key);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update notification: ${failure.message}')),
+        );
+      },
+      (_) {
+        setState(() {
+          _updatingKeys.remove(key);
+        });
+      },
+    );
   }
 
   @override
@@ -98,10 +180,15 @@ class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
         PixelBorderContainer(
           pixelSize: 4,
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [..._buildNotificationsList()],
-          ),
+          child: _isLoading
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [..._buildNotificationsList()],
+                ),
         ),
       ],
     );
@@ -118,6 +205,7 @@ class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
 
       items.add(
         _buildToggleRow(
+          keyName: _notifications.keys.elementAt(i),
           title: notifications[i].title,
           subtitle: notifications[i].subtitle,
           value: notifications[i].value,
@@ -130,6 +218,7 @@ class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
   }
 
   Widget _buildToggleRow({
+    required String keyName,
     required String title,
     required String subtitle,
     required bool value,
@@ -161,7 +250,7 @@ class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
         const SizedBox(width: 12),
         Switch(
           value: value,
-          onChanged: onChanged,
+          onChanged: _updatingKeys.contains(keyName) ? null : onChanged,
           activeThumbColor: AppColors.primaryBrand,
           activeTrackColor: AppColors.primaryBrand.withValues(alpha: 0.4),
           inactiveThumbColor: AppColors.textDisabled,

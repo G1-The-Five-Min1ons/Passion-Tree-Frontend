@@ -32,7 +32,9 @@ abstract class AuthRemoteDataSource {
   Future<void> updateUser(String token, UpdateUserRequest request);
   Future<void> updateProfile(String token, UpdateProfileRequest request);
   Future<void> changePassword(String token, ChangePasswordRequest request);
-  Future<void> deleteUser(String token);
+  Future<void> deleteUser(String token, String password);
+  Future<void> deactivateAccount(String token);
+  Future<void> logout(String token);
   Future<NativeGoogleSignInResponse> nativeGoogleSignIn(String idToken);
   Future<NativeDiscordSignInResponse> nativeDiscordSignIn(String code);
   Future<VerifyEmailResponse> refreshToken(String refreshTokenValue);
@@ -248,11 +250,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> deleteUser(String token) async {
+  Future<void> deleteUser(String token, String password) async {
     LogHandler.separator(title: 'AUTH REMOTE · DELETE USER');
     final response = await _apiHandler.delete(
       url: ApiConfig.authDeleteUser,
       headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode({'password': password}),
       timeout: ApiConfig.connectionTimeout,
     );
     if (response.isSuccess) {
@@ -260,6 +263,36 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return;
     }
     throw _handleError(response, 'deleteUser');
+  }
+
+  @override
+  Future<void> deactivateAccount(String token) async {
+    LogHandler.separator(title: 'AUTH REMOTE · DEACTIVATE ACCOUNT');
+    final response = await _apiHandler.post(
+      url: ApiConfig.authDeactivate,
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Account deactivated');
+      return;
+    }
+    throw _handleError(response, 'deactivateAccount');
+  }
+
+  @override
+  Future<void> logout(String token) async {
+    LogHandler.separator(title: 'AUTH REMOTE · LOGOUT');
+    final response = await _apiHandler.post(
+      url: ApiConfig.authLogout,
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Logged out all sessions');
+      return;
+    }
+    throw _handleError(response, 'logout');
   }
 
   @override
@@ -273,14 +306,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
     if (response.isSuccess) {
       try {
-        // Backend returns token and user at ROOT level (not under 'data'):
-        // { "success": true, "message": "...", "token": "...", "user": {...} }
+        // Backend may return user payload under either `user` or `data` at root level.
         final fullBody = _parseMap(response.rawBody, 'rawBody');
         LogHandler.success('Google sign-in successful');
+        final userPayload = fullBody['user'] ?? fullBody['data'];
         final raw = <String, dynamic>{
           'success': response.success,
           'token': _parseString(fullBody['token'], 'token'),
-          'user': fullBody['user'],
+          'user': userPayload,
         };
         return NativeGoogleSignInResponse.fromJson(raw);
       } catch (e) {
@@ -305,14 +338,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
     if (response.isSuccess) {
       try {
-        // Backend returns token and user at ROOT level (not under 'data'):
-        // { "success": true, "message": "...", "token": "...", "user": {...} }
+        // Backend may return user payload under either `user` or `data` at root level.
         final fullBody = _parseMap(response.rawBody, 'rawBody');
         LogHandler.success('Discord sign-in successful');
+        final userPayload = fullBody['user'] ?? fullBody['data'];
         final raw = <String, dynamic>{
           'success': response.success,
           'token': _parseString(fullBody['token'], 'token'),
-          'user': fullBody['user'],
+          'user': userPayload,
         };
         return NativeDiscordSignInResponse.fromJson(raw);
       } catch (e) {

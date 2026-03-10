@@ -196,15 +196,31 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
-  Future<void> deleteUser() async {
+  Future<void> deleteUser(String password) async {
     final token = await _localDataSource.getToken();
     if (token == null) throw Exception('No token found');
-    await _remoteDataSource.deleteUser(token);
+    await _remoteDataSource.deleteUser(token, password);
+    await _localDataSource.clearAuth();
+  }
+
+  @override
+  Future<void> deactivateAccount() async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+    await _remoteDataSource.deactivateAccount(token);
     await _localDataSource.clearAuth();
   }
 
   @override
   Future<void> logout() async {
+    final token = await _localDataSource.getToken();
+    if (token != null && token.isNotEmpty) {
+      try {
+        await _remoteDataSource.logout(token);
+      } catch (e) {
+        LogHandler.warning('AuthRepository: remote logout failed, clearing local auth anyway: $e');
+      }
+    }
     await _localDataSource.clearAuth();
   }
 
