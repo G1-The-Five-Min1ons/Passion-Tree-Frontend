@@ -150,7 +150,10 @@ class _TeacherLearningPathOverviewPageState
                       if (_activeTab == 0) ...[
                         if (_learningView == TeacherLearningView.main)
                           TeacherLearningTab(
-                            allPaths: overviewData.allPaths,
+                            allPaths: overviewData.allPaths.where((path) {
+                              final status = path.publishStatus.toLowerCase().trim();
+                              return status == 'published' && status.isNotEmpty && status != 'null';
+                            }).toList(),
                             enrolledPaths: overviewData.enrolledPaths,
                             searchQuery: _searchQuery,
                             selectedCategory: null,
