@@ -55,6 +55,33 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
     }
   }
 
+  /// Navigate to nodes overview page and refetch data when returning
+  void _navigateToNodesOverview() {
+    if (!mounted) return;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: context.read<LearningPathBloc>(),
+          child: StudentNodesOverviewPage(
+            course: widget.course,
+            enrolledPath: _enrolledPath,
+          ),
+        ),
+      ),
+    ).then((_) {
+      // Refetch overview data when returning (in case user completes a course)
+      if (!mounted) return;
+      final userId = _userId ?? '';
+      if (userId.isNotEmpty) {
+        context.read<LearningPathBloc>().add(
+          FetchLearningPathOverview(userId: userId),
+        );
+      }
+    });
+  }
+
   void _handleStartJourney(BuildContext context) {
     final userId = _userId ?? '';
     if (userId.isEmpty) return;
@@ -62,29 +89,12 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
     // If not enrolled yet, enroll first
     if (_enrolledPath == null) {
       setState(() => _isEnrolling = true);
-
       context.read<LearningPathBloc>().add(
         EnrollPathEvent(pathId: widget.course.id, userId: userId),
       );
     } else {
       // Already enrolled, navigate directly
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: context.read<LearningPathBloc>(),
-            child: StudentNodesOverviewPage(
-              course: widget.course,
-              enrolledPath: _enrolledPath,
-            ),
-          ),
-        ),
-      ).then((_) {
-        // Refetch overview data when returning (in case user completes a course)
-        context.read<LearningPathBloc>().add(
-          FetchLearningPathOverview(userId: userId),
-        );
-      });
+      _navigateToNodesOverview();
     }
   }
 
@@ -101,30 +111,9 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                 _isEnrolling) {
               setState(() {
                 _isEnrolling = false;
-                // Use enrolled path data from backend
-                _enrolledPath = state.enrolledPath;
+                _enrolledPath = state.enrolledPath; // Use enrolled path data from backend
               });
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BlocProvider.value(
-                    value: context.read<LearningPathBloc>(),
-                    child: StudentNodesOverviewPage(
-                      course: widget.course,
-                      enrolledPath: _enrolledPath,
-                    ),
-                  ),
-                ),
-              ).then((_) {
-                // Refetch overview data when returning from nodes overview
-                final userId = _userId ?? '';
-                if (userId.isNotEmpty) {
-                  context.read<LearningPathBloc>().add(
-                    FetchLearningPathOverview(userId: userId),
-                  );
-                }
-              });
+              _navigateToNodesOverview();
             }
 
             // Handle enrollment error
