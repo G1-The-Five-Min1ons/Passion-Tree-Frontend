@@ -83,28 +83,34 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
   Future<void> _saveStudentPhone() async {
     final phone = _phoneController.text.trim();
 
-    // Get profile if not already loaded
-    UserProfile profile = _userProfile!;
-    if (_userProfile == null) {
+    // Retrieve profile safely: avoid force-unwrapping before null checks.
+    UserProfile? profile = _userProfile;
+    if (profile == null) {
       final profileResult = await _getProfileUseCase.execute();
+      var failed = false;
       profileResult.fold(
         (failure) {
           _showErrorMessage('Failed to load profile: ${failure.message}');
-          return;
+          failed = true;
         },
         (loadedProfile) => profile = loadedProfile,
       );
+
+      if (failed || profile == null) return;
     }
+
+    final resolvedProfile = profile;
+    if (resolvedProfile == null) return;
 
     setState(() => _isSavingPhone = true);
 
     final result = await _updateAccountSettingsUseCase.execute(
-      username: profile.user.username,
-      firstName: profile.user.firstName,
-      lastName: profile.user.lastName,
-      location: profile.profile?.location,
-      bio: profile.profile?.bio,
-      avatarUrl: profile.profile?.avatarUrl,
+      username: resolvedProfile.user.username,
+      firstName: resolvedProfile.user.firstName,
+      lastName: resolvedProfile.user.lastName,
+      location: resolvedProfile.profile?.location,
+      bio: resolvedProfile.profile?.bio,
+      avatarUrl: resolvedProfile.profile?.avatarUrl,
       phoneNumber: phone,
     );
 

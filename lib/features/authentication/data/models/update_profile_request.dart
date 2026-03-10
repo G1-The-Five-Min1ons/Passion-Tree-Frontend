@@ -1,5 +1,3 @@
-import 'package:passion_tree_frontend/core/config/account_preference_defaults.dart';
-
 class UpdateProfileRequest {
   final String? location;
   final String? bio;
@@ -31,9 +29,10 @@ class UpdateProfileRequest {
     if (avatarUrl != null) json['avatar_url'] = avatarUrl;
     if (phoneNumber != null) json['phone_number'] = phoneNumber;
     
-    // Include timezone and date format with defaults if not provided
-    json['time_zone'] = timeZone ?? AccountPreferenceDefaults.timeZoneApiValue;
-    json['date_format'] = dateFormat ?? AccountPreferenceDefaults.dateFormatApiValue;
+    // Only include timezone and date format when explicitly provided.
+    // This prevents accidental overwrites when performing partial updates.
+    if (timeZone != null) json['time_zone'] = timeZone;
+    if (dateFormat != null) json['date_format'] = dateFormat;
 
     return json;
   }

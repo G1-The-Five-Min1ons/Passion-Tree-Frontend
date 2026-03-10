@@ -17,25 +17,15 @@ class UpdateAccountSettingsUseCase {
     String? avatarUrl,
     String? phoneNumber,
   }) async {
-    // Validation logic
-    if (username.trim().isEmpty) {
-      return left(const ValidationFailure(message: 'Username cannot be empty'));
-    }
+    final validation = _validateInput(
+      username: username,
+      firstName: firstName,
+      lastName: lastName,
+      phoneNumber: phoneNumber,
+    );
 
-    if (firstName.trim().isEmpty) {
-      return left(const ValidationFailure(message: 'First name cannot be empty'));
-    }
-
-    if (lastName.trim().isEmpty) {
-      return left(const ValidationFailure(message: 'Last name cannot be empty'));
-    }
-
-    // Validate phone number if provided
-    if (phoneNumber != null && phoneNumber.isNotEmpty) {
-      if (!_isValidPhoneNumber(phoneNumber)) {
-        return left(const ValidationFailure(message: 'Phone number format is invalid'));
-      }
-    }
+    // If validation failed, return the failure early
+    if (validation.isLeft()) return validation;
 
     // Call repository and handle exceptions
     try {
@@ -57,5 +47,32 @@ class UpdateAccountSettingsUseCase {
   bool _isValidPhoneNumber(String phoneNumber) {
     // Basic phone number validation (9-15 digits, can start with +)
     return RegExp(r'^[0-9+]{9,15}$').hasMatch(phoneNumber);
+  }
+
+  Either<Failure, void> _validateInput({
+    required String username,
+    required String firstName,
+    required String lastName,
+    String? phoneNumber,
+  }) {
+    if (username.trim().isEmpty) {
+      return left(const ValidationFailure(message: 'Username cannot be empty'));
+    }
+
+    if (firstName.trim().isEmpty) {
+      return left(const ValidationFailure(message: 'First name cannot be empty'));
+    }
+
+    if (lastName.trim().isEmpty) {
+      return left(const ValidationFailure(message: 'Last name cannot be empty'));
+    }
+
+    if (phoneNumber != null && phoneNumber.isNotEmpty) {
+      if (!_isValidPhoneNumber(phoneNumber)) {
+        return left(const ValidationFailure(message: 'Phone number format is invalid'));
+      }
+    }
+
+    return right(null);
   }
 }
