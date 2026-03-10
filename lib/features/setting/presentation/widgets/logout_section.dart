@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
@@ -16,38 +17,53 @@ class LogoutSection extends StatelessWidget {
   Future<void> _handleLogout(BuildContext context) async {
     final shouldLogout = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(
-          'Log Out',
-          style: AppTypography.h3SemiBold.copyWith(
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to log out?',
-          style: AppTypography.bodyRegular.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(
-              'Cancel',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: PixelBorderContainer(
+          pixelSize: 4,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Log Out',
+                style: AppTypography.h3SemiBold.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
+              const SizedBox(height: 12),
+              Text(
+                'Are you sure you want to log out?',
+                style: AppTypography.bodyRegular.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppButton(
+                      variant: AppButtonVariant.text,
+                      text: 'Cancel',
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: AppButton(
+                      variant: AppButtonVariant.text,
+                      text: 'Log Out',
+                      backgroundColor: AppColors.cancel,
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(
-              'Log Out',
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.cancel),
-            ),
-          ),
-        ],
+        ),
       ),
     );
 
