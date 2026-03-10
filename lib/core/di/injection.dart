@@ -35,6 +35,11 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/com
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/delete_comment.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/add_comment_reaction.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/comment/comment_bloc.dart';
+import 'package:passion_tree_frontend/features/setting/data/datasources/setting_remote_data_source.dart';
+import 'package:passion_tree_frontend/features/setting/data/repositories/setting_repository_impl.dart';
+import 'package:passion_tree_frontend/features/setting/domain/repositories/setting_repository.dart';
+import 'package:passion_tree_frontend/features/setting/domain/usecases/get_settings_usecase.dart';
+import 'package:passion_tree_frontend/features/setting/domain/usecases/update_setting_usecase.dart';
 
 final getIt = GetIt.instance;
 
@@ -203,6 +208,23 @@ Future<void> initializeDependencies() async {
       deleteComment: getIt<DeleteComment>(),
       addCommentReaction: getIt<AddCommentReaction>(),
     ),
+  );
+
+  // Setting Feature
+  getIt.registerLazySingleton<SettingRemoteDataSource>(
+    () => SettingRemoteDataSourceImpl(apiHandler: getIt<ApiHandler>()),
+  );
+  getIt.registerLazySingleton<ISettingRepository>(
+    () => SettingRepositoryImpl(
+      remoteDataSource: getIt<SettingRemoteDataSource>(),
+      localDataSource: getIt<AuthLocalDataSource>(),
+    ),
+  );
+  getIt.registerFactory<GetSettingsUseCase>(
+    () => GetSettingsUseCase(getIt<ISettingRepository>()),
+  );
+  getIt.registerFactory<UpdateSettingUseCase>(
+    () => UpdateSettingUseCase(getIt<ISettingRepository>()),
   );
 }
 

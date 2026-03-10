@@ -39,6 +39,11 @@ class ApiConfig {
       '$apiBackendUrl/auth/teacher/verification-status';
   static String get authApplyTeacher => '$apiBackendUrl/auth/teacher/apply';
 
+    // Setting endpoints
+    static String get settings => '$apiBackendUrl/settings';
+    static String settingByKey(String key) =>
+            '$apiBackendUrl/settings/${Uri.encodeComponent(key)}';
+
   // Learning Path endpoints
   static String get learningPaths => '$apiBackendUrl/learningpaths';
   static String userEnrolledPaths(String userId) =>

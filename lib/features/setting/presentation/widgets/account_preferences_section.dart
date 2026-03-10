@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
@@ -7,6 +8,8 @@ import 'package:passion_tree_frontend/features/authentication/domain/entities/us
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_profile_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_user_role_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/update_account_settings_usecase.dart';
+import 'package:passion_tree_frontend/features/setting/domain/usecases/get_settings_usecase.dart';
+import 'package:passion_tree_frontend/features/setting/domain/usecases/update_setting_usecase.dart';
 import 'package:passion_tree_frontend/features/setting/presentation/pages/teacher_verification_page.dart';
 
 class AccountPreferencesSection extends StatefulWidget {
@@ -18,14 +21,20 @@ class AccountPreferencesSection extends StatefulWidget {
 }
 
 class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
+  static const String _autoSaveKey = 'auto_save_progress';
+
   final GetProfileUseCase _getProfileUseCase = getIt<GetProfileUseCase>();
   final GetUserRoleUseCase _getUserRoleUseCase = getIt<GetUserRoleUseCase>();
   final UpdateAccountSettingsUseCase _updateAccountSettingsUseCase =
       getIt<UpdateAccountSettingsUseCase>();
+  final GetSettingsUseCase _getSettingsUseCase = getIt<GetSettingsUseCase>();
+  final UpdateSettingUseCase _updateSettingUseCase =
+      getIt<UpdateSettingUseCase>();
 
   bool _autoSave = true;
   bool _isLoading = true;
   bool _isSavingPhone = false;
+  bool _isSavingAutoSave = false;
   String _role = '';
   UserProfile? _userProfile;
 
@@ -46,13 +55,17 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
   }
 
   Future<void> _loadPreferenceData() async {
+    LogHandler.info('SETTING UI · LOAD PREFERENCES');
+
     final profileResult = await _getProfileUseCase.execute();
     final roleResult = await _getUserRoleUseCase.execute();
+    final settingsResult = await _getSettingsUseCase.execute();
 
     if (!mounted) return;
 
     profileResult.fold(
       (failure) {
+        LogHandler.error('SETTING UI · LOAD failed profile: ${failure.message}');
         setState(() => _isLoading = false);
       },
       (profile) {
@@ -66,8 +79,63 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
           _userProfile = profile;
           _role = role;
           _phoneController.text = profile.profile?.phoneNumber ?? '';
+
+          settingsResult.fold(
+            (failure) {
+              LogHandler.warning(
+                'SETTING UI · LOAD settings fallback to default auto-save=true: ${failure.message}',
+              );
+              _autoSave = true;
+            },
+            (settings) {
+              final autoSaveSetting = settings.where((item) => item.key == _autoSaveKey);
+              if (autoSaveSetting.isEmpty) {
+                _autoSave = true;
+              } else {
+                _autoSave = autoSaveSetting.first.value.toLowerCase() == 'true';
+              }
+
+              LogHandler.info(
+                'SETTING UI · LOAD resolved auto-save=$_autoSave from settingsCount=${settings.length}',
+              );
+            },
+          );
+
           _isLoading = false;
         });
+      },
+    );
+  }
+
+  Future<void> _onAutoSaveChanged(bool value) async {
+    LogHandler.info('SETTING UI · TOGGLE request: value=$value');
+
+    setState(() {
+      _autoSave = value;
+      _isSavingAutoSave = true;
+    });
+
+    final result = await _updateSettingUseCase.execute(
+      key: _autoSaveKey,
+      value: value.toString(),
+    );
+
+    if (!mounted) return;
+
+    result.fold(
+      (failure) {
+        setState(() {
+          _autoSave = !value;
+          _isSavingAutoSave = false;
+        });
+        LogHandler.error('SETTING UI · TOGGLE failed: ${failure.message}');
+        _showErrorMessage('Failed to update auto-save: ${failure.message}');
+      },
+      (_) {
+        setState(() {
+          _isSavingAutoSave = false;
+        });
+        LogHandler.success('SETTING UI · TOGGLE success: value=$value');
       },
     );
   }
@@ -171,7 +239,7 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
                 title: 'Auto-Save progress',
                 subtitle: 'Automatically save your progress',
                 value: _autoSave,
-                onChanged: (v) => setState(() => _autoSave = v),
+                onChanged: _isSavingAutoSave ? null : _onAutoSaveChanged,
               ),
             ],
           ),
@@ -311,7 +379,7 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
     required String title,
     required String subtitle,
     required bool value,
-    required ValueChanged<bool> onChanged,
+    required ValueChanged<bool>? onChanged,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
