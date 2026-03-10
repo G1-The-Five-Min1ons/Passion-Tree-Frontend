@@ -166,6 +166,7 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                             _enrolledPath?.description ??
                             widget.course.description,
                         isEnrolled: _enrolledPath != null,
+                        isEnrolling: _isEnrolling,
                         nodes: nodes,
                         onStartJourney: () => _handleStartJourney(context),
                       ),
