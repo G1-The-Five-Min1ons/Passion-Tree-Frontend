@@ -21,10 +21,6 @@ import 'package:passion_tree_frontend/features/authentication/presentation/bloc/
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_event.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:app_links/app_links.dart';
-import 'dart:async';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -40,88 +36,13 @@ class _LoginPageState extends State<LoginPage> {
   String? _usernameError;
   String? _passwordError;
 
-  late AppLinks _appLinks;
-  StreamSubscription<Uri>? _linkSubscription;
-
   @override
   void initState() {
     super.initState();
-    _initGoogleSignIn();
-    _initDeepLinks();
-  }
-
-  Future<void> _initGoogleSignIn() async {
-    // GoogleSignIn v7 requires initialization
-    await GoogleSignIn.instance.initialize();
-  }
-
-  void _initDeepLinks() {
-    _appLinks = AppLinks();
-
-    // Check initial link if app was started by a deep link
-    _checkInitialLink();
-
-    // Listen to link changes
-    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
-      _handleDeepLink(uri);
-    });
-  }
-
-  Future<void> _checkInitialLink() async {
-    try {
-      final initialLink = await _appLinks.getInitialLink();
-      if (initialLink != null) {
-        _handleDeepLink(initialLink);
-      }
-    } catch (e) {
-      // Ignore errors
-    }
-  }
-
-  void _handleDeepLink(Uri uri) {
-    // Check if it's the specific Discord auth callback
-    // scheme: passiontree, host: auth, path: /callback
-    if (uri.scheme == 'passiontree' && 
-        uri.host == 'auth' && 
-        uri.path == '/callback') {
-      
-      final code = uri.queryParameters['code'];
-      if (code != null) {
-        // Dispatch Discord code authentication event
-        context.read<LoginBloc>().add(LoginWithDiscordCode(code));
-      }
-    }
-  }
-
-  Future<void> _handleDiscordLogin() async {
-    // TODO: Replace with actual Client ID
-    const clientId = 'YOUR_DISCORD_CLIENT_ID'; 
-    const redirectUri = 'passiontree://auth/callback';
-    const scope = 'identify email connections guild.join';
-    
-    final url = Uri.parse(
-      'https://discord.com/api/oauth2/authorize?client_id=$clientId&redirect_uri=$redirectUri&response_type=code&scope=$scope',
-    );
-
-    // Dispatch event to initiate Discord OAuth
-    context.read<LoginBloc>().add(const LoginWithDiscord());
-    
-    try {
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        throw Exception('Could not launch Discord login');
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not launch Discord login: ${e.toString()}')),
-      );
-    }
   }
 
   @override
   void dispose() {
-    _linkSubscription?.cancel();
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -459,7 +380,11 @@ class _LoginPageState extends State<LoginPage> {
                               : () {
                                   context.read<LoginBloc>().add(const LoginWithGoogle());
                                 },
-                          onDiscordTap: isLoading ? () {} : _handleDiscordLogin,
+                          onDiscordTap: isLoading
+                              ? () {}
+                              : () {
+                                  context.read<LoginBloc>().add(const LoginWithDiscord());
+                                },
                         ),
                       ],
                     );

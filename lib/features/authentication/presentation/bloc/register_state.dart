@@ -8,6 +8,7 @@ enum RegisterNextStep {
   otpVerification,
   roleSync,
   complete,
+  oauthComplete,
 }
 
 class RegisterState extends Equatable {

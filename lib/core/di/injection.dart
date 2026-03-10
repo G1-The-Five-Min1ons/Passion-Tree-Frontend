@@ -21,6 +21,8 @@ import 'package:passion_tree_frontend/features/authentication/domain/usecases/fo
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/mark_role_selected_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/save_user_role_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/reset_password_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/update_account_settings_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/change_password_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/datasources/comment_remote_data_source.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/repositories/comment_repository_impl.dart';
@@ -93,6 +95,12 @@ Future<void> initializeDependencies() async {
   );
   getIt.registerFactory<ResetPasswordUseCase>(
     () => ResetPasswordUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<UpdateAccountSettingsUseCase>(
+    () => UpdateAccountSettingsUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<ChangePasswordUseCase>(
+    () => ChangePasswordUseCase(getIt<IAuthRepository>()),
   );
 
   // Auth Blocs
