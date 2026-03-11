@@ -40,7 +40,6 @@ abstract class IAuthRepository {
 
   /// Updates account settings in both user and profile tables
   Future<void> updateAccountSettings({
-    required String username,
     required String firstName,
     required String lastName,
     String? location,

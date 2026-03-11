@@ -101,8 +101,7 @@ class AuthRepositoryImpl implements IAuthRepository {
     required String password,
     bool confirmReactivate = false,
   }) async {
-    LogHandler.info('AuthRepository: Attempting login for $identifier' +
-        (confirmReactivate ? ' (with reactivation)' : ''));
+    LogHandler.info('AuthRepository: Attempting login for $identifier' + (confirmReactivate ? ' (with reactivation)' : ''));
     final request = LoginRequest(identifier: identifier, password: password);
     final response = await _remoteDataSource.login(request, confirmReactivate: confirmReactivate);
     LogHandler.success('AuthRepository: Login successful');
@@ -156,7 +155,6 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<void> updateAccountSettings({
-    required String username,
     required String firstName,
     required String lastName,
     String? location,
@@ -168,7 +166,6 @@ class AuthRepositoryImpl implements IAuthRepository {
     if (token == null) throw Exception('No token found');
 
     final userRequest = UpdateUserRequest(
-      username: username,
       firstName: firstName,
       lastName: lastName,
     );
@@ -182,8 +179,6 @@ class AuthRepositoryImpl implements IAuthRepository {
 
     await _remoteDataSource.updateUser(token, userRequest);
     await _remoteDataSource.updateProfile(token, profileRequest);
-
-    await _localDataSource.saveUsername(username);
   }
 
   @override

@@ -19,7 +19,7 @@ class ActivityHeatmapWidget extends StatelessWidget {
     ];
 
     return PixelBorderContainer(
-      pixelSize: 4,
+      pixelSize: 3,
       padding: const EdgeInsets.all(10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

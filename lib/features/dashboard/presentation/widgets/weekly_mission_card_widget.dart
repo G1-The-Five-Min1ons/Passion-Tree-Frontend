@@ -9,7 +9,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PixelBorderContainer(
-      pixelSize: 4,
+      pixelSize: 3,
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

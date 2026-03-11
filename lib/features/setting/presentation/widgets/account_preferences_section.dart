@@ -169,7 +169,6 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
     setState(() => _isSavingPhone = true);
 
     final result = await _updateAccountSettingsUseCase.execute(
-      username: resolvedProfile.user.username,
       firstName: resolvedProfile.user.firstName,
       lastName: resolvedProfile.user.lastName,
       location: resolvedProfile.profile?.location,
@@ -225,15 +224,13 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Center(child: CircularProgressIndicator()),
                 )
-              else if (_isTeacher)
+              else
                 _buildActionRow(
                   title: 'Verify Teacher Account',
                   subtitle:
                       'Bind phone number, reason to teach, and teaching history.',
                   onTap: _openTeacherVerification,
-                )
-              else
-                _buildStudentPhoneRow(),
+                ),
               const Divider(color: AppColors.cardBorder, height: 20),
               _buildToggleRow(
                 title: 'Auto-Save progress',

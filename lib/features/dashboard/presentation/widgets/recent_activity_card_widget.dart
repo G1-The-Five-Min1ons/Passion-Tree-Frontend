@@ -16,7 +16,7 @@ class RecentActivityCardWidget extends StatelessWidget {
     ];
 
     return PixelBorderContainer(
-      pixelSize: 4,
+      pixelSize: 3,
       padding: const EdgeInsets.all(8),
       child: Column(
         children: items

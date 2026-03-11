@@ -26,13 +26,6 @@ class DashboardFooter extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'AI-Powered learning platform for everyone.',
-            style: AppTypography.smallBodyRegular.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
         ],
       ),
     );

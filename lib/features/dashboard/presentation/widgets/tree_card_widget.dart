@@ -14,7 +14,7 @@ class TreeCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PixelBorderContainer(
-      pixelSize: 4,
+      pixelSize: 3,
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
