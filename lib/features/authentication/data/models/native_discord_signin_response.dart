@@ -23,7 +23,7 @@ class NativeDiscordSignInResponse {
 
   factory NativeDiscordSignInResponse.fromJson(Map<String, dynamic> json) {
     try {
-      final user = json['user'] as Map<String, dynamic>;
+      final user = json['data'] as Map<String, dynamic>;
       return NativeDiscordSignInResponse(
         success: json['success'] as bool? ?? true,
         token: json['token'] as String,

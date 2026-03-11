@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/error/failures.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_event.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_state.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_credentials_usecase.dart';
@@ -146,17 +146,17 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     LoginWithDiscord event,
     Emitter<LoginState> emit,
   ) async {
-    debugPrint('### [LoginBloc] _onLoginWithDiscord: START');
+    LogHandler.info('[LoginBloc] _onLoginWithDiscord: START');
     emit(state.copyWith(status: LoginStatus.loading));
 
     final result = await _loginWithDiscord.initiateOAuth();
-    debugPrint(
-      '### [LoginBloc] initiateOAuth() returned. IsRight: ${result.isRight()}',
+    LogHandler.info(
+      '[LoginBloc] initiateOAuth() returned. IsRight: ${result.isRight()}',
     );
 
     result.fold(
       (failure) {
-        debugPrint('### [LoginBloc] initiateOAuth FAILED: ${failure.message}');
+        LogHandler.error('[LoginBloc] initiateOAuth FAILED: ${failure.message}');
         if (failure is CancellationFailure) {
           emit(state.copyWith(status: LoginStatus.initial));
         } else {
@@ -169,8 +169,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         }
       },
       (_) {
-        debugPrint(
-          '### [LoginBloc] initiateOAuth SUCCESS -> emitting (success, checkingRole)',
+        LogHandler.info(
+          '[LoginBloc] initiateOAuth SUCCESS -> emitting (success, checkingRole)',
         );
         emit(
           state.copyWith(
@@ -178,8 +178,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             nextStep: LoginNextStep.checkingRole,
           ),
         );
-        debugPrint(
-          '### [LoginBloc] Emitted (success, checkingRole). Current state: ${state.status}, ${state.nextStep}',
+        LogHandler.info(
+          '[LoginBloc] Emitted (success, checkingRole). Current state: ${state.status}, ${state.nextStep}',
         );
       },
     );
@@ -239,7 +239,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     CheckRoleStatus event,
     Emitter<LoginState> emit,
   ) async {
-    debugPrint('### [LoginBloc] _onCheckRoleStatus: START');
+    LogHandler.info('[LoginBloc] _onCheckRoleStatus: START');
     emit(state.copyWith(status: LoginStatus.loading));
 
     // Get local role first
@@ -247,18 +247,18 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     String? localRole;
 
     localRoleResult.fold((failure) => null, (role) => localRole = role);
-    debugPrint('### [LoginBloc] localRole: $localRole');
+    LogHandler.info('[LoginBloc] localRole: $localRole');
 
     // Get profile from backend
-    debugPrint('### [LoginBloc] Fetching profile from backend...');
+    LogHandler.info('[LoginBloc] Fetching profile from backend...');
     final profileResult = await _getProfile.execute();
-    debugPrint(
-      '### [LoginBloc] _getProfile.execute() returned. IsRight: ${profileResult.isRight()}',
+    LogHandler.info(
+      '[LoginBloc] _getProfile.execute() returned. IsRight: ${profileResult.isRight()}',
     );
 
     profileResult.fold(
       (failure) {
-        debugPrint('### [LoginBloc] getProfile FAILED: ${failure.message}');
+        LogHandler.error('[LoginBloc] getProfile FAILED: ${failure.message}');
         emit(
           state.copyWith(
             status: LoginStatus.failure,
@@ -268,14 +268,14 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       },
       (profile) {
         final backendRole = profile.user.role;
-        debugPrint(
-          '### [LoginBloc] Profile fetched. backendRole: $backendRole',
+        LogHandler.info(
+          '[LoginBloc] Profile fetched. backendRole: $backendRole',
         );
 
         // Determine next step based on role
         if (backendRole == 'pending') {
-          debugPrint(
-            '### [LoginBloc] Role is pending -> emitting (success, roleSelection)',
+          LogHandler.info(
+            '[LoginBloc] Role is pending -> emitting (success, roleSelection)',
           );
           emit(
             state.copyWith(
@@ -284,8 +284,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             ),
           );
         } else {
-          debugPrint(
-            '### [LoginBloc] Role is set ($backendRole) -> emitting (success, complete)',
+          LogHandler.info(
+            '[LoginBloc] Role is set ($backendRole) -> emitting (success, complete)',
           );
           emit(
             state.copyWith(

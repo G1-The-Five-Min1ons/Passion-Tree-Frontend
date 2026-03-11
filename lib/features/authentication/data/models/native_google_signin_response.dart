@@ -1,4 +1,5 @@
 import 'package:passion_tree_frontend/core/error/exceptions.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 
 /// Response from POST /auth/native/google
 class NativeGoogleSignInResponse {
@@ -24,7 +25,13 @@ class NativeGoogleSignInResponse {
 
   factory NativeGoogleSignInResponse.fromJson(Map<String, dynamic> json) {
     try {
-      final user = json['user'] as Map<String, dynamic>;
+      LogHandler.info('DEBUG: NativeGoogleSignInResponse.fromJson received: $json');
+      LogHandler.info('DEBUG: json[\'data\'] = ${json['data']}');
+      LogHandler.info('DEBUG: json[\'data\'] type = ${json['data'].runtimeType}');
+      
+      final user = json['data'] as Map<String, dynamic>;
+      LogHandler.info('DEBUG: user map = $user');
+      
       return NativeGoogleSignInResponse(
         success: json['success'] as bool? ?? true,
         token: json['token'] as String,
@@ -36,6 +43,8 @@ class NativeGoogleSignInResponse {
         role: user['role'] as String,
       );
     } catch (e) {
+      LogHandler.error('DEBUG: Parse error: $e');
+      LogHandler.error('DEBUG: Error type: ${e.runtimeType}');
       throw ParseException(
         message: 'Failed to parse NativeGoogleSignInResponse',
         originalError: e,
