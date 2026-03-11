@@ -16,7 +16,12 @@ abstract class IAuthRepository {
   });
 
   /// Logs in and triggers OTP email. Returns success message.
-  Future<String> login({required String identifier, required String password});
+  /// Set confirmReactivate to true to confirm reactivation if account is deactivated.
+  Future<String> login({
+    required String identifier,
+    required String password,
+    bool confirmReactivate = false,
+  });
 
   /// Verifies email OTP and saves tokens. Returns formatted message or user data if available.
   Future<void> verifyEmail(String code);
@@ -52,6 +57,9 @@ abstract class IAuthRepository {
 
   /// Deactivates account temporarily and revokes active sessions
   Future<void> deactivateAccount();
+
+  /// Reactivates a deactivated account
+  Future<void> reactivateAccount();
 
   /// Logs out locally and optionally remotely
   Future<void> logout();

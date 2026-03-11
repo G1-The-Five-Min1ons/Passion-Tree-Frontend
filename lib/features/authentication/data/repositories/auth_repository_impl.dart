@@ -99,10 +99,12 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<String> login({
     required String identifier,
     required String password,
+    bool confirmReactivate = false,
   }) async {
-    LogHandler.info('AuthRepository: Attempting login for $identifier');
+    LogHandler.info('AuthRepository: Attempting login for $identifier' +
+        (confirmReactivate ? ' (with reactivation)' : ''));
     final request = LoginRequest(identifier: identifier, password: password);
-    final response = await _remoteDataSource.login(request);
+    final response = await _remoteDataSource.login(request, confirmReactivate);
     LogHandler.success('AuthRepository: Login successful');
     return response.message;
   }

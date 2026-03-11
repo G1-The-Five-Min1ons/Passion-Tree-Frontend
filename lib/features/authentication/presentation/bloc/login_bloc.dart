@@ -38,6 +38,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<VerifyEmailSubmitted>(_onVerifyEmailSubmitted);
     on<CheckRoleStatus>(_onCheckRoleStatus);
     on<SelectRoleSubmitted>(_onSelectRoleSubmitted);
+    on<ConfirmReactivation>(_onConfirmReactivation);
     on<LoginReset>(_onLoginReset);
   }
 
@@ -82,12 +83,27 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     );
 
     result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: LoginStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
+      (failure) {
+        // Check if it's an account reactivation required failure
+        if (failure is AccountReactivationRequiredFailure) {
+          emit(
+            state.copyWith(
+              status: LoginStatus.success,
+              nextStep: LoginNextStep.accountReactivation,
+              requiresReactivation: true,
+              gracePeriodDays: failure.gracePeriodDays,
+              errorMessage: failure.message,
+            ),
+          );
+        } else {
+          emit(
+            state.copyWith(
+              status: LoginStatus.failure,
+              errorMessage: failure.message,
+            ),
+          );
+        }
+      },
       (_) => emit(
         state.copyWith(
           status: LoginStatus.success,
@@ -303,6 +319,37 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         state.copyWith(
           status: LoginStatus.success,
           nextStep: LoginNextStep.complete,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onConfirmReactivation(
+    ConfirmReactivation event,
+    Emitter<LoginState> emit,
+  ) async {
+    emit(state.copyWith(status: LoginStatus.loading));
+
+    // Retry login with confirmReactivate=true
+    final result = await _loginWithCredentials.execute(
+      identifier: state.username,
+      password: state.password,
+      confirmReactivate: true,
+    );
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: LoginStatus.failure,
+          errorMessage: failure.message,
+          requiresReactivation: false,
+        ),
+      ),
+      (_) => emit(
+        state.copyWith(
+          status: LoginStatus.success,
+          nextStep: LoginNextStep.otpVerification,
+          requiresReactivation: false,
         ),
       ),
     );

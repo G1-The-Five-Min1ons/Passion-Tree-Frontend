@@ -34,6 +34,7 @@ abstract class AuthRemoteDataSource {
   Future<void> changePassword(String token, ChangePasswordRequest request);
   Future<void> deleteUser(String token, String password);
   Future<void> deactivateAccount(String token);
+  Future<void> reactivateAccount(String token);
   Future<void> logout(String token);
   Future<NativeGoogleSignInResponse> nativeGoogleSignIn(String idToken);
   Future<NativeDiscordSignInResponse> nativeDiscordSignIn(String code);
@@ -81,16 +82,23 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<LoginOtpResponse> login(LoginRequest request) async {
+  Future<LoginOtpResponse> login(LoginRequest request, {bool confirmReactivate = false}) async {
     LogHandler.separator(title: 'AUTH REMOTE · LOGIN');
+    
+    // Add query parameter if confirming reactivation
+    String url = ApiConfig.authLogin;
+    if (confirmReactivate) {
+      url = '$url?confirm_reactivate=true';
+    }
+    
     final response = await _apiHandler.post(
-      url: ApiConfig.authLogin,
+      url: url,
       headers: ApiConfig.defaultHeaders,
       body: jsonEncode(request.toJson()),
       timeout: ApiConfig.connectionTimeout,
     );
     if (response.isSuccess) {
-      LogHandler.success('OTP sent to email');
+      LogHandler.success('OTP sent to email' + (confirmReactivate ? ' (with reactivation)' : ''));
       return LoginOtpResponse(
         success: response.success,
         message: response.message ?? '',
@@ -278,6 +286,21 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return;
     }
     throw _handleError(response, 'deactivateAccount');
+  }
+
+  @override
+  Future<void> reactivateAccount(String token) async {
+    LogHandler.separator(title: 'AUTH REMOTE · REACTIVATE ACCOUNT');
+    final response = await _apiHandler.post(
+      url: ApiConfig.authReactivate,
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Account reactivated');
+      return;
+    }
+    throw _handleError(response, 'reactivateAccount');
   }
 
   @override

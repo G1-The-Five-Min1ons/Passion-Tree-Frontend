@@ -168,3 +168,17 @@ class CancellationFailure extends Failure {
     super.technicalMessage,
   });
 }
+
+/// Account reactivation required failure
+class AccountReactivationRequiredFailure extends Failure {
+  final int gracePeriodDays;
+
+  const AccountReactivationRequiredFailure({
+    super.message = 'Your account has been deactivated. Reactivate it within the grace period.',
+    this.gracePeriodDays = 14,
+    super.technicalMessage,
+  });
+
+  @override
+  List<Object?> get props => [message, technicalMessage, gracePeriodDays];
+}

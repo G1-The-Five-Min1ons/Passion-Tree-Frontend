@@ -80,3 +80,7 @@ class SelectRoleSubmitted extends LoginEvent {
   @override
   List<Object?> get props => [role];
 }
+
+class ConfirmReactivation extends LoginEvent {
+  const ConfirmReactivation();
+}

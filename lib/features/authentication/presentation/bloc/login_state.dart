@@ -12,6 +12,7 @@ enum LoginNextStep {
   checkingRole,
   roleSelection,
   complete,
+  accountReactivation,
 }
 
 class LoginState extends Equatable {
@@ -21,6 +22,8 @@ class LoginState extends Equatable {
   final LoginStatus status;
   final String? errorMessage;
   final LoginNextStep? nextStep;
+  final bool requiresReactivation;
+  final int gracePeriodDays;
 
   const LoginState({
     this.username = '',
@@ -29,6 +32,8 @@ class LoginState extends Equatable {
     this.status = LoginStatus.initial,
     this.errorMessage,
     this.nextStep,
+    this.requiresReactivation = false,
+    this.gracePeriodDays = 14,
   });
 
   LoginState copyWith({
@@ -38,6 +43,8 @@ class LoginState extends Equatable {
     LoginStatus? status,
     String? errorMessage,
     LoginNextStep? nextStep,
+    bool? requiresReactivation,
+    int? gracePeriodDays,
   }) {
     return LoginState(
       username: username ?? this.username,
@@ -46,6 +53,8 @@ class LoginState extends Equatable {
       status: status ?? this.status,
       errorMessage: errorMessage ?? this.errorMessage,
       nextStep: nextStep ?? this.nextStep,
+      requiresReactivation: requiresReactivation ?? this.requiresReactivation,
+      gracePeriodDays: gracePeriodDays ?? this.gracePeriodDays,
     );
   }
 
@@ -56,5 +65,7 @@ class LoginState extends Equatable {
         rememberMe,
         status,
         nextStep,
+        requiresReactivation,
+        gracePeriodDays,
       ];
 }
