@@ -7,7 +7,13 @@ class TreeMapper {
     final chapters = tree.nodes?.map((node) => Chapter(
       name: node.nodeTitle,
       isEnrolled: node.nodeScore != null,
+      status: node.status,
+      complete: node.complete,
+      sequence: node.sequence,
     )).toList() ?? [];
+
+    // Sort chapters by sequence
+    chapters.sort((a, b) => a.sequence.compareTo(b.sequence));
 
     return AlbumItem(
       treeId: tree.treeId,

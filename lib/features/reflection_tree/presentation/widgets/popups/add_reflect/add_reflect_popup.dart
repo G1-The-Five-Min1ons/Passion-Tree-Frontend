@@ -11,12 +11,14 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/reflection_overview.dart';
 
 class AddReflectPopup extends StatefulWidget {
-  const AddReflectPopup({super.key});
+  final String nodeName;
 
-  static void show(BuildContext context) {
+  const AddReflectPopup({super.key, required this.nodeName});
+
+  static void show(BuildContext context, {required String nodeName}) {
     showDialog(
       context: context,
-      builder: (context) => const AddReflectPopup(),
+      builder: (context) => AddReflectPopup(nodeName: nodeName),
     );
   }
 
@@ -68,7 +70,7 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Node: ',
+                      'Node: ${widget.nodeName}',
                       style: AppTypography.h3SemiBold,
                     ),
                   ),

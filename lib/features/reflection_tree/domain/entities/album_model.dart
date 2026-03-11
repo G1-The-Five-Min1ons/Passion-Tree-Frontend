@@ -56,9 +56,18 @@ class AlbumItem {
 class Chapter {
   final String name;
   final bool isEnrolled;
+  final String? status;
+  final String? complete;
+  final int sequence;
 
   Chapter({
     required this.name,
     this.isEnrolled = false,
+    this.status,
+    this.complete,
+    this.sequence = 0,
   });
+
+  // Helper to check if node is completed
+  bool get isCompleted => complete == 'true';
 }

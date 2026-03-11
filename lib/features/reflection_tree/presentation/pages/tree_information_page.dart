@@ -9,6 +9,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/a
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/page_header.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_node_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/add_reflect_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/status_badge.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
@@ -166,13 +167,17 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                                 left: pos.dx - 40,
                                 top: pos.dy - 40,
                                 child: NodeItem(
-                                  imagePath: chapter.isEnrolled
+                                  imagePath: chapter.isCompleted
                                       ? 'assets/images/trees/node-enrolled.png'
                                       : 'assets/images/trees/node_notenrolled.png',
                                   size: 90,
                                   onTap: () {
-                                    //
-                                    //TODO: logic ทีหลัง
+                                    if (chapter.isCompleted) {
+                                      AddReflectPopup.show(
+                                        context,
+                                        nodeName: chapter.name,
+                                      );
+                                    }
                                   },
                                 ),
                               );
