@@ -8,6 +8,7 @@ class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback? onBackPressed;
   final ValueChanged<String>? onSearch;
   final double titleFontSize;
+  final List<Widget>? actions;
 
   const AppBarWidget({
     super.key,
@@ -16,6 +17,7 @@ class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
     this.onBackPressed,
     this.onSearch,
     this.titleFontSize = 22,
+    this.actions,
   });
 
   @override
@@ -173,6 +175,15 @@ class _AppBarWidgetState extends State<AppBarWidget>
                                 size: 26,
                               ),
                               onPressed: _openSearch,
+                            ),
+                          ),
+                        // ── Custom actions (right) ─────────────────
+                        if (widget.actions != null)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: widget.actions!,
                             ),
                           ),
                       ],

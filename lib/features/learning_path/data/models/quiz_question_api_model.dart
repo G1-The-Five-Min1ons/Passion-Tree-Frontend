@@ -1,5 +1,3 @@
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
-
 /// API Model สำหรับ Quiz Choice
 class QuizChoiceApiModel {
   final String choiceId;
@@ -34,17 +32,6 @@ class QuizChoiceApiModel {
       'reasoning': reasoning,
       'question_id': questionId,
     };
-  }
-
-  /// แปลงเป็น Entity
-  QuizChoice toEntity() {
-    return QuizChoice(
-      choiceId: choiceId,
-      choiceText: choiceText,
-      isCorrect: isCorrect,
-      reasoning: reasoning,
-      questionId: questionId,
-    );
   }
 }
 
@@ -85,16 +72,5 @@ class QuizQuestionApiModel {
       'node_id': nodeId,
       'choices': choices.map((c) => c.toJson()).toList(),
     };
-  }
-
-  /// แปลงเป็น Entity
-  QuizQuestion toEntity() {
-    return QuizQuestion(
-      questionId: questionId,
-      questionText: questionText,
-      type: type,
-      nodeId: nodeId,
-      choices: choices.map((c) => c.toEntity()).toList(),
-    );
   }
 }

@@ -35,10 +35,12 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
   List<NodeDetail>? _cachedNodes;
   bool _isEnrolling = false;
   String? _userId;
+  EnrolledLearningPath? _enrolledPath; // Cache enrolled path after enrollment
 
   @override
   void initState() {
     super.initState();
+    _enrolledPath = widget.enrolledPath; // Initialize with widget value
     _loadUserAndFetchNodes();
   }
 
@@ -53,36 +55,46 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
     }
   }
 
+  /// Navigate to nodes overview page and refetch data when returning
+  void _navigateToNodesOverview() {
+    if (!mounted) return;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: context.read<LearningPathBloc>(),
+          child: StudentNodesOverviewPage(
+            course: widget.course,
+            enrolledPath: _enrolledPath,
+          ),
+        ),
+      ),
+    ).then((_) {
+      // Refetch overview data when returning (in case user completes a course)
+      if (!mounted) return;
+      final userId = _userId ?? '';
+      if (userId.isNotEmpty) {
+        context.read<LearningPathBloc>().add(
+          FetchLearningPathOverview(userId: userId),
+        );
+      }
+    });
+  }
+
   void _handleStartJourney(BuildContext context) {
     final userId = _userId ?? '';
     if (userId.isEmpty) return;
 
     // If not enrolled yet, enroll first
-    if (widget.enrolledPath == null) {
+    if (_enrolledPath == null) {
       setState(() => _isEnrolling = true);
-
       context.read<LearningPathBloc>().add(
         EnrollPathEvent(pathId: widget.course.id, userId: userId),
       );
     } else {
       // Already enrolled, navigate directly
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: context.read<LearningPathBloc>(),
-            child: StudentNodesOverviewPage(
-              course: widget.course,
-              enrolledPath: widget.enrolledPath,
-            ),
-          ),
-        ),
-      ).then((_) {
-        // Refetch overview data when returning (in case user completes a course)
-        context.read<LearningPathBloc>().add(
-          FetchLearningPathOverview(userId: userId),
-        );
-      });
+      _navigateToNodesOverview();
     }
   }
 
@@ -97,28 +109,11 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
             if (state is PathEnrolled &&
                 state.pathId == widget.course.id &&
                 _isEnrolling) {
-              setState(() => _isEnrolling = false);
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BlocProvider.value(
-                    value: context.read<LearningPathBloc>(),
-                    child: StudentNodesOverviewPage(
-                      course: widget.course,
-                      enrolledPath: widget.enrolledPath,
-                    ),
-                  ),
-                ),
-              ).then((_) {
-                // Refetch overview data when returning from nodes overview
-                final userId = _userId ?? '';
-                if (userId.isNotEmpty) {
-                  context.read<LearningPathBloc>().add(
-                    FetchLearningPathOverview(userId: userId),
-                  );
-                }
+              setState(() {
+                _isEnrolling = false;
+                _enrolledPath = state.enrolledPath; // Use enrolled path data from backend
               });
+              _navigateToNodesOverview();
             }
 
             // Handle enrollment error
@@ -155,18 +150,22 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                       /// ===== COURSE CONTENT =====
                       LearningCourseContent(
                         title:
-                            widget.enrolledPath?.title ?? widget.course.title,
+                            _enrolledPath?.title ?? widget.course.title,
                         description:
-                            widget.enrolledPath?.description ??
+                            _enrolledPath?.description ??
                             widget.course.description,
-                        isEnrolled: widget.enrolledPath != null,
+                        isEnrolled: _enrolledPath != null,
+                        isEnrolling: _isEnrolling,
                         nodes: nodes,
                         onStartJourney: () => _handleStartJourney(context),
                       ),
 
                       if (nodes != null) ...[
                         const SizedBox(height: 32),
-                        CommentsSection(pathId: widget.course.id),
+                        CommentsSection(
+                          pathId: widget.course.id,
+                          userId: _userId ?? '',
+                        ),
                       ],
                     ],
                   ),

@@ -9,6 +9,8 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/save_cancel.da
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
+import 'package:passion_tree_frontend/core/services/upload_service.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'dart:io';
 
 class EditAlbumPopup extends StatefulWidget {
@@ -55,6 +57,7 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
   late TextEditingController _controller;
   File? _selectedImage;
   String? _albumNameError;
+  String? _imageError;
 
   @override
   void initState() {
@@ -71,6 +74,7 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
 
   Future<void> _pickImage() async {
     final imagePicker = ImagePicker();
+    final uploadService = getIt<UploadApiService>();
 
     try {
       XFile? result = await imagePicker.pickImage(
@@ -78,28 +82,40 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
       );
 
       if (result != null) {
+        final bytes = await File(result.path).readAsBytes();
+        
+        final errorMessage = await uploadService.validateImageFile(bytes, result.name);
+        
+        if (errorMessage != null) {
+          setState(() {
+            _selectedImage = null;
+            _imageError = errorMessage;
+          });
+          return;
+        }
+
         setState(() {
           _selectedImage = File(result.path);
+          _imageError = null;
         });
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image: $e')),
-        );
-      }
+      setState(() {
+        _selectedImage = null;
+        _imageError = 'Failed to pick image: $e';
+      });
     }
   }
 
   void _saveChanges() {
     final albumName = _controller.text.trim();
-    final error = _validateAlbumName(albumName);
+    final nameError = _validateAlbumName(albumName);
     
     setState(() {
-      _albumNameError = error;
+      _albumNameError = nameError;
     });
     
-    if (error != null) {
+    if (nameError != null) {
       return;
     }
 
@@ -111,6 +127,12 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
         existingImageUrl: widget.imageUrl,
       ),
     );
+    
+    if (_imageError != null) {
+      setState(() {
+        _imageError = null;
+      });
+    }
   }
 
   @override
@@ -126,12 +148,9 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
         if (state is AlbumsLoaded) {
           Navigator.pop(context, true);
         } else if (state is AlbumError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.cancel,
-            ),
-          );
+          setState(() {
+            _imageError = state.message;
+          });
         }
       },
       builder: (context, state) {
@@ -258,6 +277,20 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
                                 ),
                     ),
                 ),
+
+                if (_imageError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _imageError!,
+                        style: AppTypography.bodyRegular.copyWith(
+                          color: AppColors.cancel,
+                        ),
+                      ),
+                    ),
+                  ),
 
                 const SizedBox(height: 18),
 

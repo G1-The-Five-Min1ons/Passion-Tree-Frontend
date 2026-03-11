@@ -21,6 +21,8 @@ import 'package:passion_tree_frontend/features/authentication/domain/usecases/fo
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/mark_role_selected_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/save_user_role_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/reset_password_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/update_account_settings_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/change_password_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/datasources/comment_remote_data_source.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/repositories/comment_repository_impl.dart';
@@ -33,6 +35,28 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/com
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/delete_comment.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/comment/add_comment_reaction.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/comment/comment_bloc.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/datasources/learning_path_data_source.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/repositories/learning_path_repositories.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_usecases.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_status.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/nodes_for_path_usecases.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_detail_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enroll_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/start_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_learning_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/generate_nodes_with_ai_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_learning_path_by_id_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_learning_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enrolled_learning_paths.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_progress_usecases.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -94,6 +118,12 @@ Future<void> initializeDependencies() async {
   getIt.registerFactory<ResetPasswordUseCase>(
     () => ResetPasswordUseCase(getIt<IAuthRepository>()),
   );
+  getIt.registerFactory<UpdateAccountSettingsUseCase>(
+    () => UpdateAccountSettingsUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<ChangePasswordUseCase>(
+    () => ChangePasswordUseCase(getIt<IAuthRepository>()),
+  );
 
   // Auth Blocs
   getIt.registerFactory<UserBloc>(
@@ -141,6 +171,17 @@ Future<void> initializeDependencies() async {
     () => DeleteAlbumUseCase(getIt<IAlbumRepository>()),
   );
 
+  getIt.registerFactory<CreateTreeUseCase>(
+    () => CreateTreeUseCase(getIt<IAlbumRepository>()),
+  );
+
+  getIt.registerFactory<UpdateTreeUseCase>(
+    () => UpdateTreeUseCase(getIt<IAlbumRepository>()),
+  );
+
+  getIt.registerFactory<DeleteTreeUseCase>(
+    () => DeleteTreeUseCase(getIt<IAlbumRepository>()),
+  );
   // Comment Feature
   getIt.registerLazySingleton<CommentRemoteDataSource>(
     () => CommentRemoteDataSource(),
@@ -183,6 +224,96 @@ Future<void> initializeDependencies() async {
       updateComment: getIt<UpdateComment>(),
       deleteComment: getIt<DeleteComment>(),
       addCommentReaction: getIt<AddCommentReaction>(),
+    ),
+  );
+
+  // Learning Path Feature
+  getIt.registerLazySingleton<LearningPathDataSource>(
+    () => LearningPathDataSource(),
+  );
+
+  getIt.registerLazySingleton<LearningPathRepositoryImpl>(
+    () => LearningPathRepositoryImpl(getIt<LearningPathDataSource>()),
+  );
+
+  // Learning Path Use Cases
+  getIt.registerFactory<GetAllLearningPaths>(
+    () => GetAllLearningPaths(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<GetLearningPathStatus>(
+    () => GetLearningPathStatus(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<GetNodesForPath>(
+    () => GetNodesForPath(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<GetNodeDetail>(
+    () => GetNodeDetail(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<EnrollPath>(
+    () => EnrollPath(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<StartNode>(
+    () => StartNode(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<CompleteNode>(
+    () => CompleteNode(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<DeleteLearningPath>(
+    () => DeleteLearningPath(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<DeleteNodeUseCase>(
+    () => DeleteNodeUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<CreateLearningPathUseCase>(
+    () => CreateLearningPathUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<CreateNodeUseCase>(
+    () => CreateNodeUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<CreateNodeQuestionsUseCase>(
+    () => CreateNodeQuestionsUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<GenerateNodesWithAIUseCase>(
+    () => GenerateNodesWithAIUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<GetLearningPathByIdUseCase>(
+    () => GetLearningPathByIdUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<UpdateNodeUseCase>(
+    () => UpdateNodeUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<UpdateLearningPathUseCase>(
+    () => UpdateLearningPathUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<GetNodeQuestions>(
+    () => GetNodeQuestions(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<GetEnrolledLearningPaths>(
+    () => GetEnrolledLearningPaths(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<GetLearningPathProgress>(
+    () => GetLearningPathProgress(getIt<LearningPathRepositoryImpl>()),
+  );
+
+  // Learning Path Bloc
+  getIt.registerFactory<LearningPathBloc>(
+    () => LearningPathBloc(
+      getIt<GetAllLearningPaths>(),
+      getIt<GetLearningPathStatus>(),
+      getIt<GetNodesForPath>(),
+      getIt<GetNodeDetail>(),
+      getIt<EnrollPath>(),
+      getIt<StartNode>(),
+      getIt<CompleteNode>(),
+      getIt<DeleteLearningPath>(),
+      getIt<DeleteNodeUseCase>(),
+      getIt<CreateLearningPathUseCase>(),
+      getIt<CreateNodeUseCase>(),
+      getIt<CreateNodeQuestionsUseCase>(),
+      getIt<GenerateNodesWithAIUseCase>(),
+      getIt<GetLearningPathByIdUseCase>(),
+      getIt<UpdateLearningPathUseCase>(),
+      getIt<UpdateNodeUseCase>(),
     ),
   );
 }

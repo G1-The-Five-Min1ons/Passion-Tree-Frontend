@@ -12,9 +12,13 @@ import 'package:passion_tree_frontend/features/authentication/data/models/forgot
 import 'package:passion_tree_frontend/features/authentication/data/models/reset_password_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/change_password_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/select_role_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/update_user_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/update_profile_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/apply_teacher_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/mappers/auth_mapper.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/entities/teacher_verification_status.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements IAuthRepository {
@@ -195,6 +199,38 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
+  Future<void> updateAccountSettings({
+    required String username,
+    required String firstName,
+    required String lastName,
+    String? location,
+    String? bio,
+    String? avatarUrl,
+    String? phoneNumber,
+  }) async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+
+    final userRequest = UpdateUserRequest(
+      username: username,
+      firstName: firstName,
+      lastName: lastName,
+    );
+
+    final profileRequest = UpdateProfileRequest(
+      location: location,
+      bio: bio,
+      avatarUrl: avatarUrl,
+      phoneNumber: phoneNumber,
+    );
+
+    await _remoteDataSource.updateUser(token, userRequest);
+    await _remoteDataSource.updateProfile(token, profileRequest);
+
+    await _localDataSource.saveUsername(username);
+  }
+
+  @override
   Future<void> changePassword(String oldPassword, String newPassword) async {
     final token = await _localDataSource.getToken();
     if (token == null) throw Exception('No token found');
@@ -359,5 +395,31 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<void> signInWithDiscord(String code) async {
     // Exchange authorization code with backend for token
     await nativeDiscordSignIn(code);
+  }
+
+  @override
+  Future<TeacherVerificationStatus> getTeacherVerificationStatus() async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+
+    final model = await _remoteDataSource.getTeacherVerificationStatus(token);
+    return model.toEntity();
+  }
+
+  @override
+  Future<void> applyForTeacher({
+    required String phoneNumber,
+    required String reason,
+    required String teachingHistory,
+  }) async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+
+    final request = ApplyTeacherRequest(
+      phoneNumber: phoneNumber,
+      reason: reason,
+      teachingHistory: teachingHistory,
+    );
+    await _remoteDataSource.applyForTeacher(token, request);
   }
 }

@@ -39,57 +39,106 @@ class TeacherLearningTab extends StatefulWidget {
 class _TeacherLearningTabState extends State<TeacherLearningTab> {
   int _allListShownCount = 4;
 
+  // Cached filtered lists to avoid re-filtering on every build
+  List<LearningPath> _filteredAll = [];
+  List<EnrolledLearningPath> _filteredEnrolled = [];
+  List<LearningPath> _filteredNonEnrolled = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _updateFilteredPaths();
+  }
+
+  @override
+  void didUpdateWidget(TeacherLearningTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Re-filter only when data or filter criteria actually change
+    if (oldWidget.allPaths != widget.allPaths ||
+        oldWidget.enrolledPaths != widget.enrolledPaths ||
+        oldWidget.searchQuery != widget.searchQuery ||
+        oldWidget.selectedCategory != widget.selectedCategory ||
+        oldWidget.ratingRange != widget.ratingRange ||
+        oldWidget.maxModules != widget.maxModules) {
+      _updateFilteredPaths();
+    }
+  }
+
+  /// Update all filtered lists
+  /// Called only when data or filter criteria change, not on every build
+  void _updateFilteredPaths() {
+    _filteredAll = _filterCourses(widget.allPaths);
+    _filteredEnrolled = _filterEnrolledCourses(widget.enrolledPaths);
+    
+    // Filter out ALL enrolled paths from "All Learning Paths" and "Recommended"
+    final enrolledPathIds = widget.enrolledPaths
+        .map((e) => e.pathId)
+        .toSet();
+    _filteredNonEnrolled = _filteredAll
+        .where((path) => !enrolledPathIds.contains(path.id))
+        .toList();
+  }
+
   List<LearningPath> _filterCourses(List<LearningPath> courses) {
     return courses.where((c) {
-      final query = widget.searchQuery.trim().toLowerCase();
-
-      final matchesSearch =
-          query.isEmpty ||
-          c.title.toLowerCase().contains(query) ||
-          c.description.toLowerCase().contains(query) ||
-          c.instructor.toLowerCase().contains(query);
-
-      final matchesRating =
-          widget.ratingRange == null ||
-          (c.rating >= widget.ratingRange!.start &&
-              c.rating <= widget.ratingRange!.end);
-
-      final matchesModules =
-          widget.maxModules == null || c.modules <= widget.maxModules!;
-
-      return matchesSearch && matchesRating && matchesModules;
+      return _matchesCommonFilters(
+        title: c.title,
+        description: c.description,
+        instructor: c.instructor,
+        rating: c.rating,
+        modules: c.modules,
+      );
     }).toList();
   }
 
   List<EnrolledLearningPath> _filterEnrolledCourses(List<EnrolledLearningPath> courses) {
     return courses.where((c) {
-      final query = widget.searchQuery.trim().toLowerCase();
-
-      final matchesSearch =
-          query.isEmpty ||
-          c.title.toLowerCase().contains(query) ||
-          c.description.toLowerCase().contains(query) ||
-          c.instructor.toLowerCase().contains(query);
-
-      final matchesRating =
-          widget.ratingRange == null ||
-          (c.rating >= widget.ratingRange!.start &&
-              c.rating <= widget.ratingRange!.end);
-
-      final matchesModules =
-          widget.maxModules == null || c.modules <= widget.maxModules!;
-
-      return matchesSearch && matchesRating && matchesModules;
+      return _matchesCommonFilters(
+        title: c.title,
+        description: c.description,
+        instructor: c.instructor,
+        rating: c.rating,
+        modules: c.modules,
+      );
     }).toList();
+  }
+
+  bool _matchesCommonFilters({
+    required String title,
+    required String description,
+    required String instructor,
+    required double rating,
+    required int modules,
+  }) {
+    final query = widget.searchQuery.trim().toLowerCase();
+
+    final matchesSearch =
+        query.isEmpty ||
+        title.toLowerCase().contains(query) ||
+        description.toLowerCase().contains(query) ||
+        instructor.toLowerCase().contains(query);
+
+    final matchesRating =
+        widget.ratingRange == null ||
+        (rating >= widget.ratingRange!.start &&
+            rating <= widget.ratingRange!.end);
+
+    final matchesModules =
+        widget.maxModules == null || modules <= widget.maxModules!;
+
+    return matchesSearch && matchesRating && matchesModules;
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    final filteredAll = _filterCourses(widget.allPaths);
-    final filteredEnrolled = _filterEnrolledCourses(widget.enrolledPaths);
-    final shownAllCourses = filteredAll.take(_allListShownCount).toList();
+    // Use cached filtered lists instead of filtering on every build
+    final filteredAll = _filteredAll;
+    final filteredEnrolled = _filteredEnrolled;
+    final filteredNonEnrolled = _filteredNonEnrolled;
+    
+    final shownAllCourses = filteredNonEnrolled.take(_allListShownCount).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,7 +202,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
 
         SizedBox(
           height: BaseCourseCard.defaultHeight,
-          child: filteredAll.isEmpty
+          child: filteredNonEnrolled.isEmpty
               ? Center(
                   child: Text(
                     'No recommended paths found',
@@ -164,11 +213,11 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
                 )
               : ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: filteredAll.length,
+                  itemCount: filteredNonEnrolled.length,
                   separatorBuilder: (context, index) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     return PixelCourseCard(
-                      course: filteredAll[index],
+                      course: filteredNonEnrolled[index],
                     );
                   },
                 ),
@@ -210,33 +259,34 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
             },
           ),
 
-        const SizedBox(height: 40),
-
         // ===== MORE =====
-        Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'More',
-                style: AppPixelTypography.smallTitle.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
+        if (_allListShownCount < filteredNonEnrolled.length) ...[
+          const SizedBox(height: 40),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'More',
+                  style: AppPixelTypography.smallTitle.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 5),
-              NavigationButton(
-                direction: NavigationDirection.down,
-                onPressed: () {
-                  setState(() {
-                    _allListShownCount += 4;
-                  });
-                },
-              ),
-            ],
+                const SizedBox(height: 5),
+                NavigationButton(
+                  direction: NavigationDirection.down,
+                  onPressed: () {
+                    setState(() {
+                      _allListShownCount += 4;
+                    });
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-
-        const SizedBox(height: 40),
+          const SizedBox(height: 40),
+        ] else
+          const SizedBox(height: 40),
       ],
     );
   }

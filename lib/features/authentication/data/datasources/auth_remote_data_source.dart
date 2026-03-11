@@ -17,6 +17,10 @@ import 'package:passion_tree_frontend/features/authentication/data/models/native
 import 'package:passion_tree_frontend/features/authentication/data/models/native_discord_signin_response.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/select_role_request.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/profile_response.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/update_user_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/update_profile_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/apply_teacher_request.dart';
+import 'package:passion_tree_frontend/features/authentication/data/models/teacher_verification_status_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<RegisterResponse> register(RegisterRequest request);
@@ -25,13 +29,19 @@ abstract class AuthRemoteDataSource {
   Future<void> resendVerificationEmail(ResendVerificationRequest request);
   Future<void> forgotPassword(ForgotPasswordRequest request);
   Future<void> resetPassword(ResetPasswordRequest request);
-  Future<ProfileResponse> getProfile(String token);
+  Future<Map<String, dynamic>> getProfile(String token);
+  Future<void> updateUser(String token, UpdateUserRequest request);
+  Future<void> updateProfile(String token, UpdateProfileRequest request);
   Future<void> changePassword(String token, ChangePasswordRequest request);
   Future<void> deleteUser(String token);
   Future<NativeGoogleSignInResponse> nativeGoogleSignIn(String idToken);
   Future<NativeDiscordSignInResponse> nativeDiscordSignIn(String code);
   Future<VerifyEmailResponse> refreshToken(String refreshTokenValue);
   Future<void> selectRole(String token, SelectRoleRequest request);
+  Future<TeacherVerificationStatusModel> getTeacherVerificationStatus(
+    String token,
+  );
+  Future<void> applyForTeacher(String token, ApplyTeacherRequest request);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -227,6 +237,38 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
+  Future<void> updateUser(String token, UpdateUserRequest request) async {
+    LogHandler.separator(title: 'AUTH REMOTE · UPDATE USER');
+    final response = await _apiHandler.put(
+      url: ApiConfig.authUpdateUser,
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode(request.toJson()),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('User info updated');
+      return;
+    }
+    throw _handleError(response, 'updateUser');
+  }
+
+  @override
+  Future<void> updateProfile(String token, UpdateProfileRequest request) async {
+    LogHandler.separator(title: 'AUTH REMOTE · UPDATE PROFILE');
+    final response = await _apiHandler.put(
+      url: ApiConfig.authUpdateProfile,
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode(request.toJson()),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Profile info updated');
+      return;
+    }
+    throw _handleError(response, 'updateProfile');
+  }
+
+  @override
   Future<void> changePassword(
     String token,
     ChangePasswordRequest request,
@@ -327,9 +369,51 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
   }
 
+  @override
+  Future<TeacherVerificationStatusModel> getTeacherVerificationStatus(
+    String token,
+  ) async {
+    LogHandler.separator(title: 'AUTH REMOTE · TEACHER VERIFICATION STATUS');
+    final response = await _apiHandler.get(
+      url: ApiConfig.authTeacherVerificationStatus,
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (response.isSuccess) {
+      final data = _parseMap(response.data, 'response.data');
+      return TeacherVerificationStatusModel.fromJson(data);
+    }
+
+    throw _handleError(response, 'getTeacherVerificationStatus');
+  }
+
+  @override
+  Future<void> applyForTeacher(
+    String token,
+    ApplyTeacherRequest request,
+  ) async {
+    LogHandler.separator(title: 'AUTH REMOTE · APPLY TEACHER');
+    final response = await _apiHandler.post(
+      url: ApiConfig.authApplyTeacher,
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode(request.toJson()),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (!response.isSuccess) {
+      throw _handleError(response, 'applyForTeacher');
+    }
+  }
+
   String _getUserFriendlyMessage(String backendError, String context) {
     final errorLower = backendError.toLowerCase();
     if (context == 'login') {
+      if (errorLower.contains('verification_required') ||
+          errorLower.contains('6-digit code') ||
+          errorLower.contains('otp')) {
+        return backendError;
+      }
       if (errorLower.contains('invalid') ||
           errorLower.contains('password') ||
           errorLower.contains('incorrect') ||

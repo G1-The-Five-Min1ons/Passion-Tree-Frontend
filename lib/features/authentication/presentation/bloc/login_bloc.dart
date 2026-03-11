@@ -82,19 +82,33 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     );
 
     result.fold(
-      (failure) => emit(
-        state.copyWith(
+      (failure) {
+        if (_isOtpVerificationRequired(failure.message)) {
+          emit(state.copyWith(
+            status: LoginStatus.success,
+            nextStep: LoginNextStep.otpVerification,
+            errorMessage: null,
+          ));
+          return;
+        }
+
+        emit(state.copyWith(
           status: LoginStatus.failure,
           errorMessage: failure.message,
-        ),
-      ),
-      (_) => emit(
-        state.copyWith(
-          status: LoginStatus.success,
-          nextStep: LoginNextStep.otpVerification,
-        ),
-      ),
+        ));
+      },
+      (_) => emit(state.copyWith(
+        status: LoginStatus.success,
+        nextStep: LoginNextStep.otpVerification,
+      )),
     );
+  }
+
+  bool _isOtpVerificationRequired(String message) {
+    final normalized = message.toLowerCase();
+    return normalized.contains('verification_required') ||
+        normalized.contains('6-digit code') ||
+        normalized.contains('otp');
   }
 
   Future<void> _onLoginWithGoogle(

@@ -12,8 +12,18 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enr
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/start_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_learning_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/generate_nodes_with_ai_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_learning_path_by_id_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_node.dart';
 
 class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GetAllLearningPaths getAllLearningPaths;
@@ -24,6 +34,14 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final StartNode startNode;
   final CompleteNode completeNode;
   final DeleteLearningPath deleteLearningPath;
+  final DeleteNodeUseCase deleteNodeUseCase;
+  final CreateLearningPathUseCase createLearningPathUseCase;
+  final CreateNodeUseCase createNodeUseCase;
+  final CreateNodeQuestionsUseCase createNodeQuestionsUseCase;
+  final GenerateNodesWithAIUseCase generateNodesWithAIUseCase;
+  final GetLearningPathByIdUseCase getLearningPathByIdUseCase;
+  final UpdateNodeUseCase updateNodeUseCase;
+  final UpdateLearningPathUseCase updateLearningPathUseCase;
 
   LearningPathBloc(
     this.getAllLearningPaths,
@@ -34,7 +52,42 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.startNode,
     this.completeNode,
     this.deleteLearningPath,
+    this.deleteNodeUseCase,
+    this.createLearningPathUseCase,
+    this.createNodeUseCase,
+    this.createNodeQuestionsUseCase,
+    this.generateNodesWithAIUseCase,
+    this.getLearningPathByIdUseCase,
+    this.updateLearningPathUseCase,
+    this.updateNodeUseCase,
   ) : super(LearningPathInitial()) {
+    
+    // ===== HELPER METHODS =====
+    
+    /// Helper method to handle errors consistently
+    void _handleError(
+      Emitter<LearningPathState> emit,
+      String operation,
+      dynamic error,
+    ) {
+      LogHandler.error('[BLoC] Error in $operation: $error');
+      emit(LearningPathError(error.toString()));
+    }
+    
+    /// Helper method to execute async operations with error handling
+    Future<void> _safeExecute(
+      Emitter<LearningPathState> emit,
+      String operation,
+      Future<void> Function() action,
+    ) async {
+      try {
+        await action();
+      } catch (e) {
+        _handleError(emit, operation, e);
+      }
+    }
+    
+    // ===== EVENT HANDLERS =====
     
     ///  FETCH ALL LEARNING PATHS
     
@@ -163,17 +216,15 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     on<StartNodeEvent>(
       (event, emit) async {
         LogHandler.debug('[BLoC] StartNodeEvent: ${event.nodeId}');
+        emit(StartingNode(event.nodeId));
         
-        try {
+        await _safeExecute(emit, 'start node', () async {
           await startNode(event.nodeId, event.userId);
           // Refetch node detail to get updated status
           final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
           LogHandler.debug('[BLoC] Node started successfully');
           emit(NodeDetailLoaded(nodeDetail));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error starting node: $e');
-          emit(LearningPathError(e.toString()));
-        }
+        });
       },
       transformer: droppable(),
     );
@@ -183,15 +234,29 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     on<EnrollPathEvent>(
       (event, emit) async {
         LogHandler.debug('[BLoC] EnrollPathEvent: ${event.pathId}');
+        emit(EnrollingPath(event.pathId));
         
-        try {
+        await _safeExecute(emit, 'enroll path', () async {
+          // Step 1: Enroll in the path
           await enrollPath(event.pathId, event.userId);
           LogHandler.info('[BLoC] Enrolled in path: ${event.pathId}');
-          emit(PathEnrolled(pathId: event.pathId, userId: event.userId));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error enrolling in path: $e');
-          emit(LearningPathError(e.toString()));
-        }
+          
+          // Step 2: Fetch updated enrolled paths to get the enrolled data
+          final enrolledPaths = await getLearningPathStatus(event.userId);
+          
+          // Step 3: Find the newly enrolled path
+          final enrolledPath = enrolledPaths.firstWhere(
+            (path) => path.pathId == event.pathId,
+            orElse: () => throw Exception('Enrolled path not found after enrollment'),
+          );
+          
+          LogHandler.debug('[BLoC] Fetched enrolled path data: ${enrolledPath.title}');
+          emit(PathEnrolled(
+            pathId: event.pathId,
+            userId: event.userId,
+            enrolledPath: enrolledPath,
+          ));
+        });
       },
       transformer: droppable(),
     );
@@ -201,17 +266,15 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     on<CompleteNodeEvent>(
       (event, emit) async {
         LogHandler.debug('[BLoC] CompleteNodeEvent: ${event.nodeId}');
+        emit(CompletingNode(event.nodeId));
         
-        try {
+        await _safeExecute(emit, 'complete node', () async {
           await completeNode(event.nodeId, event.userId);
           // Refetch node detail to get updated status
           final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
           LogHandler.debug('[BLoC] Node completed successfully');
           emit(NodeDetailLoaded(nodeDetail));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error completing node: $e');
-          emit(LearningPathError(e.toString()));
-        }
+        });
       },
       transformer: droppable(),
     );
@@ -221,8 +284,9 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     on<DeleteLearningPathEvent>(
       (event, emit) async {
         LogHandler.debug('[BLoC] DeleteLearningPathEvent: ${event.pathId}');
+        emit(DeletingLearningPath(event.pathId));
         
-        try {
+        await _safeExecute(emit, 'delete learning path', () async {
           await deleteLearningPath(event.pathId);
           LogHandler.info('[BLoC] Deleted path: ${event.pathId}');
           
@@ -244,10 +308,161 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           } else {
             emit(LearningPathDeleted('Learning path deleted successfully'));
           }
+        });
+      },
+      transformer: droppable(),
+    );
+
+    on<DeleteNodeEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] DeleteNodeEvent: ${event.nodeId}');
+        emit(DeletingNode(event.nodeId));
+
+        await _safeExecute(emit, 'delete node', () async {
+          await deleteNodeUseCase(event.nodeId);
+          LogHandler.info('[BLoC] Deleted node: ${event.nodeId}');
+          emit(NodeDeleted(event.nodeId));
+        });
+      },
+      transformer: droppable(),
+    );
+
+    // ===== TEACHER EVENT HANDLERS =====
+
+    on<CreateLearningPathEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] CreateLearningPathEvent received');
+        emit(CreatingLearningPath());
+
+        await _safeExecute(emit, 'create learning path', () async {
+          final learningPath = CreateLearningPath(
+            title: event.title,
+            objective: event.objective,
+            description: event.description,
+            creatorId: event.creatorId,
+            coverImgUrl: event.coverImgUrl,
+            publishStatus: event.publishStatus,
+          );
+          
+          LogHandler.debug('Creating learning path...');
+          final pathId = await createLearningPathUseCase(learningPath);
+          LogHandler.debug('[BLoC] Learning path created: $pathId');
+          emit(LearningPathCreated(pathId));
+        });
+      },
+      transformer: droppable(),
+    );
+
+    on<GenerateNodesWithAIEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] GenerateNodesWithAIEvent received');
+        LogHandler.debug('Topic: ${event.topic}');
+        emit(GeneratingNodesWithAI());
+
+        await _safeExecute(emit, 'generate nodes with AI', () async {
+          LogHandler.debug('Generating nodes with AI...');
+          final response = await generateNodesWithAIUseCase(event.topic);
+          LogHandler.debug('[BLoC] Generated ${response.nodes.length} nodes');
+          emit(NodesGeneratedWithAI(
+            topic: response.topic,
+            nodes: response.nodes,
+          ));
+        });
+      },
+      transformer: restartable(),
+    );
+
+    on<CreateNodeEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] CreateNodeEvent received');
+        emit(CreatingNode());
+
+        await _safeExecute(emit, 'create node', () async {
+          final node = CreateNode(
+            title: event.title,
+            description: event.description,
+            pathId: event.pathId,
+            sequence: event.sequence,
+            linkvdo: event.linkvdo,
+            materials: event.materials,
+            questions: null,
+          );
+          
+          LogHandler.debug('Creating node...');
+          final nodeId = await createNodeUseCase(node);
+
+          if (event.questions != null && event.questions!.isNotEmpty) {
+            LogHandler.debug('Creating quiz questions for node...');
+            await createNodeQuestionsUseCase(nodeId, event.questions!);
+          }
+
+          LogHandler.debug('[BLoC] Node created: $nodeId');
+          emit(NodeCreated(nodeId));
+        });
+      },
+      transformer: droppable(),
+    );
+
+    on<GetLearningPathByIdEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] GetLearningPathByIdEvent received');
+        LogHandler.debug('Path ID: ${event.pathId}');
+        emit(LearningPathLoading());
+
+        try {
+          LogHandler.debug('Fetching learning path by ID...');
+          final learningPath = await getLearningPathByIdUseCase(event.pathId);
+          LogHandler.debug('[BLoC] Learning path loaded: ${learningPath.id}');
+          emit(LearningPathDetailLoaded(learningPath));
         } catch (e) {
-          LogHandler.error('[BLoC] Error deleting learning path: $e');
+          LogHandler.error('[BLoC] Error fetching learning path: $e');
           emit(LearningPathError(e.toString()));
         }
+      },
+      transformer: restartable(),
+    );
+
+    on<UpdateNodeEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] UpdateNodeEvent received');
+        LogHandler.debug('Node ID: ${event.nodeId}');
+        emit(UpdatingNode(event.nodeId));
+
+        await _safeExecute(emit, 'update node', () async {
+          LogHandler.debug('Updating node...');
+          await updateNodeUseCase(
+            event.nodeId,
+            event.title,
+            event.description,
+            linkvdo: event.linkvdo,
+            materials: event.materials,
+          );
+          LogHandler.debug('[BLoC] Node updated: ${event.nodeId}');
+          emit(NodeUpdated(event.nodeId));
+        });
+      },
+      transformer: droppable(),
+    );
+
+    on<UpdateLearningPathEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] UpdateLearningPathEvent received');
+        LogHandler.debug('Path ID: ${event.pathId}');
+        emit(UpdatingLearningPath(event.pathId));
+
+        await _safeExecute(emit, 'update learning path', () async {
+          LogHandler.debug('Updating learning path...');
+          await updateLearningPathUseCase(
+            event.pathId,
+            event.title,
+            event.objective,
+            event.description,
+            event.coverImgUrl,
+            event.publishStatus,
+          );
+          LogHandler.debug('[BLoC] Learning path updated: ${event.pathId}');
+          emit(LearningPathUpdated(event.pathId));
+        });
       },
       transformer: droppable(),
     );

@@ -7,12 +7,14 @@ extension LearningPathMapper on LearningPathApiModel {
       id: id,
       title: title,
       description: description,
+      objective: objective,
       coverImageUrl: coverImgUrl,
       rating: rating,
       publishStatus: publishStatus,
       instructor: instructor,
       students: students,
       modules: modules,
+      creatorId: creatorId,
     );
   }
 

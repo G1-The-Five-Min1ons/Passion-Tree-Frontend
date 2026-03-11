@@ -12,12 +12,11 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/congrats_popups.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/rating_popup.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/datasources/learning_path_data_source.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/repositories/learning_path_repositories.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 enum QuizViewState { loading, answering, result, error }
 
@@ -27,6 +26,7 @@ class LearningPathQuizPage extends StatefulWidget {
   final String? pathName;
   final int? totalNodes;
   final int? currentNodeSequence;
+  final String userId;
 
   const LearningPathQuizPage({
     super.key,
@@ -35,6 +35,7 @@ class LearningPathQuizPage extends StatefulWidget {
     this.pathName,
     this.totalNodes,
     this.currentNodeSequence,
+    required this.userId,
   });
 
   @override
@@ -59,10 +60,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
     });
 
     try {
-      final dataSource = LearningPathDataSource();
-      final repository = LearningPathRepositoryImpl(dataSource);
-      final getNodeQuestions = GetNodeQuestions(repository);
-
+      final getNodeQuestions = getIt<GetNodeQuestions>();
       final questions = await getNodeQuestions(widget.nodeId);
 
       setState(() {
@@ -262,9 +260,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
   }
 
   void _finishQuiz() {
-    // TODO: Get userId from authentication service
-    const userId =
-        'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc'; // Hardcoded for testing
+    final userId = widget.userId;
 
     // Check if this is the last node (sequence starts from 1)
 

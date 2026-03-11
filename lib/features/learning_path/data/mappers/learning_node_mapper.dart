@@ -10,6 +10,7 @@ extension LearningNodeMapper on LearningNodeApiModel {
       sequence: sequence,
       pathId: pathId,
       materials: const [],
+      questions: const [],
       status: status,
       complete: complete,
       linkVdo: linkVdo,

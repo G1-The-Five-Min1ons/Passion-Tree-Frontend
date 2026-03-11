@@ -71,11 +71,13 @@ class UpdateAlbumUseCase {
     required String albumId,
     required String title,
     File? coverImage,
+    String? existingImageUrl,
   }) async {
     return await repository.updateAlbum(
       albumId: albumId,
       title: title,
       coverImage: coverImage,
+      existingImageUrl: existingImageUrl,
     );
   }
 }
@@ -88,5 +90,56 @@ class DeleteAlbumUseCase {
 
   Future<Either<Failure, void>> call(String albumId) async {
     return await repository.deleteAlbum(albumId);
+  }
+}
+
+/// Use case for creating a new tree
+class CreateTreeUseCase {
+  final IAlbumRepository repository;
+
+  CreateTreeUseCase(this.repository);
+
+  Future<Either<Failure, String>> call({
+    required String title,
+    required String difficulties,
+    required String pathId,
+    required String albumId,
+  }) async {
+    return await repository.createTree(
+      title: title,
+      difficulties: difficulties,
+      pathId: pathId,
+      albumId: albumId,
+    );
+  }
+}
+
+/// Use case for deleting a tree
+class DeleteTreeUseCase {
+  final IAlbumRepository repository;
+
+  DeleteTreeUseCase(this.repository);
+
+  Future<Either<Failure, void>> call(String treeId) async {
+    return await repository.deleteTree(treeId);
+  }
+}
+
+/// Use case for updating a tree
+class UpdateTreeUseCase {
+  final IAlbumRepository repository;
+
+  UpdateTreeUseCase(this.repository);
+
+  Future<Either<Failure, void>> call({
+    required String treeId,
+    required String title,
+    String? albumId,
+  }) async {
+    return await repository.updateTree(
+      treeId: treeId,
+      title: title,
+      albumId: albumId,
+    );
   }
 }
