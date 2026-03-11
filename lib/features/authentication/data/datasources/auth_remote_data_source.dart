@@ -23,7 +23,7 @@ import 'package:passion_tree_frontend/features/authentication/data/models/teache
 
 abstract class AuthRemoteDataSource {
   Future<RegisterResponse> register(RegisterRequest request);
-  Future<LoginOtpResponse> login(LoginRequest request);
+  Future<LoginOtpResponse> login(LoginRequest request, {bool confirmReactivate = false});
   Future<VerifyEmailResponse> verifyEmail(VerifyEmailRequest request);
   Future<void> resendVerificationEmail(ResendVerificationRequest request);
   Future<void> forgotPassword(ForgotPasswordRequest request);

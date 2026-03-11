@@ -104,7 +104,7 @@ class AuthRepositoryImpl implements IAuthRepository {
     LogHandler.info('AuthRepository: Attempting login for $identifier' +
         (confirmReactivate ? ' (with reactivation)' : ''));
     final request = LoginRequest(identifier: identifier, password: password);
-    final response = await _remoteDataSource.login(request, confirmReactivate);
+    final response = await _remoteDataSource.login(request, confirmReactivate: confirmReactivate);
     LogHandler.success('AuthRepository: Login successful');
     return response.message;
   }
@@ -211,6 +211,13 @@ class AuthRepositoryImpl implements IAuthRepository {
     if (token == null) throw Exception('No token found');
     await _remoteDataSource.deactivateAccount(token);
     await _localDataSource.clearAuth();
+  }
+
+  @override
+  Future<void> reactivateAccount() async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+    await _remoteDataSource.reactivateAccount(token);
   }
 
   @override
