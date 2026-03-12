@@ -187,6 +187,7 @@ class TreeNodeApiModel {
   final int sequence;
   final String? status;
   final String? complete;
+  final String? reflectionId;
 
   TreeNodeApiModel({
     required this.treeNodeId,
@@ -199,6 +200,7 @@ class TreeNodeApiModel {
     required this.sequence,
     this.status,
     this.complete,
+    this.reflectionId,
   });
 
   factory TreeNodeApiModel.fromJson(Map<String, dynamic> json) {
@@ -216,6 +218,7 @@ class TreeNodeApiModel {
         sequence: json['sequence'] ?? 0,
         status: json['status'],
         complete: json['complete'],
+        reflectionId: json['reflection_id'],
       );
     } catch (e) {
       throw ParseException(

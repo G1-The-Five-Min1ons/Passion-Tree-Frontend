@@ -1,24 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/reflection_data_source.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/models/reflection_api_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/page._two.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/page_one.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/page_three.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/reflection_overview.dart';
 
 class AddReflectPopup extends StatefulWidget {
+  final String treeNodeId;
   final String nodeName;
 
-  const AddReflectPopup({super.key, required this.nodeName});
+  const AddReflectPopup({
+    super.key,
+    required this.treeNodeId,
+    required this.nodeName,
+  });
 
-  static void show(BuildContext context, {required String nodeName}) {
+  static void show(BuildContext context, {required String treeNodeId, required String nodeName}) {
     showDialog(
       context: context,
-      builder: (context) => AddReflectPopup(nodeName: nodeName),
+      builder: (context) => AddReflectPopup(
+        treeNodeId: treeNodeId,
+        nodeName: nodeName,
+      ),
     );
   }
 
@@ -28,9 +39,12 @@ class AddReflectPopup extends StatefulWidget {
 
 class _AddReflectPopupState extends State<AddReflectPopup> {
   final PageController _pageController = PageController();
+  final ReflectionDataSource _reflectionDataSource = ReflectionDataSource();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  
   int _currentPage = 0;
+  bool _isSubmitting = false;
 
-  //TODO: จัดการ state
   String learn = "";
   String feel = "";
   int score = 0;
@@ -42,6 +56,56 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
     if (_currentPage == 1) return score > 0 && feel.trim().isNotEmpty;
     if (_currentPage == 2) return progress > 0 && challenge > 0;
     return true;
+  }
+
+  Future<void> _submitReflection() async {
+    if (_isSubmitting) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final token = await _storage.read(key: 'auth_token');
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final request = CreateReflectionRequest(
+        learningReflect: learn,
+        moodReflect: feel,
+        feelScore: score,
+        progressScore: progress,
+        challengeScore: challenge,
+        treeNodeId: widget.treeNodeId,
+      );
+
+      // Call API
+      await _reflectionDataSource.createReflection(request, token);
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Reflected successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -135,17 +199,21 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
       return Row(
         children: [
           GestureDetector(
-            onTap: () => _pageController.previousPage(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
+            onTap: _isSubmitting ? null : () => _pageController.previousPage(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
             child: Image.asset('assets/buttons/navigation/pixel/left_small_light.png', width: 24, height: 24),
           ),
           const Spacer(),
-          AppButton(
-              variant: AppButtonVariant.text,
-              text: 'Submit',
-              onPressed: () {
-                //TODO save to db
-              },
-            ),
+          _isSubmitting
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : AppButton(
+                  variant: AppButtonVariant.text,
+                  text: 'Submit',
+                  onPressed: _submitReflection,
+                ),
         ],
       );
     }

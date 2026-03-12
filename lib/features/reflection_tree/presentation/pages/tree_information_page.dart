@@ -4,12 +4,14 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/node_item.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/tree_canvas.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/page_header.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_node_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/add_reflect_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/detail_reflect_after/reflect_detail_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/status_badge.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
@@ -172,9 +174,23 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                                       : 'assets/images/trees/node_notenrolled.png',
                                   size: 90,
                                   onTap: () {
-                                    if (chapter.isCompleted) {
+                                    if (!chapter.isCompleted) {
+                                      // Learning Path not completed
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Please finish this chapter before reflecting'),
+                                          backgroundColor: AppColors.cancel,
+                                          duration: const Duration(seconds: 3),
+                                        ),
+                                      );
+                                    } else if (chapter.hasReflection) {
+                                      // Node completed and has reflection - show detail
+                                      ReflectDetailPopup.show(context);
+                                    } else {
+                                      // Node completed but no reflection yet - add new reflection
                                       AddReflectPopup.show(
                                         context,
+                                        treeNodeId: chapter.treeNodeId,    
                                         nodeName: chapter.name,
                                       );
                                     }
