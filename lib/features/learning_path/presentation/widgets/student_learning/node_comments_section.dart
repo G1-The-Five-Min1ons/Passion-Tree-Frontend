@@ -13,9 +13,14 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/c
 class CommentsSection extends StatelessWidget {
   final String? nodeId;
   final String? pathId;
+  final String userId;
 
-  const CommentsSection({super.key, this.nodeId, this.pathId})
-    : assert(nodeId != null || pathId != null);
+  const CommentsSection({
+    super.key,
+    this.nodeId,
+    this.pathId,
+    required this.userId,
+  }) : assert(nodeId != null || pathId != null);
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +28,11 @@ class CommentsSection extends StatelessWidget {
       create: (_) =>
           getIt<CommentBloc>()
             ..add(FetchComments(nodeId: nodeId, pathId: pathId)),
-      child: _CommentsSectionContent(nodeId: nodeId, pathId: pathId),
+      child: _CommentsSectionContent(
+        nodeId: nodeId,
+        pathId: pathId,
+        userId: userId,
+      ),
     );
   }
 }
@@ -31,8 +40,13 @@ class CommentsSection extends StatelessWidget {
 class _CommentsSectionContent extends StatefulWidget {
   final String? nodeId;
   final String? pathId;
+  final String userId;
 
-  const _CommentsSectionContent({this.nodeId, this.pathId});
+  const _CommentsSectionContent({
+    this.nodeId,
+    this.pathId,
+    required this.userId,
+  });
 
   @override
   State<_CommentsSectionContent> createState() =>
@@ -336,8 +350,7 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
                       onDelete: () => _deleteComment(comment.commentId),
                       onReply: () =>
                           _startReply(comment.commentId, comment.userName),
-                      currentUserId:
-                          'a33282ca-e6f1-4fbf-9f51-fab7ffba3bfc', // Hardcoded temporarily like in learning_node.dart
+                      currentUserId: widget.userId,
                     );
                   },
                 );

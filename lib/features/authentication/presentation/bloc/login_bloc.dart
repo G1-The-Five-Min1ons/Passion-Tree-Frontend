@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/error/failures.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_event.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_state.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_credentials_usecase.dart';
@@ -19,14 +20,14 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     required GetProfileUseCase getProfile,
     required SelectRoleUseCase selectRole,
     required GetUserRoleUseCase getUserRole,
-  })  : _loginWithCredentials = loginWithCredentials,
-        _loginWithGoogle = loginWithGoogle,
-        _loginWithDiscord = loginWithDiscord,
-        _verifyEmail = verifyEmail,
-        _getProfile = getProfile,
-        _selectRole = selectRole,
-        _getUserRole = getUserRole,
-        super(const LoginState()) {
+  }) : _loginWithCredentials = loginWithCredentials,
+       _loginWithGoogle = loginWithGoogle,
+       _loginWithDiscord = loginWithDiscord,
+       _verifyEmail = verifyEmail,
+       _getProfile = getProfile,
+       _selectRole = selectRole,
+       _getUserRole = getUserRole,
+       super(const LoginState()) {
     on<LoginUsernameChanged>(_onUsernameChanged);
     on<LoginPasswordChanged>(_onPasswordChanged);
     on<LoginRememberMeToggled>(_onRememberMeToggled);
@@ -81,15 +82,33 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     );
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: LoginStatus.failure,
-        errorMessage: failure.message,
-      )),
+      (failure) {
+        if (_isOtpVerificationRequired(failure.message)) {
+          emit(state.copyWith(
+            status: LoginStatus.success,
+            nextStep: LoginNextStep.otpVerification,
+            errorMessage: null,
+          ));
+          return;
+        }
+
+        emit(state.copyWith(
+          status: LoginStatus.failure,
+          errorMessage: failure.message,
+        ));
+      },
       (_) => emit(state.copyWith(
         status: LoginStatus.success,
         nextStep: LoginNextStep.otpVerification,
       )),
     );
+  }
+
+  bool _isOtpVerificationRequired(String message) {
+    final normalized = message.toLowerCase();
+    return normalized.contains('verification_required') ||
+        normalized.contains('6-digit code') ||
+        normalized.contains('otp');
   }
 
   Future<void> _onLoginWithGoogle(
@@ -106,16 +125,20 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         if (failure is CancellationFailure) {
           emit(state.copyWith(status: LoginStatus.initial));
         } else {
-          emit(state.copyWith(
-            status: LoginStatus.failure,
-            errorMessage: failure.message,
-          ));
+          emit(
+            state.copyWith(
+              status: LoginStatus.failure,
+              errorMessage: failure.message,
+            ),
+          );
         }
       },
-      (_) => emit(state.copyWith(
-        status: LoginStatus.success,
-        nextStep: LoginNextStep.complete,
-      )),
+      (_) => emit(
+        state.copyWith(
+          status: LoginStatus.success,
+          nextStep: LoginNextStep.checkingRole,
+        ),
+      ),
     );
   }
 
@@ -123,17 +146,41 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     LoginWithDiscord event,
     Emitter<LoginState> emit,
   ) async {
+    LogHandler.info('[LoginBloc] _onLoginWithDiscord: START');
     emit(state.copyWith(status: LoginStatus.loading));
 
     final result = await _loginWithDiscord.initiateOAuth();
+    LogHandler.info(
+      '[LoginBloc] initiateOAuth() returned. IsRight: ${result.isRight()}',
+    );
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: LoginStatus.failure,
-        errorMessage: failure.message,
-      )),
-      (_) => {
-        // Keep loading state while waiting for callback
+      (failure) {
+        LogHandler.error('[LoginBloc] initiateOAuth FAILED: ${failure.message}');
+        if (failure is CancellationFailure) {
+          emit(state.copyWith(status: LoginStatus.initial));
+        } else {
+          emit(
+            state.copyWith(
+              status: LoginStatus.failure,
+              errorMessage: failure.message,
+            ),
+          );
+        }
+      },
+      (_) {
+        LogHandler.info(
+          '[LoginBloc] initiateOAuth SUCCESS -> emitting (success, checkingRole)',
+        );
+        emit(
+          state.copyWith(
+            status: LoginStatus.success,
+            nextStep: LoginNextStep.checkingRole,
+          ),
+        );
+        LogHandler.info(
+          '[LoginBloc] Emitted (success, checkingRole). Current state: ${state.status}, ${state.nextStep}',
+        );
       },
     );
   }
@@ -147,14 +194,18 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     final result = await _loginWithDiscord.authenticateWithCode(event.code);
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: LoginStatus.failure,
-        errorMessage: failure.message,
-      )),
-      (_) => emit(state.copyWith(
-        status: LoginStatus.success,
-        nextStep: LoginNextStep.complete,
-      )),
+      (failure) => emit(
+        state.copyWith(
+          status: LoginStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
+      (_) => emit(
+        state.copyWith(
+          status: LoginStatus.success,
+          nextStep: LoginNextStep.checkingRole,
+        ),
+      ),
     );
   }
 
@@ -167,15 +218,19 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     final result = await _verifyEmail.execute(event.code);
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: LoginStatus.failure,
-        errorMessage: failure.message,
-      )),
+      (failure) => emit(
+        state.copyWith(
+          status: LoginStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
       (_) {
-        emit(state.copyWith(
-          status: LoginStatus.success,
-          nextStep: LoginNextStep.checkingRole,
-        ));
+        emit(
+          state.copyWith(
+            status: LoginStatus.success,
+            nextStep: LoginNextStep.checkingRole,
+          ),
+        );
       },
     );
   }
@@ -184,50 +239,60 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     CheckRoleStatus event,
     Emitter<LoginState> emit,
   ) async {
+    LogHandler.info('[LoginBloc] _onCheckRoleStatus: START');
     emit(state.copyWith(status: LoginStatus.loading));
 
     // Get local role first
     final localRoleResult = await _getUserRole.execute();
     String? localRole;
-    
-    localRoleResult.fold(
-      (failure) => null,
-      (role) => localRole = role,
-    );
+
+    localRoleResult.fold((failure) => null, (role) => localRole = role);
+    LogHandler.info('[LoginBloc] localRole: $localRole');
 
     // Get profile from backend
+    LogHandler.info('[LoginBloc] Fetching profile from backend...');
     final profileResult = await _getProfile.execute();
+    LogHandler.info(
+      '[LoginBloc] _getProfile.execute() returned. IsRight: ${profileResult.isRight()}',
+    );
 
     profileResult.fold(
-      (failure) => emit(state.copyWith(
-        status: LoginStatus.failure,
-        errorMessage: failure.message,
-      )),
+      (failure) {
+        LogHandler.error('[LoginBloc] getProfile FAILED: ${failure.message}');
+        emit(
+          state.copyWith(
+            status: LoginStatus.failure,
+            errorMessage: failure.message,
+          ),
+        );
+      },
       (profile) {
         final backendRole = profile.user.role;
+        LogHandler.info(
+          '[LoginBloc] Profile fetched. backendRole: $backendRole',
+        );
 
         // Determine next step based on role
         if (backendRole == 'pending') {
-          // Check if we have a valid local role to sync
-          if (localRole == 'student' || localRole == 'teacher') {
-            // Trigger role selection with pre-selected role
-            emit(state.copyWith(
+          LogHandler.info(
+            '[LoginBloc] Role is pending -> emitting (success, roleSelection)',
+          );
+          emit(
+            state.copyWith(
               status: LoginStatus.success,
               nextStep: LoginNextStep.roleSelection,
-            ));
-          } else {
-            // Need user to select role
-            emit(state.copyWith(
-              status: LoginStatus.success,
-              nextStep: LoginNextStep.roleSelection,
-            ));
-          }
+            ),
+          );
         } else {
-          // Role is already set, can proceed to home
-          emit(state.copyWith(
-            status: LoginStatus.success,
-            nextStep: LoginNextStep.complete,
-          ));
+          LogHandler.info(
+            '[LoginBloc] Role is set ($backendRole) -> emitting (success, complete)',
+          );
+          emit(
+            state.copyWith(
+              status: LoginStatus.success,
+              nextStep: LoginNextStep.complete,
+            ),
+          );
         }
       },
     );
@@ -242,21 +307,22 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     final result = await _selectRole.execute(event.role);
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: LoginStatus.failure,
-        errorMessage: failure.message,
-      )),
-      (_) => emit(state.copyWith(
-        status: LoginStatus.success,
-        nextStep: LoginNextStep.complete,
-      )),
+      (failure) => emit(
+        state.copyWith(
+          status: LoginStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
+      (_) => emit(
+        state.copyWith(
+          status: LoginStatus.success,
+          nextStep: LoginNextStep.complete,
+        ),
+      ),
     );
   }
 
-  void _onLoginReset(
-    LoginReset event,
-    Emitter<LoginState> emit,
-  ) {
+  void _onLoginReset(LoginReset event, Emitter<LoginState> emit) {
     emit(const LoginState());
   }
 }

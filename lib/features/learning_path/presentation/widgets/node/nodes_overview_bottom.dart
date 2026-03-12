@@ -6,15 +6,23 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 class BottomBar extends StatelessWidget {
   final VoidCallback onSaveDraft;
   final VoidCallback onPublish;
+  final bool isPublished;
 
   const BottomBar({
     super.key,
     required this.onSaveDraft,
     required this.onPublish,
+    this.isPublished = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // ถ้า published แล้ว ไม่แสดงปุ่มเลย
+    if (isPublished) {
+      return const SizedBox.shrink();
+    }
+
+    // ถ้ายัง draft แสดงทั้งสองปุ่ม
     return Padding(
       padding: const EdgeInsets.only(
         bottom: 25, // ระยะลอยจากขอบล่าง

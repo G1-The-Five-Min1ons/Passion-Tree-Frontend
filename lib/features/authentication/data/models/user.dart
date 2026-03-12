@@ -27,6 +27,36 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     try {
+      // Parse dates with proper error handling
+      // Go backend uses 'create_at'/'update_at'
+      final createdAtRaw = json['create_at'] ?? json['created_at'];
+      final updatedAtRaw = json['update_at'] ?? json['updated_at'];
+
+      DateTime? createdAt;
+      DateTime? updatedAt;
+
+      if (createdAtRaw != null) {
+        try {
+          createdAt = DateTime.parse(createdAtRaw as String);
+        } catch (e) {
+          throw ParseException(
+            message: 'Invalid date format for created_at: $createdAtRaw',
+            originalError: e,
+          );
+        }
+      }
+
+      if (updatedAtRaw != null) {
+        try {
+          updatedAt = DateTime.parse(updatedAtRaw as String);
+        } catch (e) {
+          throw ParseException(
+            message: 'Invalid date format for updated_at: $updatedAtRaw',
+            originalError: e,
+          );
+        }
+      }
+
       return User(
         userId: json['user_id'] as String,
         username: json['username'] as String,
@@ -34,16 +64,13 @@ class User {
         firstName: json['first_name'] as String,
         lastName: json['last_name'] as String,
         role: json['role'] as String,
-        heartCount: json['heart_count'] as int,
-        isEmailVerified: json['is_email_verified'] as bool,
-        createdAt: DateTime.parse(json['created_at'] as String),
-        updatedAt: DateTime.parse(json['updated_at'] as String),
+        heartCount: (json['heart_count'] as int?) ?? 0,
+        isEmailVerified: json['is_email_verified'] as bool? ?? false,
+        createdAt: createdAt ?? DateTime.now(),
+        updatedAt: updatedAt ?? DateTime.now(),
       );
     } catch (e) {
-      throw ParseException(
-        message: 'Failed to parse User',
-        originalError: e,
-      );
+      throw ParseException(message: 'Failed to parse User', originalError: e);
     }
   }
 
@@ -56,7 +83,33 @@ class User {
     'role': role,
     'heart_count': heartCount,
     'is_email_verified': isEmailVerified,
-    'created_at': createdAt.toIso8601String(),
-    'updated_at': updatedAt.toIso8601String(),
+    'create_at': createdAt.toIso8601String(),
+    'update_at': updatedAt.toIso8601String(),
   };
+
+  User copyWith({
+    String? userId,
+    String? username,
+    String? email,
+    String? firstName,
+    String? lastName,
+    String? role,
+    int? heartCount,
+    bool? isEmailVerified,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return User(
+      userId: userId ?? this.userId,
+      username: username ?? this.username,
+      email: email ?? this.email,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      role: role ?? this.role,
+      heartCount: heartCount ?? this.heartCount,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }

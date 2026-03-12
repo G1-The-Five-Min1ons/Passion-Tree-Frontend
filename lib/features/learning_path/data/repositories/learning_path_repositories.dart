@@ -10,6 +10,16 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/nod
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/learning_node_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/node_detail_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/quiz_question_mapper.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_node.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/ai_generate_response.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/create_learning_path_mapper.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/create_node_mapper.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/ai_generate_response_mapper.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/create_question_with_choices_mapper.dart';
 
 class LearningPathRepositoryImpl implements LearningPathRepository {
   final LearningPathDataSource dataSource;
@@ -72,8 +82,85 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   }
 
   @override
+  Future<void> deleteNode(String nodeId) async {
+    return await dataSource.deleteNode(nodeId);
+  }
+
+  @override
   Future<void> deleteLearningPath(String pathId) async {
     return await dataSource.deleteLearningPath(pathId);
+  }
+
+  // ===== TEACHER FEATURES =====
+
+  @override
+  Future<String> createLearningPath(CreateLearningPath learningPath) async {
+    final apiModel = learningPath.toApiModel();
+    return await dataSource.createLearningPath(apiModel);
+  }
+
+  @override
+  Future<String> createNode(CreateNode node) async {
+    final apiModel = node.toApiModel();
+    return await dataSource.createNode(apiModel);
+  }
+
+  @override
+  Future<void> createNodeQuestions(
+    String nodeId,
+    List<CreateQuestionWithChoices> questions,
+  ) async {
+    final apiModels = questions.map((q) => q.toApiModel()).toList();
+    return await dataSource.createNodeQuestions(nodeId, apiModels);
+  }
+
+  @override
+  Future<AIGenerateResponse> generateNodesWithAI(String topic) async {
+    final apiModel = await dataSource.generateNodesWithAI(topic);
+    return apiModel.toEntity();
+  }
+
+  @override
+  Future<LearningPath> getLearningPathById(String pathId) async {
+    final model = await dataSource.getLearningPathById(pathId);
+    return model.toEntity();
+  }
+
+  @override
+  @override
+  Future<void> updateNode(
+    String nodeId,
+    String title,
+    String description, {
+    String? linkvdo,
+    List<CreateMaterial>? materials,
+  }) async {
+    return await dataSource.updateNode(
+      nodeId,
+      title,
+      description,
+      linkvdo: linkvdo,
+      materials: materials,
+    );
+  }
+
+  @override
+  Future<void> updateLearningPath(
+    String pathId,
+    String title,
+    String objective,
+    String description,
+    String? coverImgUrl,
+    String publishStatus,
+  ) async {
+    return await dataSource.updateLearningPath(
+      pathId,
+      title,
+      objective,
+      description,
+      coverImgUrl,
+      publishStatus,
+    );
   }
 }
 

@@ -23,18 +23,44 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
   int inProgressShown = 2;
   int completedShown = 2;
 
+  // Cached filtered lists to avoid re-filtering on every build
+  List<EnrolledLearningPath> _inProgressPaths = [];
+  List<EnrolledLearningPath> _completedPaths = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _updateFilteredPaths();
+  }
+
+  @override
+  void didUpdateWidget(TeacherLearningPathStatus oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Re-filter only when data actually changes
+    if (oldWidget.enrolledPaths != widget.enrolledPaths) {
+      _updateFilteredPaths();
+    }
+  }
+
+  /// Filter paths by progressStatus
+  /// Called only when data changes, not on every build
+  void _updateFilteredPaths() {
+    _inProgressPaths = widget.enrolledPaths
+        .where((c) => c.progressStatus != "Completed")
+        .toList();
+    
+    _completedPaths = widget.enrolledPaths
+        .where((c) => c.progressStatus == "Completed")
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     
-    // แยกตามสถานะ
-    final inProgressCourses = widget.enrolledPaths
-        .where((c) => c.progressStatus != "Completed")
-        .toList();
-    
-    final completedCourses = widget.enrolledPaths
-        .where((c) => c.progressStatus == "Completed")
-        .toList();
+    // Use cached filtered lists instead of filtering on every build
+    final inProgressCourses = _inProgressPaths;
+    final completedCourses = _completedPaths;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

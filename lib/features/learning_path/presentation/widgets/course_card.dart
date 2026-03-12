@@ -14,6 +14,7 @@ class PixelCourseCard extends StatelessWidget {
   final bool showMoreIcon;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onCardTap;
 
   const PixelCourseCard({
     super.key,
@@ -21,6 +22,7 @@ class PixelCourseCard extends StatelessWidget {
     this.showMoreIcon = false,
     this.onEdit,
     this.onDelete,
+    this.onCardTap,
   });
 
   @override
@@ -29,7 +31,7 @@ class PixelCourseCard extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(8), // ให้ ripple สวยตามการ์ด
-      onTap: () {
+      onTap: onCardTap ?? () {
         Navigator.push(
           context,
           MaterialPageRoute(
