@@ -29,7 +29,7 @@ abstract class AuthRemoteDataSource {
   Future<void> resendVerificationEmail(ResendVerificationRequest request);
   Future<void> forgotPassword(ForgotPasswordRequest request);
   Future<void> resetPassword(ResetPasswordRequest request);
-  Future<Map<String, dynamic>> getProfile(String token);
+  Future<ProfileResponse> getProfile(String token);
   Future<void> updateUser(String token, UpdateUserRequest request);
   Future<void> updateProfile(String token, UpdateProfileRequest request);
   Future<void> changePassword(String token, ChangePasswordRequest request);
