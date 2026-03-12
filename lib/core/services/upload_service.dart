@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:passion_tree_frontend/core/config/api_config.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/utils/error_utils.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 
 class UploadApiService {
@@ -47,15 +48,17 @@ class UploadApiService {
       return 'image/png';
     }
 
-    // Check GIF (47 49 46 38)
+    // Check if it's GIF (not supported)
     if (bytes[0] == 0x47 &&
         bytes[1] == 0x49 &&
         bytes[2] == 0x46 &&
         bytes[3] == 0x38) {
-      return 'image/gif';
+      throw Exception(
+        'Only .jpg, .jpeg, and .png files are allowed.'
+      );
     }
 
-    // Check WebP (RIFF ... WEBP)
+    // Check if it's WebP (not supported)
     if (bytes.length >= 16 &&
         bytes[0] == 0x52 && // R
         bytes[1] == 0x49 && // I
@@ -65,16 +68,27 @@ class UploadApiService {
         bytes[9] == 0x45 && // E
         bytes[10] == 0x42 && // B
         bytes[11] == 0x50) { // P
-      return 'image/webp';
+      throw Exception(
+        'Only .jpg, .jpeg, and .png files are allowed.'
+      );
     }
 
     // If no match, throw exception
     throw Exception(
-      'Invalid file type: File does not appear to be a valid image. '
+      'Only .jpg, .jpeg, and .png files are allowed.'
     );
   }
+
+  Future<String?> validateImageFile(Uint8List bytes, String filename) async {
+    try {
+      _validateFileSize(bytes);
+      _validateImageByMagicBytes(bytes, filename);
+      return null; 
+    } catch (e) {
+      return ErrorUtils.extractErrorMessage(e);
+    }
+  }
   
-  // 1. ขอ Presigned URL จาก Backend
   Future<Map<String, String>> getPresignedUrl(String filename, String folder) async {
     final url = Uri.parse('${ApiConfig.apiBackendUrl}/upload/presignedimg-url');
     

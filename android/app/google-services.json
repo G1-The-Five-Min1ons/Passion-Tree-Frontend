@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "757180191292",
+    "project_id": "passion-trees",
+    "storage_bucket": "passion-trees.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:757180191292:android:4aa23d9a2cdf40e2aaa939",
+        "android_client_info": {
+          "package_name": "com.example.passion_tree_frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_Shub9AtUwzRsTrcHlAVLfQkg1WZC88o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

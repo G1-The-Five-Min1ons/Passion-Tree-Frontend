@@ -13,6 +13,9 @@ class ApiResponse<T> {
   final int statusCode;
   final bool isTokenExpired;
 
+  /// Full raw JSON body - used when backend puts fields at root level instead of under 'data'
+  final Map<String, dynamic>? rawBody;
+
   ApiResponse({
     required this.success,
     this.message,
@@ -20,6 +23,7 @@ class ApiResponse<T> {
     this.error,
     required this.statusCode,
     this.isTokenExpired = false,
+    this.rawBody,
   });
 
   factory ApiResponse.fromJson(
@@ -45,6 +49,8 @@ class ApiResponse<T> {
       error: json['error'] as String?,
       statusCode: statusCode,
       isTokenExpired: isExpired,
+      rawBody:
+          json, // Store the complete JSON so callers can access root-level fields
     );
   }
 

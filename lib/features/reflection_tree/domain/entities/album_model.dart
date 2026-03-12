@@ -18,20 +18,24 @@ class Album {
 }
 
 class AlbumItem {
+  final String? treeId;
   final String subjectName;
   final String lastEdited;
   final String status;
   final List<Chapter> chapters;
   final String overallStatus;
   final String? resumeOn;
+  final String? pathId;
 
   AlbumItem({
+    this.treeId,
     required this.subjectName,
     required this.lastEdited,
     required this.status,
     this.chapters = const [],
     required this.overallStatus,
     this.resumeOn,
+    this.pathId,
   });
 
   Color get statusColor {

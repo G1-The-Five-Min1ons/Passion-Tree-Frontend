@@ -78,3 +78,11 @@ class SyncRoleAfterRegister extends RegisterEvent {
 class CompleteRegistrationFlow extends RegisterEvent {
   const CompleteRegistrationFlow();
 }
+
+class RegisterWithGoogle extends RegisterEvent {
+  const RegisterWithGoogle();
+}
+
+class RegisterWithDiscord extends RegisterEvent {
+  const RegisterWithDiscord();
+}

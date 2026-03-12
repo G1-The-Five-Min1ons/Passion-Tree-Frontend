@@ -12,6 +12,7 @@ class LearningCourseContent extends StatelessWidget {
   final String description;
   final VoidCallback onStartJourney;
   final bool isEnrolled;
+  final bool isEnrolling;
   final List<NodeDetail>? nodes;
 
   const LearningCourseContent({
@@ -20,6 +21,7 @@ class LearningCourseContent extends StatelessWidget {
     required this.description,
     required this.onStartJourney,
     this.isEnrolled = false,
+    this.isEnrolling = false,
     this.nodes,
   });
 
@@ -158,10 +160,15 @@ class LearningCourseContent extends StatelessWidget {
 
             /// ===== BUTTON =====
             Center(
-              child: AppButton(
-                variant: AppButtonVariant.text,
-                text: isEnrolled ? 'Continue Journey' : 'Start Journey',
-                onPressed: onStartJourney,
+              child: Opacity(
+                opacity: isEnrolling ? 0.6 : 1.0,
+                child: AppButton(
+                  variant: AppButtonVariant.text,
+                  text: isEnrolling 
+                      ? 'Enrolling...'
+                      : (isEnrolled ? 'Continue Journey' : 'Start Journey'),
+                  onPressed: isEnrolling ? () {} : onStartJourney,
+                ),
               ),
             ),
           ],

@@ -12,6 +12,7 @@ import 'package:passion_tree_frontend/features/authentication/domain/repositorie
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_event.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/features/setting/presentation/pages/setting_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -123,9 +124,26 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppBarWidget(
+      appBar: AppBarWidget(
         title: 'Profile',
         showBackButton: false,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.settings,
+              color: Colors.white,
+              size: 26,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettingsPage(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

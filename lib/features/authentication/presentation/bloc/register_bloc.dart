@@ -1,3 +1,4 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_event.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/register_state.dart';
@@ -9,6 +10,9 @@ import 'package:passion_tree_frontend/features/authentication/domain/usecases/ge
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/select_role_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/mark_role_selected_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/save_user_role_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_google_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_discord_usecase.dart';
+import 'package:passion_tree_frontend/core/error/failures.dart';
 
 class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   final RegisterUserUseCase registerUserUseCase;
@@ -19,6 +23,8 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   final SelectRoleUseCase selectRoleUseCase;
   final MarkRoleSelectedUseCase markRoleSelectedUseCase;
   final SaveUserRoleUseCase saveUserRoleUseCase;
+  final LoginWithGoogleUseCase loginWithGoogleUseCase;
+  final LoginWithDiscordUseCase loginWithDiscordUseCase;
 
   RegisterBloc({
     required this.registerUserUseCase,
@@ -29,6 +35,8 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     required this.selectRoleUseCase,
     required this.markRoleSelectedUseCase,
     required this.saveUserRoleUseCase,
+    required this.loginWithGoogleUseCase,
+    required this.loginWithDiscordUseCase,
   }) : super(const RegisterState()) {
     on<RegisterSubmitted>(_onRegisterSubmitted);
     on<RegisterReset>(_onRegisterReset);
@@ -36,6 +44,8 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     on<VerifyEmailAfterRegister>(_onVerifyEmailAfterRegister);
     on<SyncRoleAfterRegister>(_onSyncRoleAfterRegister);
     on<CompleteRegistrationFlow>(_onCompleteRegistrationFlow);
+    on<RegisterWithGoogle>(_onRegisterWithGoogle);
+    on<RegisterWithDiscord>(_onRegisterWithDiscord);
   }
 
   Future<void> _onRegisterSubmitted(
@@ -185,5 +195,47 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     Emitter<RegisterState> emit,
   ) {
     emit(const RegisterState());
+  }
+
+  /// Helper method to handle OAuth authentication result
+  /// Handles both success and failure cases with appropriate state emissions
+  void _handleOAuthResult(
+    Either<Failure, void> result,
+    Emitter<RegisterState> emit,
+  ) {
+    result.fold(
+      (failure) {
+        if (failure is CancellationFailure) {
+          emit(state.copyWith(status: RegisterStatus.initial));
+        } else {
+          emit(state.copyWith(
+            status: RegisterStatus.failure,
+            errorMessage: failure.message,
+          ));
+        }
+      },
+      (_) => emit(state.copyWith(
+        status: RegisterStatus.success,
+        nextStep: RegisterNextStep.oauthComplete,
+      )),
+    );
+  }
+
+  Future<void> _onRegisterWithGoogle(
+    RegisterWithGoogle event,
+    Emitter<RegisterState> emit,
+  ) async {
+    emit(state.copyWith(status: RegisterStatus.loading));
+    final result = await loginWithGoogleUseCase.execute();
+    _handleOAuthResult(result, emit);
+  }
+
+  Future<void> _onRegisterWithDiscord(
+    RegisterWithDiscord event,
+    Emitter<RegisterState> emit,
+  ) async {
+    emit(state.copyWith(status: RegisterStatus.loading));
+    final result = await loginWithDiscordUseCase.initiateOAuth();
+    _handleOAuthResult(result, emit);
   }
 }

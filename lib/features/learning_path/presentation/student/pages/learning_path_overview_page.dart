@@ -92,8 +92,24 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
         onSearch: (q) => setState(() => _searchQuery = q),
       ),
       body: SafeArea(
-        child: BlocBuilder<LearningPathBloc, LearningPathState>(
-          builder: (context, state) {
+        child: BlocListener<LearningPathBloc, LearningPathState>(
+          listener: (context, state) {
+            // Refetch overview when node is completed or path is enrolled
+            if (state is NodeDetailLoaded || state is PathEnrolled) {
+              if (userId != null && userId!.isNotEmpty) {
+                // Add a small delay to ensure backend is updated
+                Future.delayed(const Duration(milliseconds: 500), () {
+                  if (mounted) {
+                    context.read<LearningPathBloc>().add(
+                      FetchLearningPathOverview(userId: userId),
+                    );
+                  }
+                });
+              }
+            }
+          },
+          child: BlocBuilder<LearningPathBloc, LearningPathState>(
+            builder: (context, state) {
             // Cache overview data when loaded
             if (state is LearningPathOverviewLoaded) {
               _cachedOverview = state;
@@ -113,7 +129,14 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
             // Use cached overview data
             final overviewData = _cachedOverview;
             if (overviewData != null) {
-              final filteredAll = _filterCourses(overviewData.allPaths);
+              // Filter by search query and published status only
+              final filteredAll = _filterCourses(overviewData.allPaths)
+                  .where((path) {
+                    final status = path.publishStatus.toLowerCase().trim();
+                    // Only show explicitly published paths, exclude draft, empty, or null
+                    return status == 'published' && status.isNotEmpty && status != 'null';
+                  })
+                  .toList();
 
               // Filter and deduplicate enrolled paths
               final filteredEnrolledWithDuplicates = _filterEnrolledCourses(
@@ -130,8 +153,8 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                 return true;
               }).toList();
 
-              // Filter out enrolled paths from recommended section and all paths
-              final enrolledPathIds = filteredEnrolled
+              // Filter out ALL enrolled paths (use original data to ensure complete filtering)
+              final enrolledPathIds = overviewData.enrolledPaths
                   .map((e) => e.pathId)
                   .toSet();
               final filteredRecommended = filteredAll
@@ -173,16 +196,21 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                               height: 30,
                               child: NavigationButton(
                                 direction: NavigationDirection.right,
-                                onPressed: () {
-                                  Navigator.push(
+                                onPressed: () async {
+                                  final bloc = context.read<LearningPathBloc>();
+                                  await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) => BlocProvider.value(
-                                        value: context.read<LearningPathBloc>(),
+                                        value: bloc,
                                         child: const LearningPathStatusPage(),
                                       ),
                                     ),
                                   );
+                                  // Refetch overview data when returning
+                                  if (mounted && userId != null) {
+                                    bloc.add(FetchLearningPathOverview(userId: userId));
+                                  }
                                 },
                               ),
                             ),
@@ -366,6 +394,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
 
             return const SizedBox();
           },
+        ),
         ),
       ),
     );
