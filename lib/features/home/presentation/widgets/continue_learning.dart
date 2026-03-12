@@ -20,7 +20,12 @@ class ContinueLearningSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    if (enrolledPaths.isEmpty) return const SizedBox();
+    // Filter to show only in-progress courses (not completed)
+    final inProgressPaths = enrolledPaths
+        .where((path) => path.progressStatus.toLowerCase() != 'completed')
+        .toList();
+
+    if (inProgressPaths.isEmpty) return const SizedBox();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +64,7 @@ class ContinueLearningSection extends StatelessWidget {
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: enrolledPaths.length < 2 ? enrolledPaths.length : 2,
+          itemCount: inProgressPaths.length < 2 ? inProgressPaths.length : 2,
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
             maxCrossAxisExtent: 220,
             mainAxisSpacing: 35,
@@ -67,7 +72,7 @@ class ContinueLearningSection extends StatelessWidget {
             childAspectRatio: 0.692,
           ),
           itemBuilder: (context, index) {
-            return CourseProgressCard(data: enrolledPaths[index]);
+            return CourseProgressCard(data: inProgressPaths[index]);
           },
         ),
       ],
