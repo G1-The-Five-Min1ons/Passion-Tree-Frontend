@@ -129,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
             listener: (context, state) async {
               switch (state.nextStep!) {
                 case LoginNextStep.otpVerification:
-                  await _showOtpDialog(context);
+                  await _showOtpDialog(context, state);
                   break;
 
                 case LoginNextStep.checkingRole:
@@ -400,14 +400,17 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   /// Show OTP dialog
-  Future<void> _showOtpDialog(BuildContext context) async {
-    final resendEmail = _extractEmailForResend(_usernameController.text.trim());
+  Future<void> _showOtpDialog(BuildContext context, LoginState state) async {
+    final resendEmail = state.otpResendEmail.isNotEmpty
+        ? state.otpResendEmail
+        : _extractEmailForResend(_usernameController.text.trim());
 
     return showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => VerifyEmailPage(
         resendEmail: resendEmail,
+        otpExpirySeconds: 300,
         initialResendCooldownSeconds: 10,
         onCancel: () {
           if (context.mounted) {

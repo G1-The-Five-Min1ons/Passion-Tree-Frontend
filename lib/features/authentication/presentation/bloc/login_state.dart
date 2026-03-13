@@ -21,6 +21,7 @@ class LoginState extends Equatable {
   final LoginStatus status;
   final String? errorMessage;
   final LoginNextStep? nextStep;
+  final String otpResendEmail;
 
   const LoginState({
     this.username = '',
@@ -29,6 +30,7 @@ class LoginState extends Equatable {
     this.status = LoginStatus.initial,
     this.errorMessage,
     this.nextStep,
+    this.otpResendEmail = '',
   });
 
   LoginState copyWith({
@@ -38,6 +40,7 @@ class LoginState extends Equatable {
     LoginStatus? status,
     String? errorMessage,
     LoginNextStep? nextStep,
+    String? otpResendEmail,
   }) {
     return LoginState(
       username: username ?? this.username,
@@ -46,6 +49,7 @@ class LoginState extends Equatable {
       status: status ?? this.status,
       errorMessage: errorMessage ?? this.errorMessage,
       nextStep: nextStep ?? this.nextStep,
+      otpResendEmail: otpResendEmail ?? this.otpResendEmail,
     );
   }
 
@@ -57,5 +61,6 @@ class LoginState extends Equatable {
         status,
         errorMessage,
         nextStep,
+        otpResendEmail,
       ];
 }

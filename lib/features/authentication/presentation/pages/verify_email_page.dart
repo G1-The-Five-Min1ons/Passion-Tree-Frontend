@@ -19,6 +19,7 @@ class VerifyEmailPage extends StatelessWidget {
   final VoidCallback? onCancel;
   final String verifyText;
   final String? resendEmail;
+  final int otpExpirySeconds;
   final int resendCooldownSeconds;
   final int initialResendCooldownSeconds;
 
@@ -28,6 +29,7 @@ class VerifyEmailPage extends StatelessWidget {
     this.onCancel,
     this.verifyText = 'Verify',
     this.resendEmail,
+    this.otpExpirySeconds = 300,
     this.resendCooldownSeconds = 10,
     this.initialResendCooldownSeconds = 0,
   });
@@ -57,14 +59,6 @@ class VerifyEmailPage extends StatelessWidget {
             if (onCancel != null) {
               onCancel!();
             }
-          } else if (state.resendStatus == ResendVerificationStatus.success &&
-              state.resendMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.resendMessage!),
-                backgroundColor: AppColors.status,
-              ),
-            );
           } else if (state.resendStatus == ResendVerificationStatus.failure &&
               state.resendMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -78,6 +72,7 @@ class VerifyEmailPage extends StatelessWidget {
         child: _VerifyEmailDialog(
           verifyText: verifyText,
           initialResendEmail: resendEmail,
+          otpExpirySeconds: otpExpirySeconds,
           resendCooldownSeconds: resendCooldownSeconds,
           initialResendCooldownSeconds: initialResendCooldownSeconds,
         ),
@@ -89,12 +84,14 @@ class VerifyEmailPage extends StatelessWidget {
 class _VerifyEmailDialog extends StatefulWidget {
   final String verifyText;
   final String? initialResendEmail;
+  final int otpExpirySeconds;
   final int resendCooldownSeconds;
   final int initialResendCooldownSeconds;
 
   const _VerifyEmailDialog({
     required this.verifyText,
     this.initialResendEmail,
+    required this.otpExpirySeconds,
     required this.resendCooldownSeconds,
     required this.initialResendCooldownSeconds,
   });
@@ -106,11 +103,15 @@ class _VerifyEmailDialog extends StatefulWidget {
 class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
   final _otpController = TextEditingController();
   late final TextEditingController _resendEmailController;
+  Timer? _otpExpiryTimer;
   Timer? _resendCooldownTimer;
+  int _otpExpiryRemaining = 0;
   int _resendCooldownRemaining = 0;
 
   bool get _showResendEmailField =>
       widget.initialResendEmail == null || widget.initialResendEmail!.trim().isEmpty;
+
+  bool get _isOtpExpired => _otpExpiryRemaining <= 0;
 
   bool get _isCooldownActive => _resendCooldownRemaining > 0;
 
@@ -121,6 +122,8 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
       text: widget.initialResendEmail?.trim() ?? '',
     );
 
+    _startOtpExpiryCountdown(widget.otpExpirySeconds);
+
     if (widget.initialResendCooldownSeconds > 0) {
       _startResendCooldown(widget.initialResendCooldownSeconds);
     }
@@ -128,10 +131,55 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
 
   @override
   void dispose() {
+    _otpExpiryTimer?.cancel();
     _resendCooldownTimer?.cancel();
     _otpController.dispose();
     _resendEmailController.dispose();
     super.dispose();
+  }
+
+  String _formatDuration(int totalSeconds) {
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  void _startOtpExpiryCountdown([int? seconds]) {
+    final duration = seconds ?? widget.otpExpirySeconds;
+
+    _otpExpiryTimer?.cancel();
+
+    if (duration <= 0) {
+      if (mounted) {
+        setState(() {
+          _otpExpiryRemaining = 0;
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      _otpExpiryRemaining = duration;
+    });
+
+    _otpExpiryTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (_otpExpiryRemaining <= 1) {
+        timer.cancel();
+        setState(() {
+          _otpExpiryRemaining = 0;
+        });
+        return;
+      }
+
+      setState(() {
+        _otpExpiryRemaining--;
+      });
+    });
   }
 
   void _startResendCooldown([int? seconds]) {
@@ -190,6 +238,7 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                       previous.resendStatus != current.resendStatus,
                   listener: (context, state) {
                     if (state.resendStatus == ResendVerificationStatus.success) {
+                      _startOtpExpiryCountdown();
                       _startResendCooldown();
                     }
                   },
@@ -205,6 +254,8 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                           : _isCooldownActive
                           ? 'Resend OTP in ${_resendCooldownRemaining}s'
                           : 'Resend OTP';
+                        final otpExpiryText =
+                          'OTP Expire in ${_formatDuration(_otpExpiryRemaining)}';
 
                       return Column(
                         mainAxisSize: MainAxisSize.min,
@@ -254,6 +305,7 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                             hintText: 'Enter 6-digit code',
                             controller: _otpController,
                             height: 38,
+                            maxLines: 1,
                             onChanged: (value) {
                               context.read<VerifyEmailBloc>().add(
                                 OtpCodeChanged(value),
@@ -270,6 +322,20 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                                 ),
                               ),
                             ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                otpExpiryText,
+                                style: AppTypography.bodyRegular.copyWith(
+                                  color: _isOtpExpired
+                                      ? AppColors.cancel
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 16),
                           Align(
                             alignment: Alignment.centerRight,
@@ -291,9 +357,10 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                               child: Text(
                                 resendLabel,
                                 style: AppTypography.bodySemiBold.copyWith(
-                                  color: canResend
-                                      ? Theme.of(context).colorScheme.primary
-                                      : AppColors.textDisabled,
+                                  color: AppColors.textPrimary,
+                                  decoration: canResend
+                                      ? TextDecoration.underline
+                                      : TextDecoration.none,
                                 ),
                               ),
                             ),
@@ -308,7 +375,7 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                                 const CancelVerifyEmail(),
                               );
                             },
-                            onSave: isVerifying || isResending
+                            onSave: isVerifying || isResending || _isOtpExpired
                                 ? null
                                 : () {
                                     context.read<VerifyEmailBloc>().add(
