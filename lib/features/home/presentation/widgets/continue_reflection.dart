@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree.dart';
@@ -54,20 +54,24 @@ class ContinueReflectionSection extends StatelessWidget {
 
         const SizedBox(height: 40),
 
-        ListView.builder(
+        GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1,
+          ),
           itemCount: albums.length,
           itemBuilder: (context, index) {
             final album = albums[index];
-
-            return ListTile(
-              title: Text(
-                album.title,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: colors.onPrimary,
-                ),
-              ),
+            return PixelAlbumCover(
+              albumId: album.albumId,
+              color: colors.primary,
+              imageUrl: album.image,
+              title: album.title,
+              subtitle: album.subtitle,
             );
           },
         ),

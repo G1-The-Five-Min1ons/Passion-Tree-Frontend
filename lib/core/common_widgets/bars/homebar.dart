@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_role_entry_page.dart';
-import 'package:passion_tree_frontend/features/home/presentation/bloc/home_bloc_provider.dart';
-import 'package:passion_tree_frontend/features/home/presentation/pages/home_page.dart';
+import 'package:passion_tree_frontend/features/home/presentation/pages/home_wrapper.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree_wrapper.dart';
@@ -27,10 +26,7 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
 
   // ใส่หน้าของตัวเองตรงนี้
   late final List<Widget> _pages = [
-    _buildTabNavigator(
-      0,
-      const HomeBlocProvider(child: HomePage()),
-    ),
+    const HomeWrapper(),
     _buildTabNavigator(1, const LearningPathRoleEntryPage()),
     _buildTabNavigator(2, const AlbumsReflectionTreeWrapper()),
     _buildTabNavigator(3, const ProfilePage()),

@@ -30,8 +30,21 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadData();
+    });
   }
+  
+    @override
+    void didChangeDependencies() {
+      super.didChangeDependencies();
+      // Reload data when dependencies change (e.g., after navigation pop)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _loadData();
+      });
+    }
 
   Future<void> _loadData() async {
     // ดึง userId จาก auth repository

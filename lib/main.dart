@@ -13,6 +13,7 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
+import 'package:passion_tree_frontend/features/home/presentation/bloc/home_bloc_provider.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
@@ -87,7 +88,9 @@ class AuthGate extends StatelessWidget {
 
         // If logged in, go to main app
         if (snapshot.data == true) {
-          return const HomeBarWidget();
+          return const HomeBlocProvider(
+            child: HomeBarWidget(),
+          );
         }
 
         // Otherwise, require login
