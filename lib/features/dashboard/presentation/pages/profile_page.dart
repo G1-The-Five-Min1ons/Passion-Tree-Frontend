@@ -226,7 +226,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         _buildInfoRow('Role', _role == 'teacher' ? 'Teacher' : 'Student'),
                         if (_userId.isNotEmpty) ...[
                           const Divider(color: AppColors.textSecondary, height: 24),
-                          _buildInfoRow('User ID', _userId.substring(0, 8) + '...'),
+                          _buildInfoRow('User ID', '${_userId.substring(0, 8)}...'),
                         ],
                       ],
                     ),

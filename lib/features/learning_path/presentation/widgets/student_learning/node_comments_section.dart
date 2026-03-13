@@ -320,7 +320,7 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
                     child: Text(
                       'No comments yet. Be the first to comment!',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colors.onSurface.withOpacity(0.6),
+                        color: colors.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   );
@@ -332,7 +332,7 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
                   itemCount: comments
                       .where((c) => c.parentId == null || c.parentId!.isEmpty)
                       .length,
-                  separatorBuilder: (_, __) => const Divider(),
+                  separatorBuilder: (_, _) => const Divider(),
                   itemBuilder: (context, index) {
                     final rootComments = comments
                         .where((c) => c.parentId == null || c.parentId!.isEmpty)
@@ -455,7 +455,7 @@ class _CommentItemState extends State<_CommentItem> {
             children: [
               CircleAvatar(
                 radius: widget.isNested ? 16 : 20,
-                backgroundColor: colors.primary.withOpacity(0.2),
+                backgroundColor: colors.primary.withValues(alpha: 0.2),
                 child: Icon(
                   Icons.person,
                   color: colors.primary,
@@ -484,7 +484,7 @@ class _CommentItemState extends State<_CommentItem> {
                           _formatTimeAgo(widget.comment.createdAt),
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                color: colors.onSurface.withOpacity(0.6),
+                                color: colors.onSurface.withValues(alpha: 0.6),
                               ),
                         ),
                       ],
@@ -554,7 +554,7 @@ class _CommentItemState extends State<_CommentItem> {
                               Container(
                                 width: 24,
                                 height: 1,
-                                color: colors.onSurface.withOpacity(0.3),
+                                color: colors.onSurface.withValues(alpha: 0.3),
                                 margin: const EdgeInsets.only(right: 8),
                               ),
                               Text(
@@ -624,7 +624,7 @@ class _CommentItemState extends State<_CommentItem> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: widget.replies.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final reply = widget.replies[index];
                   return _CommentItem(

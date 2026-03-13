@@ -127,24 +127,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     );
   }
 
-  void _handleUpdateNode(int index, String title, String description) {
-    final node = _uiNodes[index];
-
-    if (node.realNodeId == null) return;
-
-    setState(() {
-      _pendingNodeIndex = index;
-    });
-
-    context.read<LearningPathBloc>().add(
-      UpdateNodeEvent(
-        nodeId: node.realNodeId!,
-        title: title,
-        description: description,
-      ),
-    );
-  }
-
   void _openEditNodeModal(BuildContext context, {int? index}) {
     String nodeId;
     bool isNewNode;

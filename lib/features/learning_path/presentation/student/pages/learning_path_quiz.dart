@@ -305,6 +305,8 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                   // Wait for backend to process completion (1 second)
                   await Future.delayed(const Duration(milliseconds: 1000));
 
+                  if (!scaffoldContext.mounted) return;
+
                   // Navigate to status page after completion
                   Navigator.of(scaffoldContext).pushAndRemoveUntil(
                     MaterialPageRoute(
@@ -331,6 +333,8 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
             // Wait for backend to process completion (1 second)
             await Future.delayed(const Duration(milliseconds: 1000));
 
+            if (!scaffoldContext.mounted) return;
+            
             // Navigate to status page after completion
             Navigator.of(scaffoldContext).pushAndRemoveUntil(
               MaterialPageRoute(

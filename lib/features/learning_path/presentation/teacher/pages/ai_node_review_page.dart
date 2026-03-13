@@ -158,7 +158,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                                   child: Text(
                                     'No nodes generated yet',
                                     style: AppTypography.bodyMedium.copyWith(
-                                      color: colors.onSurface.withOpacity(0.6),
+                                      color: colors.onSurface.withValues(alpha: 0.6)
                                     ),
                                   ),
                                 ),

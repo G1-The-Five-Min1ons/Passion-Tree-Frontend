@@ -162,6 +162,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                             ),
                           ),
                         ).then((_) {
+                          if (!context.mounted) return;
                           // Refetch nodes when returning from learning node page
                           if (_userId != null && _userId!.isNotEmpty) {
                             _fetchNodes(_userId!);

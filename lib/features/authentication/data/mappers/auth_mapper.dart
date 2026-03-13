@@ -3,7 +3,7 @@ import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/user.dart'
     as model;
 import 'package:passion_tree_frontend/features/authentication/data/models/profile.dart'
-    as modelProfile;
+    as model_profile;
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/profile.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
@@ -24,7 +24,7 @@ class AuthMapper {
     );
   }
 
-  static Profile toProfileEntity(modelProfile.Profile profileModel) {
+  static Profile toProfileEntity(model_profile.Profile profileModel) {
     return Profile(
       profileId: profileModel.profileId,
       avatarUrl: profileModel.avatarUrl,
@@ -96,7 +96,7 @@ class AuthMapper {
     }
 
     try {
-      final profileModel = modelProfile.Profile.fromJson(profileJson);
+      final profileModel = model_profile.Profile.fromJson(profileJson);
       return toProfileEntity(profileModel);
     } catch (e) {
       LogHandler.error('Failed to parse profile data. Error: $e');

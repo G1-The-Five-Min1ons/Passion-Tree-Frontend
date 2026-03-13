@@ -10,7 +10,6 @@ class LoginWithGoogleUseCase {
   LoginWithGoogleUseCase(this._repository);
 
   /// Execute Google Sign-In flow
-  /// Returns Either<Failure, void> - Left on failure, Right on success
   Future<Either<Failure, void>> execute() async {
     try {
       await _repository.signInWithGoogle();
