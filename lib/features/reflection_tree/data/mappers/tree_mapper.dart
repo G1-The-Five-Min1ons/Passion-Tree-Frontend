@@ -12,6 +12,7 @@ class TreeMapper {
       complete: node.complete,
       sequence: node.sequence,
       reflectionId: node.reflectionId,
+      isStandalone: node.isStandalone,
     )).toList() ?? [];
 
     // Sort chapters by sequence

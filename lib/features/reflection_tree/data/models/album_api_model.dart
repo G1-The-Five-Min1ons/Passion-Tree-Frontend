@@ -115,6 +115,54 @@ class CreateTreeRequest {
   }
 }
 
+class CreateTreeNodeRequest {
+  final String nodeTitle;
+  final String? nodeId;
+  final String treeId;
+
+  CreateTreeNodeRequest({
+    required this.nodeTitle,
+    this.nodeId,
+    required this.treeId,
+  });
+
+  Map<String, dynamic> toJson() {
+    final data = {
+      'node_title': nodeTitle,
+      'tree_id': treeId,
+    };
+
+    if (nodeId != null && nodeId!.isNotEmpty) {
+      data['node_id'] = nodeId!;
+    }
+
+    return data;
+  }
+}
+
+class LearningPathNode {
+  final String nodeId;
+  final String title;
+  final String description;
+  final int sequence;
+
+  LearningPathNode({
+    required this.nodeId,
+    required this.title,
+    required this.description,
+    required this.sequence,
+  });
+
+  factory LearningPathNode.fromJson(Map<String, dynamic> json) {
+    return LearningPathNode(
+      nodeId: json['node_id'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      sequence: json['sequence'] ?? 0,
+    );
+  }
+}
+
 class TreeApiModel {
   final String treeId;
   final String title;
@@ -188,6 +236,7 @@ class TreeNodeApiModel {
   final String? status;
   final String? complete;
   final String? reflectionId;
+  final bool isStandalone;
 
   TreeNodeApiModel({
     required this.treeNodeId,
@@ -201,6 +250,7 @@ class TreeNodeApiModel {
     this.status,
     this.complete,
     this.reflectionId,
+    this.isStandalone = false,
   });
 
   factory TreeNodeApiModel.fromJson(Map<String, dynamic> json) {
@@ -219,6 +269,7 @@ class TreeNodeApiModel {
         status: json['status'],
         complete: json['complete'],
         reflectionId: json['reflection_id'],
+        isStandalone: json['is_standalone'] == true || json['is_standalone'] == 1,
       );
     } catch (e) {
       throw ParseException(

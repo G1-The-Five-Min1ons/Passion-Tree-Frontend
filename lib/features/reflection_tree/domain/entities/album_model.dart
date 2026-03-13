@@ -61,6 +61,7 @@ class Chapter {
   final String? complete;
   final int sequence;
   final String? reflectionId;
+  final bool isStandalone;
 
   Chapter({
     required this.treeNodeId,
@@ -70,6 +71,7 @@ class Chapter {
     this.complete,
     this.sequence = 0,
     this.reflectionId,
+    this.isStandalone = false,
   });
 
   // Helper to check if node is completed
@@ -77,4 +79,7 @@ class Chapter {
   
   // Helper to check if node has reflection
   bool get hasReflection => reflectionId != null && reflectionId!.isNotEmpty;
+
+  // Helper to check if node can be reflected (completed LP node or standalone reflection node)
+  bool get canReflect => isCompleted || isStandalone;
 }

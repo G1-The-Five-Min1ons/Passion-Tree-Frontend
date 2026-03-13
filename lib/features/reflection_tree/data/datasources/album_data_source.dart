@@ -213,6 +213,176 @@ class AlbumDataSource {
     throw createExceptionFromStatusCode(statusCode, msg);
   }
 
+  /// Get nodes by learning path ID
+  Future<List<LearningPathNode>> getNodesByPathId(String pathId, String token) async {
+    LogHandler.separator(title: 'NODES · GET BY PATH');
+    final response = await _apiHandler.get(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/nodes',
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (response.isSuccess) {
+      List nodes = [];
+      
+      // Handle both response formats
+      if (response.data is List) {
+        nodes = response.data as List;
+      } else if (response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        nodes = data['data'] as List? ?? [];
+      }
+      
+      LogHandler.success('Fetched ${nodes.length} node(s) for path: $pathId');
+      return nodes.map((node) => LearningPathNode.fromJson(node)).toList();
+    }
+
+    final msg = response.error ?? response.message ?? 'Failed to get nodes';
+    LogHandler.error('Get nodes failed: $msg');
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
+  }
+
+  Future<String> createNodeInPath(
+    String pathId,
+    String title,
+    String description,
+    String sequence,
+    String token,
+  ) async {
+    LogHandler.separator(title: 'NODE · CREATE IN PATH');
+    final response = await _apiHandler.post(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/nodes',
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode({
+        'title': title,
+        'description': description,
+        'sequence': sequence,
+      }),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    LogHandler.debug('Response status: ${response.statusCode}');
+    LogHandler.debug('Response data type: ${response.data.runtimeType}');
+    LogHandler.debug('Response data: ${response.data}');
+
+    if (response.isSuccess && response.statusCode == 201) {
+      LogHandler.success('Node created in learning path');
+      
+      // Handle different response formats
+      String nodeId;
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        
+        if (data.containsKey('data') && data['data'] != null) {
+          if (data['data'] is Map) {
+            nodeId = data['data']['node_id'] as String;
+          } else {
+            throw Exception('Unexpected data structure: data is not a Map');
+          }
+        } else if (data.containsKey('node_id')) {
+          nodeId = data['node_id'] as String;
+        } else {
+          throw Exception('node_id not found in response: $data');
+        }
+      } else {
+        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+      }
+      
+      LogHandler.info('Created node_id: $nodeId');
+      return nodeId;
+    }
+
+    final msg = response.error ?? response.message ?? 'Failed to create node';
+    LogHandler.error('Create node failed: $msg');
+    LogHandler.error('Response status: ${response.statusCode}');
+    LogHandler.error('Response body: ${response.data}');
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
+  }
+
+  /// Create a tree node (link node from learning path to tree)
+  Future<TreeNodeApiModel> createTreeNode(CreateTreeNodeRequest request, String token) async {
+    LogHandler.separator(title: 'TREE NODE · CREATE');
+    LogHandler.debug('Request: ${request.toJson()}');
+    
+    final response = await _apiHandler.post(
+      url: ApiConfig.treeNodes,
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode(request.toJson()),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    LogHandler.debug('Response status: ${response.statusCode}');
+    LogHandler.debug('Response data type: ${response.data.runtimeType}');
+    LogHandler.debug('Response data: ${response.data}');
+
+    if (response.isSuccess && response.statusCode == 201) {
+      LogHandler.success('Tree node created successfully');
+      
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        
+        // Try different possible structures
+        Map<String, dynamic>? treeNodeData;
+        
+        if (data.containsKey('data') && data['data'] != null) {
+          final dataField = data['data'];
+          if (dataField is Map<String, dynamic>) {
+            if (dataField.containsKey('tree_node')) {
+              treeNodeData = dataField['tree_node'] as Map<String, dynamic>;
+            } else {
+              // data itself might be the tree node
+              treeNodeData = dataField;
+            }
+          }
+        } else if (data.containsKey('tree_node')) {
+          treeNodeData = data['tree_node'] as Map<String, dynamic>;
+        } else {
+          // The whole response might be the tree node
+          treeNodeData = data;
+        }
+        
+        if (treeNodeData != null) {
+          return TreeNodeApiModel.fromJson(treeNodeData);
+        } else {
+          throw Exception('Could not find tree node data in response: $data');
+        }
+      } else {
+        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+      }
+    }
+
+    final msg = response.error ?? response.message ?? 'Failed to create tree node';
+    LogHandler.error('Create tree node failed: $msg');
+    LogHandler.error('Response status: ${response.statusCode}');
+    LogHandler.error('Response data: ${response.data}');
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
+  }
+
+  /// Get tree nodes by tree ID
+  Future<List<TreeNodeApiModel>> getTreeNodesByTreeId(String treeId, String token) async {
+    LogHandler.separator(title: 'TREE NODES · GET BY TREE');
+    final response = await _apiHandler.get(
+      url: ApiConfig.treeNodesByTreeId(treeId),
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (response.isSuccess) {
+      final data = response.data as Map<String, dynamic>;
+      final nodes = data['data'] as List? ?? [];
+      LogHandler.success('Fetched ${nodes.length} tree node(s) for tree: $treeId');
+      return nodes.map((node) => TreeNodeApiModel.fromJson(node)).toList();
+    }
+
+    final msg = response.error ?? response.message ?? 'Failed to get tree nodes';
+    LogHandler.error('Get tree nodes failed: $msg');
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
+  }
+
   void dispose() {
     _apiHandler.dispose();
   }

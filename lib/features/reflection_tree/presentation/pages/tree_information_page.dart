@@ -37,6 +37,38 @@ class TreeDetailPage extends StatefulWidget {
 class _TreeDetailPageState extends State<TreeDetailPage> {
   AlbumItem? _currentItem;
 
+  void _updateCurrentItem(AlbumItem item) {
+    if (!mounted) return;
+    setState(() {
+      _currentItem = item;
+    });
+  }
+
+  void _syncCurrentItemFromState(AlbumState state) {
+    if (state is AlbumDetailLoaded) {
+      final album = state.album;
+      if (album.items != null) {
+        for (final item in album.items!) {
+          if (item.treeId == _currentItem?.treeId || item.treeId == widget.treeId) {
+            _updateCurrentItem(item);
+            return;
+          }
+        }
+      }
+    } else if (state is AlbumsLoaded) {
+      for (final album in state.albums) {
+        if (album.items != null) {
+          for (final item in album.items!) {
+            if (item.treeId == _currentItem?.treeId || item.treeId == widget.treeId) {
+              _updateCurrentItem(item);
+              return;
+            }
+          }
+        }
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -65,61 +97,24 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.treeId != null && widget.item == null) {
-      return BlocListener<AlbumBloc, AlbumState>(
-        listener: (context, state) {
-          if (state is AlbumDetailLoaded) {
-            final album = state.album;
-            if (album.items != null) {
-              for (final item in album.items!) {
-                if (item.treeId == widget.treeId) {
-                  if (mounted) {
-                    setState(() {
-                      _currentItem = item;
-                    });
-                  }
-                  return;
-                }
-              }
-            }
-          } else if (state is AlbumsLoaded) {
-            for (final album in state.albums) {
-              if (album.items != null) {
-                for (final item in album.items!) {
-                  if (item.treeId == widget.treeId) {
-                    if (mounted) {
-                      setState(() {
-                        _currentItem = item;
-                      });
-                    }
-                    return;
-                  }
-                }
-              }
-            }
-          }
-        },
-        child: _currentItem != null 
-            ? _buildTreeDetail(_currentItem!) 
-            : const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+    return BlocListener<AlbumBloc, AlbumState>(
+      listener: (context, state) {
+        _syncCurrentItemFromState(state);
+      },
+      child: _currentItem != null
+          ? _buildTreeDetail(_currentItem!)
+          : Scaffold(
+              appBar: AppBarWidget(
+                title: 'Reflection Tree',
+                showBackButton: true,
+                onBackPressed: () => Navigator.pop(context),
               ),
-      );
-    }
-
-    if (_currentItem != null) {
-      return _buildTreeDetail(_currentItem!);
-    }
-
-    return Scaffold(
-      appBar: AppBarWidget(
-        title: 'Reflection Tree',
-        showBackButton: true,
-        onBackPressed: () => Navigator.pop(context),
-      ),
-      body: const Center(
-        child: Text('Error: No tree data available'),
-      ),
+              body: Center(
+                child: widget.treeId != null
+                    ? const CircularProgressIndicator()
+                    : const Text('Error: No tree data available'),
+              ),
+            ),
     );
   }
 
@@ -169,12 +164,12 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                                 left: pos.dx - 40,
                                 top: pos.dy - 40,
                                 child: NodeItem(
-                                  imagePath: chapter.isCompleted
+                                  imagePath: chapter.canReflect
                                       ? 'assets/images/trees/node-enrolled.png'
                                       : 'assets/images/trees/node_notenrolled.png',
                                   size: 90,
                                   onTap: () {
-                                    if (!chapter.isCompleted) {
+                                    if (!chapter.canReflect) {
                                       // Learning Path not completed
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
@@ -222,7 +217,39 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                   title: item.subjectName,
                   actionIcon: Symbols.add_rounded,
                   onActionPressed: () {
-                    AddNodePopup.show(context);
+                    final albumBloc = context.read<AlbumBloc>();
+                    
+                    AddNodePopup.show(
+                      context,
+                      treeId: item.treeId!,
+                      onNodeAdded: (createdChapter) {
+                        final currentItem = _currentItem;
+                        if (currentItem != null) {
+                          final updatedChapters = [...currentItem.chapters, createdChapter]
+                            ..sort((left, right) => left.sequence.compareTo(right.sequence));
+
+                          _updateCurrentItem(
+                            AlbumItem(
+                              treeId: currentItem.treeId,
+                              subjectName: currentItem.subjectName,
+                              lastEdited: currentItem.lastEdited,
+                              status: currentItem.status,
+                              chapters: updatedChapters,
+                              overallStatus: currentItem.overallStatus,
+                              resumeOn: currentItem.resumeOn,
+                              pathId: currentItem.pathId,
+                            ),
+                          );
+                        }
+
+                        // Reload album data to show the new node
+                        if (widget.albumId != null) {
+                          albumBloc.add(LoadAlbumByIdEvent(widget.albumId!));
+                        } else {
+                          albumBloc.add(const LoadAlbumsEvent());
+                        }
+                      },
+                    );
                   },
                 ),
               ),
