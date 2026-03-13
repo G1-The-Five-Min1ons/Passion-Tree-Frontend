@@ -85,6 +85,9 @@ class FailureMapper {
         );
       default:
         return AuthFailure(
+          message: exception.message.isNotEmpty
+              ? exception.message
+              : 'Invalid or expired verification code.',
           technicalMessage: exception.toString(),
         );
     }
