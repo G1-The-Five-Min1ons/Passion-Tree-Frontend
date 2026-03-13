@@ -24,8 +24,16 @@ class ReflectionDataSource {
 
     if (response.isSuccess && response.statusCode == 201) {
       LogHandler.success('Reflection created successfully');
-      final data = response.data as Map<String, dynamic>;
-      return ReflectionApiModel.fromJson(data['data']);
+      final reflectionData =
+          (response.data ?? response.rawBody?['data']) as Map<String, dynamic>?;
+
+      if (reflectionData == null) {
+        throw ParseException(
+          message: 'Reflection created but response data is missing',
+        );
+      }
+
+      return ReflectionApiModel.fromJson(reflectionData);
     }
 
     final msg = response.error ?? response.message ?? 'Failed to create reflection';
@@ -45,8 +53,14 @@ class ReflectionDataSource {
 
     if (response.isSuccess) {
       LogHandler.success('Reflection fetched: $reflectId');
-      final data = response.data as Map<String, dynamic>;
-      return ReflectionApiModel.fromJson(data['data']);
+      final reflectionData =
+          (response.data ?? response.rawBody?['data']) as Map<String, dynamic>?;
+
+      if (reflectionData == null) {
+        throw ParseException(message: 'Reflection response data is missing');
+      }
+
+      return ReflectionApiModel.fromJson(reflectionData);
     }
 
     final msg = response.error ?? response.message ?? 'Failed to get reflection';
@@ -65,8 +79,8 @@ class ReflectionDataSource {
     );
 
     if (response.isSuccess) {
-      final data = response.data as Map<String, dynamic>;
-      final reflections = data['data'] as List? ?? [];
+      final reflections =
+          (response.data ?? response.rawBody?['data']) as List<dynamic>? ?? [];
       LogHandler.success('Fetched ${reflections.length} reflection(s)');
       return reflections
           .map((reflection) => ReflectionApiModel.fromJson(reflection))

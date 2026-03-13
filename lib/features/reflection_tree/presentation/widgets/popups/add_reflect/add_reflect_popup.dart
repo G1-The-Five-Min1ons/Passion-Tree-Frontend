@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/reflection_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/models/reflection_api_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/page._two.dart';
@@ -40,7 +41,7 @@ class AddReflectPopup extends StatefulWidget {
 class _AddReflectPopupState extends State<AddReflectPopup> {
   final PageController _pageController = PageController();
   final ReflectionDataSource _reflectionDataSource = ReflectionDataSource();
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final AuthLocalDataSource _authLocalDataSource = getIt<AuthLocalDataSource>();
   
   int _currentPage = 0;
   bool _isSubmitting = false;
@@ -64,8 +65,8 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
     setState(() => _isSubmitting = true);
 
     try {
-      final token = await _storage.read(key: 'auth_token');
-      if (token == null) {
+      final token = await _authLocalDataSource.getToken();
+      if (token == null || token.isEmpty) {
         throw Exception('No authentication token found');
       }
 
@@ -189,6 +190,16 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
               ),
             ),
           ),
+
+          if (_isSubmitting)
+            Positioned.fill(
+              child: Container(
+                color: AppColors.scale.withValues(alpha: 0.2),
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -203,17 +214,14 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
             child: Image.asset('assets/buttons/navigation/pixel/left_small_light.png', width: 24, height: 24),
           ),
           const Spacer(),
-          _isSubmitting
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : AppButton(
-                  variant: AppButtonVariant.text,
-                  text: 'Submit',
-                  onPressed: _submitReflection,
-                ),
+          AppButton(
+            variant: AppButtonVariant.text,
+            text: 'Submit',
+            onPressed: _isSubmitting ? () {} : _submitReflection,
+            backgroundColor: _isSubmitting ? AppColors.scale : null,
+            borderColor: _isSubmitting ? AppColors.textDisabled : null,
+            textColor: _isSubmitting ? AppColors.textDisabled : null,
+          ),
         ],
       );
     }

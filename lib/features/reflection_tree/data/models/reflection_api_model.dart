@@ -54,13 +54,21 @@ class ReflectionApiModel {
 
   factory ReflectionApiModel.fromJson(Map<String, dynamic> json) {
     try {
+      final dynamic developmentPlanValue = json['development_plan'];
+      final String developmentPlan = developmentPlanValue is List
+          ? developmentPlanValue
+                .whereType<String>()
+                .where((item) => item.trim().isNotEmpty)
+                .join('\n')
+          : (developmentPlanValue as String?) ?? '';
+
       return ReflectionApiModel(
         reflectId: json['reflect_id'] ?? '',
         summary: json['summary'] ?? '',
         sentimentAnalysis: json['sentiment_analysis'] ?? '',
         primaryEmotion: json['primary_emotion'],
         strugglePoint: json['struggle_point'] ?? '',
-        developmentPlan: json['development_plan'] ?? '',
+        developmentPlan: developmentPlan,
         aiConfidentScore: (json['ai_confident_score'] ?? 0.0).toDouble(),
         reflectionScore: (json['reflection_score'] ?? 0.0).toDouble(),
         weightedReflectionScore: (json['weighted_reflection_score'] ?? 0.0).toDouble(),
