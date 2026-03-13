@@ -7,7 +7,6 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
-import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_preview_card.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
@@ -39,8 +38,7 @@ class _CreateLearningPathInputPageState
     extends State<CreateLearningPathInputPage> {
   String _title = '';
   String _objectives = '';
-  String _description = '';
-  String? _createdPathId; // เก็บ pathId หลังสร้าง
+  String _description = ''; 
   bool _isCreatingPath = false;
   String? _userId;
   
@@ -221,7 +219,6 @@ class _CreateLearningPathInputPageState
     return BlocListener<LearningPathBloc, LearningPathState>(
       listener: (context, state) {
         if (state is LearningPathCreated) {
-          _createdPathId = state.pathId;
           final bloc = context.read<LearningPathBloc>();
           
           if (_isCreatingPath) {
@@ -431,13 +428,13 @@ class _CreateLearningPathInputPageState
                               Icon(
                                 Icons.cloud_upload_outlined,
                                 size: 40,
-                                color: colors.onSurface.withOpacity(0.5),
+                                color: colors.onSurface.withValues(alpha: 0.5),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 'Upload Cover Image',
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: AppColors.textSecondary.withOpacity(0.5),
+                                  color: AppColors.textSecondary.withValues(alpha: 0.5),
                                 ),
                               ),
                             ],
