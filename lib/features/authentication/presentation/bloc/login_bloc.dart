@@ -30,7 +30,6 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
        super(const LoginState()) {
     on<LoginUsernameChanged>(_onUsernameChanged);
     on<LoginPasswordChanged>(_onPasswordChanged);
-    on<LoginRememberMeToggled>(_onRememberMeToggled);
     on<LoginSubmitted>(_onLoginSubmitted);
     on<LoginWithGoogle>(_onLoginWithGoogle);
     on<LoginWithDiscord>(_onLoginWithDiscord);
@@ -61,13 +60,6 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     Emitter<LoginState> emit,
   ) {
     emit(state.copyWith(password: event.password));
-  }
-
-  void _onRememberMeToggled(
-    LoginRememberMeToggled event,
-    Emitter<LoginState> emit,
-  ) {
-    emit(state.copyWith(rememberMe: event.rememberMe));
   }
 
   Future<void> _onLoginSubmitted(
