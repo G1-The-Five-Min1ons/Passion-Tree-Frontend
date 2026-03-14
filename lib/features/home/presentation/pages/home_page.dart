@@ -11,8 +11,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
-
-import 'package:passion_tree_frontend/features/home/presentation/widgets/popular_learning_paths.dart';
+import 'package:passion_tree_frontend/features/home/presentation/widgets/streak_section.dart';
 import 'package:passion_tree_frontend/features/home/presentation/widgets/continue_learning.dart';
 import 'package:passion_tree_frontend/features/home/presentation/widgets/continue_reflection.dart';
 
@@ -27,38 +26,40 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _loadData();
     });
   }
-  
-    @override
-    void didChangeDependencies() {
-      super.didChangeDependencies();
-      // Reload data when dependencies change (e.g., after navigation pop)
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _loadData();
-      });
-    }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadData();
+    });
+  }
 
   Future<void> _loadData() async {
-    // ดึง userId จาก auth repository
+
     final userId = await getIt<IAuthRepository>().getUserId();
 
     if (!mounted) return;
 
-    /// โหลด learning paths พร้อม userId เพื่อดึง enrolledPaths
     context.read<LearningPathBloc>().add(
       FetchLearningPathOverview(userId: userId),
     );
 
-    /// โหลด reflection albums
-    context.read<AlbumBloc>().add(const LoadAlbumsEvent());
+    context.read<AlbumBloc>().add(
+      const LoadAlbumsEvent(),
+    );
   }
 
   @override
@@ -76,26 +77,18 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// POPULAR COURSES
+                /// STREAK SECTION (แทน Popular)
+                const StreakSection(),
+
+                const SizedBox(height: 50),
+
+                /// CONTINUE LEARNING
                 BlocBuilder<LearningPathBloc, LearningPathState>(
                   builder: (context, state) {
                     if (state is LearningPathLoading) {
                       return const Center(child: CircularProgressIndicator());
                     }
 
-                    if (state is LearningPathOverviewLoaded) {
-                      return PopularLearningPathsSection(paths: state.allPaths);
-                    }
-
-                    return const SizedBox();
-                  },
-                ),
-
-                const SizedBox(height: 60),
-
-                /// CONTINUE LEARNING
-                BlocBuilder<LearningPathBloc, LearningPathState>(
-                  builder: (context, state) {
                     if (state is LearningPathOverviewLoaded) {
                       return ContinueLearningSection(
                         enrolledPaths: state.enrolledPaths,
