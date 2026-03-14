@@ -12,7 +12,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
 import 'package:passion_tree_frontend/features/home/presentation/widgets/streak_section.dart';
-import 'package:passion_tree_frontend/features/home/presentation/widgets/continue_learning.dart';
+import 'package:passion_tree_frontend/features/home/presentation/widgets/popular_learning_path.dart';
 import 'package:passion_tree_frontend/features/home/presentation/widgets/continue_reflection.dart';
 
 import 'package:passion_tree_frontend/core/di/injection.dart';
@@ -84,20 +84,18 @@ class _HomePageState extends State<HomePage> {
 
                 /// CONTINUE LEARNING
                 BlocBuilder<LearningPathBloc, LearningPathState>(
-                  builder: (context, state) {
-                    if (state is LearningPathLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+              builder: (context, state) {
 
-                    if (state is LearningPathOverviewLoaded) {
-                      return ContinueLearningSection(
-                        enrolledPaths: state.enrolledPaths,
-                      );
-                    }
+                if (state is LearningPathOverviewLoaded) {
+                  return PopularLearningPathsSection(
+                    paths: state.allPaths,
+                  );
+                }
 
-                    return const SizedBox();
-                  },
-                ),
+                return const SizedBox();
+              },
+            )
+            ,
 
                 const SizedBox(height: 60),
 
