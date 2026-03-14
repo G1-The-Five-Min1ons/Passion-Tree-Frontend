@@ -11,6 +11,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
+
 import 'package:passion_tree_frontend/features/home/presentation/widgets/streak_section.dart';
 import 'package:passion_tree_frontend/features/home/presentation/widgets/popular_learning_path.dart';
 import 'package:passion_tree_frontend/features/home/presentation/widgets/continue_reflection.dart';
@@ -26,6 +27,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  /// cache overview state เพื่อกัน section หายตอน push/pop
+  LearningPathOverviewLoaded? _cachedOverview;
 
   @override
   void initState() {
@@ -48,7 +51,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadData() async {
-
     final userId = await getIt<IAuthRepository>().getUserId();
 
     if (!mounted) return;
@@ -57,15 +59,14 @@ class _HomePageState extends State<HomePage> {
       FetchLearningPathOverview(userId: userId),
     );
 
-    context.read<AlbumBloc>().add(
-      const LoadAlbumsEvent(),
-    );
+    context.read<AlbumBloc>().add(const LoadAlbumsEvent());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AppBarWidget(title: 'Home', showBackButton: false),
+
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -74,28 +75,38 @@ class _HomePageState extends State<HomePage> {
               right: AppSpacing.xmargin,
               top: AppSpacing.ymargin,
             ),
+
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// STREAK SECTION (แทน Popular)
+                /// STREAK
                 const StreakSection(),
 
                 const SizedBox(height: 50),
 
-                /// CONTINUE LEARNING
+                /// POPULAR LEARNING PATHS
                 BlocBuilder<LearningPathBloc, LearningPathState>(
-              builder: (context, state) {
+                  builder: (context, state) {
+                    /// update cache
+                    if (state is LearningPathOverviewLoaded) {
+                      _cachedOverview = state;
+                    }
 
-                if (state is LearningPathOverviewLoaded) {
-                  return PopularLearningPathsSection(
-                    paths: state.allPaths,
-                  );
-                }
+                    final overview = _cachedOverview;
 
-                return const SizedBox();
-              },
-            )
-            ,
+                    if (overview != null) {
+                      return PopularLearningPathsSection(
+                        paths: overview.allPaths,
+                      );
+                    }
+
+                    if (state is LearningPathLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    return const SizedBox();
+                  },
+                ),
 
                 const SizedBox(height: 60),
 
