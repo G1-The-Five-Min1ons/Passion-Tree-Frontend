@@ -254,7 +254,7 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                           : _isCooldownActive
                           ? 'Resend OTP in ${_resendCooldownRemaining}s'
                           : 'Resend OTP';
-                        final otpExpiryText =
+                      final otpExpiryText =
                           'OTP Expire in ${_formatDuration(_otpExpiryRemaining)}';
 
                       return Column(
@@ -324,45 +324,44 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                             ),
                           Padding(
                             padding: const EdgeInsets.only(top: 8),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                otpExpiryText,
-                                style: AppTypography.bodyRegular.copyWith(
-                                  color: _isOtpExpired
-                                      ? AppColors.cancel
-                                      : AppColors.textSecondary,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    otpExpiryText,
+                                    style: AppTypography.bodyRegular.copyWith(
+                                      color: _isOtpExpired
+                                          ? AppColors.cancel
+                                          : AppColors.textSecondary,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: GestureDetector(
-                              onTap: canResend
-                                  ? () {
-                                      if (_showResendEmailField) {
-                                        context.read<VerifyEmailBloc>().add(
-                                          ResendEmailChanged(
-                                            _resendEmailController.text,
-                                          ),
-                                        );
-                                      }
-                                      context.read<VerifyEmailBloc>().add(
-                                        const ResendVerificationEmailRequested(),
-                                      );
-                                    }
-                                  : null,
-                              child: Text(
-                                resendLabel,
-                                style: AppTypography.bodySemiBold.copyWith(
-                                  color: AppColors.textPrimary,
-                                  decoration: canResend
-                                      ? TextDecoration.underline
-                                      : TextDecoration.none,
+                                GestureDetector(
+                                  onTap: canResend
+                                      ? () {
+                                          if (_showResendEmailField) {
+                                            context.read<VerifyEmailBloc>().add(
+                                              ResendEmailChanged(
+                                                _resendEmailController.text,
+                                              ),
+                                            );
+                                          }
+                                          context.read<VerifyEmailBloc>().add(
+                                            const ResendVerificationEmailRequested(),
+                                          );
+                                        }
+                                      : null,
+                                  child: Text(
+                                    resendLabel,
+                                    style: AppTypography.bodySemiBold.copyWith(
+                                      color: AppColors.textPrimary,
+                                      decoration: canResend
+                                          ? TextDecoration.underline
+                                          : TextDecoration.none,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 24),

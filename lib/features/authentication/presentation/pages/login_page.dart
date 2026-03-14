@@ -5,7 +5,6 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
-import 'package:passion_tree_frontend/core/common_widgets/selections/checkbox.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/bottom_buttons.dart';
@@ -288,42 +287,23 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Remember me & Forgot password
-                        Row(
-                          children: [
-                            const SizedBox(width: 8),
-                            PixelCheckbox(
-                              value: state.rememberMe,
-                              onChanged: (value) {
-                                context.read<LoginBloc>().add(
-                                      LoginRememberMeToggled(value ?? false),
-                                    );
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Remember me',
-                              style: AppTypography.subtitleMedium.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const Spacer(),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const ForgotPasswordPage(),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                'Forgot password',
-                                style: AppTypography.subtitleMedium.copyWith(
-                                  color: colorScheme.primary,
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const ForgotPasswordPage(),
                                 ),
+                              );
+                            },
+                            child: Text(
+                              'Forgot password',
+                              style: AppTypography.subtitleMedium.copyWith(
+                                color: colorScheme.primary,
                               ),
                             ),
-                          ],
+                          ),
                         ),
                         const SizedBox(height: 24),
 
