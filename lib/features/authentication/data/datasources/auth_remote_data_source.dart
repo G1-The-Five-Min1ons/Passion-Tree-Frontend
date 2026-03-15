@@ -97,11 +97,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       body: jsonEncode(request.toJson()),
       timeout: ApiConfig.connectionTimeout,
     );
-    if (response.isSuccess) {
+    final rawLoginMessage =
+        response.error ?? response.message ?? response.rawBody?['error']?.toString() ?? '';
+    final isVerificationRequired =
+        response.statusCode == 403 && rawLoginMessage.toLowerCase().contains('verification_required');
+
+    if (response.isSuccess || isVerificationRequired) {
       LogHandler.success('OTP sent to email' + (confirmReactivate ? ' (with reactivation)' : ''));
       return LoginOtpResponse(
-        success: response.success,
-        message: response.message ?? '',
+        success: true,
+        message: rawLoginMessage,
       );
     }
     throw _handleError(response, 'login');
@@ -477,6 +482,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   String _getUserFriendlyMessage(String backendError, String context) {
     final errorLower = backendError.toLowerCase();
     if (context == 'login') {
+      if (errorLower.contains('verification_required')) {
+        return backendError;
+      }
       if (errorLower.contains('invalid') ||
           errorLower.contains('password') ||
           errorLower.contains('incorrect') ||
