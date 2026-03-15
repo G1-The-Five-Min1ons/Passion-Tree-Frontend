@@ -5,7 +5,6 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
-import 'package:passion_tree_frontend/core/common_widgets/selections/checkbox.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/bottom_buttons.dart';
@@ -14,6 +13,7 @@ import 'package:passion_tree_frontend/features/authentication/presentation/widge
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/register_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/forgot_password_page.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/pages/verify_email_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_bloc.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_event.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_state.dart';
@@ -128,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
             listener: (context, state) async {
               switch (state.nextStep!) {
                 case LoginNextStep.otpVerification:
-                  await _showOtpDialog(context);
+                  await _showOtpDialog(context, state);
                   break;
 
                 case LoginNextStep.checkingRole:
@@ -287,42 +287,23 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Remember me & Forgot password
-                        Row(
-                          children: [
-                            const SizedBox(width: 8),
-                            PixelCheckbox(
-                              value: state.rememberMe,
-                              onChanged: (value) {
-                                context.read<LoginBloc>().add(
-                                      LoginRememberMeToggled(value ?? false),
-                                    );
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Remember me',
-                              style: AppTypography.subtitleMedium.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const Spacer(),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const ForgotPasswordPage(),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                'Forgot password',
-                                style: AppTypography.subtitleMedium.copyWith(
-                                  color: colorScheme.primary,
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const ForgotPasswordPage(),
                                 ),
+                              );
+                            },
+                            child: Text(
+                              'Forgot password',
+                              style: AppTypography.subtitleMedium.copyWith(
+                                color: colorScheme.primary,
                               ),
                             ),
-                          ],
+                          ),
                         ),
                         const SizedBox(height: 24),
 
@@ -399,80 +380,39 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   /// Show OTP dialog
-  Future<void> _showOtpDialog(BuildContext context) async {
-    final otpController = TextEditingController();
+  Future<void> _showOtpDialog(BuildContext context, LoginState state) async {
+    final resendEmail = state.otpResendEmail.isNotEmpty
+        ? state.otpResendEmail
+        : _extractEmailForResend(_usernameController.text.trim());
 
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 25),
-          child: PixelBorderContainer(
-            pixelSize: 4,
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Email Verification',
-                  style: AppPixelTypography.h3.copyWith(
-                    color: Theme.of(dialogContext).colorScheme.onSurface,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Please enter the verification code sent to your email',
-                  style: AppTypography.bodySemiBold.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                PixelTextField(
-                  label: 'Verification Code',
-                  hintText: 'Enter 6-digit code',
-                  controller: otpController,
-                  height: 38,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'Cancel',
-                        backgroundColor: AppColors.cancel,
-                        onPressed: () {
-                          Navigator.of(dialogContext).pop();
-                          context.read<LoginBloc>().add(const LoginReset());
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'Verify',
-                        onPressed: () {
-                          final code = otpController.text.trim();
-                          if (code.isNotEmpty) {
-                            Navigator.of(dialogContext).pop();
-                            context.read<LoginBloc>().add(VerifyEmailSubmitted(code));
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (dialogContext) => VerifyEmailPage(
+        resendEmail: resendEmail,
+        otpExpirySeconds: 300,
+        initialResendCooldownSeconds: 10,
+        onCancel: () {
+          if (context.mounted) {
+            context.read<LoginBloc>().add(const LoginReset());
+          }
+        },
+        onSuccess: () {
+          if (context.mounted) {
+            context.read<LoginBloc>().add(const CheckRoleStatus());
+          }
+        },
+      ),
     );
+  }
+
+  String? _extractEmailForResend(String identifier) {
+    if (identifier.isEmpty) {
+      return null;
+    }
+
+    final emailPattern = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return emailPattern.hasMatch(identifier) ? identifier : null;
   }
 
   /// Show role selection dialog
