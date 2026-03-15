@@ -11,6 +11,24 @@ class AlbumDataSource {
   AlbumDataSource({ApiHandler? apiHandler})
       : _apiHandler = apiHandler ?? ApiHandler();
 
+  List<dynamic> _extractListFromResponseData(
+    dynamic responseData, {
+    String listKey = 'data',
+  }) {
+    if (responseData is List) {
+      return responseData;
+    }
+
+    if (responseData is Map<String, dynamic>) {
+      final nested = responseData[listKey];
+      if (nested is List) {
+        return nested;
+      }
+    }
+
+    return [];
+  }
+
   /// Create a new album
   Future<AlbumApiModel> createAlbum(CreateAlbumRequest request, String token) async {
     LogHandler.separator(title: 'ALBUM · CREATE');
@@ -223,15 +241,7 @@ class AlbumDataSource {
     );
 
     if (response.isSuccess) {
-      List nodes = [];
-      
-      // Handle both response formats
-      if (response.data is List) {
-        nodes = response.data as List;
-      } else if (response.data is Map<String, dynamic>) {
-        final data = response.data as Map<String, dynamic>;
-        nodes = data['data'] as List? ?? [];
-      }
+      final nodes = _extractListFromResponseData(response.data);
       
       LogHandler.success('Fetched ${nodes.length} node(s) for path: $pathId');
       return nodes.map((node) => LearningPathNode.fromJson(node)).toList();
@@ -371,8 +381,7 @@ class AlbumDataSource {
     );
 
     if (response.isSuccess) {
-      final data = response.data as Map<String, dynamic>;
-      final nodes = data['data'] as List? ?? [];
+      final nodes = _extractListFromResponseData(response.data);
       LogHandler.success('Fetched ${nodes.length} tree node(s) for tree: $treeId');
       return nodes.map((node) => TreeNodeApiModel.fromJson(node)).toList();
     }

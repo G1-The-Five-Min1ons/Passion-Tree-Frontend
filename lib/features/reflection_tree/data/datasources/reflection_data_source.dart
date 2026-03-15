@@ -11,6 +11,51 @@ class ReflectionDataSource {
   ReflectionDataSource({ApiHandler? apiHandler})
       : _apiHandler = apiHandler ?? ApiHandler();
 
+  Map<String, dynamic>? _extractMapFromResponse(
+    dynamic responseData,
+    dynamic rawBody, {
+    String key = 'data',
+  }) {
+    if (responseData is Map<String, dynamic>) {
+      return responseData;
+    }
+
+    if (rawBody is Map<String, dynamic>) {
+      final nested = rawBody[key];
+      if (nested is Map<String, dynamic>) {
+        return nested;
+      }
+    }
+
+    return null;
+  }
+
+  List<dynamic> _extractListFromResponse(
+    dynamic responseData,
+    dynamic rawBody, {
+    String key = 'data',
+  }) {
+    if (responseData is List) {
+      return responseData;
+    }
+
+    if (responseData is Map<String, dynamic>) {
+      final nested = responseData[key];
+      if (nested is List) {
+        return nested;
+      }
+    }
+
+    if (rawBody is Map<String, dynamic>) {
+      final nested = rawBody[key];
+      if (nested is List) {
+        return nested;
+      }
+    }
+
+    return [];
+  }
+
   /// Create a new reflection
   Future<ReflectionApiModel> createReflection(
       CreateReflectionRequest request, String token) async {
@@ -24,8 +69,10 @@ class ReflectionDataSource {
 
     if (response.isSuccess && response.statusCode == 201) {
       LogHandler.success('Reflection created successfully');
-      final reflectionData =
-          (response.data ?? response.rawBody?['data']) as Map<String, dynamic>?;
+      final reflectionData = _extractMapFromResponse(
+        response.data,
+        response.rawBody,
+      );
 
       if (reflectionData == null) {
         throw ParseException(
@@ -53,8 +100,10 @@ class ReflectionDataSource {
 
     if (response.isSuccess) {
       LogHandler.success('Reflection fetched: $reflectId');
-      final reflectionData =
-          (response.data ?? response.rawBody?['data']) as Map<String, dynamic>?;
+      final reflectionData = _extractMapFromResponse(
+        response.data,
+        response.rawBody,
+      );
 
       if (reflectionData == null) {
         throw ParseException(message: 'Reflection response data is missing');
@@ -79,8 +128,10 @@ class ReflectionDataSource {
     );
 
     if (response.isSuccess) {
-      final reflections =
-          (response.data ?? response.rawBody?['data']) as List<dynamic>? ?? [];
+      final reflections = _extractListFromResponse(
+        response.data,
+        response.rawBody,
+      );
       LogHandler.success('Fetched ${reflections.length} reflection(s)');
       return reflections
           .map((reflection) => ReflectionApiModel.fromJson(reflection))
