@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 /// ANSI color codes for terminal output
@@ -11,146 +12,29 @@ class _AnsiColors {
   static const String brightCyan = '\x1B[96m';
 }
 
-/// Log levels with corresponding colors
 enum LogLevel { debug, info, request, response, success, error, warning }
-
-/// Custom logger for API and general application logging
 class LogHandler {
   static bool _enabled = kDebugMode;
   static bool _useColors = true;
   static bool _debugEnabled = false;
 
-  /// Enable or disable logging
-  static void setEnabled(bool enabled) {
-    _enabled = enabled;
-  }
+  static void setEnabled(bool enabled) => _enabled = enabled;
+  static void setUseColors(bool useColors) => _useColors = useColors;
+  static void setDebugEnabled(bool enabled) => _debugEnabled = enabled;
 
-  /// Enable or disable colored output
-  static void setUseColors(bool useColors) {
-    _useColors = useColors;
-  }
-
-  /// Enable or disable verbose debug logging.
-  /// Set to true when you need detailed step-by-step logs for troubleshooting.
-  static void setDebugEnabled(bool enabled) {
-    _debugEnabled = enabled;
-  }
-
-  /// Get current timestamp in HH:mm:ss.SSS format
-  static String _timestamp() {
-    final now = DateTime.now();
-    return '[${now.hour.toString().padLeft(2, '0')}:'
-        '${now.minute.toString().padLeft(2, '0')}:'
-        '${now.second.toString().padLeft(2, '0')}.'
-        '${now.millisecond.toString().padLeft(3, '0')}]';
-  }
-
-  /// Get color for log level
-  static String _getColor(LogLevel level) {
-    if (!_useColors) return '';
-
-    switch (level) {
-      case LogLevel.debug:
-        return _AnsiColors.magenta;
-      case LogLevel.info:
-        return _AnsiColors.brightCyan;
-      case LogLevel.request:
-        return _AnsiColors.brightBlue;
-      case LogLevel.response:
-        return _AnsiColors.magenta;
-      case LogLevel.success:
-        return _AnsiColors.brightGreen;
-      case LogLevel.error:
-        return _AnsiColors.brightRed;
-      case LogLevel.warning:
-        return _AnsiColors.brightYellow;
-    }
-  }
-
-  /// Log verbose debug message (only shown when debugEnabled is true)
-  static void debug(String message) {
-    if (!_enabled || !_debugEnabled) return;
-
-    final timestamp = _timestamp();
-    final color = _getColor(LogLevel.debug);
-    final reset = _useColors ? _AnsiColors.reset : '';
-
-    debugPrint('$color$timestamp [DEBUG] : $message$reset');
-  }
-
-  /// Log info message
-  static void info(String message) {
+  /// Internal central logging method
+  static void _log(LogLevel level, String prefix, String message, {Object? error, StackTrace? stackTrace}) {
     if (!_enabled) return;
+    if (level == LogLevel.debug && !_debugEnabled) return;
 
     final timestamp = _timestamp();
-    final color = _getColor(LogLevel.info);
+    final color = _getColor(level);
     final reset = _useColors ? _AnsiColors.reset : '';
 
-    debugPrint('$color$timestamp [INFO] : $message$reset');
-  }
-
-  /// Log API request
-  static void request({
-    required String method,
-    required String url,
-    Map<String, dynamic>? headers,
-    dynamic body,
-  }) {
-    if (!_enabled) return;
-
-    final timestamp = _timestamp();
-    final color = _getColor(LogLevel.request);
-    final reset = _useColors ? _AnsiColors.reset : '';
-
-    debugPrint('$color$timestamp [REQUEST] [$method] : $url$reset');
-
-    // if (body != null) {
-    //   debugPrint('$color$timestamp Body : ${_prettyJson(body)}$reset');
-    // }
-  }
-
-  /// Log API response
-  static void response({
-    required String method,
-    required String url,
-    required int statusCode,
-    dynamic data,
-  }) {
-    if (!_enabled) return;
-
-    final timestamp = _timestamp();
-    final color = _getColor(LogLevel.response);
-    final reset = _useColors ? _AnsiColors.reset : '';
-
-    debugPrint(
-      '$color$timestamp [RESPONSE] <$statusCode>-[$method] : $url$reset',
-    );
-
-  }
-
-  /// Log success message
-  static void success(String message) {
-    if (!_enabled) return;
-
-    final timestamp = _timestamp();
-    final color = _getColor(LogLevel.success);
-    final reset = _useColors ? _AnsiColors.reset : '';
-
-    debugPrint('$color$timestamp [SUCCESS] : $message$reset');
-  }
-
-  /// Log error message
-  static void error(String message, {Object? error, StackTrace? stackTrace}) {
-    if (!_enabled) return;
-
-    final timestamp = _timestamp();
-    final color = _getColor(LogLevel.error);
-    final reset = _useColors ? _AnsiColors.reset : '';
-
-    debugPrint('$color$timestamp [ERROR] : $message$reset');
+    debugPrint('$color$timestamp [$prefix] : $message$reset');
 
     if (error != null) {
-      debugPrint('$color$timestamp Error Details : $error$reset');
+      debugPrint('$color$timestamp Details : $error$reset');
     }
 
     if (stackTrace != null) {
@@ -158,48 +42,95 @@ class LogHandler {
     }
   }
 
-  /// Log warning message
-  static void warning(String message) {
-    if (!_enabled) return;
+  static void debug(String message) => _log(LogLevel.debug, 'DEBUG', message);
+  
+  static void info(String message) => _log(LogLevel.info, 'INFO', message);
+  
+  static void success(String message) => _log(LogLevel.success, 'SUCCESS', message);
+  
+  static void warning(String message) => _log(LogLevel.warning, 'WARNING', message);
+  
+  static void error(String message, {Object? error, StackTrace? stackTrace}) => 
+      _log(LogLevel.error, 'ERROR', message, error: error, stackTrace: stackTrace);
 
-    final timestamp = _timestamp();
-    final color = _getColor(LogLevel.warning);
-    final reset = _useColors ? _AnsiColors.reset : '';
+  static void apiError({
+    required String method,
+    required String url,
+    required int statusCode,
+    String? message,
+  }) {
+    final isWarning = statusCode >= 400 && statusCode < 500;
+    final level = isWarning ? LogLevel.warning : LogLevel.error;
+    final prefix = isWarning ? 'API-WARN' : 'API-ERROR';
 
-    debugPrint('$color$timestamp [WARNING] : $message$reset');
+    _log(level, prefix, '$method $url ($statusCode) : ${message ?? "Request failed"}');
   }
 
-  // static String _prettyJson(dynamic json) {
-  //   try {
-  //     const encoder = JsonEncoder.withIndent('  ');
-  //     if (json is String) {
-  //       try {
-  //         final decoded = jsonDecode(json);
-  //         return encoder.convert(decoded);
-  //       } catch (_) {
-  //         return json;
-  //       }
-  //       return encoder.convert(json);
-  //     } catch (e) {
-  //       return json.toString();
-  //     }
-  // }
+  static void request({
+    required String method,
+    required String url,
+    dynamic body,
+  }) {
+    _log(LogLevel.request, 'REQUEST', '[$method] : $url');
+    if (body != null && _debugEnabled) {
+      debugPrint('${_getColor(LogLevel.request)}Body: ${_prettyJson(body)}${_AnsiColors.reset}');
+    }
+  }
 
-  /// Log section separator
+  static void response({
+    required String method,
+    required String url,
+    required int statusCode,
+    dynamic data,
+  }) {
+    _log(LogLevel.response, 'RESPONSE', '<$statusCode>-[$method] : $url');
+    if (data != null && _debugEnabled) {
+      debugPrint('${_getColor(LogLevel.response)}JSON: ${_prettyJson(data)}${_AnsiColors.reset}');
+    }
+  }
+
   static void separator({String? title}) {
     if (!_enabled) return;
-
-    final color = _useColors
-        ? _AnsiColors.magenta
-        : ''; // Using magenta as fallback for gray
+    final color = _useColors ? _AnsiColors.magenta : '';
     final reset = _useColors ? _AnsiColors.reset : '';
+    final bar = '=' * 60;
 
+    debugPrint('\n$color$bar$reset');
     if (title != null) {
-      debugPrint('$color${'=' * 60}$reset');
-      debugPrint('$color$title$reset');
-      debugPrint('$color${'=' * 60}$reset');
-    } else {
-      debugPrint('$color${'=' * 60}$reset');
+      debugPrint('$color${title.toUpperCase()}$reset');
+      debugPrint('$color$bar$reset');
+    }
+  }
+
+  static String _timestamp() {
+    final now = DateTime.now();
+    return '[${now.hour.toString().padLeft(2, '0')}:'
+           '${now.minute.toString().padLeft(2, '0')}:'
+           '${now.second.toString().padLeft(2, '0')}.'
+           '${now.millisecond.toString().padLeft(3, '0')}]';
+  }
+
+  static String _getColor(LogLevel level) {
+    if (!_useColors) return '';
+    switch (level) {
+      case LogLevel.debug: return _AnsiColors.magenta;
+      case LogLevel.info: return _AnsiColors.brightCyan;
+      case LogLevel.request: return _AnsiColors.brightBlue;
+      case LogLevel.response: return _AnsiColors.magenta;
+      case LogLevel.success: return _AnsiColors.brightGreen;
+      case LogLevel.error: return _AnsiColors.brightRed;
+      case LogLevel.warning: return _AnsiColors.brightYellow;
+    }
+  }
+
+  static String _prettyJson(dynamic json) {
+    try {
+      const encoder = JsonEncoder.withIndent('  ');
+      if (json is Map || json is List) return encoder.convert(json);
+      final decoded = jsonDecode(json.toString());
+      return encoder.convert(decoded);
+    } catch (_) {
+      return json.toString();
     }
   }
 }

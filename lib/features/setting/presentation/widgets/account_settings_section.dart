@@ -138,7 +138,7 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
         final pwdFailed = pwdResult.fold(
           (failure) {
             setState(() => _isSaving = false);
-            LogHandler.error('Failed to change password: ${failure.message}');
+            LogHandler.warning('AUTH · VALIDATION - Failed to change password: ${failure.message}');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(failure.message),

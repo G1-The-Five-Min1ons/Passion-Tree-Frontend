@@ -24,7 +24,10 @@ import 'package:passion_tree_frontend/features/authentication/data/models/teache
 
 abstract class AuthRemoteDataSource {
   Future<RegisterResponse> register(RegisterRequest request);
-  Future<LoginOtpResponse> login(LoginRequest request, {bool confirmReactivate = false});
+  Future<LoginOtpResponse> login(
+    LoginRequest request, {
+    bool confirmReactivate = false,
+  });
   Future<VerifyEmailResponse> verifyEmail(VerifyEmailRequest request);
   Future<void> resendVerificationEmail(ResendVerificationRequest request);
   Future<void> forgotPassword(ForgotPasswordRequest request);
@@ -64,13 +67,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }) async {
     LogHandler.separator(title: logTitle);
     final response = await apiCall();
-    
-    if (response.isSuccess && 
-        (expectedStatusCode == null || response.statusCode == expectedStatusCode)) {
+
+    if (response.isSuccess &&
+        (expectedStatusCode == null ||
+            response.statusCode == expectedStatusCode)) {
       LogHandler.success('$context successful');
       return onSuccess(response);
     }
-    
+
     throw _handleError(response, context);
   }
 
@@ -131,14 +135,21 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<LoginOtpResponse> login(LoginRequest request, {bool? confirmReactivate}) {
+  Future<LoginOtpResponse> login(
+    LoginRequest request, {
+    bool? confirmReactivate,
+  }) {
     return _executeRequest<LoginOtpResponse>(
       logTitle: 'AUTH REMOTE · LOGIN',
       context: 'login',
       apiCall: () => _apiHandler.post(
         url: ApiConfig.authLogin,
         headers: ApiConfig.defaultHeaders,
-        body: jsonEncode(request.toJson()),
+        body: jsonEncode({
+          ...request.toJson(),
+          if (confirmReactivate != null)
+            'confirm_reactivate': confirmReactivate,
+        }),
         timeout: ApiConfig.connectionTimeout,
       ),
       onSuccess: (response) => LoginOtpResponse(
@@ -298,7 +309,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         url: ApiConfig.authDeleteUser,
         headers: ApiConfig.getAuthHeaders(token),
         body: jsonEncode({'password': password}),
-      timeout: ApiConfig.connectionTimeout,
+        timeout: ApiConfig.connectionTimeout,
       ),
       onSuccess: (_) {},
     );
@@ -336,17 +347,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> logout(String token) async {
-    LogHandler.separator(title: 'AUTH REMOTE · LOGOUT');
-    final response = await _apiHandler.post(
-      url: ApiConfig.authLogout,
-      headers: ApiConfig.getAuthHeaders(token),
-      timeout: ApiConfig.connectionTimeout,
+    return _executeRequest<void>(
+      logTitle: 'AUTH REMOTE · LOGOUT',
+      context: 'logout',
+      apiCall: () => _apiHandler.post(
+        url: ApiConfig.authLogout,
+        headers: ApiConfig.getAuthHeaders(token),
+        timeout: ApiConfig.connectionTimeout,
+      ),
+      onSuccess: (_) {},
     );
-    if (response.isSuccess) {
-      LogHandler.success('Logged out all sessions');
-      return;
-    }
-    throw _handleError(response, 'logout');
   }
 
   @override
@@ -399,7 +409,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       response.error ?? response.message ?? '',
       context,
     );
-    LogHandler.error('$context failed: $msg');
+
+    if (response.statusCode >= 400 && response.statusCode < 500) {
+      LogHandler.warning('$context validation failed: $msg');
+    } else {
+      LogHandler.error('$context system failure: $msg', error: response.error);
+    }
+
     return AuthException(message: msg, statusCode: response.statusCode);
   }
 

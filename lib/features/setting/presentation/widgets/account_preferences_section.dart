@@ -65,7 +65,9 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
 
     profileResult.fold(
       (failure) {
-        LogHandler.error('SETTING UI · LOAD failed profile: ${failure.message}');
+        LogHandler.error(
+          'SETTING UI · LOAD failed profile: ${failure.message}',
+        );
         setState(() => _isLoading = false);
       },
       (profile) {
@@ -88,7 +90,9 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
               _autoSave = true;
             },
             (settings) {
-              final autoSaveSetting = settings.where((item) => item.key == _autoSaveKey);
+              final autoSaveSetting = settings.where(
+                (item) => item.key == _autoSaveKey,
+              );
               if (autoSaveSetting.isEmpty) {
                 _autoSave = true;
               } else {
@@ -224,20 +228,28 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Center(child: CircularProgressIndicator()),
                 )
-              else
-                _buildActionRow(
-                  title: 'Verify Teacher Account',
-                  subtitle:
-                      'Bind phone number, reason to teach, and teaching history.',
-                  onTap: _openTeacherVerification,
+              else ...[
+                // ✅ 1. เช็คว่าเป็น Teacher หรือไม่
+                if (_isTeacher)
+                  _buildActionRow(
+                    title: 'Verify Teacher Account',
+                    subtitle:
+                        'Bind phone number, reason to teach, and teaching history.',
+                    onTap: _openTeacherVerification,
+                  )
+                else
+                  // ✅ 2. ถ้าไม่ใช่อาจารย์ (เป็น Student) ให้โชว์ช่องกรอกเบอร์โทร
+                  _buildStudentPhoneRow(),
+
+                const Divider(color: AppColors.cardBorder, height: 20),
+
+                _buildToggleRow(
+                  title: 'Auto-Save progress',
+                  subtitle: 'Automatically save your progress',
+                  value: _autoSave,
+                  onChanged: _isSavingAutoSave ? null : _onAutoSaveChanged,
                 ),
-              const Divider(color: AppColors.cardBorder, height: 20),
-              _buildToggleRow(
-                title: 'Auto-Save progress',
-                subtitle: 'Automatically save your progress',
-                value: _autoSave,
-                onChanged: _isSavingAutoSave ? null : _onAutoSaveChanged,
-              ),
+              ],
             ],
           ),
         ),

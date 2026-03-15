@@ -318,9 +318,12 @@ class ApiHandler {
       if (apiResponse.isSuccess) {
         LogHandler.success('$method $url completed successfully');
       } else if (apiResponse.isError) {
-        LogHandler.error(
-          '$method $url failed: ${apiResponse.error ?? "Unknown error"}',
-        );
+          final errorMsg = '$method $url failed ($statusCode): ${apiResponse.error ?? "Unknown error"}';
+          if (statusCode >= 400 && statusCode < 500) {
+            LogHandler.warning(errorMsg);
+          } else {
+            LogHandler.error(errorMsg);
+          }
       }
 
       return apiResponse;
