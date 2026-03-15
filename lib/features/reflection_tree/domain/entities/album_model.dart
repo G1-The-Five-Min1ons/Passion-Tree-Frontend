@@ -54,11 +54,32 @@ class AlbumItem {
 }
 
 class Chapter {
+  final String treeNodeId;
   final String name;
   final bool isEnrolled;
+  final String? status;
+  final String? complete;
+  final int sequence;
+  final String? reflectionId;
+  final bool isStandalone;
 
   Chapter({
+    required this.treeNodeId,
     required this.name,
     this.isEnrolled = false,
+    this.status,
+    this.complete,
+    this.sequence = 0,
+    this.reflectionId,
+    this.isStandalone = false,
   });
+
+  // Helper to check if node is completed
+  bool get isCompleted => complete == 'true';
+  
+  // Helper to check if node has reflection
+  bool get hasReflection => reflectionId != null && reflectionId!.isNotEmpty;
+
+  // Helper to check if node can be reflected (completed LP node or standalone reflection node)
+  bool get canReflect => isCompleted || isStandalone;
 }
