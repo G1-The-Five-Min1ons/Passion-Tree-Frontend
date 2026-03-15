@@ -23,6 +23,7 @@ class PageOneView extends StatelessWidget {
           pixelSize: 3,
           hintText: 'Type what you have learned',
           height: 320,
+          value: initialValue,
           onChanged: onLearnChanged,
         )
       ],

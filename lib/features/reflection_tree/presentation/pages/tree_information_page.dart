@@ -4,11 +4,18 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/node_item.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/tree_canvas.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/reflection_data_source.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/models/reflection_api_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/page_header.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_node_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/add_reflect_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/detail_reflect_after/reflect_detail_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/status_badge.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
@@ -33,6 +40,123 @@ class TreeDetailPage extends StatefulWidget {
 
 class _TreeDetailPageState extends State<TreeDetailPage> {
   AlbumItem? _currentItem;
+  final Map<String, _ReflectionViewData> _latestReflectionByNodeId = {};
+  final ReflectionDataSource _reflectionDataSource = ReflectionDataSource();
+  final AuthLocalDataSource _authLocalDataSource = getIt<AuthLocalDataSource>();
+
+  void _updateCurrentItem(AlbumItem item) {
+    if (!mounted) return;
+    setState(() {
+      _currentItem = item;
+    });
+  }
+
+  void _syncCurrentItemFromState(AlbumState state) {
+    if (state is AlbumDetailLoaded) {
+      final album = state.album;
+      if (album.items != null) {
+        for (final item in album.items!) {
+          if (item.treeId == _currentItem?.treeId || item.treeId == widget.treeId) {
+            _updateCurrentItem(item);
+            return;
+          }
+        }
+      }
+    } else if (state is AlbumsLoaded) {
+      for (final album in state.albums) {
+        if (album.items != null) {
+          for (final item in album.items!) {
+            if (item.treeId == _currentItem?.treeId || item.treeId == widget.treeId) {
+              _updateCurrentItem(item);
+              return;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  void _handleReflectionCreated(
+    Chapter chapter,
+    ReflectionApiModel createdReflection,
+    CreateReflectionRequest request,
+  ) {
+    _latestReflectionByNodeId[chapter.treeNodeId] = _ReflectionViewData(
+      nodeName: chapter.name,
+      level: request.feelScore,
+      learn: request.learningReflect,
+      feel: request.moodReflect,
+      progress: request.progressScore,
+      challenge: request.challengeScore,
+      sentiment: createdReflection.sentimentAnalysis,
+      reflectionScore: createdReflection.reflectionScore,
+      summary: createdReflection.summary,
+      strugglePoint: createdReflection.strugglePoint,
+    );
+
+    final currentItem = _currentItem;
+    if (currentItem == null) return;
+
+    final reflectedChapterId = createdReflection.reflectId.trim();
+    final updatedChapters = currentItem.chapters.map((itemChapter) {
+      if (itemChapter.treeNodeId != chapter.treeNodeId) return itemChapter;
+
+      return Chapter(
+        treeNodeId: itemChapter.treeNodeId,
+        name: itemChapter.name,
+        isEnrolled: itemChapter.isEnrolled,
+        status: itemChapter.status,
+        complete: itemChapter.complete,
+        sequence: itemChapter.sequence,
+        reflectionId: reflectedChapterId.isNotEmpty
+            ? reflectedChapterId
+            : itemChapter.reflectionId,
+        isStandalone: itemChapter.isStandalone,
+      );
+    }).toList();
+
+    _updateCurrentItem(
+      AlbumItem(
+        treeId: currentItem.treeId,
+        subjectName: currentItem.subjectName,
+        lastEdited: currentItem.lastEdited,
+        status: currentItem.status,
+        chapters: updatedChapters,
+        overallStatus: currentItem.overallStatus,
+        resumeOn: currentItem.resumeOn,
+        pathId: currentItem.pathId,
+      ),
+    );
+  }
+
+  Future<void> _fetchAndShowReflectionDetail(Chapter chapter) async {
+    final token = await _authLocalDataSource.getToken();
+    if (token == null || token.isEmpty || !mounted) return;
+
+    try {
+      final reflection = await _reflectionDataSource.getReflectionById(
+        chapter.reflectionId!,
+        token,
+      );
+      if (!mounted) return;
+      ReflectDetailPopup.show(
+        context,
+        nodeName: chapter.name,
+        level: reflection.feelScore ?? 0,
+        learn: reflection.learnText ?? '',
+        feel: reflection.feelText ?? '',
+        progress: reflection.progressScore ?? 0,
+        challenge: reflection.challengeScore ?? 0,
+        sentiment: reflection.sentimentAnalysis,
+        reflectionScore: reflection.reflectionScore,
+        summary: reflection.summary,
+        strugglePoint: reflection.strugglePoint,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ReflectDetailPopup.show(context, nodeName: chapter.name);
+    }
+  }
 
   @override
   void initState() {
@@ -62,61 +186,24 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.treeId != null && widget.item == null) {
-      return BlocListener<AlbumBloc, AlbumState>(
-        listener: (context, state) {
-          if (state is AlbumDetailLoaded) {
-            final album = state.album;
-            if (album.items != null) {
-              for (final item in album.items!) {
-                if (item.treeId == widget.treeId) {
-                  if (mounted) {
-                    setState(() {
-                      _currentItem = item;
-                    });
-                  }
-                  return;
-                }
-              }
-            }
-          } else if (state is AlbumsLoaded) {
-            for (final album in state.albums) {
-              if (album.items != null) {
-                for (final item in album.items!) {
-                  if (item.treeId == widget.treeId) {
-                    if (mounted) {
-                      setState(() {
-                        _currentItem = item;
-                      });
-                    }
-                    return;
-                  }
-                }
-              }
-            }
-          }
-        },
-        child: _currentItem != null 
-            ? _buildTreeDetail(_currentItem!) 
-            : const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+    return BlocListener<AlbumBloc, AlbumState>(
+      listener: (context, state) {
+        _syncCurrentItemFromState(state);
+      },
+      child: _currentItem != null
+          ? _buildTreeDetail(_currentItem!)
+          : Scaffold(
+              appBar: AppBarWidget(
+                title: 'Reflection Tree',
+                showBackButton: true,
+                onBackPressed: () => Navigator.pop(context),
               ),
-      );
-    }
-
-    if (_currentItem != null) {
-      return _buildTreeDetail(_currentItem!);
-    }
-
-    return Scaffold(
-      appBar: AppBarWidget(
-        title: 'Reflection Tree',
-        showBackButton: true,
-        onBackPressed: () => Navigator.pop(context),
-      ),
-      body: const Center(
-        child: Text('Error: No tree data available'),
-      ),
+              body: Center(
+                child: widget.treeId != null
+                    ? const CircularProgressIndicator()
+                    : const Text('Error: No tree data available'),
+              ),
+            ),
     );
   }
 
@@ -166,13 +253,66 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                                 left: pos.dx - 40,
                                 top: pos.dy - 40,
                                 child: NodeItem(
-                                  imagePath: chapter.isEnrolled
+                                  imagePath: chapter.canReflect
                                       ? 'assets/images/trees/node-enrolled.png'
                                       : 'assets/images/trees/node_notenrolled.png',
                                   size: 90,
                                   onTap: () {
-                                    //
-                                    //TODO: logic ทีหลัง
+                                    if (!chapter.canReflect) {
+                                      // Learning Path not completed
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Please finish this chapter before reflecting'),
+                                          backgroundColor: AppColors.cancel,
+                                          duration: const Duration(seconds: 3),
+                                        ),
+                                      );
+                                    } else if (chapter.hasReflection) {
+                                      // Node completed and has reflection - show detail
+                                      final reflectionData =
+                                          _latestReflectionByNodeId[chapter
+                                              .treeNodeId];
+
+                                      if (reflectionData != null) {
+                                        ReflectDetailPopup.show(
+                                          context,
+                                          nodeName: reflectionData.nodeName,
+                                          level: reflectionData.level,
+                                          learn: reflectionData.learn,
+                                          feel: reflectionData.feel,
+                                          progress: reflectionData.progress,
+                                          challenge: reflectionData.challenge,
+                                          sentiment: reflectionData.sentiment,
+                                          reflectionScore:
+                                              reflectionData.reflectionScore,
+                                          summary: reflectionData.summary,
+                                          strugglePoint:
+                                              reflectionData.strugglePoint,
+                                        );
+                                      } else if (chapter.reflectionId != null) {
+                                        _fetchAndShowReflectionDetail(chapter);
+                                      } else {
+                                        ReflectDetailPopup.show(
+                                          context,
+                                          nodeName: chapter.name,
+                                        );
+                                      }
+                                    } else {
+                                      // Node completed but no reflection yet - add new reflection
+                                      AddReflectPopup.show(
+                                        context,
+                                        treeNodeId: chapter.treeNodeId,    
+                                        nodeName: chapter.name,
+                                        onReflectionCreated:
+                                            (createdReflection, request) {
+                                              _handleReflectionCreated(
+                                                chapter,
+                                                createdReflection,
+                                                request,
+                                              );
+                                            },
+                                      );
+                                    }
                                   },
                                 ),
                               );
@@ -201,7 +341,39 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                   title: item.subjectName,
                   actionIcon: Symbols.add_rounded,
                   onActionPressed: () {
-                    AddNodePopup.show(context);
+                    final albumBloc = context.read<AlbumBloc>();
+                    
+                    AddNodePopup.show(
+                      context,
+                      treeId: item.treeId!,
+                      onNodeAdded: (createdChapter) {
+                        final currentItem = _currentItem;
+                        if (currentItem != null) {
+                          final updatedChapters = [...currentItem.chapters, createdChapter]
+                            ..sort((left, right) => left.sequence.compareTo(right.sequence));
+
+                          _updateCurrentItem(
+                            AlbumItem(
+                              treeId: currentItem.treeId,
+                              subjectName: currentItem.subjectName,
+                              lastEdited: currentItem.lastEdited,
+                              status: currentItem.status,
+                              chapters: updatedChapters,
+                              overallStatus: currentItem.overallStatus,
+                              resumeOn: currentItem.resumeOn,
+                              pathId: currentItem.pathId,
+                            ),
+                          );
+                        }
+
+                        // Reload album data to show the new node
+                        if (widget.albumId != null) {
+                          albumBloc.add(LoadAlbumByIdEvent(widget.albumId!));
+                        } else {
+                          albumBloc.add(const LoadAlbumsEvent());
+                        }
+                      },
+                    );
                   },
                 ),
               ),
@@ -213,3 +385,28 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
   }
 }
 
+class _ReflectionViewData {
+  final String nodeName;
+  final int level;
+  final String learn;
+  final String feel;
+  final int progress;
+  final int challenge;
+  final String sentiment;
+  final double reflectionScore;
+  final String summary;
+  final String strugglePoint;
+
+  const _ReflectionViewData({
+    required this.nodeName,
+    required this.level,
+    required this.learn,
+    required this.feel,
+    required this.progress,
+    required this.challenge,
+    required this.sentiment,
+    required this.reflectionScore,
+    required this.summary,
+    required this.strugglePoint,
+  });
+}
