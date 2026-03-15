@@ -9,28 +9,35 @@ class RegionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PixelBorderContainer(
-      pixelSize: 4,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Region',
-            style: AppTypography.titleSemiBold.copyWith(color: AppColors.title),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Region',
+          style: AppTypography.titleSemiBold.copyWith(
+            color: AppColors.textPrimary,
           ),
-          const SizedBox(height: 12),
-          _buildInfoPair(
-            'Time Zone',
-            AccountPreferenceDefaults.timeZoneDisplay,
+        ),
+        const SizedBox(height: 12),
+        PixelBorderContainer(
+          pixelSize: 4,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoPair(
+                'Time Zone',
+                AccountPreferenceDefaults.timeZoneDisplay,
+              ),
+              const Divider(color: AppColors.cardBorder, height: 20),
+              _buildInfoPair(
+                'Date Format',
+                AccountPreferenceDefaults.dateFormatDisplay,
+              ),
+            ],
           ),
-          const Divider(color: AppColors.cardBorder, height: 20),
-          _buildInfoPair(
-            'Date Format',
-            AccountPreferenceDefaults.dateFormatDisplay,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

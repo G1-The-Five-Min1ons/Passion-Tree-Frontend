@@ -140,10 +140,11 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<String> login({
     required String identifier,
     required String password,
+    bool confirmReactivate = false,
   }) async {
-    LogHandler.info('AuthRepository: Attempting login for $identifier');
+    LogHandler.info('AuthRepository: Attempting login for $identifier${confirmReactivate ? ' (with reactivation)' : ''}');
     final request = LoginRequest(identifier: identifier, password: password);
-    final response = await _remoteDataSource.login(request);
+    final response = await _remoteDataSource.login(request, confirmReactivate: confirmReactivate);
     LogHandler.success('AuthRepository: Login successful');
     return response.message;
   }
@@ -200,7 +201,6 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<void> updateAccountSettings({
-    required String username,
     required String firstName,
     required String lastName,
     String? location,
@@ -212,7 +212,6 @@ class AuthRepositoryImpl implements IAuthRepository {
     if (token == null) throw Exception('No token found');
 
     final userRequest = UpdateUserRequest(
-      username: username,
       firstName: firstName,
       lastName: lastName,
     );
@@ -226,8 +225,6 @@ class AuthRepositoryImpl implements IAuthRepository {
 
     await _remoteDataSource.updateUser(token, userRequest);
     await _remoteDataSource.updateProfile(token, profileRequest);
-
-    await _localDataSource.saveUsername(username);
   }
 
   @override
@@ -242,15 +239,38 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
-  Future<void> deleteUser() async {
+  Future<void> deleteUser(String password) async {
     final token = await _localDataSource.getToken();
     if (token == null) throw Exception('No token found');
-    await _remoteDataSource.deleteUser(token);
+    await _remoteDataSource.deleteUser(token, password);
     await _localDataSource.clearAuth();
   }
 
   @override
+  Future<void> deactivateAccount() async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+    await _remoteDataSource.deactivateAccount(token);
+    await _localDataSource.clearAuth();
+  }
+
+  @override
+  Future<void> reactivateAccount() async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+    await _remoteDataSource.reactivateAccount(token);
+  }
+
+  @override
   Future<void> logout() async {
+    final token = await _localDataSource.getToken();
+    if (token != null && token.isNotEmpty) {
+      try {
+        await _remoteDataSource.logout(token);
+      } catch (e) {
+        LogHandler.warning('AuthRepository: remote logout failed, clearing local auth anyway: $e');
+      }
+    }
     await _localDataSource.clearAuth();
   }
 

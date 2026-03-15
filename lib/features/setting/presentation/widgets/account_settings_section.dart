@@ -12,6 +12,7 @@ import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/core/services/upload_service.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_profile_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/update_account_settings_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/change_password_usecase.dart';
 
 class AccountSettingsSection extends StatefulWidget {
   const AccountSettingsSection({super.key});
@@ -37,6 +38,8 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
   final GetProfileUseCase _getProfileUseCase = getIt<GetProfileUseCase>();
   final UpdateAccountSettingsUseCase _updateAccountSettingsUseCase =
       getIt<UpdateAccountSettingsUseCase>();
+  final ChangePasswordUseCase _changePasswordUseCase =
+      getIt<ChangePasswordUseCase>();
   final UploadApiService _uploadService = getIt<UploadApiService>();
   final ImagePicker _imagePicker = ImagePicker();
   File? _selectedAvatarFile;
@@ -47,6 +50,8 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
   late final TextEditingController _locationCtrl;
   late final TextEditingController _bioCtrl;
   late final TextEditingController _emailCtrl;
+  late final TextEditingController _oldPasswordCtrl;
+  late final TextEditingController _newPasswordCtrl;
 
   @override
   void initState() {
@@ -57,6 +62,8 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
     _locationCtrl = TextEditingController(text: _location);
     _bioCtrl = TextEditingController(text: _bio);
     _emailCtrl = TextEditingController(text: _email);
+    _oldPasswordCtrl = TextEditingController();
+    _newPasswordCtrl = TextEditingController();
 
     _loadAccountSettings();
   }
@@ -69,12 +76,14 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
     _locationCtrl.dispose();
     _bioCtrl.dispose();
     _emailCtrl.dispose();
+    _oldPasswordCtrl.dispose();
+    _newPasswordCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _loadAccountSettings() async {
     LogHandler.separator(title: 'SETTINGS · LOAD ACCOUNT');
-    
+
     final result = await _getProfileUseCase.execute();
 
     if (!mounted) return;
@@ -115,6 +124,36 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
     setState(() => _isSaving = true);
 
     try {
+      // Handle password change if user filled in password fields
+      final oldPwd = _oldPasswordCtrl.text.trim();
+      final newPwd = _newPasswordCtrl.text.trim();
+      if (oldPwd.isNotEmpty || newPwd.isNotEmpty) {
+        final pwdResult = await _changePasswordUseCase.execute(
+          oldPassword: oldPwd,
+          newPassword: newPwd,
+        );
+
+        if (!mounted) return;
+
+        final pwdFailed = pwdResult.fold(
+          (failure) {
+            setState(() => _isSaving = false);
+            LogHandler.error('Failed to change password: ${failure.message}');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(failure.message),
+                backgroundColor: AppColors.cancel,
+              ),
+            );
+            return true;
+          },
+          (_) => false,
+        );
+
+        if (pwdFailed) return;
+        LogHandler.success('SETTINGS · Password changed successfully');
+      }
+
       String? uploadedAvatarUrl;
       if (_selectedAvatarFile != null) {
         LogHandler.info('SETTINGS · Uploading new avatar image');
@@ -134,12 +173,12 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
       final bioValue = _bioCtrl.text.trim();
 
       final result = await _updateAccountSettingsUseCase.execute(
-        username: _usernameCtrl.text.trim(),
         firstName: _firstNameCtrl.text.trim(),
         lastName: _lastNameCtrl.text.trim(),
         location: locationValue.isNotEmpty ? locationValue : null,
         bio: bioValue.isNotEmpty ? bioValue : null,
-        avatarUrl: uploadedAvatarUrl ?? (_avatarUrl.isNotEmpty ? _avatarUrl : null),
+        avatarUrl:
+            uploadedAvatarUrl ?? (_avatarUrl.isNotEmpty ? _avatarUrl : null),
       );
 
       if (!mounted) return;
@@ -147,7 +186,9 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
       result.fold(
         (failure) {
           setState(() => _isSaving = false);
-          LogHandler.error('Failed to update account settings: ${failure.message}');
+          LogHandler.error(
+            'Failed to update account settings: ${failure.message}',
+          );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to update settings: ${failure.message}'),
@@ -159,11 +200,12 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
           setState(() {
             _firstName = _firstNameCtrl.text.trim();
             _lastName = _lastNameCtrl.text.trim();
-            _username = _usernameCtrl.text.trim();
             _location = locationValue;
             _bio = bioValue;
             _avatarUrl = uploadedAvatarUrl ?? _avatarUrl;
             _selectedAvatarFile = null;
+            _oldPasswordCtrl.clear();
+            _newPasswordCtrl.clear();
             _isEditing = false;
             _isSaving = false;
           });
@@ -176,9 +218,7 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
           LogHandler.success('SETTINGS · SAVE ACCOUNT completed');
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Settings updated successfully'),
-            ),
+            const SnackBar(content: Text('Settings updated successfully')),
           );
         },
       );
@@ -227,6 +267,8 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
     _locationCtrl.text = _location;
     _bioCtrl.text = _bio;
     _emailCtrl.text = _email;
+    _oldPasswordCtrl.clear();
+    _newPasswordCtrl.clear();
     setState(() {
       _selectedAvatarFile = null;
       _isEditing = false;
@@ -242,149 +284,185 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
       );
     }
 
-    return PixelBorderContainer(
-      pixelSize: 4,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              Text(
-                'Account Settings',
-                style: AppTypography.titleSemiBold.copyWith(color: AppColors.title),
-              ),
-              const Spacer(),
-              IconButton(
-                icon: Icon(
-                  _isEditing ? Icons.close : Icons.edit,
-                  color: AppColors.textSecondary,
-                  size: 20,
-                ),
-                onPressed: () => setState(() {
-                  if (_isEditing) {
-                    _cancel();
-                  } else {
-                    _isEditing = true;
-                  }
-                }),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Text(
+          'Account Settings',
+          style: AppTypography.titleSemiBold.copyWith(
+            color: AppColors.textPrimary,
           ),
-          const SizedBox(height: 12),
-
-          // Avatar + display name
-          Center(
-            child: Column(
-              children: [
-                GestureDetector(
-                  onTap: _isEditing && !_isSaving ? _pickAvatarImage : null,
-                  child: SizedBox(
-                    width: 72,
-                    height: 72,
-                    child: Stack(
+        ),
+        const SizedBox(height: 12),
+        PixelBorderContainer(
+          pixelSize: 4,
+          padding: const EdgeInsets.all(16),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Avatar + display name
+                  Center(
+                    child: Column(
                       children: [
-                        Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.primaryBrand.withValues(alpha: 0.3),
-                            border: Border.all(color: AppColors.secondaryBrand, width: 2.5),
-                          ),
-                          child: ClipOval(
-                            child: _selectedAvatarFile != null
-                                ? Image.file(_selectedAvatarFile!, fit: BoxFit.cover)
-                                : (_avatarUrl.isNotEmpty
-                                    ? Image.network(
-                                        _avatarUrl,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => _buildAvatarFallback(),
-                                      )
-                                    : _buildAvatarFallback()),
-                          ),
-                        ),
-                        if (_isEditing)
-                          Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: AppColors.secondaryBrand,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.camera_alt,
-                                color: Colors.black,
-                                size: 12,
-                              ),
+                        GestureDetector(
+                          onTap: _isEditing && !_isSaving
+                              ? _pickAvatarImage
+                              : null,
+                          child: SizedBox(
+                            width: 72,
+                            height: 72,
+                            child: Stack(
+                              children: [
+                                Container(
+                                  width: 72,
+                                  height: 72,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.primaryBrand.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    border: Border.all(
+                                      color: AppColors.secondaryBrand,
+                                      width: 2.5,
+                                    ),
+                                  ),
+                                  child: ClipOval(
+                                    child: _selectedAvatarFile != null
+                                        ? Image.file(
+                                            _selectedAvatarFile!,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : (_avatarUrl.isNotEmpty
+                                              ? Image.network(
+                                                  _avatarUrl,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder:
+                                                      (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) =>
+                                                          _buildAvatarFallback(),
+                                                )
+                                              : _buildAvatarFallback()),
+                                  ),
+                                ),
+                                if (_isEditing)
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.secondaryBrand,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        color: Colors.black,
+                                        size: 12,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _username,
+                          style: AppTypography.titleSemiBold.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Passion Gardener',
+                          style: AppTypography.bodyRegular.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          'Member since May 2025',
+                          style: AppTypography.smallBodyRegular.copyWith(
+                            color: AppColors.textDisabled,
+                          ),
+                        ),
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 16),
+                  const Divider(color: AppColors.cardBorder, height: 1),
+                  const SizedBox(height: 12),
+
+                  // Fields
+                  _buildField('First name', _firstName, _firstNameCtrl),
+                  _buildField('Last name', _lastName, _lastNameCtrl),
+                  _buildField('Username', _username, _usernameCtrl, isReadOnly: true),
+                  _buildField('Email', _email, _emailCtrl, isReadOnly: true),
+                  _buildField('Location', _location, _locationCtrl),
+                  _buildField('Bio', _bio, _bioCtrl),
+                  if (_isEditing) ...[
+                    _buildField('Current Password', '', _oldPasswordCtrl, isPassword: true),
+                    _buildField('New Password', '', _newPasswordCtrl, isPassword: true),
+                  ] else
+                    _buildField('Password', '••••••••••', null, isPassword: true),
+
+                  // Cancel / Save (edit mode only)
+                  if (_isEditing) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AppButton(
+                            variant: AppButtonVariant.text,
+                            text: 'Cancel',
+                            backgroundColor: AppColors.surface,
+                            onPressed: _cancel,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: AppButton(
+                            variant: AppButtonVariant.text,
+                            text: 'Save',
+                            onPressed: _isSaving ? () {} : () => _save(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+              // Edit icon in top-right corner
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: Icon(
+                    _isEditing ? Icons.close : Icons.edit,
+                    color: AppColors.textSecondary,
+                    size: 20,
+                  ),
+                  onPressed: () => setState(() {
+                    if (_isEditing) {
+                      _cancel();
+                    } else {
+                      _isEditing = true;
+                    }
+                  }),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _username,
-                  style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Passion Gardener',
-                  style: AppTypography.bodyRegular.copyWith(color: AppColors.textSecondary),
-                ),
-                Text(
-                  'Member since May 2025',
-                  style: AppTypography.smallBodyRegular.copyWith(color: AppColors.textDisabled),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 16),
-          const Divider(color: AppColors.cardBorder, height: 1),
-          const SizedBox(height: 12),
-
-          // Fields
-          _buildField('First name', _firstName, _firstNameCtrl),
-          _buildField('Last name', _lastName, _lastNameCtrl),
-          _buildField('Username', _username, _usernameCtrl),
-          _buildField('Email', _email, _emailCtrl, isReadOnly: true),
-          _buildField('Location', _location, _locationCtrl),
-          _buildField('Bio', _bio, _bioCtrl),
-          _buildField('Password', '••••••••••', null, isPassword: true),
-
-          // Cancel / Save (edit mode only)
-          if (_isEditing) ...[
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    variant: AppButtonVariant.text,
-                    text: 'Cancel',
-                    backgroundColor: AppColors.surface,
-                    onPressed: _cancel,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: AppButton(
-                    variant: AppButtonVariant.text,
-                    text: 'Save',
-                    onPressed: _isSaving ? () {} : () => _save(),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -402,11 +480,13 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
         children: [
           Text(
             label,
-            style: AppTypography.smallBodyRegular.copyWith(color: AppColors.textSecondary),
+            style: AppTypography.smallBodyRegular.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: 4),
-          if (_isEditing && !isPassword && controller != null)
-            _buildInput(controller, readOnly: isReadOnly)
+          if (_isEditing && controller != null)
+            _buildInput(controller, readOnly: isReadOnly, obscureText: isPassword)
           else
             Text(
               isPassword ? '••••••••••' : value,
@@ -419,18 +499,29 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
     );
   }
 
-  Widget _buildInput(TextEditingController controller, {bool readOnly = false}) {
+  Widget _buildInput(
+    TextEditingController controller, {
+    bool readOnly = false,
+    bool obscureText = false,
+  }) {
     return Container(
       height: 36,
       decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.4),
-        border: Border.all(color: AppColors.primaryBrand),
+        color: readOnly
+            ? AppColors.surface.withValues(alpha: 0.2)
+            : AppColors.surface.withValues(alpha: 0.4),
+        border: Border.all(
+          color: readOnly ? AppColors.cardBorder : AppColors.primaryBrand,
+        ),
         borderRadius: BorderRadius.circular(4),
       ),
       child: TextField(
         controller: controller,
         readOnly: readOnly,
-        style: AppTypography.bodyRegular.copyWith(color: AppColors.textPrimary),
+        obscureText: obscureText,
+        style: AppTypography.bodyRegular.copyWith(
+          color: readOnly ? AppColors.textDisabled : AppColors.textPrimary,
+        ),
         decoration: const InputDecoration(
           contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           border: InputBorder.none,

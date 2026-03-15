@@ -67,23 +67,13 @@ class _PixelBorderClipper extends CustomClipper<Path> {
 
   @override
   Path getClip(Size size) {
-    final p = pixelSize;
-    final w = size.width;
-    final h = size.height;
-    return Path()
-      ..moveTo(p * 3, p * 2)
-      ..lineTo(w - p * 3, p * 2)
-      ..lineTo(w - p * 2, p * 3)
-      ..lineTo(w - p * 2, h - p * 3)
-      ..lineTo(w - p * 3, h - p * 2)
-      ..lineTo(p * 3, h - p * 2)
-      ..lineTo(p * 2, h - p * 3)
-      ..lineTo(p * 2, p * 3)
-      ..close();
+    return _pixelBorderPath(size, inset: pixelSize, step: pixelSize);
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+  bool shouldReclip(covariant _PixelBorderClipper oldClipper) {
+    return oldClipper.pixelSize != pixelSize;
+  }
 }
 
 
@@ -99,54 +89,64 @@ class _PixelBorderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-  double w = size.width;
-  double h = size.height;
-  double p = pixelSize;
-  double s = p * 0.5; //ความหนาของขอบที่เพิ่มมา
+    final outerPath = _pixelBorderPath(size, inset: 0, step: pixelSize);
+    final innerPath = _pixelBorderPath(
+      size,
+      inset: pixelSize,
+      step: pixelSize,
+    );
 
-  final fillPaint = Paint()
-  ..color = fillColor 
-  ..style = PaintingStyle.fill;
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(innerPath, fillPaint);
 
-  canvas.drawRect(Rect.fromLTWH(p * 2, p * 2, w - (p * 4), h - (p * 4)), fillPaint);
-  canvas.drawRect(Rect.fromLTWH(p * 3, 0, w - (p * 6), h), fillPaint);
-  canvas.drawRect(Rect.fromLTWH(0, p * 3, w, h - (p * 6)), fillPaint);
-
-  final borderPaint = Paint()
-    ..color = color
-    ..style = PaintingStyle.fill;
-
-  // --- 1. เส้นขอบตรงหลัก ---
-  canvas.drawRect(Rect.fromLTWH(p * 2, 0, w - (p * 4), p), borderPaint); // บน 
-  canvas.drawRect(Rect.fromLTWH(0, p * 2, p, h - (p * 4)), borderPaint); // ซ้าย 
-
-  //เพิ่มความหนา
-  canvas.drawRect(Rect.fromLTWH(w - p - s, p * 2, p + s, h - (p * 4)), borderPaint); // ขวา
-  canvas.drawRect(Rect.fromLTWH(p * 2, h - p - s, w - (p * 4), p + s), borderPaint); // ล่าง
-
-  // --- 2. รอยหยักมุม ---
-  // มุมบนซ้าย
-  canvas.drawRect(Rect.fromLTWH(p * 2, p, p, p), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(p, p, p, p * 2), borderPaint); 
-  canvas.drawRect(Rect.fromLTWH(p, p * 2, p, p), borderPaint); 
-
-  // มุมบนขวา (เพิ่มความหนา)
-  canvas.drawRect(Rect.fromLTWH(w - (p * 3) - s, p, p, p), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, p, p + s, p), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, p * 2, p + s, p), borderPaint);
-
-  // มุมล่างซ้าย (เพิ่มความหนา)
-  canvas.drawRect(Rect.fromLTWH(p * 2, h - (p * 2) - s, p, p + s), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(p, h - (p * 2) - s, p, p + s), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(p, h - (p * 3) - s, p, p), borderPaint);
-
-
-  // มุมล่างขวา (เพิ่มความหนา)
-  canvas.drawRect(Rect.fromLTWH(w - (p * 3) - s, h - (p * 2) - s, p, p + s), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, h - (p * 2) - s, p + s, p + s), borderPaint);
-  canvas.drawRect(Rect.fromLTWH(w - (p * 2) - s, h - (p * 3) - s, p + s, p), borderPaint);
-}
+    final borderPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final borderPath = Path.combine(
+      PathOperation.difference,
+      outerPath,
+      innerPath,
+    );
+    canvas.drawPath(borderPath, borderPaint);
+  }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _PixelBorderPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.pixelSize != pixelSize ||
+        oldDelegate.fillColor != fillColor;
+  }
+}
+
+Path _pixelBorderPath(Size size, {required double inset, required double step}) {
+  final safeStep = step <= 0 ? 1.0 : step;
+  final left = inset;
+  final top = inset;
+  final right = size.width - inset;
+  final bottom = size.height - inset;
+
+  return Path()
+    ..moveTo(left + safeStep * 2, top)
+    ..lineTo(right - safeStep * 2, top)
+    ..lineTo(right - safeStep * 2, top + safeStep)
+    ..lineTo(right - safeStep, top + safeStep)
+    ..lineTo(right - safeStep, top + safeStep * 2)
+    ..lineTo(right, top + safeStep * 2)
+    ..lineTo(right, bottom - safeStep * 2)
+    ..lineTo(right - safeStep, bottom - safeStep * 2)
+    ..lineTo(right - safeStep, bottom - safeStep)
+    ..lineTo(right - safeStep * 2, bottom - safeStep)
+    ..lineTo(right - safeStep * 2, bottom)
+    ..lineTo(left + safeStep * 2, bottom)
+    ..lineTo(left + safeStep * 2, bottom - safeStep)
+    ..lineTo(left + safeStep, bottom - safeStep)
+    ..lineTo(left + safeStep, bottom - safeStep * 2)
+    ..lineTo(left, bottom - safeStep * 2)
+    ..lineTo(left, top + safeStep * 2)
+    ..lineTo(left + safeStep, top + safeStep * 2)
+    ..lineTo(left + safeStep, top + safeStep)
+    ..lineTo(left + safeStep * 2, top + safeStep)
+    ..close();
 }

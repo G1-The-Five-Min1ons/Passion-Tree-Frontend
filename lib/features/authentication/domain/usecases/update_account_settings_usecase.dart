@@ -9,7 +9,6 @@ class UpdateAccountSettingsUseCase {
   UpdateAccountSettingsUseCase(this._repository);
 
   Future<Either<Failure, void>> execute({
-    required String username,
     required String firstName,
     required String lastName,
     String? location,
@@ -18,7 +17,6 @@ class UpdateAccountSettingsUseCase {
     String? phoneNumber,
   }) async {
     final validation = _validateInput(
-      username: username,
       firstName: firstName,
       lastName: lastName,
       phoneNumber: phoneNumber,
@@ -30,7 +28,6 @@ class UpdateAccountSettingsUseCase {
     // Call repository and handle exceptions
     try {
       await _repository.updateAccountSettings(
-        username: username,
         firstName: firstName,
         lastName: lastName,
         location: location,
@@ -50,15 +47,10 @@ class UpdateAccountSettingsUseCase {
   }
 
   Either<Failure, void> _validateInput({
-    required String username,
     required String firstName,
     required String lastName,
     String? phoneNumber,
   }) {
-    if (username.trim().isEmpty) {
-      return left(const ValidationFailure(message: 'Username cannot be empty'));
-    }
-
     if (firstName.trim().isEmpty) {
       return left(const ValidationFailure(message: 'First name cannot be empty'));
     }

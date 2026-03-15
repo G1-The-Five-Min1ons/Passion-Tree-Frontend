@@ -24,7 +24,7 @@ import 'package:passion_tree_frontend/features/authentication/data/models/teache
 
 abstract class AuthRemoteDataSource {
   Future<RegisterResponse> register(RegisterRequest request);
-  Future<LoginOtpResponse> login(LoginRequest request);
+  Future<LoginOtpResponse> login(LoginRequest request, {bool confirmReactivate = false});
   Future<VerifyEmailResponse> verifyEmail(VerifyEmailRequest request);
   Future<void> resendVerificationEmail(ResendVerificationRequest request);
   Future<void> forgotPassword(ForgotPasswordRequest request);
@@ -33,7 +33,10 @@ abstract class AuthRemoteDataSource {
   Future<void> updateUser(String token, UpdateUserRequest request);
   Future<void> updateProfile(String token, UpdateProfileRequest request);
   Future<void> changePassword(String token, ChangePasswordRequest request);
-  Future<void> deleteUser(String token);
+  Future<void> deleteUser(String token, String password);
+  Future<void> deactivateAccount(String token);
+  Future<void> reactivateAccount(String token);
+  Future<void> logout(String token);
   Future<NativeGoogleSignInResponse> nativeGoogleSignIn(String idToken);
   Future<NativeDiscordSignInResponse> nativeDiscordSignIn(String code);
   Future<VerifyEmailResponse> refreshToken(String refreshTokenValue);
@@ -128,7 +131,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<LoginOtpResponse> login(LoginRequest request) async {
+  Future<LoginOtpResponse> login(LoginRequest request, {bool? confirmReactivate}) {
     return _executeRequest<LoginOtpResponse>(
       logTitle: 'AUTH REMOTE · LOGIN',
       context: 'login',
@@ -287,17 +290,63 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> deleteUser(String token) async {
+  Future<void> deleteUser(String token, String password) async {
     return _executeRequest<void>(
       logTitle: 'AUTH REMOTE · DELETE USER',
       context: 'deleteUser',
       apiCall: () => _apiHandler.delete(
         url: ApiConfig.authDeleteUser,
         headers: ApiConfig.getAuthHeaders(token),
-        timeout: ApiConfig.connectionTimeout,
+        body: jsonEncode({'password': password}),
+      timeout: ApiConfig.connectionTimeout,
       ),
       onSuccess: (_) {},
     );
+  }
+
+  @override
+  Future<void> deactivateAccount(String token) async {
+    LogHandler.separator(title: 'AUTH REMOTE · DEACTIVATE ACCOUNT');
+    final response = await _apiHandler.post(
+      url: ApiConfig.authDeactivate,
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Account deactivated');
+      return;
+    }
+    throw _handleError(response, 'deactivateAccount');
+  }
+
+  @override
+  Future<void> reactivateAccount(String token) async {
+    LogHandler.separator(title: 'AUTH REMOTE · REACTIVATE ACCOUNT');
+    final response = await _apiHandler.post(
+      url: ApiConfig.authReactivate,
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Account reactivated');
+      return;
+    }
+    throw _handleError(response, 'reactivateAccount');
+  }
+
+  @override
+  Future<void> logout(String token) async {
+    LogHandler.separator(title: 'AUTH REMOTE · LOGOUT');
+    final response = await _apiHandler.post(
+      url: ApiConfig.authLogout,
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Logged out all sessions');
+      return;
+    }
+    throw _handleError(response, 'logout');
   }
 
   @override
