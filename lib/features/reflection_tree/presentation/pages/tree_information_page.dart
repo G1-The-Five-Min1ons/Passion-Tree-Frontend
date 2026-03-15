@@ -4,8 +4,12 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/node_item.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/tree_canvas.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/reflection_data_source.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/models/reflection_api_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/page_header.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
@@ -36,6 +40,9 @@ class TreeDetailPage extends StatefulWidget {
 
 class _TreeDetailPageState extends State<TreeDetailPage> {
   AlbumItem? _currentItem;
+  final Map<String, _ReflectionViewData> _latestReflectionByNodeId = {};
+  final ReflectionDataSource _reflectionDataSource = ReflectionDataSource();
+  final AuthLocalDataSource _authLocalDataSource = getIt<AuthLocalDataSource>();
 
   void _updateCurrentItem(AlbumItem item) {
     if (!mounted) return;
@@ -66,6 +73,88 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
           }
         }
       }
+    }
+  }
+
+  void _handleReflectionCreated(
+    Chapter chapter,
+    ReflectionApiModel createdReflection,
+    CreateReflectionRequest request,
+  ) {
+    _latestReflectionByNodeId[chapter.treeNodeId] = _ReflectionViewData(
+      nodeName: chapter.name,
+      level: request.feelScore,
+      learn: request.learningReflect,
+      feel: request.moodReflect,
+      progress: request.progressScore,
+      challenge: request.challengeScore,
+      sentiment: createdReflection.sentimentAnalysis,
+      reflectionScore: createdReflection.reflectionScore,
+      summary: createdReflection.summary,
+      strugglePoint: createdReflection.strugglePoint,
+    );
+
+    final currentItem = _currentItem;
+    if (currentItem == null) return;
+
+    final reflectedChapterId = createdReflection.reflectId.trim();
+    final updatedChapters = currentItem.chapters.map((itemChapter) {
+      if (itemChapter.treeNodeId != chapter.treeNodeId) return itemChapter;
+
+      return Chapter(
+        treeNodeId: itemChapter.treeNodeId,
+        name: itemChapter.name,
+        isEnrolled: itemChapter.isEnrolled,
+        status: itemChapter.status,
+        complete: itemChapter.complete,
+        sequence: itemChapter.sequence,
+        reflectionId: reflectedChapterId.isNotEmpty
+            ? reflectedChapterId
+            : itemChapter.reflectionId,
+        isStandalone: itemChapter.isStandalone,
+      );
+    }).toList();
+
+    _updateCurrentItem(
+      AlbumItem(
+        treeId: currentItem.treeId,
+        subjectName: currentItem.subjectName,
+        lastEdited: currentItem.lastEdited,
+        status: currentItem.status,
+        chapters: updatedChapters,
+        overallStatus: currentItem.overallStatus,
+        resumeOn: currentItem.resumeOn,
+        pathId: currentItem.pathId,
+      ),
+    );
+  }
+
+  Future<void> _fetchAndShowReflectionDetail(Chapter chapter) async {
+    final token = await _authLocalDataSource.getToken();
+    if (token == null || token.isEmpty || !mounted) return;
+
+    try {
+      final reflection = await _reflectionDataSource.getReflectionById(
+        chapter.reflectionId!,
+        token,
+      );
+      if (!mounted) return;
+      ReflectDetailPopup.show(
+        context,
+        nodeName: chapter.name,
+        level: reflection.feelScore ?? 0,
+        learn: reflection.learnText ?? '',
+        feel: reflection.feelText ?? '',
+        progress: reflection.progressScore ?? 0,
+        challenge: reflection.challengeScore ?? 0,
+        sentiment: reflection.sentimentAnalysis,
+        reflectionScore: reflection.reflectionScore,
+        summary: reflection.summary,
+        strugglePoint: reflection.strugglePoint,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ReflectDetailPopup.show(context, nodeName: chapter.name);
     }
   }
 
@@ -180,13 +269,48 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                                       );
                                     } else if (chapter.hasReflection) {
                                       // Node completed and has reflection - show detail
-                                      ReflectDetailPopup.show(context);
+                                      final reflectionData =
+                                          _latestReflectionByNodeId[chapter
+                                              .treeNodeId];
+
+                                      if (reflectionData != null) {
+                                        ReflectDetailPopup.show(
+                                          context,
+                                          nodeName: reflectionData.nodeName,
+                                          level: reflectionData.level,
+                                          learn: reflectionData.learn,
+                                          feel: reflectionData.feel,
+                                          progress: reflectionData.progress,
+                                          challenge: reflectionData.challenge,
+                                          sentiment: reflectionData.sentiment,
+                                          reflectionScore:
+                                              reflectionData.reflectionScore,
+                                          summary: reflectionData.summary,
+                                          strugglePoint:
+                                              reflectionData.strugglePoint,
+                                        );
+                                      } else if (chapter.reflectionId != null) {
+                                        _fetchAndShowReflectionDetail(chapter);
+                                      } else {
+                                        ReflectDetailPopup.show(
+                                          context,
+                                          nodeName: chapter.name,
+                                        );
+                                      }
                                     } else {
                                       // Node completed but no reflection yet - add new reflection
                                       AddReflectPopup.show(
                                         context,
                                         treeNodeId: chapter.treeNodeId,    
                                         nodeName: chapter.name,
+                                        onReflectionCreated:
+                                            (createdReflection, request) {
+                                              _handleReflectionCreated(
+                                                chapter,
+                                                createdReflection,
+                                                request,
+                                              );
+                                            },
                                       );
                                     }
                                   },
@@ -261,3 +385,28 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
   }
 }
 
+class _ReflectionViewData {
+  final String nodeName;
+  final int level;
+  final String learn;
+  final String feel;
+  final int progress;
+  final int challenge;
+  final String sentiment;
+  final double reflectionScore;
+  final String summary;
+  final String strugglePoint;
+
+  const _ReflectionViewData({
+    required this.nodeName,
+    required this.level,
+    required this.learn,
+    required this.feel,
+    required this.progress,
+    required this.challenge,
+    required this.sentiment,
+    required this.reflectionScore,
+    required this.summary,
+    required this.strugglePoint,
+  });
+}

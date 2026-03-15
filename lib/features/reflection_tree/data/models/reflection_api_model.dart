@@ -39,6 +39,11 @@ class ReflectionApiModel {
   final double aiConfidentScore;
   final double reflectionScore;
   final double weightedReflectionScore;
+  final String? learnText;
+  final String? feelText;
+  final int? feelScore;
+  final int? progressScore;
+  final int? challengeScore;
 
   ReflectionApiModel({
     required this.reflectId,
@@ -50,6 +55,11 @@ class ReflectionApiModel {
     required this.aiConfidentScore,
     required this.reflectionScore,
     required this.weightedReflectionScore,
+    this.learnText,
+    this.feelText,
+    this.feelScore,
+    this.progressScore,
+    this.challengeScore,
   });
 
   factory ReflectionApiModel.fromJson(Map<String, dynamic> json) {
@@ -72,6 +82,11 @@ class ReflectionApiModel {
         aiConfidentScore: (json['ai_confident_score'] ?? 0.0).toDouble(),
         reflectionScore: (json['reflection_score'] ?? 0.0).toDouble(),
         weightedReflectionScore: (json['weighted_reflection_score'] ?? 0.0).toDouble(),
+        learnText: json['reflect_description'] as String?,
+        feelText: json['reflect'] as String?,
+        feelScore: _parseInt(json['reflect_score']),
+        progressScore: _parseInt(json['progress_score']),
+        challengeScore: _parseInt(json['challenge_score']),
       );
     } catch (e) {
       throw ParseException(
@@ -79,6 +94,16 @@ class ReflectionApiModel {
         originalError: e,
       );
     }
+  }
+
+  static int? _parseInt(dynamic val) {
+    if (val == null) return null;
+    if (val is int) return val;
+    if (val is double) return val.round();
+    if (val is String) {
+      return int.tryParse(val) ?? double.tryParse(val)?.round();
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() {

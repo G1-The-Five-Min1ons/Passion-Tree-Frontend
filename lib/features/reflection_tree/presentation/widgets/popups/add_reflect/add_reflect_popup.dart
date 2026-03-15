@@ -17,19 +17,32 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 class AddReflectPopup extends StatefulWidget {
   final String treeNodeId;
   final String nodeName;
+  final void Function(
+    ReflectionApiModel createdReflection,
+    CreateReflectionRequest request,
+  )?
+  onReflectionCreated;
 
   const AddReflectPopup({
     super.key,
     required this.treeNodeId,
     required this.nodeName,
+    this.onReflectionCreated,
   });
 
-  static void show(BuildContext context, {required String treeNodeId, required String nodeName}) {
+  static void show(
+    BuildContext context, {
+    required String treeNodeId,
+    required String nodeName,
+    void Function(ReflectionApiModel, CreateReflectionRequest)?
+    onReflectionCreated,
+  }) {
     showDialog(
       context: context,
       builder: (context) => AddReflectPopup(
         treeNodeId: treeNodeId,
         nodeName: nodeName,
+        onReflectionCreated: onReflectionCreated,
       ),
     );
   }
@@ -42,7 +55,7 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
   final PageController _pageController = PageController();
   final ReflectionDataSource _reflectionDataSource = ReflectionDataSource();
   final AuthLocalDataSource _authLocalDataSource = getIt<AuthLocalDataSource>();
-  
+
   int _currentPage = 0;
   bool _isSubmitting = false;
 
@@ -80,10 +93,14 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
       );
 
       // Call API
-      await _reflectionDataSource.createReflection(request, token);
+      final createdReflection = await _reflectionDataSource.createReflection(
+        request,
+        token,
+      );
 
       if (mounted) {
         Navigator.pop(context);
+        widget.onReflectionCreated?.call(createdReflection, request);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Reflected successfully'),
