@@ -6,10 +6,16 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/lea
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 
+
 class PopularLearningPathsSection extends StatelessWidget {
   final List<LearningPath> paths;
+  final bool hasEnrolledPaths;
 
-  const PopularLearningPathsSection({super.key, required this.paths});
+  const PopularLearningPathsSection({
+    super.key,
+    required this.paths,
+    required this.hasEnrolledPaths,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,12 +27,10 @@ class PopularLearningPathsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Popular Learning Paths',
+          hasEnrolledPaths ? 'Recommended for you' : 'Popular Learning Paths',
           style: AppPixelTypography.title.copyWith(color: colors.onPrimary),
         ),
-
         const SizedBox(height: 40),
-
         SizedBox(
           height: BaseCourseCard.defaultHeight,
           child: ListView.separated(

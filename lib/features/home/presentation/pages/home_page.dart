@@ -95,8 +95,10 @@ class _HomePageState extends State<HomePage> {
                     final overview = _cachedOverview;
 
                     if (overview != null) {
+                      final hasEnrolledPaths = overview.enrolledPaths.isNotEmpty;
                       return PopularLearningPathsSection(
                         paths: overview.allPaths,
+                        hasEnrolledPaths: hasEnrolledPaths,
                       );
                     }
 
