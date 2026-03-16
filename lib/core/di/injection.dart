@@ -299,10 +299,15 @@ Future<void> initializeDependencies() async {
     () => GetLearningPathProgress(getIt<LearningPathRepositoryImpl>()),
   );
 
+  getIt.registerFactory<GetRecommendedLearningPaths>(
+    () => GetRecommendedLearningPaths(getIt<LearningPathRepositoryImpl>()),
+  );
+
   // Learning Path Bloc
   getIt.registerFactory<LearningPathBloc>(
     () => LearningPathBloc(
       getIt<GetAllLearningPaths>(),
+      getIt<GetRecommendedLearningPaths>(),
       getIt<GetLearningPathStatus>(),
       getIt<GetNodesForPath>(),
       getIt<GetNodeDetail>(),
