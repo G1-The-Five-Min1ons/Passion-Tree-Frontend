@@ -5,6 +5,13 @@ import 'failures.dart';
 class FailureMapper {
   /// Convert any exception to a Failure
   static Failure fromException(dynamic exception) {
+    if (exception is AccountReactivationRequiredException) {
+      return AccountReactivationRequiredFailure(
+        gracePeriodDays: exception.gracePeriodDays,
+        technicalMessage: exception.toString(),
+      );
+    }
+
     if (exception is NetworkException) {
       return NetworkFailure(
         technicalMessage: exception.toString(),

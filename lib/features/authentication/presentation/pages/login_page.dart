@@ -141,6 +141,10 @@ class _LoginPageState extends State<LoginPage> {
                   await _showRoleSelectionDialog(context);
                   break;
 
+                case LoginNextStep.accountReactivation:
+                  await _showReactivationDialog(context, state.gracePeriodDays);
+                  break;
+
                 case LoginNextStep.complete:
                   if (context.mounted) {
                     // Load user data into UserBloc before navigation
@@ -426,6 +430,71 @@ class _LoginPageState extends State<LoginPage> {
             Navigator.of(dialogContext).pop();
             context.read<LoginBloc>().add(SelectRoleSubmitted(role));
           },
+        );
+      },
+    );
+  }
+
+  /// Show account reactivation confirmation dialog
+  Future<void> _showReactivationDialog(BuildContext context, int gracePeriodDays) async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 25),
+          child: PixelBorderContainer(
+            pixelSize: 4,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Account Deactivated',
+                  style: AppPixelTypography.h3.copyWith(
+                    color: Theme.of(dialogContext).colorScheme.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Your account has been deactivated. Reactivate it within $gracePeriodDays days to continue using Passion Tree.',
+                  style: AppTypography.bodySemiBold.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        variant: AppButtonVariant.text,
+                        text: 'Cancel',
+                        backgroundColor: AppColors.cancel,
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          context.read<LoginBloc>().add(const LoginReset());
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppButton(
+                        variant: AppButtonVariant.text,
+                        text: 'Reactivate',
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          context.read<LoginBloc>().add(const ConfirmReactivation());
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         );
       },
     );

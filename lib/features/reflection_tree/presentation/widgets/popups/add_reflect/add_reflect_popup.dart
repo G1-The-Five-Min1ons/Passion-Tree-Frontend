@@ -3,20 +3,47 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/reflection_data_source.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/models/reflection_api_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/page._two.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/page_one.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/page_three.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/reflection_overview.dart';
 
 class AddReflectPopup extends StatefulWidget {
-  const AddReflectPopup({super.key});
+  final String treeNodeId;
+  final String nodeName;
+  final void Function(
+    ReflectionApiModel createdReflection,
+    CreateReflectionRequest request,
+  )?
+  onReflectionCreated;
 
-  static void show(BuildContext context) {
+  const AddReflectPopup({
+    super.key,
+    required this.treeNodeId,
+    required this.nodeName,
+    this.onReflectionCreated,
+  });
+
+  static void show(
+    BuildContext context, {
+    required String treeNodeId,
+    required String nodeName,
+    void Function(ReflectionApiModel, CreateReflectionRequest)?
+    onReflectionCreated,
+  }) {
     showDialog(
       context: context,
-      builder: (context) => const AddReflectPopup(),
+      builder: (context) => AddReflectPopup(
+        treeNodeId: treeNodeId,
+        nodeName: nodeName,
+        onReflectionCreated: onReflectionCreated,
+      ),
     );
   }
 
@@ -26,9 +53,12 @@ class AddReflectPopup extends StatefulWidget {
 
 class _AddReflectPopupState extends State<AddReflectPopup> {
   final PageController _pageController = PageController();
-  int _currentPage = 0;
+  final ReflectionDataSource _reflectionDataSource = ReflectionDataSource();
+  final AuthLocalDataSource _authLocalDataSource = getIt<AuthLocalDataSource>();
 
-  //TODO: จัดการ state
+  int _currentPage = 0;
+  bool _isSubmitting = false;
+
   String learn = "";
   String feel = "";
   int score = 0;
@@ -40,6 +70,60 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
     if (_currentPage == 1) return score > 0 && feel.trim().isNotEmpty;
     if (_currentPage == 2) return progress > 0 && challenge > 0;
     return true;
+  }
+
+  Future<void> _submitReflection() async {
+    if (_isSubmitting) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final token = await _authLocalDataSource.getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found');
+      }
+
+      final request = CreateReflectionRequest(
+        learningReflect: learn,
+        moodReflect: feel,
+        feelScore: score,
+        progressScore: progress,
+        challengeScore: challenge,
+        treeNodeId: widget.treeNodeId,
+      );
+
+      // Call API
+      final createdReflection = await _reflectionDataSource.createReflection(
+        request,
+        token,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onReflectionCreated?.call(createdReflection, request);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Reflected successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -68,7 +152,7 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Node: ',
+                      'Node: ${widget.nodeName}',
                       style: AppTypography.h3SemiBold,
                     ),
                   ),
@@ -123,6 +207,16 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
               ),
             ),
           ),
+
+          if (_isSubmitting)
+            Positioned.fill(
+              child: Container(
+                color: AppColors.scale.withValues(alpha: 0.2),
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -133,17 +227,18 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
       return Row(
         children: [
           GestureDetector(
-            onTap: () => _pageController.previousPage(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
+            onTap: _isSubmitting ? null : () => _pageController.previousPage(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
             child: Image.asset('assets/buttons/navigation/pixel/left_small_light.png', width: 24, height: 24),
           ),
           const Spacer(),
           AppButton(
-              variant: AppButtonVariant.text,
-              text: 'Submit',
-              onPressed: () {
-                //TODO save to db
-              },
-            ),
+            variant: AppButtonVariant.text,
+            text: 'Submit',
+            onPressed: _isSubmitting ? () {} : _submitReflection,
+            backgroundColor: _isSubmitting ? AppColors.scale : null,
+            borderColor: _isSubmitting ? AppColors.textDisabled : null,
+            textColor: _isSubmitting ? AppColors.textDisabled : null,
+          ),
         ],
       );
     }

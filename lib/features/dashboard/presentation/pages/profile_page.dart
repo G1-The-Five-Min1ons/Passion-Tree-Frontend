@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
-import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
-import 'package:passion_tree_frontend/core/network/log_handler.dart';
-import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
-import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
-import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_event.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_profile_usecase.dart';
 import 'package:passion_tree_frontend/features/setting/presentation/pages/setting_page.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/profile_card_widget.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/tree_card_widget.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/learning_path_card_widget.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/weekly_mission_card_widget.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/recent_activity_card_widget.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/activity_heatmap_widget.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/dashboard_footer.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/section_title.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -22,253 +22,118 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String _username = '';
-  String _role = '';
-  String _userId = '';
+  final GetProfileUseCase _getProfileUseCase = getIt<GetProfileUseCase>();
+
   bool _isLoading = true;
+  UserProfile? _userProfile;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _loadDashboardData();
   }
 
-  Future<void> _loadUserData() async {
-    final authRepo = getIt<IAuthRepository>();
-    final username = await authRepo.getUsername() ?? 'User';
-    final role = await authRepo.getUserRole() ?? 'student';
-    final userId = await authRepo.getUserId() ?? '';
+  Future<void> _loadDashboardData() async {
+    final result = await _getProfileUseCase.execute();
 
     if (!mounted) return;
-    setState(() {
-      _username = username;
-      _role = role;
-      _userId = userId;
-      _isLoading = false;
+
+    result.fold((_) => setState(() => _isLoading = false), (profile) {
+      setState(() {
+        _userProfile = profile;
+        _isLoading = false;
+      });
     });
   }
 
-  Future<void> _handleLogout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: PixelBorderContainer(
-          pixelSize: 4,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Logout',
-                style: AppPixelTypography.h3.copyWith(
-                  color: AppColors.surface,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Are you sure you want to logout?',
-                style: AppTypography.bodySemiBold.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      variant: AppButtonVariant.text,
-                      text: 'Cancel',
-                      onPressed: () => Navigator.of(dialogContext).pop(false),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppButton(
-                      variant: AppButtonVariant.text,
-                      text: 'Logout',
-                      onPressed: () => Navigator.of(dialogContext).pop(true),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+  void _openSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SettingsPage()),
     );
-
-    if (confirmed == true) {
-      LogHandler.separator(title: 'AUTH · LOGOUT');
-      
-      // Clear user data from UserBloc
-      if (mounted) {
-        context.read<UserBloc>().add(const ClearUser());
-      }
-      
-      await getIt<IAuthRepository>().clearAuth();
-      LogHandler.success('User logged out — tokens cleared');
-
-      if (!mounted) return;
-
-      // Navigate to LoginPage and clear entire navigation stack
-      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-        (route) => false,
-      );
-    }
   }
+
+  String get _fullName {
+    final user = _userProfile?.user;
+    if (user == null) return 'Passion Gardener';
+
+    final fullName = '${user.firstName} ${user.lastName}'.trim();
+    return fullName.isEmpty ? user.username : fullName;
+  }
+
+  String get _roleLabel {
+    final role = _userProfile?.user.role.toLowerCase();
+    if (role == 'teacher') return 'Teacher';
+    return 'Passion Gardener';
+  }
+
+  double get _xpProgress {
+    final xp = _userProfile?.profile?.xp ?? 500;
+    final nextXp = ((xp ~/ 1000) + 1) * 1000;
+    return (xp / nextXp).clamp(0, 1);
+  }
+
+  int get _level => _userProfile?.profile?.level ?? 15;
+  int get _xp => _userProfile?.profile?.xp ?? 500;
+  int get _nextXp => ((_xp ~/ 1000) + 1) * 1000;
+  int get _hours => _userProfile?.profile?.hourLearned ?? 120;
+  int get _streak => _userProfile?.profile?.learningStreak ?? 17;
+  int get _learningPathCount => _userProfile?.profile?.learningCount ?? 10;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBarWidget(
-        title: 'Profile',
+      appBar: const AppBarWidget(
+        title: 'Dashboard&Profile',
         showBackButton: false,
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.settings,
-              color: Colors.white,
-              size: 26,
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SettingsPage(),
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 16),
-
-                  // Avatar
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryBrand.withValues(alpha: 0.3),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.secondaryBrand,
-                        width: 3,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        _username.isNotEmpty
-                            ? _username[0].toUpperCase()
-                            : '?',
-                        style: AppPixelTypography.h1.copyWith(
-                          color: AppColors.secondaryBrand,
-                        ),
-                      ),
-                    ),
+                  ProfileCardWidget(
+                    fullName: _fullName,
+                    roleLabel: _roleLabel,
+                    email: _userProfile?.user.email ?? 'you@example.com',
+                    location:
+                        _userProfile?.profile?.location ?? 'Bangkok, Thailand',
+                    bio:
+                        _userProfile?.profile?.bio ??
+                        'Passionate about creating digital experiences and learning new technologies.',
+                    level: _level,
+                    xp: _xp,
+                    nextXp: _nextXp,
+                    xpProgress: _xpProgress,
+                    hours: _hours,
+                    streak: _streak,
+                    learningPathCount: _learningPathCount,
+                    onSettingsTap: _openSettings,
                   ),
-                  const SizedBox(height: 16),
-
-                  // Username
-                  Text(
-                    _username,
-                    style: AppPixelTypography.h3.copyWith(
-                      color: AppColors.surface,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Role badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _role == 'teacher'
-                          ? AppColors.secondaryBrand.withValues(alpha: 0.2)
-                          : AppColors.primaryBrand.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _role == 'teacher'
-                            ? AppColors.secondaryBrand
-                            : AppColors.primaryBrand,
-                      ),
-                    ),
-                    child: Text(
-                      _role == 'teacher' ? 'Teacher' : 'Student',
-                      style: AppTypography.subtitleMedium.copyWith(
-                        color: _role == 'teacher'
-                            ? AppColors.secondaryBrand
-                            : AppColors.iconbar,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Info card
-                  PixelBorderContainer(
-                    pixelSize: 4,
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        _buildInfoRow('Username', _username),
-                        const Divider(color: AppColors.textSecondary, height: 24),
-                        _buildInfoRow('Role', _role == 'teacher' ? 'Teacher' : 'Student'),
-                        if (_userId.isNotEmpty) ...[
-                          const Divider(color: AppColors.textSecondary, height: 24),
-                          _buildInfoRow('User ID', '${_userId.substring(0, 8)}...'),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Logout button
-                  SizedBox(
-                    width: double.infinity,
-                    child: AppButton(
-                      variant: AppButtonVariant.text,
-                      text: 'Logout',
-                      onPressed: _handleLogout,
-                    ),
-                  ),
+                  const SizedBox(height: 10),
+                  TreeCardWidget(level: _level),
+                  const SizedBox(height: 14),
+                  const SectionTitle(title: 'My Learning Path'),
+                  const SizedBox(height: 8),
+                  const LearningPathCardWidget(),
+                  const SizedBox(height: 14),
+                  const WeeklyMissionCardWidget(),
+                  const SizedBox(height: 14),
+                  const SectionTitle(title: 'Recent Activity'),
+                  const SizedBox(height: 8),
+                  const RecentActivityCardWidget(),
+                  const SizedBox(height: 14),
+                  const SectionTitle(title: 'Activity'),
+                  const SizedBox(height: 8),
+                  const ActivityHeatmapWidget(),
+                  const SizedBox(height: 14),
+                  const DashboardFooter(),
                 ],
               ),
             ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: AppTypography.subtitleMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-        Flexible(
-          child: Text(
-            value,
-            style: AppTypography.bodySemiBold.copyWith(
-              color: AppColors.surface,
-            ),
-            textAlign: TextAlign.right,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
     );
   }
 }

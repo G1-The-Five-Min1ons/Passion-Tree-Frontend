@@ -5,6 +5,7 @@ import 'package:passion_tree_frontend/features/setting/presentation/widgets/acco
 import 'package:passion_tree_frontend/features/setting/presentation/widgets/account_preferences_section.dart';
 import 'package:passion_tree_frontend/features/setting/presentation/widgets/region_section.dart';
 import 'package:passion_tree_frontend/features/setting/presentation/widgets/email_notifications_section.dart';
+import 'package:passion_tree_frontend/features/setting/presentation/widgets/logout_section.dart';
 import 'package:passion_tree_frontend/features/setting/presentation/widgets/danger_zone_section.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -15,7 +16,7 @@ class SettingsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AppBarWidget(
-        title: 'Account Settings',
+        title: 'Settings',
         showBackButton: true,
       ),
       body: const SingleChildScrollView(
@@ -30,6 +31,8 @@ class SettingsPage extends StatelessWidget {
             RegionSection(),
             SizedBox(height: 20),
             EmailNotificationsSection(),
+            SizedBox(height: 20),
+            LogoutSection(),
             SizedBox(height: 20),
             DangerZoneSection(),
             SizedBox(height: 32),

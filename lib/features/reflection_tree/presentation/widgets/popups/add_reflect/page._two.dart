@@ -79,6 +79,7 @@ class _PageTwoViewState extends State<PageTwoView> with AutomaticKeepAliveClient
           pixelSize: 3,
           hintText: 'Reflect on how you feel',
           height: 180,
+          value: widget.initialText,
           onChanged: (val) {
             widget.onTextChanged(val);
           },

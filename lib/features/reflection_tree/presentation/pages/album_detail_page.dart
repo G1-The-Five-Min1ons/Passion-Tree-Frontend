@@ -210,9 +210,18 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
           dataDisplay: const SizedBox.shrink(),
 
           onCardTap: () {
+            final albumBloc = BlocProvider.of<AlbumBloc>(context);
             Navigator.push(
               context, 
-              MaterialPageRoute(builder: (context) => TreeDetailPage(item: item)),
+              MaterialPageRoute(
+                builder: (context) => BlocProvider.value(
+                  value: albumBloc,
+                  child: TreeDetailPage(
+                    item: item,
+                    albumId: album.albumId,
+                  ),
+                ),
+              ),
             );
           },
 

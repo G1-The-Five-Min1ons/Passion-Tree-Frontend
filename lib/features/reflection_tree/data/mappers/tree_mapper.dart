@@ -5,9 +5,18 @@ import 'package:passion_tree_frontend/features/reflection_tree/domain/utils/date
 class TreeMapper {
   static AlbumItem toAlbumItem(TreeApiModel tree) {
     final chapters = tree.nodes?.map((node) => Chapter(
+      treeNodeId: node.treeNodeId,
       name: node.nodeTitle,
       isEnrolled: node.nodeScore != null,
+      status: node.status,
+      complete: node.complete,
+      sequence: node.sequence,
+      reflectionId: node.reflectionId,
+      isStandalone: node.isStandalone,
     )).toList() ?? [];
+
+    // Sort chapters by sequence
+    chapters.sort((a, b) => a.sequence.compareTo(b.sequence));
 
     return AlbumItem(
       treeId: tree.treeId,

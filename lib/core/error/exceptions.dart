@@ -212,6 +212,22 @@ class ParseException extends AppException {
   String toString() => 'ParseException: $message';
 }
 
+/// Account reactivation required exception
+class AccountReactivationRequiredException extends AppException {
+  final int gracePeriodDays;
+
+  AccountReactivationRequiredException({
+    required super.message,
+    this.gracePeriodDays = 14,
+    super.originalError,
+  }) : super(statusCode: 200);
+
+  @override
+  String toString() {
+    return 'AccountReactivationRequiredException: $message (Grace period: $gracePeriodDays days)';
+  }
+}
+
 /// Helper function to create exception from status code
 AppException createExceptionFromStatusCode(int statusCode, String message) {
   if (statusCode >= 500) {
