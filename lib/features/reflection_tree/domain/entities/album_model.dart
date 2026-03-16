@@ -39,9 +39,9 @@ class AlbumItem {
   });
 
   Color get statusColor {
-    switch (status.toLowerCase()) {
+    switch (status.trim().toLowerCase()) {
       case 'died':
-        return AppColors.textPrimary;
+        return AppColors.died;
       case 'fading':
         return AppColors.warning;
       case 'dying':

@@ -168,8 +168,8 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
       _currentItem = AlbumItem(
         treeId: widget.treeId!,
         subjectName: 'Loading...',
-        overallStatus: 'active',
-        status: 'active',
+        overallStatus: 'growing',
+        status: 'growing',
         lastEdited:'Edited just now',
         chapters: [],
       );
