@@ -30,7 +30,7 @@ class PopularLearningPathsSection extends StatelessWidget {
           hasEnrolledPaths ? 'Recommended for you' : 'Popular Learning Paths',
           style: AppPixelTypography.title.copyWith(color: colors.onPrimary),
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 30),
         SizedBox(
           height: BaseCourseCard.defaultHeight,
           child: ListView.separated(

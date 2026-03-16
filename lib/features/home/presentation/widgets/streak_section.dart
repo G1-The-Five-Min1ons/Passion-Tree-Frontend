@@ -3,7 +3,7 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
-
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 class StreakSection extends StatelessWidget {
   const StreakSection({super.key});
 
@@ -67,13 +67,13 @@ class _DayBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        
         SizedBox(
           width: 28,
           height: 28,
-          child: Image.asset(
-            'assets/icons/tree_icon.png',
-            fit: BoxFit.contain,
+          child: Icon(
+            Icons.local_fire_department,
+            color: AppColors.secondaryBrand,
+            size: 28,
           ),
         ),
         const SizedBox(height: 4),
