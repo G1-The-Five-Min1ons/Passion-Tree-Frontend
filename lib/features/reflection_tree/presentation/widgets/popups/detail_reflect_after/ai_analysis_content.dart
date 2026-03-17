@@ -28,18 +28,24 @@ class AIAnalysisContent extends StatelessWidget {
         const SizedBox(height: 16),
 
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Overall  : ',
-              style: AppTypography.titleSemiBold.copyWith(
-                color: AppColors.surface,
+            Expanded(
+              child: Text(
+                'Overall  : ',
+                style: AppTypography.titleSemiBold.copyWith(
+                  color: AppColors.surface,
+                ),
               ),
             ),
-            Text(
-              sentiment,
-              style: AppTypography.titleRegular.copyWith(
-                color: AppColors.surface,
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                sentiment,
+                textAlign: TextAlign.right,
+                style: AppTypography.titleRegular.copyWith(
+                  color: AppColors.surface,
+                ),
               ),
             ),
           ],
@@ -74,15 +80,25 @@ class AIAnalysisContent extends StatelessWidget {
 
   Widget _buildScoreLine(String label, double val) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTypography.titleSemiBold.copyWith(
+              color: AppColors.surface,
+            ),
+          ),
         ),
-        Text(
-          "${val.toStringAsFixed(val % 1 == 0 ? 0 : 1)}/10",
-          style: AppTypography.titleRegular.copyWith(color: AppColors.surface),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            "${val.toStringAsFixed(val % 1 == 0 ? 0 : 1)}/10",
+            textAlign: TextAlign.right,
+            style: AppTypography.titleRegular.copyWith(
+              color: AppColors.surface,
+            ),
+          ),
         ),
       ],
     );

@@ -144,42 +144,44 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
                 children: [
                   if (_currentPage < 3) ...[
                     const SizedBox(height: 10),
-                    Text("Add Reflect", style: Theme.of(context).textTheme.displaySmall),
+                    Text(
+                      "Add Reflect",
+                      style: Theme.of(context).textTheme.displaySmall,
+                    ),
                     const SizedBox(height: 20),
                   ] else ...[
                     const SizedBox(height: 10),
                   ],
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Node: ${widget.nodeName}',
-                      style: AppTypography.h3SemiBold,
-                    ),
-                  ),
-
                   Expanded(
                     child: PageView(
                       controller: _pageController,
                       physics: const NeverScrollableScrollPhysics(),
-                      onPageChanged: (index) => setState(() => _currentPage = index),
+                      onPageChanged: (index) =>
+                          setState(() => _currentPage = index),
                       children: [
                         PageOneView(
+                          nodeName: widget.nodeName,
                           initialValue: learn,
                           onLearnChanged: (val) => setState(() => learn = val),
                         ),
                         PageTwoView(
+                          nodeName: widget.nodeName,
                           initialScore: score,
                           initialText: feel,
                           onScoreChanged: (val) => setState(() => score = val),
                           onTextChanged: (val) => setState(() => feel = val),
                         ),
                         PageThreeView(
+                          nodeName: widget.nodeName,
                           initialProgress: progress,
                           initialChallenge: challenge,
-                          onProgressChanged: (val) => setState(() => progress = val),
-                          onChallengeChanged: (val) => setState(() => challenge = val),
+                          onProgressChanged: (val) =>
+                              setState(() => progress = val),
+                          onChallengeChanged: (val) =>
+                              setState(() => challenge = val),
                         ),
                         ReflectionOverview(
+                          nodeName: widget.nodeName,
                           learn: learn,
                           feel: feel,
                           level: score,
@@ -212,9 +214,7 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
             Positioned.fill(
               child: Container(
                 color: AppColors.scale.withValues(alpha: 0.2),
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                child: const Center(child: CircularProgressIndicator()),
               ),
             ),
         ],
@@ -227,8 +227,17 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
       return Row(
         children: [
           GestureDetector(
-            onTap: _isSubmitting ? null : () => _pageController.previousPage(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
-            child: Image.asset('assets/buttons/navigation/pixel/left_small_light.png', width: 24, height: 24),
+            onTap: _isSubmitting
+                ? null
+                : () => _pageController.previousPage(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                  ),
+            child: Image.asset(
+              'assets/buttons/navigation/pixel/left_small_light.png',
+              width: 24,
+              height: 24,
+            ),
           ),
           const Spacer(),
           AppButton(
@@ -246,12 +255,18 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
     return Row(
       children: [
         _currentPage > 0
-        ? GestureDetector(
-            onTap: () => _pageController.previousPage(
-                duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
-            child: Image.asset('assets/buttons/navigation/pixel/left_small_light.png', width: 24, height: 24),
-          )
-        : const SizedBox(width: 24),
+            ? GestureDetector(
+                onTap: () => _pageController.previousPage(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                ),
+                child: Image.asset(
+                  'assets/buttons/navigation/pixel/left_small_light.png',
+                  width: 24,
+                  height: 24,
+                ),
+              )
+            : const SizedBox(width: 24),
         const SizedBox(width: 12),
         Expanded(
           child: Row(
@@ -262,8 +277,8 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
                     color: index <= _currentPage
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.secondary,
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.secondary,
                   ),
                 ),
               );
@@ -272,15 +287,17 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
         ),
         const SizedBox(width: 12),
         GestureDetector(
-          onTap: _canGoNext 
+          onTap: _canGoNext
               ? () => _pageController.nextPage(
-                  duration: const Duration(milliseconds: 250), curve: Curves.easeInOut)
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                )
               : null,
           child: Image.asset(
-            _canGoNext 
-                ? 'assets/buttons/navigation/pixel/right_small_light.png' 
+            _canGoNext
+                ? 'assets/buttons/navigation/pixel/right_small_light.png'
                 : 'assets/buttons/navigation/pixel/gray_right_small_light.png',
-            width: 24, 
+            width: 24,
             height: 24,
           ),
         ),

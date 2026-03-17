@@ -55,15 +55,25 @@ class DetailReflectContent extends StatelessWidget {
 
   Widget _buildScoreLine(String label, int val) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTypography.titleSemiBold.copyWith(
+              color: AppColors.surface,
+            ),
+          ),
         ),
-        Text(
-          "$val/5",
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            "$val/5",
+            textAlign: TextAlign.right,
+            style: AppTypography.titleSemiBold.copyWith(
+              color: AppColors.surface,
+            ),
+          ),
         ),
       ],
     );
