@@ -17,6 +17,8 @@ import 'package:passion_tree_frontend/features/home/presentation/bloc/home_bloc_
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passion_tree_frontend/features/onboarding/presentation/pages/onboarding_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,12 +54,21 @@ class MyApp extends StatelessWidget {
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
+  Future<Map<String, bool>> _init() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final hasOnboarded = prefs.getBool('hasOnboarded') ?? false;
+    final isLoggedIn = await getIt<IAuthRepository>().isLoggedIn();
+
+    return {'hasOnboarded': hasOnboarded, 'isLoggedIn': isLoggedIn};
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: getIt<IAuthRepository>().isLoggedIn(),
+    return FutureBuilder<Map<String, bool>>(
+      future: _init(),
       builder: (context, snapshot) {
-        // While checking auth status, show a loading screen
+        
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
             backgroundColor: AppColors.background,
@@ -69,9 +80,6 @@ class AuthGate extends StatelessWidget {
                     'assets/icons/tree_icon.png',
                     width: 100,
                     height: 100,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const SizedBox(width: 100, height: 100);
-                    },
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -86,15 +94,21 @@ class AuthGate extends StatelessWidget {
           );
         }
 
-        // If logged in, go to main app
-        if (snapshot.data == true) {
-          return const HomeBlocProvider(
-            child: HomeBarWidget(),
-          );
+        final hasOnboarded = snapshot.data!['hasOnboarded']!;
+        final isLoggedIn = snapshot.data!['isLoggedIn']!;
+
+        /// STEP 1: onboarding มาก่อนเสมอ
+        if (!hasOnboarded) {
+          return const OnboardingPage();
         }
 
-        // Otherwise, require login
-        return const LoginPage();
+        /// STEP 2: เช็ค login
+        if (!isLoggedIn) {
+          return const LoginPage();
+        }
+
+        /// STEP 3: เข้า app
+        return const HomeBlocProvider(child: HomeBarWidget());
       },
     );
   }
