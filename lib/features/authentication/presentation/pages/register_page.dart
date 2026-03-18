@@ -502,7 +502,8 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                                           text: 'Terms',
                                           style: AppTypography.subtitleMedium
                                               .copyWith(
-                                                color: colorScheme.primary,
+                                                color: AppColors.textPrimary,
+                                                decoration: TextDecoration.underline
                                               ),
                                           // TODO: Add gesture recognizer for Terms
                                         ),
@@ -511,7 +512,8 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                                           text: 'Privacy Policy.',
                                           style: AppTypography.subtitleMedium
                                               .copyWith(
-                                                color: colorScheme.primary,
+                                                color: AppColors.textPrimary,
+                                                decoration: TextDecoration.underline
                                               ),
                                           // TODO: Add gesture recognizer for Privacy Policy
                                         ),
@@ -587,7 +589,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               child: Text(
                                 'Sign in',
                                 style: AppTypography.titleMedium.copyWith(
-                                  color: colorScheme.primary,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ),

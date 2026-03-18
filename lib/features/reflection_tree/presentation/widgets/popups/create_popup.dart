@@ -163,7 +163,7 @@ class _CreatePopUpState extends State<CreatePopUp> {
                       height: 150,
                       padding: EdgeInsets.zero,
                       borderColor: AppColors.scale,
-                      fillColor: AppColors.scale,
+                      fillColor: AppColors.textPrimary.withValues(alpha: 0.9),
                       child: _selectedImage != null
                           ? SizedBox(
                               width: double.infinity,
@@ -203,14 +203,14 @@ class _CreatePopUpState extends State<CreatePopUp> {
                                   Icon(
                                     Icons.add_photo_alternate,
                                     size: 48,
-                                    color: AppColors.textSecondary,
+                                    color: AppColors.primaryBrand,
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     'Upload Cover Image',
                                     style: Theme.of(context).textTheme.bodyMedium
                                         ?.copyWith(
-                                          color: AppColors.textSecondary.withValues(
+                                          color: AppColors.primaryBrand.withValues(
                                             alpha: 0.5,
                                           ),
                                         ),

@@ -304,7 +304,7 @@ class _LoginPageState extends State<LoginPage> {
                             child: Text(
                               'Forgot password',
                               style: AppTypography.subtitleMedium.copyWith(
-                                color: colorScheme.primary,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ),
@@ -340,7 +340,7 @@ class _LoginPageState extends State<LoginPage> {
                               child: Text(
                                 'Sign up',
                                 style: AppTypography.titleMedium.copyWith(
-                                  color: colorScheme.primary,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ),

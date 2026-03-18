@@ -84,7 +84,7 @@ class HowToUsePopup extends StatelessWidget {
                       children: [
                         const Expanded(
                           child: Divider(
-                            color: AppColors.textDisabled,
+                            color: AppColors.textPrimary,
                             thickness: 1,
                           ),
                           ),
@@ -99,7 +99,7 @@ class HowToUsePopup extends StatelessWidget {
                         ),
                         const Expanded(
                           child: Divider(
-                            color: AppColors.textDisabled,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],

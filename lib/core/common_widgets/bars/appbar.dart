@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/arrow_button.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/core/theme/typography.dart';
 
 class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
   final String title;
@@ -143,10 +144,9 @@ class _AppBarWidgetState extends State<AppBarWidget>
                         // ── True center title ──────────────────────
                         Text(
                           widget.title,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
+                          style: AppTypography.titleMedium
+                              .copyWith(
                                 color: textColor,
-                                fontSize: widget.titleFontSize,
                               ),
                         ),
                         // ── Back button (left) ─────────────────────
@@ -155,6 +155,7 @@ class _AppBarWidgetState extends State<AppBarWidget>
                             alignment: Alignment.centerLeft,
                             child: ArrowButton(
                               direction: ArrowDirection.left,
+                              color: AppColors.textPrimary,
                               onPressed: () {
                                 if (widget.onBackPressed != null) {
                                   widget.onBackPressed!();

@@ -17,44 +17,47 @@ class BottomButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Wrap(
-      spacing: 4,
-      runSpacing: 4,
-      alignment: WrapAlignment.center,
-      children: [
-        AppButton(
-          variant: AppButtonVariant.leadingIconWithText,
-          backgroundColor: AppColors.surface,
-          textColor: colorScheme.onSurface,
-          text: 'Google',
-          icon: Image.asset(
-            'assets/icons/google.png',
-            width: 18,
-            height: 18,
-            errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.g_mobiledata, size: 16),
-          ),
-          onPressed: onGoogleTap,
-        ),
-
-        AppButton(
-          variant: AppButtonVariant.leadingIconWithText,
-          backgroundColor: AppColors.surface,
-          textColor: colorScheme.onSurface,
-          text: 'Discord',
-          icon: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: Image.asset(
-              'assets/icons/discord.jpg',
-              width: 20,
-              height: 20,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.discord, size: 16),
+    return Center(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppButton(
+              variant: AppButtonVariant.leadingIconWithText,
+              backgroundColor: AppColors.surface,
+              textColor: colorScheme.onSurface,
+              text: 'Google',
+              icon: Image.asset(
+                'assets/icons/google.png',
+                width: 18,
+                height: 18,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.g_mobiledata, size: 16),
+              ),
+              onPressed: onGoogleTap,
             ),
-          ),
-          onPressed: onDiscordTap,
+            const SizedBox(width: 4),
+            AppButton(
+              variant: AppButtonVariant.leadingIconWithText,
+              backgroundColor: AppColors.surface,
+              textColor: colorScheme.onSurface,
+              text: 'Discord',
+              icon: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.asset(
+                  'assets/icons/discord.jpg',
+                  width: 20,
+                  height: 20,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.discord, size: 16),
+                ),
+              ),
+              onPressed: onDiscordTap,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

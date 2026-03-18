@@ -36,6 +36,7 @@ class AppButton extends StatefulWidget {
 
 class _AppButtonState extends State<AppButton> {
   static const double _pixel = 4;
+  static const double _shadowOffset = 4;
   static const double _horizontalPadding = 40; // 20 + 20
   static const double _iconSize = 16;
   static const double _iconSpacing = 16;
@@ -44,7 +45,7 @@ class _AppButtonState extends State<AppButton> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final bgColor = widget.backgroundColor ?? scheme.primary;
-    final bdColor = widget.borderColor ?? AppColors.buttonBorder;
+    final bdColor = widget.borderColor ?? AppColors.background;
     final fgColor = widget.textColor ?? scheme.onPrimary;
 
     final TextStyle buttonTextStyle = AppPixelTypography.smallTitle.copyWith(
@@ -62,16 +63,42 @@ class _AppButtonState extends State<AppButton> {
       ),
     };
 
+    final Widget buttonContent = SizedBox(
+      width: buttonWidth,
+      height: _height(),
+      child: Center(child: _buildContent(buttonTextStyle)),
+    );
+
     return GestureDetector(
       onTap: widget.onPressed,
-      child: PixelBorderContainer(
-        padding: EdgeInsets.zero,
-        fillColor: bgColor,
-        borderColor: bdColor,
-        child: SizedBox(
-          width: buttonWidth,
-          height: _height(),
-          child: Center(child: _buildContent(buttonTextStyle)),
+      child: Padding(
+        padding: const EdgeInsets.only(
+          right: _shadowOffset,
+          bottom: _shadowOffset,
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              left: _shadowOffset,
+              top: _shadowOffset,
+              child: PixelBorderContainer(
+                padding: EdgeInsets.zero,
+                fillColor: AppColors.background,
+                borderColor: bdColor,
+                child: SizedBox(
+                  width: buttonWidth,
+                  height: _height(),
+                ),
+              ),
+            ),
+            PixelBorderContainer(
+              padding: EdgeInsets.zero,
+              fillColor: bgColor,
+              borderColor: bdColor,
+              child: buttonContent,
+            ),
+          ],
         ),
       ),
     );

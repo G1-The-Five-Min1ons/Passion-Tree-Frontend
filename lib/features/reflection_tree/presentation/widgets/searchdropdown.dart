@@ -120,6 +120,10 @@ Widget _buildDropdownList() {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(5),
+          border: Border.all(
+            color: AppColors.primaryBrand,
+            width: 3,
+          ),
         ),
         child: ListView.builder(
           shrinkWrap: true,
