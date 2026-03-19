@@ -242,7 +242,7 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
                   ),
                 );
                 // Reload albums when returning from detail page
-                if (mounted) {
+                if (context.mounted) {
                   context.read<AlbumBloc>().add(const RefreshAlbumsEvent());
                 }
               },

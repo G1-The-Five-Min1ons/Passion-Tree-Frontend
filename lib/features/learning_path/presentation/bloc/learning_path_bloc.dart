@@ -62,10 +62,8 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.updateNodeUseCase,
   ) : super(LearningPathInitial()) {
     
-    // ===== HELPER METHODS =====
-    
     /// Helper method to handle errors consistently
-    void _handleError(
+    void handleError(
       Emitter<LearningPathState> emit,
       String operation,
       dynamic error,
@@ -75,7 +73,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     }
     
     /// Helper method to execute async operations with error handling
-    Future<void> _safeExecute(
+    Future<void> safeExecute(
       Emitter<LearningPathState> emit,
       String operation,
       Future<void> Function() action,
@@ -83,7 +81,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
       try {
         await action();
       } catch (e) {
-        _handleError(emit, operation, e);
+        handleError(emit, operation, e);
       }
     }
     
@@ -218,7 +216,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         LogHandler.debug('[BLoC] StartNodeEvent: ${event.nodeId}');
         emit(StartingNode(event.nodeId));
         
-        await _safeExecute(emit, 'start node', () async {
+        await safeExecute(emit, 'start node', () async {
           await startNode(event.nodeId, event.userId);
           // Refetch node detail to get updated status
           final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
@@ -236,7 +234,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         LogHandler.debug('[BLoC] EnrollPathEvent: ${event.pathId}');
         emit(EnrollingPath(event.pathId));
         
-        await _safeExecute(emit, 'enroll path', () async {
+        await safeExecute(emit, 'enroll path', () async {
           // Step 1: Enroll in the path
           await enrollPath(event.pathId, event.userId);
           LogHandler.info('[BLoC] Enrolled in path: ${event.pathId}');
@@ -268,7 +266,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         LogHandler.debug('[BLoC] CompleteNodeEvent: ${event.nodeId}');
         emit(CompletingNode(event.nodeId));
         
-        await _safeExecute(emit, 'complete node', () async {
+        await safeExecute(emit, 'complete node', () async {
           await completeNode(event.nodeId, event.userId);
           // Refetch node detail to get updated status
           final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
@@ -286,7 +284,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         LogHandler.debug('[BLoC] DeleteLearningPathEvent: ${event.pathId}');
         emit(DeletingLearningPath(event.pathId));
         
-        await _safeExecute(emit, 'delete learning path', () async {
+        await safeExecute(emit, 'delete learning path', () async {
           await deleteLearningPath(event.pathId);
           LogHandler.info('[BLoC] Deleted path: ${event.pathId}');
           
@@ -318,7 +316,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         LogHandler.debug('[BLoC] DeleteNodeEvent: ${event.nodeId}');
         emit(DeletingNode(event.nodeId));
 
-        await _safeExecute(emit, 'delete node', () async {
+        await safeExecute(emit, 'delete node', () async {
           await deleteNodeUseCase(event.nodeId);
           LogHandler.info('[BLoC] Deleted node: ${event.nodeId}');
           emit(NodeDeleted(event.nodeId));
@@ -334,7 +332,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         LogHandler.debug('[BLoC] CreateLearningPathEvent received');
         emit(CreatingLearningPath());
 
-        await _safeExecute(emit, 'create learning path', () async {
+        await safeExecute(emit, 'create learning path', () async {
           final learningPath = CreateLearningPath(
             title: event.title,
             objective: event.objective,
@@ -359,7 +357,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         LogHandler.debug('Topic: ${event.topic}');
         emit(GeneratingNodesWithAI());
 
-        await _safeExecute(emit, 'generate nodes with AI', () async {
+        await safeExecute(emit, 'generate nodes with AI', () async {
           LogHandler.debug('Generating nodes with AI...');
           final response = await generateNodesWithAIUseCase(event.topic);
           LogHandler.debug('[BLoC] Generated ${response.nodes.length} nodes');
@@ -377,7 +375,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         LogHandler.debug('[BLoC] CreateNodeEvent received');
         emit(CreatingNode());
 
-        await _safeExecute(emit, 'create node', () async {
+        await safeExecute(emit, 'create node', () async {
           final node = CreateNode(
             title: event.title,
             description: event.description,
@@ -428,7 +426,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         LogHandler.debug('Node ID: ${event.nodeId}');
         emit(UpdatingNode(event.nodeId));
 
-        await _safeExecute(emit, 'update node', () async {
+        await safeExecute(emit, 'update node', () async {
           LogHandler.debug('Updating node...');
           await updateNodeUseCase(
             event.nodeId,
@@ -450,7 +448,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         LogHandler.debug('Path ID: ${event.pathId}');
         emit(UpdatingLearningPath(event.pathId));
 
-        await _safeExecute(emit, 'update learning path', () async {
+        await safeExecute(emit, 'update learning path', () async {
           LogHandler.debug('Updating learning path...');
           await updateLearningPathUseCase(
             event.pathId,

@@ -13,6 +13,7 @@ import 'package:passion_tree_frontend/features/authentication/domain/usecases/lo
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_google_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_discord_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/register_user_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/resend_verification_email_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/verify_email_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_profile_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/select_role_usecase.dart';
@@ -57,6 +58,11 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/nod
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enrolled_learning_paths.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_progress_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
+import 'package:passion_tree_frontend/features/setting/data/datasources/setting_remote_data_source.dart';
+import 'package:passion_tree_frontend/features/setting/data/repositories/setting_repository_impl.dart';
+import 'package:passion_tree_frontend/features/setting/domain/repositories/setting_repository.dart';
+import 'package:passion_tree_frontend/features/setting/domain/usecases/get_settings_usecase.dart';
+import 'package:passion_tree_frontend/features/setting/domain/usecases/update_setting_usecase.dart';
 
 final getIt = GetIt.instance;
 
@@ -93,6 +99,9 @@ Future<void> initializeDependencies() async {
   );
   getIt.registerFactory<RegisterUserUseCase>(
     () => RegisterUserUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<ResendVerificationEmailUseCase>(
+    () => ResendVerificationEmailUseCase(getIt<IAuthRepository>()),
   );
   getIt.registerFactory<VerifyEmailUseCase>(
     () => VerifyEmailUseCase(getIt<IAuthRepository>()),
@@ -315,6 +324,23 @@ Future<void> initializeDependencies() async {
       getIt<UpdateLearningPathUseCase>(),
       getIt<UpdateNodeUseCase>(),
     ),
+  );
+
+  // Setting Feature
+  getIt.registerLazySingleton<SettingRemoteDataSource>(
+    () => SettingRemoteDataSourceImpl(apiHandler: getIt<ApiHandler>()),
+  );
+  getIt.registerLazySingleton<ISettingRepository>(
+    () => SettingRepositoryImpl(
+      remoteDataSource: getIt<SettingRemoteDataSource>(),
+      localDataSource: getIt<AuthLocalDataSource>(),
+    ),
+  );
+  getIt.registerFactory<GetSettingsUseCase>(
+    () => GetSettingsUseCase(getIt<ISettingRepository>()),
+  );
+  getIt.registerFactory<UpdateSettingUseCase>(
+    () => UpdateSettingUseCase(getIt<ISettingRepository>()),
   );
 }
 

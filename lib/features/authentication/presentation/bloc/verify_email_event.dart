@@ -16,8 +16,21 @@ class OtpCodeChanged extends VerifyEmailEvent {
   List<Object?> get props => [code];
 }
 
+class ResendEmailChanged extends VerifyEmailEvent {
+  final String email;
+
+  const ResendEmailChanged(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
 class SubmitVerifyEmail extends VerifyEmailEvent {
   const SubmitVerifyEmail();
+}
+
+class ResendVerificationEmailRequested extends VerifyEmailEvent {
+  const ResendVerificationEmailRequested();
 }
 
 class CancelVerifyEmail extends VerifyEmailEvent {

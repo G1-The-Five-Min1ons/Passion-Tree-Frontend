@@ -16,7 +16,12 @@ abstract class IAuthRepository {
   });
 
   /// Logs in and triggers OTP email. Returns success message.
-  Future<String> login({required String identifier, required String password});
+  /// Set confirmReactivate to true to confirm reactivation if account is deactivated.
+  Future<String> login({
+    required String identifier,
+    required String password,
+    bool confirmReactivate = false,
+  });
 
   /// Verifies email OTP and saves tokens. Returns formatted message or user data if available.
   Future<void> verifyEmail(String code);
@@ -35,7 +40,6 @@ abstract class IAuthRepository {
 
   /// Updates account settings in both user and profile tables
   Future<void> updateAccountSettings({
-    required String username,
     required String firstName,
     required String lastName,
     String? location,
@@ -48,7 +52,13 @@ abstract class IAuthRepository {
   Future<void> changePassword(String oldPassword, String newPassword);
 
   /// Deletes account
-  Future<void> deleteUser();
+  Future<void> deleteUser(String password);
+
+  /// Deactivates account temporarily and revokes active sessions
+  Future<void> deactivateAccount();
+
+  /// Reactivates a deactivated account
+  Future<void> reactivateAccount();
 
   /// Logs out locally and optionally remotely
   Future<void> logout();

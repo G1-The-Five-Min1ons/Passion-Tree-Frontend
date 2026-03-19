@@ -99,7 +99,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
               if (userId != null && userId!.isNotEmpty) {
                 // Add a small delay to ensure backend is updated
                 Future.delayed(const Duration(milliseconds: 500), () {
-                  if (mounted) {
+                  if (context.mounted) {
                     context.read<LearningPathBloc>().add(
                       FetchLearningPathOverview(userId: userId),
                     );
@@ -273,8 +273,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                                     horizontal: 0,
                                   ),
                                   itemCount: filteredRecommended.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(width: 12),
+                                  separatorBuilder: (context, index) => const SizedBox(width: 12),
                                   itemBuilder: (context, index) {
                                     return PixelCourseCard(
                                       course: filteredRecommended[index],
@@ -307,8 +306,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                                     horizontal: 0,
                                   ),
                                   itemCount: filteredRecommended.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(width: 12),
+                                  separatorBuilder: (context, index) => const SizedBox(width: 12),
                                   itemBuilder: (context, index) {
                                     return PixelCourseCard(
                                       course: filteredRecommended[index],

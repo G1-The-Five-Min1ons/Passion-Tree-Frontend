@@ -133,8 +133,6 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    // Use cached filtered lists instead of filtering on every build
-    final filteredAll = _filteredAll;
     final filteredEnrolled = _filteredEnrolled;
     final filteredNonEnrolled = _filteredNonEnrolled;
     

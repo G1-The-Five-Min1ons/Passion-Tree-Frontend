@@ -13,7 +13,6 @@ import 'package:passion_tree_frontend/features/learning_path/data/models/node_de
 import 'package:passion_tree_frontend/features/learning_path/data/models/quiz_question_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/create_path_request_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/create_node_request_api_model.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/models/create_choice_request_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/create_question_with_choices_request_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/ai_generate_response_api_model.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
@@ -276,7 +275,6 @@ class LearningPathDataSource {
 
   Future<List<LearningNodeApiModel>> getNodesForPath(
     String pathId,
-    String _userId,
   ) async {
     return await _makeGetRequest(
       endpoint: '/learningpaths/$pathId/nodes',
@@ -289,7 +287,7 @@ class LearningPathDataSource {
     );
   }
 
-  Future<NodeDetailApiModel> getNodeDetail(String nodeId, String _userId) async {
+  Future<NodeDetailApiModel> getNodeDetail(String nodeId) async {
     return await _makeGetRequest(
       endpoint: '/learningpaths/nodes/$nodeId',
       fromJson: (data) => NodeDetailApiModel.fromJson(data['data']),
@@ -389,14 +387,14 @@ class LearningPathDataSource {
     }
   }
 
-  Future<void> startNode(String nodeId, String _userId) async {
+  Future<void> startNode(String nodeId) async {
     await _makePutRequest(
       endpoint: '/learningpaths/nodes/$nodeId/start',
       errorMessage: 'Failed to start node',
     );
   }
 
-  Future<void> completeNode(String nodeId, String _userId) async {
+  Future<void> completeNode(String nodeId) async {
     await _makePutRequest(
       endpoint: '/learningpaths/nodes/$nodeId/complete',
       errorMessage: 'Failed to complete node',

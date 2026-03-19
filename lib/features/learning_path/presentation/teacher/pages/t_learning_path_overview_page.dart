@@ -89,7 +89,7 @@ class _TeacherLearningPathOverviewPageState
               if (_userId != null && _userId!.isNotEmpty) {
                 // Add a small delay to ensure backend is updated
                 Future.delayed(const Duration(milliseconds: 500), () {
-                  if (mounted) {
+                  if (context.mounted) {
                     context.read<LearningPathBloc>().add(
                       FetchLearningPathOverview(userId: _userId),
                     );

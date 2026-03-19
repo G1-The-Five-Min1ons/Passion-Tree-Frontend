@@ -18,10 +18,8 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/nod
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_quiz.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_choice.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
-
 
 class EditNodeModal extends StatefulWidget {
   final String nodeId;
@@ -212,6 +210,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
       }
 
       setState(() => _isUploading = true);
+      
 
       try {
         // Upload files และรวม materials
@@ -234,7 +233,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
           }
         }
 
-        if (!mounted) return;
+        if (!context.mounted) return;
 
         final questions = _convertQuizzesToQuestions();
 
@@ -250,13 +249,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
           ),
         );
       } catch (e) {
-        if (!mounted) return;
+        if (!context.mounted) return;
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to upload files: $e')),
         );
       } finally {
-        if (mounted) {
+        if (context.mounted) {
           setState(() => _isUploading = false);
         }
       }
@@ -285,7 +284,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
           }
         }
 
-        if (!mounted) return;
+        if (!context.mounted) return;
 
         final questions = _convertQuizzesToQuestions();
 
@@ -300,13 +299,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
           ),
         );
       } catch (e) {
-        if (!mounted) return;
+        if (!context.mounted) return;
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to upload files: $e')),
         );
       } finally {
-        if (mounted) {
+        if (context.mounted) {
           setState(() => _isUploading = false);
         }
       }
@@ -325,7 +324,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
           );
           // Delay closing modal to allow parent listeners to process and refetch
           Future.delayed(const Duration(milliseconds: 300), () {
-            if (mounted) {
+            if (context.mounted) {
               Navigator.pop(context);
             }
           });
@@ -335,7 +334,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
           );
           // Delay closing modal to allow parent listeners to process and refetch
           Future.delayed(const Duration(milliseconds: 300), () {
-            if (mounted) {
+            if (context.mounted) {
               Navigator.pop(context);
             }
           });
@@ -343,7 +342,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Node deleted successfully')),
           );
-          if (mounted) {
+          if (context.mounted) {
             Navigator.pop(context);
           }
         } else if (state is LearningPathError) {

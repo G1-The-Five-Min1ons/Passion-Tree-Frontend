@@ -50,13 +50,13 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
 
   @override
   Future<List<NodeDetail>> getNodesForPath(String pathId, String userId) async {
-    final models = await dataSource.getNodesForPath(pathId, userId);
+    final models = await dataSource.getNodesForPath(pathId);
     return models.map((e) => e.toEntity()).toList();
   }
 
   @override
   Future<NodeDetail> getNodeDetail(String nodeId, String userId) async {
-    final model = await dataSource.getNodeDetail(nodeId, userId);
+    final model = await dataSource.getNodeDetail(nodeId);
     return model.toEntity();
   }
 
@@ -73,12 +73,12 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
 
   @override
   Future<void> startNode(String nodeId, String userId) async {
-    return await dataSource.startNode(nodeId, userId);
+    return await dataSource.startNode(nodeId);
   }
 
   @override
   Future<void> completeNode(String nodeId, String userId) async {
-    return await dataSource.completeNode(nodeId, userId);
+    return await dataSource.completeNode(nodeId);
   }
 
   @override
