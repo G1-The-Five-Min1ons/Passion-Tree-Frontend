@@ -49,4 +49,7 @@ abstract class LearningPathRepository {
     String? coverImgUrl,
     String publishStatus,
   );
+
+  // Recommendation
+  Future<List<LearningPath>> getRecommendedLearningPaths();
 }

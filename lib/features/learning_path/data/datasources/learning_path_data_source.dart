@@ -1,3 +1,4 @@
+
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -21,6 +22,41 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/cre
 import 'package:passion_tree_frontend/features/learning_path/data/models/create_material_request_api_model.dart';
 
 class LearningPathDataSource {
+    /// Fetch recommended learning paths for the current user (auth header)
+    Future<List<LearningPathApiModel>> getRecommendedLearningPaths() async {
+    return await _makeGetRequest(
+      endpoint: '/home/recommendation',
+      fromJson: (data) {
+        final raw = data['data'];
+
+        if (raw == null) return [];
+
+        /// ถ้า API ส่งเป็น List ตรง ๆ
+        if (raw is List) {
+          return raw
+              .map((path) => LearningPathApiModel.fromJson(path))
+              .toList();
+        }
+
+        /// ถ้า API ส่งเป็น Map เช่น { popular: [] }
+        if (raw is Map<String, dynamic>) {
+          final popular = raw['popular'];
+
+          if (popular is List) {
+            return popular
+                .map((path) => LearningPathApiModel.fromJson(path))
+                .toList();
+          }
+
+          return [];
+        }
+
+        return [];
+      },
+      errorMessage: 'Failed to get recommended learning paths',
+    );
+  }
+
   final http.Client client;
 
   LearningPathDataSource({http.Client? client})

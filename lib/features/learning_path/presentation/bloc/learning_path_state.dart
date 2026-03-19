@@ -67,10 +67,12 @@ class LearningPathStatusLoaded extends LearningPathState {
 class LearningPathOverviewLoaded extends LearningPathState {
   final List<LearningPath> allPaths;
   final List<EnrolledLearningPath> enrolledPaths;
+  final List<LearningPath> recommendedPaths;
 
   LearningPathOverviewLoaded({
     required this.allPaths,
     required this.enrolledPaths,
+    required this.recommendedPaths,
   });
 }
 
