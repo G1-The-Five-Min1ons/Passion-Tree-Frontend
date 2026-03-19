@@ -299,7 +299,7 @@ class _EditAlbumPopupState extends State<EditAlbumPopup> {
                   children: [
                     PixelTextField(
                       controller: _controller,
-                      height: 38,
+                      height: 35,
                       onChanged: (value) {
                         setState(() {
                           _albumNameError = _validateAlbumName(value.trim());

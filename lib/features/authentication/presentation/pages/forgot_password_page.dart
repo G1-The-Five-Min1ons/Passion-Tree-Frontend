@@ -130,7 +130,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               label: 'Email',
                               hintText: 'Enter your email',
                               controller: _emailController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 context.read<ForgotPasswordBloc>().add(EmailChanged(value));
                               },

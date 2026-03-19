@@ -89,7 +89,7 @@ class PixelRadioButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color themeSurface = Theme.of(context).colorScheme.surface;
-    final Color themePrimary = Theme.of(context).colorScheme.primary;
+    final Color themePrimary = Theme.of(context).colorScheme.onPrimary;
 
 
     return CustomPaint(

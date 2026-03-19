@@ -14,22 +14,25 @@ class WeeklyMissionCardWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'Weekly Mission!',
-                style: AppPixelTypography.smallTitle.copyWith(
-                  color: AppColors.textPrimary,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(
+              children: [
+                Text(
+                  'Weekly Mission!',
+                  style: AppPixelTypography.smallTitle.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              Text(
-                '60%',
-                style: AppTypography.titleSemiBold.copyWith(
-                  color: AppColors.textPrimary,
+                const Spacer(),
+                Text(
+                  '60%',
+                  style: AppTypography.titleSemiBold.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 10),
           _buildMissionProgress('Complete daily login', 6 / 7, '6/7'),

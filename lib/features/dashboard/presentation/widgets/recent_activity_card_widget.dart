@@ -36,7 +36,7 @@ class RecentActivityCardWidget extends StatelessWidget {
                           Text(
                             item.$1,
                             style: AppTypography.bodySemiBold.copyWith(
-                              color: AppColors.primaryBrand,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           Text(

@@ -195,7 +195,7 @@ class _ReflectDetailPopupState extends State<ReflectDetailPopup> {
         child: Text(
           title,
           style: isSelected 
-          ? AppTypography.subtitleMedium.copyWith(color: AppColors.surface)
+          ? AppTypography.subtitleMedium.copyWith(color: AppColors.textPrimary)
           : AppTypography.subtitleRegular.copyWith(color: AppColors.surface),
         ),
       ),

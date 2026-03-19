@@ -243,7 +243,7 @@ class _CreatePopUpState extends State<CreatePopUp> {
                     PixelTextField(
                       controller: _albumNameController,
                       hintText: widget.hint,
-                      height: 38,
+                      height: 35,
                       onChanged: (value) {
                         setState(() {
                           _albumNameError = _validateAlbumName(value.trim());

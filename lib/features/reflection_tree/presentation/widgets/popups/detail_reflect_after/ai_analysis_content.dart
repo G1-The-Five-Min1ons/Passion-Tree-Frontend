@@ -23,7 +23,7 @@ class AIAnalysisContent extends StatelessWidget {
       children: [
         Text(
           'Results',
-          style: AppTypography.h3SemiBold.copyWith(color: AppColors.surface),
+          style: AppTypography.h3SemiBold.copyWith(color: AppColors.textPrimary),
         ),
         const SizedBox(height: 16),
 
@@ -33,13 +33,13 @@ class AIAnalysisContent extends StatelessWidget {
             Text(
               'Overall  : ',
               style: AppTypography.titleSemiBold.copyWith(
-                color: AppColors.surface,
+                color: AppColors.textPrimary,
               ),
             ),
             Text(
               sentiment,
               style: AppTypography.titleRegular.copyWith(
-                color: AppColors.surface,
+                color: AppColors.textPrimary,
               ),
             ),
           ],
@@ -50,23 +50,23 @@ class AIAnalysisContent extends StatelessWidget {
         const SizedBox(height: 14),
         Text(
           'Summary  : ',
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface),
+          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
         ),
         const SizedBox(height: 5),
         Text(
           summary,
-          style: AppTypography.titleRegular.copyWith(color: AppColors.surface),
+          style: AppTypography.titleRegular.copyWith(color: AppColors.textPrimary),
         ),
 
         const SizedBox(height: 14),
         Text(
           'Struggle Point  : ',
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface),
+          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
         ),
         const SizedBox(height: 5),
         Text(
           strugglePoint,
-          style: AppTypography.titleRegular.copyWith(color: AppColors.surface),
+          style: AppTypography.titleRegular.copyWith(color: AppColors.textPrimary),
         ),
       ],
     );
@@ -78,11 +78,11 @@ class AIAnalysisContent extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface),
+          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
         ),
         Text(
           "${val.toStringAsFixed(val % 1 == 0 ? 0 : 1)}/10",
-          style: AppTypography.titleRegular.copyWith(color: AppColors.surface),
+          style: AppTypography.titleRegular.copyWith(color: AppColors.textPrimary),
         ),
       ],
     );

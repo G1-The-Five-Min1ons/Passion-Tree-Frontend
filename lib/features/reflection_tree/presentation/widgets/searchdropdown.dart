@@ -73,7 +73,7 @@ class _SearchDropdownState extends State<SearchDropdown> {
             },
             child: PixelBorderContainer(
               pixelSize: 3,
-              height: 38,
+              height: 35,
               borderColor: Theme.of(context).colorScheme.primary,
               fillColor: Theme.of(context).colorScheme.surface,
               padding: const EdgeInsets.only(left: 18, right: 8),

@@ -28,38 +28,41 @@ class SaveCancel extends StatelessWidget{
     final bool isDisable = onSave == null;
     final colors = Theme.of(context).colorScheme;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-          AppButton(
-            variant: AppButtonVariant.text,
-            text: cancelText,
-            onPressed: onCancel,
-            backgroundColor:
-              cancelButtonColor ?? AppColors.scale,
-              //borderColor: AppColors.textPrimary,
-          textColor: cancelButtonColor != null
-              ? colors.onError
-              : AppColors.background,
-          ),
-        
-        const SizedBox(width: 8),
-
-        AppButton(
-          variant: saveIcon != null 
-              ? AppButtonVariant.textWithIcon
-              : AppButtonVariant.text,
-          text: saveText,
-          icon: saveIcon,
-          onPressed: onSave ?? () {},
-          backgroundColor: isDisable 
-            ? AppColors.textDisabled
-            : (saveButtonColor ?? Theme.of(context).colorScheme.primary),
-          textColor: saveButtonColor != null 
-              ? AppColors.textPrimary
-              : Theme.of(context).colorScheme.onPrimary,
+    return Align(
+      alignment: Alignment.centerRight,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerRight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppButton(
+              variant: AppButtonVariant.text,
+              text: cancelText,
+              onPressed: onCancel,
+              backgroundColor: cancelButtonColor ?? AppColors.scale,
+              textColor: cancelButtonColor != null
+                  ? colors.onError
+                  : AppColors.background,
+            ),
+            const SizedBox(width: 8),
+            AppButton(
+              variant: saveIcon != null
+                  ? AppButtonVariant.textWithIcon
+                  : AppButtonVariant.text,
+              text: saveText,
+              icon: saveIcon,
+              onPressed: onSave ?? () {},
+              backgroundColor: isDisable
+                  ? AppColors.textDisabled
+                  : (saveButtonColor ?? Theme.of(context).colorScheme.primary),
+              textColor: saveButtonColor != null
+                  ? AppColors.textPrimary
+                  : Theme.of(context).colorScheme.onPrimary,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

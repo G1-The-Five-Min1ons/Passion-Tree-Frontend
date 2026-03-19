@@ -45,7 +45,7 @@ class _PixelPasswordFieldState extends State<PixelPasswordField> {
         ),
         Positioned(
           right: 12,
-          bottom: 11, 
+          bottom: 9, 
           child: GestureDetector(
             onTap: () {
               setState(() {

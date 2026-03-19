@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/save_cancel.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
@@ -41,25 +42,12 @@ class LogoutSection extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      variant: AppButtonVariant.text,
-                      text: 'Cancel',
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppButton(
-                      variant: AppButtonVariant.text,
-                      text: 'Log Out',
-                      backgroundColor: AppColors.cancel,
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                    ),
-                  ),
-                ],
+              SaveCancel(
+                saveText: 'Log Out',
+                saveButtonColor: AppColors.cancel,
+                cancelText: 'Cancel',
+                onCancel: () => Navigator.of(ctx).pop(false),
+                onSave: () => Navigator.of(ctx).pop(true),
               ),
             ],
           ),

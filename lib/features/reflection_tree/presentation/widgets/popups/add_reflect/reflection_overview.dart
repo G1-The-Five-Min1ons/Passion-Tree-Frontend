@@ -78,7 +78,7 @@ class ReflectionOverview extends StatelessWidget {
         Text(
           "$score/5", 
           style: AppTypography.titleSemiBold.copyWith(
-            color: AppColors.primaryBrand,
+            color: AppColors.textPrimary,
           ),
         ),
       ],
