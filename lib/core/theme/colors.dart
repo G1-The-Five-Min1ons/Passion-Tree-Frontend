@@ -24,6 +24,7 @@ class AppColors{
   static const Color activitytwo = Color.fromARGB(255, 91, 182, 98);
   static const Color activitythree = Color.fromARGB(255, 58, 118, 63);
   static const Color activityfour = Color.fromARGB(255, 44, 86, 165);
+  static const Color died = Color(0xFF000000);
 
   // AppBackground ambient blobs 
   static const Color bgGradientTop  = Color(0xFF091A38); // dark navy top-left

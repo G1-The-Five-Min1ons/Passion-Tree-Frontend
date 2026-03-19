@@ -12,16 +12,24 @@ class StatusBadge extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
-    final currentStatus = status.toLowerCase();
+    final normalizedStatus = status.trim().toLowerCase();
+
+    final Map<String, String> statusAliases = {
+      'active': 'growing',
+    };
+
+    final currentStatus =
+        statusAliases[normalizedStatus] ??
+        (normalizedStatus.isEmpty ? 'growing' : normalizedStatus);
 
     final Map<String, Color> statusColors = {
       'growing' : AppColors.status,
       'fading' : AppColors.warning,
       'dying' : AppColors.cancel,
-      'died' : AppColors.textPrimary,
+      'died' : AppColors.died,
     };
 
-    final Color effectiveColor = statusColors[currentStatus] ?? AppColors.surface;
+    final Color effectiveColor = statusColors[currentStatus] ?? AppColors.status;
 
     return Align(
       alignment: Alignment.center,
@@ -33,7 +41,7 @@ class StatusBadge extends StatelessWidget{
       padding: const EdgeInsets.symmetric(vertical:6),
       child: Center(
         child: Text(
-            status,
+            currentStatus,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: Theme.of(context).colorScheme.onPrimary ),

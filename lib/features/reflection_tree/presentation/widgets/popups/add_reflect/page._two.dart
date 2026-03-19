@@ -8,6 +8,7 @@ class PageTwoView extends StatefulWidget {
   final Function(String) onTextChanged;
   final int initialScore;
   final String initialText;
+  final String nodeName;
 
   const PageTwoView({
     super.key,
@@ -15,13 +16,15 @@ class PageTwoView extends StatefulWidget {
     required this.initialScore,
     required this.onTextChanged,
     required this.initialText,
+    required this.nodeName,
   });
 
   @override
   State<PageTwoView> createState() => _PageTwoViewState();
 }
 
-class _PageTwoViewState extends State<PageTwoView> with AutomaticKeepAliveClientMixin{
+class _PageTwoViewState extends State<PageTwoView>
+    with AutomaticKeepAliveClientMixin {
   late int _score;
 
   final List<String> _levelImages = [
@@ -44,47 +47,63 @@ class _PageTwoViewState extends State<PageTwoView> with AutomaticKeepAliveClient
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Column(
-      children: [
-        Text(
-          "How you feel",
-          style: AppTypography.titleSemiBold,
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 120,
-          child: _score > 0 
-            ? Image.asset(
-                _levelImages[_score - 1],
-                key: ValueKey(_score),
-              )
-            : const Center(child: Text("Please Select")),
-        ),
-
-        const SizedBox(height: 10),
-
-        PixelRadioGroup(
-          showIndex: true,
-          count: 5,
-          initialValue: _score,
-          onSelected: (value) {
-            setState(() {
-              _score = value;
-            });
-            widget.onScoreChanged(value);
-          },
-        ),
-        const SizedBox(height: 30),
-        PixelTextField(
-          pixelSize: 3,
-          hintText: 'Reflect on how you feel',
-          height: 180,
-          value: widget.initialText,
-          onChanged: (val) {
-            widget.onTextChanged(val);
-          },
-        )
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Scrollbar(
+          thumbVisibility: true,
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Node: ${widget.nodeName}',
+                      style: AppTypography.h3SemiBold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text("How you feel", style: AppTypography.titleSemiBold),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 120,
+                    child: _score > 0
+                        ? Image.asset(
+                            _levelImages[_score - 1],
+                            key: ValueKey(_score),
+                          )
+                        : const Center(child: Text("Please Select")),
+                  ),
+                  const SizedBox(height: 10),
+                  PixelRadioGroup(
+                    showIndex: true,
+                    count: 5,
+                    initialValue: _score,
+                    onSelected: (value) {
+                      setState(() {
+                        _score = value;
+                      });
+                      widget.onScoreChanged(value);
+                    },
+                  ),
+                  const SizedBox(height: 30),
+                  PixelTextField(
+                    pixelSize: 3,
+                    hintText: 'Reflect on how you feel',
+                    height: 180,
+                    value: widget.initialText,
+                    onChanged: (val) {
+                      widget.onTextChanged(val);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

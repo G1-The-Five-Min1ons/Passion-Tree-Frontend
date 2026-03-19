@@ -20,6 +20,7 @@ class TreeAlbumCard extends StatelessWidget {
   final Color statusColor;
   final Widget dataDisplay;
   final String treeStatus;
+  final double? treeScore;
   final String currentAlbumname;
   final List<String> albumOptions;
   final List<Album> availableAlbums;
@@ -38,6 +39,7 @@ class TreeAlbumCard extends StatelessWidget {
     required this.statusColor,
     required this.dataDisplay,
     required this.treeStatus,
+    this.treeScore,
     required this.currentAlbumname,
     required this.albumOptions,
     required this.availableAlbums,
@@ -113,7 +115,10 @@ class TreeAlbumCard extends StatelessWidget {
             child: Stack(
               children: [
                   Center(
-                    child: MainTreeImage(status: treeStatus),
+                    child: MainTreeImage(
+                      status: treeStatus,
+                      treeScore: treeScore,
+                    ),
                   )
                 ],
               ),

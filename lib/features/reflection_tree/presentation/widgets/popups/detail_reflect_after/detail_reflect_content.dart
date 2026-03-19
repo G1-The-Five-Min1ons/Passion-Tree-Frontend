@@ -55,7 +55,7 @@ class DetailReflectContent extends StatelessWidget {
 
   Widget _buildScoreLine(String label, int val) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,

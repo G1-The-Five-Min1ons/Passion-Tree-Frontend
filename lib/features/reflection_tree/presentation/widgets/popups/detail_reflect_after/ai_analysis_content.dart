@@ -28,18 +28,24 @@ class AIAnalysisContent extends StatelessWidget {
         const SizedBox(height: 16),
 
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Overall  : ',
-              style: AppTypography.titleSemiBold.copyWith(
-                color: AppColors.textPrimary,
+            Expanded(
+              child: Text(
+                'Overall  : ',
+                style: AppTypography.titleSemiBold.copyWith(
+                  color: AppColors.surface,
+                ),
               ),
             ),
-            Text(
-              sentiment,
-              style: AppTypography.titleRegular.copyWith(
-                color: AppColors.textPrimary,
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                sentiment,
+                textAlign: TextAlign.right,
+                style: AppTypography.titleRegular.copyWith(
+                  color: AppColors.surface,
+                ),
               ),
             ),
           ],
@@ -74,7 +80,7 @@ class AIAnalysisContent extends StatelessWidget {
 
   Widget _buildScoreLine(String label, double val) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,

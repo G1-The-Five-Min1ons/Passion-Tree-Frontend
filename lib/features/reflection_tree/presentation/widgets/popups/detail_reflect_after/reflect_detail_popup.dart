@@ -18,7 +18,6 @@ class ReflectDetailPopup extends StatefulWidget {
   final String summary;
   final String strugglePoint;
 
-
   const ReflectDetailPopup({
     super.key,
     this.nodeName = '',
@@ -86,40 +85,51 @@ class _ReflectDetailPopupState extends State<ReflectDetailPopup> {
               padding: const EdgeInsets.only(bottom: 4),
               child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 12),
-                          RichText(
-                            text: TextSpan(
-                              style: AppTypography.h3SemiBold.copyWith(color: AppColors.textPrimary),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Scrollbar(
+                        thumbVisibility: true,
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const TextSpan(text: "Node : "),
-                                TextSpan(
-                                  text: widget.nodeName,
-                                  style: AppTypography.h3SemiBold.copyWith(color: AppColors.textPrimary),
+                                const SizedBox(height: 12),
+                                RichText(
+                                  text: TextSpan(
+                                    style: AppTypography.h3SemiBold.copyWith(
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    children: [
+                                      const TextSpan(text: "Node : "),
+                                      TextSpan(
+                                        text: widget.nodeName,
+                                        style: AppTypography.h3SemiBold
+                                            .copyWith(
+                                              color: AppColors.textPrimary,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 30),
+                                Center(
+                                  child: Image.asset(
+                                    'assets/images/emojis/level_${widget.level}.png',
+                                    height: 160,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 30),
-                          Center(
-                            child: Image.asset(
-                              'assets/images/emojis/level_${widget.level}.png',
-                              height: 160,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-
-                  const Spacer(),
 
                   Column(
                     children: [
@@ -139,19 +149,19 @@ class _ReflectDetailPopupState extends State<ReflectDetailPopup> {
                           color: AppColors.primaryBrand,
                         ),
                         child: SingleChildScrollView(
-                          child: _selectedTab == 0 
-                            ? DetailReflectContent(
-                              learn: widget.learn,
-                              feel: widget.feel,
-                              progress: widget.progress,
-                              challenge: widget.challenge,
-                              ) 
-                            : AIAnalysisContent(
-                              sentiment: widget.sentiment,
-                              reflectScore: widget.reflectionScore,
-                              summary: widget.summary,
-                              strugglePoint: widget.strugglePoint,
-                              ),
+                          child: _selectedTab == 0
+                              ? DetailReflectContent(
+                                  learn: widget.learn,
+                                  feel: widget.feel,
+                                  progress: widget.progress,
+                                  challenge: widget.challenge,
+                                )
+                              : AIAnalysisContent(
+                                  sentiment: widget.sentiment,
+                                  reflectScore: widget.reflectionScore,
+                                  summary: widget.summary,
+                                  strugglePoint: widget.strugglePoint,
+                                ),
                         ),
                       ),
                     ],
