@@ -17,6 +17,8 @@ class AppButton extends StatefulWidget {
   final Color? borderColor;
   final Color? textColor;
 
+  final bool fullWidth;
+
   const AppButton({
     super.key,
     required this.variant,
@@ -28,6 +30,7 @@ class AppButton extends StatefulWidget {
     this.backgroundColor,
     this.borderColor,
     this.textColor,
+    this.fullWidth = false,
   });
 
   @override
@@ -69,7 +72,7 @@ class _AppButtonState extends State<AppButton> {
         fillColor: bgColor,
         borderColor: bdColor,
         child: SizedBox(
-          width: buttonWidth,
+          width: widget.fullWidth ? double.infinity : buttonWidth,
           height: _height(),
           child: Center(child: _buildContent(buttonTextStyle)),
         ),

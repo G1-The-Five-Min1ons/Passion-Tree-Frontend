@@ -127,7 +127,6 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   }
 
   @override
-  @override
   Future<void> updateNode(
     String nodeId,
     String title,
@@ -161,6 +160,12 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
       coverImgUrl,
       publishStatus,
     );
+  }
+
+  @override
+  Future<List<LearningPath>> getRecommendedLearningPaths() async {
+    final models = await dataSource.getRecommendedLearningPaths();
+    return models.map((e) => e.toEntity()).toList();
   }
 }
 

@@ -27,6 +27,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/cre
 
 class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GetAllLearningPaths getAllLearningPaths;
+  final GetRecommendedLearningPaths getRecommendedLearningPaths;
   final GetLearningPathStatus getLearningPathStatus;
   final GetNodesForPath getNodesForPath;
   final GetNodeDetail getNodeDetail;
@@ -45,6 +46,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
   LearningPathBloc(
     this.getAllLearningPaths,
+    this.getRecommendedLearningPaths,
     this.getLearningPathStatus,
     this.getNodesForPath,
     this.getNodeDetail,
@@ -134,32 +136,21 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(LearningPathLoading());
 
         try {
-          if (event.userId != null) {
-            // Fetch both in parallel using Future.wait
-            final results = await Future.wait([
-              getAllLearningPaths(),
-              getLearningPathStatus(event.userId!),
-            ]);
-            
-            final allPaths = results[0] as List<LearningPath>;
-            final enrolledPaths = results[1] as List<EnrolledLearningPath>;
-            
-            LogHandler.debug('[BLoC] Overview: ${allPaths.length} paths, ${enrolledPaths.length} enrolled');
-
-            emit(LearningPathOverviewLoaded(
-              allPaths: allPaths,
-              enrolledPaths: enrolledPaths,
-            ));
-          } else {
-            // Guest user - only fetch all paths
-            final allPaths = await getAllLearningPaths();
-            LogHandler.debug('[BLoC] Overview: ${allPaths.length} paths (guest)');
-            
-            emit(LearningPathOverviewLoaded(
-              allPaths: allPaths,
-              enrolledPaths: <EnrolledLearningPath>[],
-            ));
-          }
+          // Always fetch recommendedPaths (API will use auth header)
+          final List<dynamic> results = await Future.wait([
+            getAllLearningPaths(),
+            getLearningPathStatus(event.userId!),
+            getRecommendedLearningPaths(),
+          ]);
+          final List<LearningPath> allPaths = List<LearningPath>.from(results[0] as List);
+          final List<EnrolledLearningPath> enrolledPaths = List<EnrolledLearningPath>.from(results[1] as List);
+          final List<LearningPath> recommendedPaths = List<LearningPath>.from(results[2] as List);
+          LogHandler.debug('[BLoC] Overview: \\${allPaths.length} all, \\${enrolledPaths.length} enrolled, \\${recommendedPaths.length} recommended');
+          emit(LearningPathOverviewLoaded(
+            allPaths: allPaths,
+            enrolledPaths: enrolledPaths,
+            recommendedPaths: recommendedPaths,
+          ));
         } catch (e) {
           LogHandler.error('[BLoC] Error fetching overview: $e');
           emit(LearningPathError(e.toString()));
@@ -302,6 +293,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             emit(LearningPathOverviewLoaded(
               allPaths: allPaths,
               enrolledPaths: enrolledPaths,
+              recommendedPaths: <LearningPath>[],
             ));
           } else {
             emit(LearningPathDeleted('Learning path deleted successfully'));
