@@ -57,12 +57,16 @@ class DetailReflectContent extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
+          ),
         ),
+        const SizedBox(width: 12),
         Text(
           "$val/5",
+          textAlign: TextAlign.right,
           style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
         ),
       ],

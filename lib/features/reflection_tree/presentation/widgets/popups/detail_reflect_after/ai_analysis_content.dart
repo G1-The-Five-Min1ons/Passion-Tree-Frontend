@@ -31,20 +31,22 @@ class AIAnalysisContent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
+              flex: 3,
               child: Text(
                 'Overall  : ',
                 style: AppTypography.titleSemiBold.copyWith(
-                  color: AppColors.surface,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            Flexible(
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
               child: Text(
                 sentiment,
                 textAlign: TextAlign.right,
                 style: AppTypography.titleRegular.copyWith(
-                  color: AppColors.surface,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -82,13 +84,21 @@ class AIAnalysisContent extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
+        Expanded(
+          flex: 3,
+          child: Text(
+            label,
+            style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
+          ),
         ),
-        Text(
-          "${val.toStringAsFixed(val % 1 == 0 ? 0 : 1)}/10",
-          style: AppTypography.titleRegular.copyWith(color: AppColors.textPrimary),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 2,
+          child: Text(
+            "${val.toStringAsFixed(val % 1 == 0 ? 0 : 1)}/10",
+            textAlign: TextAlign.right,
+            style: AppTypography.titleRegular.copyWith(color: AppColors.textPrimary),
+          ),
         ),
       ],
     );
