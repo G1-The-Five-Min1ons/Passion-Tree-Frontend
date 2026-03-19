@@ -1,5 +1,21 @@
 import 'package:passion_tree_frontend/core/error/exceptions.dart';
 
+String _normalizeTreeStatus(dynamic rawStatus) {
+  final normalizedStatus = (rawStatus?.toString() ?? '').trim().toLowerCase();
+
+  switch (normalizedStatus) {
+    case 'growing':
+    case 'fading':
+    case 'dying':
+    case 'died':
+      return normalizedStatus;
+    case 'active':
+      return 'growing';
+    default:
+      return 'growing';
+  }
+}
+
 class AlbumApiModel {
   final String albumId;
   final String albumName;
@@ -169,6 +185,7 @@ class TreeApiModel {
   final String difficulties;
   final String pathId;
   final String status;
+  final double? treeScore;
   final bool isPause;
   final int nodeCount;
   final DateTime createdAt;
@@ -182,6 +199,7 @@ class TreeApiModel {
     required this.difficulties,
     required this.pathId,
     required this.status,
+    this.treeScore,
     required this.isPause,
     required this.nodeCount,
     required this.createdAt,
@@ -203,7 +221,10 @@ class TreeApiModel {
         title: json['title'] ?? '',
         difficulties: json['difficulties'] ?? '',
         pathId: json['path_id'] ?? '',
-        status: json['status'] ?? 'active',
+        status: _normalizeTreeStatus(json['status']),
+        treeScore: json['tree_score'] != null
+          ? (json['tree_score'] as num).toDouble()
+          : null,
         isPause: json['is_pause'] ?? false,
         nodeCount: json['node_count'] ?? 0,
         createdAt: json['created_at'] != null

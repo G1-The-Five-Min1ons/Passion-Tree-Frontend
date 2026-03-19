@@ -2,34 +2,42 @@ import 'package:flutter/material.dart';
 
 class MainTreeImage extends StatelessWidget {
   final String status;
+  final double? treeScore;
 
   const MainTreeImage ({
     super.key,
     required this.status,
+    this.treeScore,
   });
+
+  String _normalizeLifecycleStatus(String rawStatus) {
+    final normalized = rawStatus.trim().toLowerCase();
+
+    if (normalized.startsWith('growing')) return 'growing';
+    if (normalized.startsWith('fading')) return 'fading';
+    if (normalized.startsWith('dying')) return 'dying';
+    if (normalized.startsWith('died')) return 'died';
+
+    switch (normalized) {
+      case 'active':
+        return 'growing';
+      default:
+        return 'growing';
+    }
+  }
+
+  String _moodFromTreeScore(double? score) {
+    if (score == null) return 'neutral';
+    if (score <= 3.33) return 'dislike';
+    if (score <= 6.66) return 'neutral';
+    return 'happy';
+  }
 
     @override
     Widget build(BuildContext context) {
-      final Map<String, String> statusImages = {
-      'growinghappy': 'assets/images/trees/growing-happy.png',
-      'growingneutral': 'assets/images/trees/growing-neutral.png',
-      'growingdislike': 'assets/images/trees/growing-dislike.png',
-      'fadinghappy': 'assets/images/trees/fading-happy.png',
-      'fadingneutral': 'assets/images/trees/fading-neutral.png',
-      'fadingdislike': 'assets/images/trees/fading-dislike.png',
-      'dyinghappy': 'assets/images/trees/dying-happy.png',
-      'dyingneutral': 'assets/images/trees/dying-neutral.png',
-      'dyingdislike': 'assets/images/trees/dying-dislike.png',
-      'diedhappy': 'assets/images/trees/died-happy.png',
-      'diedneutral': 'assets/images/trees/died-neutral.png',
-      'dieddislike': 'assets/images/trees/died-dislike.png',
-      };
-
-      final String? imagePath = statusImages[status.toLowerCase()];
-
-      if (imagePath == null) {
-        return const SizedBox.shrink();
-      }
+      final lifecycleStatus = _normalizeLifecycleStatus(status);
+      final moodStatus = _moodFromTreeScore(treeScore);
+      final imagePath = 'assets/images/trees/$lifecycleStatus-$moodStatus.png';
     
       return Padding(
         padding: const EdgeInsets.only(top: 6, bottom: 0),

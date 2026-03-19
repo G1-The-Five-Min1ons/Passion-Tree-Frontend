@@ -201,6 +201,7 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
           statusText: item.status, 
           statusColor: item.statusColor,
           treeStatus: item.overallStatus,
+          treeScore: item.treeScore,
           currentAlbumname: album.title,
           albumOptions: _availableAlbumNames,
           availableAlbums: _availableAlbums,
