@@ -140,7 +140,7 @@ class _AddNodePopupState extends State<AddNodePopup> {
                 PixelTextField(
                   label: 'Node name : ',
                   hintText: 'Enter Node name',
-                  height: 38,
+                  height: 35,
                   controller: _nodeNameController,
                 ),
                 const SizedBox(height: 24),

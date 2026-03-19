@@ -73,7 +73,7 @@ class _SearchDropdownState extends State<SearchDropdown> {
             },
             child: PixelBorderContainer(
               pixelSize: 3,
-              height: 38,
+              height: 35,
               borderColor: Theme.of(context).colorScheme.primary,
               fillColor: Theme.of(context).colorScheme.surface,
               padding: const EdgeInsets.only(left: 18, right: 8),
@@ -120,6 +120,10 @@ Widget _buildDropdownList() {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(5),
+          border: Border.all(
+            color: AppColors.primaryBrand,
+            width: 3,
+          ),
         ),
         child: ListView.builder(
           shrinkWrap: true,

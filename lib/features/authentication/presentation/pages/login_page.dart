@@ -241,7 +241,7 @@ class _LoginPageState extends State<LoginPage> {
                               label: 'Username or Email',
                               hintText: 'Enter your username or email',
                               controller: _usernameController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _usernameError = _validateUsername(value.trim());
@@ -270,7 +270,7 @@ class _LoginPageState extends State<LoginPage> {
                               label: 'Password',
                               hintText: 'Enter Password',
                               controller: _passwordController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _passwordError = _validatePassword(value);
@@ -304,7 +304,7 @@ class _LoginPageState extends State<LoginPage> {
                             child: Text(
                               'Forgot password',
                               style: AppTypography.subtitleMedium.copyWith(
-                                color: colorScheme.primary,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ),
@@ -340,7 +340,7 @@ class _LoginPageState extends State<LoginPage> {
                               child: Text(
                                 'Sign up',
                                 style: AppTypography.titleMedium.copyWith(
-                                  color: colorScheme.primary,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ),

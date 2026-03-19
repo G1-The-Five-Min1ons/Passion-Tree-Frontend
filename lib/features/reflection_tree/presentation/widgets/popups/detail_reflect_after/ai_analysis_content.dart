@@ -23,7 +23,7 @@ class AIAnalysisContent extends StatelessWidget {
       children: [
         Text(
           'Results',
-          style: AppTypography.h3SemiBold.copyWith(color: AppColors.surface),
+          style: AppTypography.h3SemiBold.copyWith(color: AppColors.textPrimary),
         ),
         const SizedBox(height: 16),
 
@@ -31,20 +31,22 @@ class AIAnalysisContent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
+              flex: 3,
               child: Text(
                 'Overall  : ',
                 style: AppTypography.titleSemiBold.copyWith(
-                  color: AppColors.surface,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            Flexible(
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
               child: Text(
                 sentiment,
                 textAlign: TextAlign.right,
                 style: AppTypography.titleRegular.copyWith(
-                  color: AppColors.surface,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -56,23 +58,23 @@ class AIAnalysisContent extends StatelessWidget {
         const SizedBox(height: 14),
         Text(
           'Summary  : ',
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface),
+          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
         ),
         const SizedBox(height: 5),
         Text(
           summary,
-          style: AppTypography.titleRegular.copyWith(color: AppColors.surface),
+          style: AppTypography.titleRegular.copyWith(color: AppColors.textPrimary),
         ),
 
         const SizedBox(height: 14),
         Text(
           'Struggle Point  : ',
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface),
+          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
         ),
         const SizedBox(height: 5),
         Text(
           strugglePoint,
-          style: AppTypography.titleRegular.copyWith(color: AppColors.surface),
+          style: AppTypography.titleRegular.copyWith(color: AppColors.textPrimary),
         ),
       ],
     );
@@ -83,21 +85,19 @@ class AIAnalysisContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
+          flex: 3,
           child: Text(
             label,
-            style: AppTypography.titleSemiBold.copyWith(
-              color: AppColors.surface,
-            ),
+            style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
           ),
         ),
-        const SizedBox(width: 8),
-        Flexible(
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 2,
           child: Text(
             "${val.toStringAsFixed(val % 1 == 0 ? 0 : 1)}/10",
             textAlign: TextAlign.right,
-            style: AppTypography.titleRegular.copyWith(
-              color: AppColors.surface,
-            ),
+            style: AppTypography.titleRegular.copyWith(color: AppColors.textPrimary),
           ),
         ),
       ],

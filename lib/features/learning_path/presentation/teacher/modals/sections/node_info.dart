@@ -47,7 +47,7 @@ class NodeInfoSection extends StatelessWidget {
         PixelTextField(
           label: 'Node Title',
           hintText: 'Enter node title',
-          height: 38,
+          height: 35,
           value: initialTitle,
           onChanged: onTitleChanged,
         ),
@@ -58,7 +58,7 @@ class NodeInfoSection extends StatelessWidget {
         PixelTextField(
           label: 'Node Description',
           hintText: 'Enter node description',
-          height: 38,
+          height: 35,
           value: initialDescription,
           onChanged: onDescriptionChanged,
         ),
@@ -69,7 +69,7 @@ class NodeInfoSection extends StatelessWidget {
         PixelTextField(
           label: 'Video URL (Optional)',
           hintText: 'Enter YouTube video URL',
-          height: 38,
+          height: 35,
           value: videoUrlValue,
           onChanged: onVideoUrlChanged ?? (_) {},
         ),

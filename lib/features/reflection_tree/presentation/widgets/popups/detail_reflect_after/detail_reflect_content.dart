@@ -23,26 +23,26 @@ class DetailReflectContent extends StatelessWidget {
       children: [
         Text(
           "You've learned :",
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface),
+          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
           learn,
           style: AppTypography.subtitleRegular.copyWith(
-            color: AppColors.surface,
+            color: AppColors.textPrimary,
           ),
         ),
 
         const SizedBox(height: 20),
         Text(
           "You felt :",
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface),
+          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
           feel,
           style: AppTypography.subtitleRegular.copyWith(
-            color: AppColors.surface,
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 30),
@@ -60,20 +60,14 @@ class DetailReflectContent extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: AppTypography.titleSemiBold.copyWith(
-              color: AppColors.surface,
-            ),
+            style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
           ),
         ),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            "$val/5",
-            textAlign: TextAlign.right,
-            style: AppTypography.titleSemiBold.copyWith(
-              color: AppColors.surface,
-            ),
-          ),
+        const SizedBox(width: 12),
+        Text(
+          "$val/5",
+          textAlign: TextAlign.right,
+          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
         ),
       ],
     );

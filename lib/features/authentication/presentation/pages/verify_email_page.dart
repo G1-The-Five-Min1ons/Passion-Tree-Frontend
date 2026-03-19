@@ -281,7 +281,7 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                               label: 'Email',
                               hintText: 'Enter your email to resend code',
                               controller: _resendEmailController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 context.read<VerifyEmailBloc>().add(
                                   ResendEmailChanged(value),
@@ -304,7 +304,7 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                             label: 'Verification Code',
                             hintText: 'Enter 6-digit code',
                             controller: _otpController,
-                            height: 38,
+                            height: 35,
                             maxLines: 1,
                             onChanged: (value) {
                               context.read<VerifyEmailBloc>().add(

@@ -55,7 +55,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String get _fullName {
     final user = _userProfile?.user;
-    if (user == null) return 'Passion Gardener';
+    if (user == null) return 'Student';
 
     final fullName = '${user.firstName} ${user.lastName}'.trim();
     return fullName.isEmpty ? user.username : fullName;
@@ -64,7 +64,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String get _roleLabel {
     final role = _userProfile?.user.role.toLowerCase();
     if (role == 'teacher') return 'Teacher';
-    return 'Passion Gardener';
+    return 'Student';
   }
 
   double get _xpProgress {
@@ -85,7 +85,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AppBarWidget(
-        title: 'Dashboard&Profile',
+        title: 'Dashboard & Profile',
         showBackButton: false,
       ),
       body: _isLoading

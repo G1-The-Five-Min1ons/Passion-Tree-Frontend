@@ -115,7 +115,7 @@ class _PixelTextFieldState extends State<PixelTextField> {
           height: widget.height,
           pixelSize: widget.pixelSize,
           borderColor: activeBorderColor,
-          fillColor: colorScheme.surface,
+          fillColor: colorScheme.primary,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Scrollbar(
             controller: scrollController,
@@ -152,7 +152,7 @@ class _PixelTextFieldState extends State<PixelTextField> {
             const PixelTextField(
               label: 'เทส', -- ชื่อหัวข้อข้างบน
               hintText: 'Summary', --ตัวอักษรข้างใน
-              height: 38, -- จัดการความสูง บรรทัดเดียว 38 กำลังสวย
+              height: 38, -- จัดการความสูง บรรทัดเดียว 35 กำลังสวย
               //borderColor: Theme.of(context).colorScheme.error, -- ใส่เมื่อต้องการเปลี่ยนสีขอบ
             ),
 */

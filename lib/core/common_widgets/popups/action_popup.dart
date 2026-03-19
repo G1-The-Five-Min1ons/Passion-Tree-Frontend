@@ -90,6 +90,8 @@ class ActionPopUp extends StatelessWidget {
               iconPath,
               width: 20,
               height: 20,
+              color: color,
+              colorBlendMode: BlendMode.srcIn,
               filterQuality: FilterQuality.none,
             ),
           ],

@@ -281,7 +281,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               label: 'Username *',
                               hintText: 'Enter a unique username',
                               controller: _usernameController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _usernameError = _validateUsername(
@@ -313,7 +313,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               label: 'First name *',
                               hintText: 'Enter your first name',
                               controller: _firstNameController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _firstNameError = _validateName(
@@ -346,7 +346,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               label: 'Last name *',
                               hintText: 'Enter your last name',
                               controller: _lastNameController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _lastNameError = _validateName(
@@ -379,7 +379,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               label: 'Email *',
                               hintText: 'Enter your email',
                               controller: _emailController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _emailError = _validateEmail(value.trim());
@@ -409,7 +409,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               label: 'Password *',
                               hintText: 'Enter Password',
                               controller: _passwordController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _passwordError = _validatePassword(value);
@@ -448,7 +448,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               hintText: 'Confirm your password',
                               controller: _confirmPasswordController,
                               obscureText: _obscureConfirmPassword,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _confirmPasswordError =
@@ -502,7 +502,8 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                                           text: 'Terms',
                                           style: AppTypography.subtitleMedium
                                               .copyWith(
-                                                color: colorScheme.primary,
+                                                color: AppColors.textPrimary,
+                                                decoration: TextDecoration.underline
                                               ),
                                           // TODO: Add gesture recognizer for Terms
                                         ),
@@ -511,7 +512,8 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                                           text: 'Privacy Policy.',
                                           style: AppTypography.subtitleMedium
                                               .copyWith(
-                                                color: colorScheme.primary,
+                                                color: AppColors.textPrimary,
+                                                decoration: TextDecoration.underline
                                               ),
                                           // TODO: Add gesture recognizer for Privacy Policy
                                         ),
@@ -587,7 +589,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               child: Text(
                                 'Sign in',
                                 style: AppTypography.titleMedium.copyWith(
-                                  color: colorScheme.primary,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ),

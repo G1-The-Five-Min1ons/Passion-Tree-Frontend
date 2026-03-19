@@ -27,11 +27,11 @@ class ActivityHeatmapWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: const [
-              Text('MAR', style: TextStyle(color: AppColors.textSecondary)),
-              Text('APR', style: TextStyle(color: AppColors.textSecondary)),
-              Text('MAY', style: TextStyle(color: AppColors.textSecondary)),
-              Text('JUN', style: TextStyle(color: AppColors.textSecondary)),
-              Text('JUL', style: TextStyle(color: AppColors.textSecondary)),
+              Text('MAR', style: TextStyle(color: AppColors.textPrimary)),
+              Text('APR', style: TextStyle(color: AppColors.textPrimary)),
+              Text('MAY', style: TextStyle(color: AppColors.textPrimary)),
+              Text('JUN', style: TextStyle(color: AppColors.textPrimary)),
+              Text('JUL', style: TextStyle(color: AppColors.textPrimary)),
             ],
           ),
           const SizedBox(height: 8),
@@ -86,9 +86,9 @@ class ActivityHeatmapWidget extends StatelessWidget {
   }
 
   Color _getColor(int level) {
-    if (level == 0) return AppColors.background;
-    if (level == 1) return AppColors.surface;
-    if (level == 2) return AppColors.primaryBrand;
-    return AppColors.status;
+    if (level == 0) return AppColors.activityfour;
+    if (level == 1) return AppColors.activitythree;
+    if (level == 2) return AppColors.activitytwo;
+    return AppColors.activityone;
   }
 }
