@@ -24,6 +24,8 @@ class AlbumItem {
   final String status;
   final List<Chapter> chapters;
   final String overallStatus;
+  final double? treeScore;
+  final bool isPaused;
   final String? resumeOn;
   final String? pathId;
 
@@ -34,6 +36,8 @@ class AlbumItem {
     required this.status,
     this.chapters = const [],
     required this.overallStatus,
+    this.treeScore,
+    this.isPaused = false,
     this.resumeOn,
     this.pathId,
   });

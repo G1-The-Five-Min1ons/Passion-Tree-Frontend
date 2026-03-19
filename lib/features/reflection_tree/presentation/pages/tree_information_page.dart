@@ -229,7 +229,10 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                 children: [
                   const SizedBox(height: 80), // เว้นที่ให้ header ลอย
 
-                  MainTreeImage(status: item.overallStatus),
+                  MainTreeImage(
+                    status: item.overallStatus,
+                    treeScore: item.treeScore,
+                  ),
 
                   Transform.translate(
                     offset: const Offset(0, -10),
@@ -310,6 +313,20 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                                                 createdReflection,
                                                 request,
                                               );
+
+                                              final albumBloc =
+                                                  context.read<AlbumBloc>();
+                                              if (widget.albumId != null) {
+                                                albumBloc.add(
+                                                  LoadAlbumByIdEvent(
+                                                    widget.albumId!,
+                                                  ),
+                                                );
+                                              } else {
+                                                albumBloc.add(
+                                                  const LoadAlbumsEvent(),
+                                                );
+                                              }
                                             },
                                       );
                                     }

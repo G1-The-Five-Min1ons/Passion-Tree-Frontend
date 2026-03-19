@@ -24,7 +24,9 @@ class TreeMapper {
       lastEdited: 'Edited ${DateTimeFormatter.getRelativeTime(tree.lastUpdate)}',
       status: tree.status,
       chapters: chapters,
-      overallStatus: tree.isPause ? 'paused' : tree.status,
+      overallStatus: tree.status,
+      treeScore: tree.treeScore,
+      isPaused: tree.isPause,
       resumeOn: null,
       pathId: tree.pathId,
     );
