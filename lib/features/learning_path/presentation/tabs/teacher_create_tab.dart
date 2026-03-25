@@ -80,7 +80,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
       final status = await _authRepository.getTeacherVerificationStatus();
       if (!mounted) return;
 
-      if (!status.isVerified) {
+      if (status.applicationStatus != 'approved') {
         await Navigator.push(
           context,
           MaterialPageRoute(
@@ -90,10 +90,15 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
         return;
       }
 
+      final bloc = context.read<LearningPathBloc>();
+
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const CreateLearningPathInputPage(),
+          builder: (context) => BlocProvider.value(
+            value: bloc,
+            child: const CreateLearningPathInputPage(),
+          ),
         ),
       );
     } catch (e) {
