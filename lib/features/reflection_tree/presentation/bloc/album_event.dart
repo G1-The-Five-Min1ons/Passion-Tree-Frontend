@@ -124,3 +124,13 @@ class UpdateTreeEvent extends AlbumEvent {
   @override
   List<Object?> get props => [treeId, albumId, title, newAlbumId];
 }
+
+class RetrieveTreeEvent extends AlbumEvent {
+  final String treeId;
+  final String albumId;
+
+  const RetrieveTreeEvent({required this.treeId, required this.albumId});
+
+  @override
+  List<Object?> get props => [treeId, albumId];
+}

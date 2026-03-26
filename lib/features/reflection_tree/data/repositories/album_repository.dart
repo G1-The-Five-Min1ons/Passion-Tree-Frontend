@@ -321,10 +321,34 @@ class AlbumRepository implements IAlbumRepository {
       return Left(FailureMapper.fromException(e));
     } catch (e) {
       LogHandler.error('Repository: update tree failed', error: e);
-      return Left(UnknownFailure(
-        message: 'Failed to update tree',
-        technicalMessage: e.toString(),
-      ));
+      return Left(
+        UnknownFailure(
+          message: 'Failed to update tree',
+          technicalMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> retrieveTree({required String treeId}) async {
+    try {
+      final tokenResult = await _getValidToken();
+      return tokenResult.fold((failure) => Left(failure), (token) async {
+        final remainingHearts = await dataSource.retrieveTree(treeId, token);
+        LogHandler.success('Tree retrieved successfully');
+        return Right(remainingHearts);
+      });
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository: retrieve tree failed', error: e);
+      return Left(
+        UnknownFailure(
+          message: 'Failed to retrieve tree',
+          technicalMessage: e.toString(),
+        ),
+      );
     }
   }
 }

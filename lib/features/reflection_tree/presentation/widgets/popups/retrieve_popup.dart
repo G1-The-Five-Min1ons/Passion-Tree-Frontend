@@ -5,13 +5,15 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 
-class RetrievePopup extends StatelessWidget{
-  const RetrievePopup({super.key});
+class RetrievePopup extends StatelessWidget {
+  final VoidCallback? onConfirm;
 
-  static void show(BuildContext context) {
+  const RetrievePopup({super.key, this.onConfirm});
+
+  static void show(BuildContext context, {VoidCallback? onConfirm}) {
     showDialog(
       context: context,
-      builder: (context) => const RetrievePopup(),
+      builder: (context) => RetrievePopup(onConfirm: onConfirm),
     );
   }
 
@@ -48,13 +50,14 @@ class RetrievePopup extends StatelessWidget{
                 saveText: '5',
                 saveIcon: const PixelIcon('assets/icons/Pixel_heart.png'),
                 cancelText: 'Cancel',
-                onSave: (){
+                onSave: () {
+                  onConfirm?.call();
                   Navigator.pop(context);
-                  //TODO: add logic
-                }, onCancel: () => Navigator.pop(context),
-              )
+                },
+                onCancel: () => Navigator.pop(context),
+              ),
             ],
-          )
+          ),
         ),
       ),
     );

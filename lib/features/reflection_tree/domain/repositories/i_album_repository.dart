@@ -45,4 +45,7 @@ abstract class IAlbumRepository {
     required String title,
     String? albumId,
   });
+
+  /// Retrieve a dead tree by spending hearts
+  Future<Either<Failure, int>> retrieveTree({required String treeId});
 }

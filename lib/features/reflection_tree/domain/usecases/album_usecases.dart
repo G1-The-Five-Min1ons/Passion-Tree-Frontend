@@ -143,3 +143,14 @@ class UpdateTreeUseCase {
     );
   }
 }
+
+/// Use case for retrieving a dead tree
+class RetrieveTreeUseCase {
+  final IAlbumRepository repository;
+
+  RetrieveTreeUseCase(this.repository);
+
+  Future<Either<Failure, int>> call({required String treeId}) async {
+    return await repository.retrieveTree(treeId: treeId);
+  }
+}

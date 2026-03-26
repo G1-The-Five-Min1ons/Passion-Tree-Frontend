@@ -231,6 +231,47 @@ class AlbumDataSource {
     throw createExceptionFromStatusCode(statusCode, msg);
   }
 
+  /// Retrieve a dead tree by spending hearts
+  Future<int> retrieveTree(String treeId, String token) async {
+    LogHandler.separator(title: 'TREE · RETRIEVE');
+    final response = await _apiHandler.patch(
+      url: ApiConfig.retrieveTree(treeId),
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (response.isSuccess) {
+      final data = response.data as Map<String, dynamic>? ?? {};
+      final dynamic heartCount = data['heart_count'];
+      if (heartCount is int) {
+        LogHandler.success(
+          'Tree retrieved: $treeId (remaining hearts: $heartCount)',
+        );
+        return heartCount;
+      }
+      if (heartCount is num) {
+        final parsedHeartCount = heartCount.toInt();
+        LogHandler.success(
+          'Tree retrieved: $treeId (remaining hearts: $parsedHeartCount)',
+        );
+        return parsedHeartCount;
+      }
+
+      LogHandler.error(
+        'Retrieve tree succeeded but heart_count missing in response',
+      );
+      throw createExceptionFromStatusCode(
+        500,
+        'Missing heart_count in retrieve response',
+      );
+    }
+
+    final msg = response.error ?? response.message ?? 'Failed to retrieve tree';
+    LogHandler.error('Retrieve tree failed: $msg');
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
+  }
+
   /// Get nodes by learning path ID
   Future<List<LearningPathNode>> getNodesByPathId(String pathId, String token) async {
     LogHandler.separator(title: 'NODES · GET BY PATH');

@@ -7,11 +7,13 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
 import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/edit_tree_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/retrieve_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/resume_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
-
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_state.dart';
 
 class TreeAlbumCard extends StatelessWidget {
   final String title;
@@ -51,75 +53,88 @@ class TreeAlbumCard extends StatelessWidget {
     this.resumeOn,
   });
 
+  String _capitalizeStatus(String value) {
+    final trimmedValue = value.trim();
+    if (trimmedValue.isEmpty) {
+      return trimmedValue;
+    }
+    return '${trimmedValue[0].toUpperCase()}${trimmedValue.substring(1)}';
+  }
+
+  bool _isDiedStatus(String value) {
+    return value.trim().toLowerCase() == 'died';
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isPaused = resumeOn != null;
     return Stack(
       children: [
         GestureDetector(
-        onTap: isPaused ? null : onCardTap,
-        child: PixelBaseCard(
-          title: title,
-          subtitle: subtitle,
-          actionIcon: IconButton(
-          constraints: const BoxConstraints(),
-          padding: EdgeInsets.zero,
-          splashRadius: 20,
-          icon: const MoreIcon(),
-          onPressed: () {
-            ActionPopUp.show(
-              context,
-              onEdit: () {
-                EditTreePopUp.show(
+          onTap: isPaused ? null : onCardTap,
+          child: PixelBaseCard(
+            title: title,
+            subtitle: subtitle,
+            actionIcon: IconButton(
+              constraints: const BoxConstraints(),
+              padding: EdgeInsets.zero,
+              splashRadius: 20,
+              icon: const MoreIcon(),
+              onPressed: () {
+                ActionPopUp.show(
                   context,
-                  initialName: title,
-                  initialPath: currentAlbumname,
-                  pathOptions: albumOptions.isEmpty 
-                      ? ['No albums available'] 
-                      : albumOptions,
-                  onSave: (newTitle, selectedAlbumName) {
-                    String? newAlbumId;
-                    if (selectedAlbumName != currentAlbumname && availableAlbums.isNotEmpty) {
-                      try {
-                        final selectedAlbum = availableAlbums.firstWhere(
-                          (album) => album.title == selectedAlbumName,
+                  onEdit: () {
+                    EditTreePopUp.show(
+                      context,
+                      initialName: title,
+                      initialPath: currentAlbumname,
+                      pathOptions: albumOptions.isEmpty
+                          ? ['No albums available']
+                          : albumOptions,
+                      onSave: (newTitle, selectedAlbumName) {
+                        String? newAlbumId;
+                        if (selectedAlbumName != currentAlbumname &&
+                            availableAlbums.isNotEmpty) {
+                          try {
+                            final selectedAlbum = availableAlbums.firstWhere(
+                              (album) => album.title == selectedAlbumName,
+                            );
+                            newAlbumId = selectedAlbum.albumId;
+                          } catch (e) {
+                            // If not found, don't change album
+                            newAlbumId = null;
+                          }
+                        }
+
+                        context.read<AlbumBloc>().add(
+                          UpdateTreeEvent(
+                            treeId: treeId,
+                            albumId: albumId,
+                            title: newTitle,
+                            newAlbumId: newAlbumId,
+                          ),
                         );
-                        newAlbumId = selectedAlbum.albumId;
-                      } catch (e) {
-                        // If not found, don't change album
-                        newAlbumId = null;
-                      }
-                    }
-                    
-                    context.read<AlbumBloc>().add(
-                      UpdateTreeEvent(
-                        treeId: treeId,
-                        albumId: albumId,
-                        title: newTitle,
-                        newAlbumId: newAlbumId,
-                      ),
+                      },
                     );
+                  },
+                  onDelete: () {
+                    onDelete?.call();
                   },
                 );
               },
-              onDelete: () {
-                onDelete?.call();
-                },
-              );
-            },
-          ),
-          topContent: Container(
-            width: double.infinity,
-            height: double.infinity,
-            color: AppColors.surface,
-            child: Stack(
-              children: [
+            ),
+            topContent: Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: AppColors.surface,
+              child: Stack(
+                children: [
                   Center(
                     child: MainTreeImage(
                       status: treeStatus,
                       treeScore: treeScore,
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -132,6 +147,44 @@ class TreeAlbumCard extends StatelessWidget {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
+              if (_isDiedStatus(statusText)) {
+                RetrievePopup.show(
+                  context,
+                  onConfirm: () {
+                    final userState = context.read<UserBloc>().state;
+                    final int currentHeartCount = userState is UserLoaded
+                        ? userState.heartCount
+                        : 5;
+
+                    if (currentHeartCount < 5) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Not enough hearts.',
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    if (treeId.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Tree ID is missing.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    context.read<AlbumBloc>().add(
+                      RetrieveTreeEvent(treeId: treeId, albumId: albumId),
+                    );
+                  },
+                );
+                return;
+              }
               onStatusTap?.call();
             },
             child: Padding(
@@ -144,7 +197,7 @@ class TreeAlbumCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  statusText,
+                  _capitalizeStatus(statusText),
                   textAlign: TextAlign.center,
                   style: AppPixelTypography.littleSmall.copyWith(
                     color: Theme.of(context).colorScheme.onPrimary,
@@ -156,33 +209,37 @@ class TreeAlbumCard extends StatelessWidget {
         ),
 
         if (resumeOn != null)
-        Positioned.fill(
-          child: GestureDetector(
-            onTap: () {
-              ResumePopup.show(context);
-            },
-            child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.textDisabled.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Paused",
-                  style: AppPixelTypography.smallTitle.copyWith(color: AppColors.surface),
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                ResumePopup.show(context);
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.textDisabled.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  "Resume on : $resumeOn",
-                  style: AppTypography.smallBodyRegular.copyWith(color: AppColors.surface),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Paused",
+                      style: AppPixelTypography.smallTitle.copyWith(
+                        color: AppColors.surface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Resume on : $resumeOn",
+                      style: AppTypography.smallBodyRegular.copyWith(
+                        color: AppColors.surface,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-          ),
-        ),
       ],
     );
   }
