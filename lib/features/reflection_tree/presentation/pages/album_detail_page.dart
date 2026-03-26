@@ -18,6 +18,9 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc_provider.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_event.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_state.dart';
+import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 
 class AlbumDetailPage extends StatefulWidget {
   final String albumId;
@@ -43,6 +46,20 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
     // Load album data when page opens
     context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
     context.read<AlbumBloc>().add(const LoadAlbumsEvent());
+    _ensureUserLoaded();
+  }
+
+  Future<void> _ensureUserLoaded() async {
+    final userBloc = context.read<UserBloc>();
+    if (userBloc.state is UserLoaded || userBloc.state is UserLoading) {
+      return;
+    }
+
+    final authLocalDataSource = getIt<AuthLocalDataSource>();
+    final userId = await authLocalDataSource.getUserId();
+    if (userId != null && mounted) {
+      userBloc.add(LoadUser(userId));
+    }
   }
 
   @override
