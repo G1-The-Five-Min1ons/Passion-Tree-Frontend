@@ -16,6 +16,7 @@ class ProfileCardWidget extends StatelessWidget {
   final int hours;
   final int streak;
   final int learningPathCount;
+  final String rankName;
   final VoidCallback onSettingsTap;
 
   const ProfileCardWidget({
@@ -33,16 +34,18 @@ class ProfileCardWidget extends StatelessWidget {
     required this.streak,
     required this.learningPathCount,
     required this.onSettingsTap,
+    this.rankName = 'Beginner',
   });
 
   @override
   Widget build(BuildContext context) {
     return PixelBorderContainer(
       pixelSize: 3,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // --- Header: Avatar + Name + Settings ---
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -52,7 +55,8 @@ class ProfileCardWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.primaryBrand.withValues(alpha: 0.35),
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.secondaryBrand, width: 2),
+                  border:
+                      Border.all(color: AppColors.secondaryBrand, width: 2),
                 ),
                 child: Center(
                   child: Text(
@@ -73,12 +77,39 @@ class ProfileCardWidget extends StatelessWidget {
                       style: AppTypography.titleSemiBold.copyWith(
                         color: AppColors.textPrimary,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
-                      roleLabel,
-                      style: AppTypography.bodyRegular.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Text(
+                          roleLabel,
+                          style: AppTypography.bodyRegular.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        if (rankName.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.secondaryBrand
+                                  .withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              rankName,
+                              style: AppTypography.smallBodySemiBold.copyWith(
+                                color: AppColors.secondaryBrand,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
@@ -97,21 +128,31 @@ class ProfileCardWidget extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: _buildMiniInfo('Email', email)),
-              const SizedBox(width: 8),
-              Expanded(child: _buildMiniInfo('Location', location)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildMiniInfo('Bio', bio),
-          const SizedBox(height: 10),
+
+          const SizedBox(height: 12),
+
+          // --- Email (always shown) ---
+          _buildMiniInfo('Email', email),
+
+          // --- Location (hidden when empty) ---
+          if (location.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            _buildMiniInfo('Location', location),
+          ],
+
+          // --- Bio (hidden when empty) ---
+          if (bio.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            _buildMiniInfo('Bio', bio),
+          ],
+
+          const SizedBox(height: 14),
+
+          // --- Level Progress ---
           Row(
             children: [
               Text(
-                'Level Progress',
+                'Level $level',
                 style: AppTypography.bodySemiBold.copyWith(
                   color: AppColors.textPrimary,
                 ),
@@ -126,19 +167,22 @@ class ProfileCardWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          LinearProgressIndicator(
-            value: xpProgress,
-            backgroundColor: AppColors.cardBorder,
-            color: AppColors.secondaryBrand,
-            minHeight: 8,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: xpProgress,
+              backgroundColor: AppColors.cardBorder,
+              color: AppColors.secondaryBrand,
+              minHeight: 8,
+            ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Row(
             children: [
               Text(
                 '$xp XP',
-                style: AppTypography.smallBodyRegular.copyWith(
-                  color: AppColors.textSecondary,
+                style: AppTypography.smallBodySemiBold.copyWith(
+                  color: AppColors.secondaryBrand,
                 ),
               ),
               const Spacer(),
@@ -150,20 +194,25 @@ class ProfileCardWidget extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+
+          const SizedBox(height: 12),
+
+          // --- Stats Grid ---
           Row(
             children: [
               Expanded(
                 child: _buildStatTile(
-                  title: '$hours Hours',
+                  value: '$hours',
+                  label: 'Hours',
                   icon: Icons.access_time_filled,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildStatTile(
-                  title: '8 Achievements',
-                  icon: Icons.emoji_events,
+                  value: '$streak',
+                  label: 'Day Streak',
+                  icon: Icons.local_fire_department,
                 ),
               ),
             ],
@@ -173,15 +222,17 @@ class ProfileCardWidget extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildStatTile(
-                  title: '$streak Days Streak',
-                  icon: Icons.local_fire_department,
+                  value: '$learningPathCount',
+                  label: 'Paths',
+                  icon: Icons.menu_book,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildStatTile(
-                  title: '$learningPathCount Learning Path',
-                  icon: Icons.menu_book,
+                  value: '$xp',
+                  label: 'Total XP',
+                  icon: Icons.star,
                 ),
               ),
             ],
@@ -203,7 +254,7 @@ class ProfileCardWidget extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          value,
+          value.isEmpty ? '-' : value,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: AppTypography.smallBodyRegular.copyWith(
@@ -215,27 +266,39 @@ class ProfileCardWidget extends StatelessWidget {
   }
 
   Widget _buildStatTile({
-    required String title,
+    required String value,
+    required String label,
     required IconData icon,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.primaryBrand,
         border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: AppColors.secondaryBrand),
-          const SizedBox(width: 6),
+          Icon(icon, size: 16, color: AppColors.secondaryBrand),
+          const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.bodySemiBold.copyWith(
-                color: AppColors.textPrimary,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: AppTypography.subtitleSemiBold.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.smallBodyRegular.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

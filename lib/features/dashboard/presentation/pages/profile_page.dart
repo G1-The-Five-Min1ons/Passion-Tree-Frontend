@@ -4,6 +4,8 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_profile_usecase.dart';
+import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
+import 'package:passion_tree_frontend/features/dashboard/domain/usecases/get_dashboard_usecase.dart';
 import 'package:passion_tree_frontend/features/setting/presentation/pages/setting_page.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/profile_card_widget.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/tree_card_widget.dart';
@@ -23,9 +25,11 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final GetProfileUseCase _getProfileUseCase = getIt<GetProfileUseCase>();
+  final GetDashboardUseCase _getDashboardUseCase = getIt<GetDashboardUseCase>();
 
   bool _isLoading = true;
   UserProfile? _userProfile;
+  DashboardResponse? _dashboardData;
 
   @override
   void initState() {
@@ -34,15 +38,25 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadDashboardData() async {
-    final result = await _getProfileUseCase.execute();
+    // Fetch profile and dashboard data in parallel
+    final profileFuture = _getProfileUseCase.execute();
+    final dashboardFuture = _getDashboardUseCase.execute();
+
+    final profileResult = await profileFuture;
+    final dashboardResult = await dashboardFuture;
 
     if (!mounted) return;
 
-    result.fold((_) => setState(() => _isLoading = false), (profile) {
-      setState(() {
+    profileResult.fold(
+      (_) {},
+      (profile) {
         _userProfile = profile;
-        _isLoading = false;
-      });
+      },
+    );
+
+    setState(() {
+      _dashboardData = dashboardResult;
+      _isLoading = false;
     });
   }
 
@@ -68,17 +82,28 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   double get _xpProgress {
-    final xp = _userProfile?.profile?.xp ?? 500;
+    final xp = _userProfile?.profile?.xp ?? _dashboardData?.userInfo.xp ?? 0;
     final nextXp = ((xp ~/ 1000) + 1) * 1000;
     return (xp / nextXp).clamp(0, 1);
   }
 
-  int get _level => _userProfile?.profile?.level ?? 15;
-  int get _xp => _userProfile?.profile?.xp ?? 500;
+  int get _level =>
+      _userProfile?.profile?.level ?? _dashboardData?.userInfo.level ?? 1;
+  int get _xp =>
+      _userProfile?.profile?.xp ?? _dashboardData?.userInfo.xp ?? 0;
   int get _nextXp => ((_xp ~/ 1000) + 1) * 1000;
-  int get _hours => _userProfile?.profile?.hourLearned ?? 120;
-  int get _streak => _userProfile?.profile?.learningStreak ?? 17;
-  int get _learningPathCount => _userProfile?.profile?.learningCount ?? 10;
+  int get _hours =>
+      _userProfile?.profile?.hourLearned ??
+      _dashboardData?.userInfo.hourLearned ??
+      0;
+  int get _streak =>
+      _userProfile?.profile?.learningStreak ??
+      _dashboardData?.userInfo.learningStreak ??
+      0;
+  int get _learningPathCount =>
+      _dashboardData?.currentPaths.length ??
+      _userProfile?.profile?.learningCount ??
+      0;
 
   @override
   Widget build(BuildContext context) {
@@ -90,48 +115,64 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ProfileCardWidget(
-                    fullName: _fullName,
-                    roleLabel: _roleLabel,
-                    email: _userProfile?.user.email ?? 'you@example.com',
-                    location:
-                        _userProfile?.profile?.location ?? 'Bangkok, Thailand',
-                    bio:
-                        _userProfile?.profile?.bio ??
-                        'Passionate about creating digital experiences and learning new technologies.',
-                    level: _level,
-                    xp: _xp,
-                    nextXp: _nextXp,
-                    xpProgress: _xpProgress,
-                    hours: _hours,
-                    streak: _streak,
-                    learningPathCount: _learningPathCount,
-                    onSettingsTap: _openSettings,
-                  ),
-                  const SizedBox(height: 10),
-                  TreeCardWidget(level: _level),
-                  const SizedBox(height: 14),
-                  const SectionTitle(title: 'My Learning Path'),
-                  const SizedBox(height: 8),
-                  const LearningPathCardWidget(),
-                  const SizedBox(height: 14),
-                  const WeeklyMissionCardWidget(),
-                  const SizedBox(height: 14),
-                  const SectionTitle(title: 'Recent Activity'),
-                  const SizedBox(height: 8),
-                  const RecentActivityCardWidget(),
-                  const SizedBox(height: 14),
-                  const SectionTitle(title: 'Activity'),
-                  const SizedBox(height: 8),
-                  const ActivityHeatmapWidget(),
-                  const SizedBox(height: 14),
-                  const DashboardFooter(),
-                ],
+          : RefreshIndicator(
+              onRefresh: _loadDashboardData,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ProfileCardWidget(
+                      fullName: _fullName,
+                      roleLabel: _roleLabel,
+                      email: _userProfile?.user.email ?? 'you@example.com',
+                      location:
+                          _userProfile?.profile?.location ??
+                          'Bangkok, Thailand',
+                      bio:
+                          _userProfile?.profile?.bio ??
+                          'Passionate about creating digital experiences and learning new technologies.',
+                      level: _level,
+                      xp: _xp,
+                      nextXp: _nextXp,
+                      xpProgress: _xpProgress,
+                      hours: _hours,
+                      streak: _streak,
+                      learningPathCount: _learningPathCount,
+                      onSettingsTap: _openSettings,
+                    ),
+                    const SizedBox(height: 10),
+                    TreeCardWidget(
+                      level: _level,
+                      treeStats: _dashboardData?.treeCounter,
+                    ),
+                    const SizedBox(height: 14),
+                    const SectionTitle(title: 'My Learning Path'),
+                    const SizedBox(height: 8),
+                    LearningPathCardWidget(
+                      paths: _dashboardData?.currentPaths ?? [],
+                    ),
+                    const SizedBox(height: 14),
+                    WeeklyMissionCardWidget(
+                      missions: _dashboardData?.weeklyMissions ?? [],
+                    ),
+                    const SizedBox(height: 14),
+                    const SectionTitle(title: 'Recent Activity'),
+                    const SizedBox(height: 8),
+                    RecentActivityCardWidget(
+                      activities: _dashboardData?.recentActivity ?? [],
+                    ),
+                    const SizedBox(height: 14),
+                    const SectionTitle(title: 'Activity'),
+                    const SizedBox(height: 8),
+                    ActivityHeatmapWidget(
+                      heatmapData: _dashboardData?.activitySummary ?? [],
+                    ),
+                    const SizedBox(height: 14),
+                    const DashboardFooter(),
+                  ],
+                ),
               ),
             ),
     );

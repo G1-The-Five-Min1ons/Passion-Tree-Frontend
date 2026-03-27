@@ -63,6 +63,10 @@ import 'package:passion_tree_frontend/features/setting/data/repositories/setting
 import 'package:passion_tree_frontend/features/setting/domain/repositories/setting_repository.dart';
 import 'package:passion_tree_frontend/features/setting/domain/usecases/get_settings_usecase.dart';
 import 'package:passion_tree_frontend/features/setting/domain/usecases/update_setting_usecase.dart';
+import 'package:passion_tree_frontend/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:passion_tree_frontend/features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'package:passion_tree_frontend/features/dashboard/domain/repositories/i_dashboard_repository.dart';
+import 'package:passion_tree_frontend/features/dashboard/domain/usecases/get_dashboard_usecase.dart';
 
 final getIt = GetIt.instance;
 
@@ -346,6 +350,20 @@ Future<void> initializeDependencies() async {
   );
   getIt.registerFactory<UpdateSettingUseCase>(
     () => UpdateSettingUseCase(getIt<ISettingRepository>()),
+  );
+
+  // Dashboard Feature
+  getIt.registerLazySingleton<DashboardRemoteDataSource>(
+    () => DashboardRemoteDataSourceImpl(apiHandler: getIt<ApiHandler>()),
+  );
+  getIt.registerLazySingleton<IDashboardRepository>(
+    () => DashboardRepositoryImpl(
+      remoteDataSource: getIt<DashboardRemoteDataSource>(),
+      localDataSource: getIt<AuthLocalDataSource>(),
+    ),
+  );
+  getIt.registerFactory<GetDashboardUseCase>(
+    () => GetDashboardUseCase(getIt<IDashboardRepository>()),
   );
 }
 

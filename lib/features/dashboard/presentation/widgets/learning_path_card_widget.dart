@@ -2,12 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
+import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
 
 class LearningPathCardWidget extends StatelessWidget {
-  const LearningPathCardWidget({super.key});
+  final List<CurrentPathItem> paths;
+
+  const LearningPathCardWidget({super.key, required this.paths});
 
   @override
   Widget build(BuildContext context) {
+    if (paths.isEmpty) {
+      return PixelBorderContainer(
+        pixelSize: 3,
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          'No learning paths enrolled yet',
+          style: AppTypography.bodyRegular.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      );
+    }
+
+    // Show the first enrolled path as the "current" path
+    final path = paths.first;
+    final progress = (path.progressPercent / 100).clamp(0.0, 1.0);
+    final progressLabel = '${path.progressPercent.round()}%';
+
     return PixelBorderContainer(
       pixelSize: 3,
       padding: const EdgeInsets.all(0),
@@ -18,29 +39,34 @@ class LearningPathCardWidget extends StatelessWidget {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
             child: Stack(
               children: [
-                Image.asset(
-                  'assets/images/courses/biology_101.png',
-                  width: double.infinity,
-                  height: 130,
-                  fit: BoxFit.cover,
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    color: AppColors.primaryBrand,
-                    child: Text(
-                      '⭐ 4.8',
-                      style: AppTypography.smallBodySemiBold.copyWith(
-                        color: AppColors.secondaryBrand,
+                // Use network image if available, otherwise fallback
+                path.coverImgUrl.isNotEmpty
+                    ? Image.network(
+                        path.coverImgUrl,
+                        width: double.infinity,
+                        height: 130,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: double.infinity,
+                          height: 130,
+                          color: AppColors.primaryBrand,
+                          child: const Icon(
+                            Icons.school,
+                            size: 48,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      )
+                    : Container(
+                        width: double.infinity,
+                        height: 130,
+                        color: AppColors.primaryBrand,
+                        child: const Icon(
+                          Icons.school,
+                          size: 48,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -50,7 +76,7 @@ class LearningPathCardWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Biology 101',
+                  path.title,
                   style: AppTypography.subtitleSemiBold.copyWith(
                     color: AppColors.textPrimary,
                   ),
@@ -64,7 +90,7 @@ class LearningPathCardWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 LinearProgressIndicator(
-                  value: 0.35,
+                  value: progress,
                   backgroundColor: AppColors.cardBorder,
                   color: AppColors.secondaryBrand,
                   minHeight: 7,
@@ -73,33 +99,22 @@ class LearningPathCardWidget extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerRight,
                   child: Text(
-                    '35%',
+                    progressLabel,
                     style: AppTypography.smallBodyRegular.copyWith(
                       color: AppColors.textSecondary,
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Learning Modules',
-                  style: AppTypography.bodySemiBold.copyWith(
-                    color: AppColors.textPrimary,
+                // Show remaining paths count
+                if (paths.length > 1) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    '+ ${paths.length - 1} more learning path${paths.length - 1 > 1 ? 's' : ''}',
+                    style: AppTypography.smallBodyRegular.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Currently on Module # Ecosystem',
-                  style: AppTypography.smallBodyRegular.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                LinearProgressIndicator(
-                  value: 1,
-                  backgroundColor: AppColors.cardBorder,
-                  color: AppColors.primaryBrand,
-                  minHeight: 7,
-                ),
+                ],
               ],
             ),
           ),

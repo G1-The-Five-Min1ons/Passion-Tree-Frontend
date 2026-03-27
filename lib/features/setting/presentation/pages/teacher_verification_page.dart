@@ -98,8 +98,6 @@ class _TeacherVerificationPageState extends State<TeacherVerificationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final status = _status;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AppBarWidget(
@@ -109,7 +107,8 @@ class _TeacherVerificationPageState extends State<TeacherVerificationPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -120,56 +119,219 @@ class _TeacherVerificationPageState extends State<TeacherVerificationPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  if (status != null)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        border: Border.all(color: AppColors.cardBorder),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        status.isVerified
-                            ? 'Status: Verified'
-                            : 'Status: ${status.applicationStatus}',
-                        style: AppTypography.bodySemiBold.copyWith(
-                          color: status.isVerified
-                              ? Colors.green
-                              : AppColors.textPrimary,
+
+                  // ── Status banner ──────────────────────────────────
+                  _buildStatusBanner(),
+                  const SizedBox(height: 16),
+
+                  // ── Body depending on status ───────────────────────
+                  if (_status != null &&
+                      _status!.applicationStatus == 'pending')
+                    _buildPendingView()
+                  else if (_status != null &&
+                      (_status!.applicationStatus == 'approved' ||
+                          _status!.isVerified))
+                    _buildApprovedView()
+                  else ...[
+                    // none / rejected → show form
+                    if (_status != null &&
+                        _status!.applicationStatus == 'rejected')
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          'Your previous application was rejected. You may re-apply below.',
+                          style: AppTypography.bodyRegular.copyWith(
+                            color: Colors.orangeAccent,
+                          ),
                         ),
                       ),
+                    _buildField(
+                      label: 'Phone Number',
+                      controller: _phoneController,
+                      hint: 'e.g. 0812345678',
                     ),
-                  const SizedBox(height: 16),
-                  _buildField(
-                    label: 'Phone Number',
-                    controller: _phoneController,
-                    hint: 'e.g. 0812345678',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildField(
-                    label: 'Reason for applying',
-                    controller: _reasonController,
-                    hint: 'Why do you want to become a teacher?',
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildField(
-                    label: 'Teaching history',
-                    controller: _historyController,
-                    hint: 'Share your teaching background and experience.',
-                    maxLines: 4,
-                  ),
-                  const SizedBox(height: 20),
-                  AppButton(
-                    variant: AppButtonVariant.text,
-                    text: _isSubmitting ? 'Submitting...' : 'Apply for Teacher',
-                    onPressed: _isSubmitting ? () {} : _submit,
-                  ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      label: 'Reason for applying',
+                      controller: _reasonController,
+                      hint: 'Why do you want to become a teacher?',
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      label: 'Teaching history',
+                      controller: _historyController,
+                      hint:
+                          'Share your teaching background and experience.',
+                      maxLines: 4,
+                    ),
+                    const SizedBox(height: 20),
+                    AppButton(
+                      variant: AppButtonVariant.text,
+                      text: _isSubmitting
+                          ? 'Submitting...'
+                          : 'Apply for Teacher',
+                      onPressed: _isSubmitting ? () {} : _submit,
+                    ),
+                  ],
                 ],
               ),
             ),
     );
   }
+
+  // ── Status banner ────────────────────────────────────────────────────
+
+  Widget _buildStatusBanner() {
+    final status = _status;
+    if (status == null) return const SizedBox.shrink();
+
+    final String label;
+    final Color color;
+    final IconData icon;
+
+    if (status.isVerified || status.applicationStatus == 'approved') {
+      label = 'Status: Verified';
+      color = Colors.green;
+      icon = Icons.check_circle;
+    } else if (status.applicationStatus == 'pending') {
+      label = 'Status: Pending Review';
+      color = Colors.amber;
+      icon = Icons.hourglass_top;
+    } else if (status.applicationStatus == 'rejected') {
+      label = 'Status: Rejected';
+      color = Colors.redAccent;
+      icon = Icons.cancel;
+    } else {
+      label = 'Status: Not Applied';
+      color = AppColors.textPrimary;
+      icon = Icons.info_outline;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: color.withOpacity(0.6)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: AppTypography.bodySemiBold.copyWith(color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Pending view ─────────────────────────────────────────────────────
+
+  Widget _buildPendingView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.amber.withOpacity(0.08),
+            border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.hourglass_top,
+                  color: Colors.amber, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Your application has been submitted and is waiting for admin approval.',
+                  style: AppTypography.bodyRegular.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (_status!.phoneNumber.isNotEmpty) ...[
+          _buildReadOnlyField(
+              label: 'Phone Number', value: _status!.phoneNumber),
+          const SizedBox(height: 12),
+        ],
+      ],
+    );
+  }
+
+  // ── Approved / Verified view ─────────────────────────────────────────
+
+  Widget _buildApprovedView() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.08),
+        border: Border.all(color: Colors.green.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle, color: Colors.green, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Your teacher account has been verified! You can now create learning paths.',
+              style: AppTypography.bodyRegular.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Read-only field ──────────────────────────────────────────────────
+
+  Widget _buildReadOnlyField({
+    required String label,
+    required String value,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTypography.subtitleSemiBold.copyWith(
+            color: AppColors.title,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.surface.withOpacity(0.5),
+            border: Border.all(color: AppColors.cardBorder),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            value,
+            style: AppTypography.bodyRegular.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Editable field ───────────────────────────────────────────────────
 
   Widget _buildField({
     required String label,

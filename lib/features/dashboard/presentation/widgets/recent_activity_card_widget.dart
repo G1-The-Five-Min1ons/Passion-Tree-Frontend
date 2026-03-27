@@ -2,24 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
+import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
 
 class RecentActivityCardWidget extends StatelessWidget {
-  const RecentActivityCardWidget({super.key});
+  final List<ActivityItem> activities;
+
+  const RecentActivityCardWidget({super.key, required this.activities});
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      ('Complete React fundamentals', 'Learning', '2 Hours ago'),
-      ('Started photography module', 'Learning', '2 Days ago'),
-      ('Completed weekly mission', 'Mission', '1 Days ago'),
-      ('14-Day streak achieved', 'Milestone', '3 Days ago'),
-    ];
+    if (activities.isEmpty) {
+      return PixelBorderContainer(
+        pixelSize: 3,
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          'No recent activity',
+          style: AppTypography.bodyRegular.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      );
+    }
 
     return PixelBorderContainer(
       pixelSize: 3,
       padding: const EdgeInsets.all(8),
       child: Column(
-        children: items
+        children: activities
             .map(
               (item) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
@@ -34,13 +43,13 @@ class RecentActivityCardWidget extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            item.$1,
+                            item.title,
                             style: AppTypography.bodySemiBold.copyWith(
                               color: AppColors.textPrimary,
                             ),
                           ),
                           Text(
-                            item.$3,
+                            item.timeAgo,
                             style: AppTypography.smallBodyRegular.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -55,7 +64,7 @@ class RecentActivityCardWidget extends StatelessWidget {
                       ),
                       color: AppColors.primaryBrand,
                       child: Text(
-                        item.$2,
+                        item.typeLabel,
                         style: AppTypography.smallBodySemiBold.copyWith(
                           color: AppColors.textPrimary,
                         ),

@@ -2,12 +2,50 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
+import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
 
 class WeeklyMissionCardWidget extends StatelessWidget {
-  const WeeklyMissionCardWidget({super.key});
+  final List<MissionItem> missions;
+
+  const WeeklyMissionCardWidget({super.key, required this.missions});
+
+  int get _completedCount => missions.where((m) => m.isCompleted).length;
+
+  String get _progressLabel {
+    if (missions.isEmpty) return '0%';
+    return '${((_completedCount / missions.length) * 100).round()}%';
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (missions.isEmpty) {
+      return PixelBorderContainer(
+        pixelSize: 3,
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Text(
+                'Weekly Mission!',
+                style: AppPixelTypography.smallTitle.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'No missions this week',
+              style: AppTypography.bodyRegular.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return PixelBorderContainer(
       pixelSize: 3,
       padding: const EdgeInsets.all(12),
@@ -26,7 +64,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  '60%',
+                  _progressLabel,
                   style: AppTypography.titleSemiBold.copyWith(
                     color: AppColors.textPrimary,
                   ),
@@ -35,11 +73,16 @@ class WeeklyMissionCardWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          _buildMissionProgress('Complete daily login', 6 / 7, '6/7'),
-          const SizedBox(height: 8),
-          _buildMissionProgress('Take quiz', 0 / 10, '0/10'),
-          const SizedBox(height: 8),
-          _buildMissionProgress('Watch Videos', 6 / 7, '6/7'),
+          ...missions.map(
+            (mission) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildMissionProgress(
+                mission.detail,
+                mission.isCompleted ? 1.0 : 0.0,
+                mission.isCompleted ? 'Done' : '${mission.rewardXp} XP',
+              ),
+            ),
+          ),
         ],
       ),
     );

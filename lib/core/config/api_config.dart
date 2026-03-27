@@ -18,7 +18,7 @@ class ApiConfig {
   // OAuth Configuration
   static const String googleWebClientId = String.fromEnvironment(
     'GOOGLE_WEB_CLIENT_ID',
-    defaultValue: '1018698126969-ea61vm6q39icnr4vom4p5uot8712r59d.apps.googleusercontent.com',
+    defaultValue: '757180191292-blgkl3rlakvoie71b5fi4fcofuqd4qu1.apps.googleusercontent.com',
   );
   
   static const String discordClientId = String.fromEnvironment(
@@ -54,6 +54,9 @@ class ApiConfig {
   static String get authTeacherVerificationStatus =>
       '$apiBackendUrl/auth/teacher/verification-status';
   static String get authApplyTeacher => '$apiBackendUrl/auth/teacher/apply';
+
+  // Dashboard endpoint
+  static String get dashboard => '$apiBackendUrl/dashboard';
 
     // Setting endpoints
     static String get settings => '$apiBackendUrl/settings';
