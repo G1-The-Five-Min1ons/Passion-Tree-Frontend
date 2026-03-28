@@ -9,7 +9,7 @@ class AlbumDataSource {
   final ApiHandler _apiHandler;
 
   AlbumDataSource({ApiHandler? apiHandler})
-      : _apiHandler = apiHandler ?? ApiHandler();
+    : _apiHandler = apiHandler ?? ApiHandler();
 
   List<dynamic> _extractListFromResponseData(
     dynamic responseData, {
@@ -27,6 +27,22 @@ class AlbumDataSource {
     }
 
     return [];
+  }
+
+  String _toRfc3339WithLocalOffset(DateTime value) {
+    final local = value.toLocal();
+    final offset = local.timeZoneOffset;
+    final sign = offset.isNegative ? '-' : '+';
+    final totalMinutes = offset.inMinutes.abs();
+    final hours = (totalMinutes ~/ 60).toString().padLeft(2, '0');
+    final minutes = (totalMinutes % 60).toString().padLeft(2, '0');
+
+    return '${local.toIso8601String()}$sign$hours:$minutes';
+  }
+
+  DateTime _endOfDay(DateTime value) {
+    final local = value.toLocal();
+    return DateTime(local.year, local.month, local.day, 23, 59, 0);
   }
 
   /// Create a new album
@@ -169,11 +185,11 @@ class AlbumDataSource {
 
     if (response.isSuccess && response.statusCode == 201) {
       LogHandler.success('Tree created successfully');
-            if (response.data == null) {
+      if (response.data == null) {
         LogHandler.error('Response data is null');
         throw createExceptionFromStatusCode(500, 'Server returned null data');
       }
-      
+
       final data = response.data as Map<String, dynamic>;
       return TreeApiModel.fromJson(data);
     }
@@ -207,12 +223,12 @@ class AlbumDataSource {
   /// Update a tree
   Future<void> updateTree(String treeId, String title, String? albumId, String token) async {
     LogHandler.separator(title: 'TREE · UPDATE');
-    
+
     final Map<String, dynamic> requestBody = {'title': title};
     if (albumId != null && albumId.isNotEmpty) {
       requestBody['album_id'] = albumId;
     }
-    
+
     final response = await _apiHandler.put(
       url: ApiConfig.treeById(treeId),
       headers: ApiConfig.getAuthHeaders(token),
@@ -272,6 +288,56 @@ class AlbumDataSource {
     throw createExceptionFromStatusCode(statusCode, msg);
   }
 
+  Future<int> pauseTree(
+    String treeId,
+    DateTime pauseFrom,
+    DateTime resumeOn,
+    String token,
+  ) async {
+    LogHandler.separator(title: 'TREE · PAUSE');
+    final resumeOnEndOfDay = _endOfDay(resumeOn);
+    final response = await _apiHandler.patch(
+      url: ApiConfig.pauseTree(treeId),
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode({
+        'pause_from': _toRfc3339WithLocalOffset(pauseFrom),
+        'paused_at': _toRfc3339WithLocalOffset(resumeOnEndOfDay),
+      }),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (response.isSuccess) {
+      final data = response.data as Map<String, dynamic>? ?? {};
+      final dynamic heartCount = data['heart_count'];
+      if (heartCount is int) {
+        LogHandler.success(
+          'Tree paused: $treeId (remaining hearts: $heartCount)',
+        );
+        return heartCount;
+      }
+      if (heartCount is num) {
+        final parsedHeartCount = heartCount.toInt();
+        LogHandler.success(
+          'Tree paused: $treeId (remaining hearts: $parsedHeartCount)',
+        );
+        return parsedHeartCount;
+      }
+
+      LogHandler.error(
+        'Pause tree succeeded but heart_count missing in response',
+      );
+      throw createExceptionFromStatusCode(
+        500,
+        'Missing heart_count in pause response',
+      );
+    }
+
+    final msg = response.error ?? response.message ?? 'Failed to pause tree';
+    LogHandler.error('Pause tree failed: $msg');
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
+  }
+
   /// Get nodes by learning path ID
   Future<List<LearningPathNode>> getNodesByPathId(String pathId, String token) async {
     LogHandler.separator(title: 'NODES · GET BY PATH');
@@ -283,7 +349,7 @@ class AlbumDataSource {
 
     if (response.isSuccess) {
       final nodes = _extractListFromResponseData(response.data);
-      
+
       LogHandler.success('Fetched ${nodes.length} node(s) for path: $pathId');
       return nodes.map((node) => LearningPathNode.fromJson(node)).toList();
     }
@@ -319,12 +385,12 @@ class AlbumDataSource {
 
     if (response.isSuccess && response.statusCode == 201) {
       LogHandler.success('Node created in learning path');
-      
+
       // Handle different response formats
       String nodeId;
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
-        
+
         if (data.containsKey('data') && data['data'] != null) {
           if (data['data'] is Map) {
             nodeId = data['data']['node_id'] as String;
@@ -339,7 +405,7 @@ class AlbumDataSource {
       } else {
         throw Exception('Unexpected response type: ${response.data.runtimeType}');
       }
-      
+
       LogHandler.info('Created node_id: $nodeId');
       return nodeId;
     }
@@ -356,7 +422,7 @@ class AlbumDataSource {
   Future<TreeNodeApiModel> createTreeNode(CreateTreeNodeRequest request, String token) async {
     LogHandler.separator(title: 'TREE NODE · CREATE');
     LogHandler.debug('Request: ${request.toJson()}');
-    
+
     final response = await _apiHandler.post(
       url: ApiConfig.treeNodes,
       headers: ApiConfig.getAuthHeaders(token),
@@ -370,13 +436,13 @@ class AlbumDataSource {
 
     if (response.isSuccess && response.statusCode == 201) {
       LogHandler.success('Tree node created successfully');
-      
+
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
-        
+
         // Try different possible structures
         Map<String, dynamic>? treeNodeData;
-        
+
         if (data.containsKey('data') && data['data'] != null) {
           final dataField = data['data'];
           if (dataField is Map<String, dynamic>) {
@@ -393,7 +459,7 @@ class AlbumDataSource {
           // The whole response might be the tree node
           treeNodeData = data;
         }
-        
+
         if (treeNodeData != null) {
           return TreeNodeApiModel.fromJson(treeNodeData);
         } else {

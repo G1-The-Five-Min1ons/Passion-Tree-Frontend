@@ -240,6 +240,7 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
           availableAlbums: _availableAlbums,
           treeId: item.treeId ?? '',
           albumId: album.albumId,
+          isPaused: item.isPaused,
           resumeOn: item.resumeOn,
           dataDisplay: const SizedBox.shrink(),
 

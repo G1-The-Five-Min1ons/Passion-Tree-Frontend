@@ -22,7 +22,7 @@ class CreateAlbumUseCase {
         message: 'User not authenticated',
       ));
     }
-    
+
     return await repository.createAlbum(
       userId: userId,
       title: title,
@@ -45,7 +45,7 @@ class GetAlbumsByUserIdUseCase {
         message: 'User not authenticated',
       ));
     }
-    
+
     return await repository.getAlbumsByUserId(userId);
   }
 }
@@ -152,5 +152,24 @@ class RetrieveTreeUseCase {
 
   Future<Either<Failure, int>> call({required String treeId}) async {
     return await repository.retrieveTree(treeId: treeId);
+  }
+}
+
+/// Use case for pausing a tree
+class PauseTreeUseCase {
+  final IAlbumRepository repository;
+
+  PauseTreeUseCase(this.repository);
+
+  Future<Either<Failure, int>> call({
+    required String treeId,
+    required DateTime pauseFrom,
+    required DateTime resumeOn,
+  }) async {
+    return await repository.pauseTree(
+      treeId: treeId,
+      pauseFrom: pauseFrom,
+      resumeOn: resumeOn,
+    );
   }
 }

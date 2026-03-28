@@ -39,8 +39,8 @@ class AlbumRepository implements IAlbumRepository {
     } catch (e) {
       LogHandler.error('Failed to get token', error: e);
       return Left(AuthFailure(
-        message: 'Failed to retrieve authentication',
-        technicalMessage: e.toString(),
+          message: 'Failed to retrieve authentication',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -49,21 +49,21 @@ class AlbumRepository implements IAlbumRepository {
   Future<Either<Failure, String>> _uploadImage(File imageFile) async {
     try {
       LogHandler.info('Uploading album cover image...');
-      
+
       final fileName = path.basename(imageFile.path);
       final bytes = await imageFile.readAsBytes();
       final urls = await uploadService.getPresignedUrl(fileName, 'reflect');
       await uploadService.uploadFileToBlob(urls['upload_url']!, bytes, fileName);
-      
+
       final publicUrl = urls['public_url']!;
       LogHandler.success('Album cover uploaded successfully');
-      
+
       return Right(publicUrl);
     } catch (e) {
       LogHandler.error('Failed to upload image', error: e);
       return Left(ServerFailure(
-        message: ErrorUtils.extractErrorMessage(e),
-        technicalMessage: e.toString(),
+          message: ErrorUtils.extractErrorMessage(e),
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -88,7 +88,7 @@ class AlbumRepository implements IAlbumRepository {
               (failure) => null,
               (url) => url,
             );
-            
+
             if (uploadUrlOrFailure == null) {
               // Return failure from upload
               return uploadResult.fold(
@@ -98,7 +98,7 @@ class AlbumRepository implements IAlbumRepository {
             }
             coverImageUrl = uploadUrlOrFailure;
           }
-          
+
           // Proceed with album creation
           final request = CreateAlbumRequest(
             userId: userId,
@@ -114,8 +114,8 @@ class AlbumRepository implements IAlbumRepository {
     } catch (e) {
       LogHandler.error('Repository: create album failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to create album',
-        technicalMessage: e.toString(),
+          message: 'Failed to create album',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -127,12 +127,12 @@ class AlbumRepository implements IAlbumRepository {
       return tokenResult.fold(
         (failure) => Left(failure),
         (token) async {
-          final albumApiModel = await dataSource.getAlbumById(albumId, token);
+        final albumApiModel = await dataSource.getAlbumById(albumId, token);
           final treesApiModels = await dataSource.getTreesByAlbumId(albumId, token);
-          
-          final items = TreeMapper.toAlbumItemList(treesApiModels);
-          
-          return Right(AlbumMapper.toAlbumWithItems(albumApiModel, items));
+
+        final items = TreeMapper.toAlbumItemList(treesApiModels);
+
+        return Right(AlbumMapper.toAlbumWithItems(albumApiModel, items));
         },
       );
     } on AppException catch (e) {
@@ -140,8 +140,8 @@ class AlbumRepository implements IAlbumRepository {
     } catch (e) {
       LogHandler.error('Repository: get album failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to get album',
-        technicalMessage: e.toString(),
+          message: 'Failed to get album',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -153,8 +153,8 @@ class AlbumRepository implements IAlbumRepository {
       return tokenResult.fold(
         (failure) => Left(failure),
         (token) async {
-          final apiModels = await dataSource.getAlbumsByUserId(userId, token);
-          return Right(AlbumMapper.toAlbumList(apiModels));
+        final apiModels = await dataSource.getAlbumsByUserId(userId, token);
+        return Right(AlbumMapper.toAlbumList(apiModels));
         },
       );
     } on AppException catch (e) {
@@ -162,8 +162,8 @@ class AlbumRepository implements IAlbumRepository {
     } catch (e) {
       LogHandler.error('Repository: get albums failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to get albums',
-        technicalMessage: e.toString(),
+          message: 'Failed to get albums',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -180,34 +180,34 @@ class AlbumRepository implements IAlbumRepository {
       return tokenResult.fold(
         (failure) => Left(failure),
         (token) async {
-          // Upload image if provided, otherwise use existing URL
-          String? coverImageUrl;
-          if (coverImage != null) {
-            final uploadResult = await _uploadImage(coverImage);
-            // If upload failed, return the failure immediately
-            final uploadUrlOrFailure = uploadResult.fold(
-              (failure) => null,
-              (url) => url,
-            );
-            
-            if (uploadUrlOrFailure == null) {
-              // Return failure from upload
-              return uploadResult.fold(
-                (failure) => Left(failure),
-                (_) => Left(UnknownFailure(message: 'Upload failed')),
-              );
-            }
-            coverImageUrl = uploadUrlOrFailure;
-          } else {
-            coverImageUrl = existingImageUrl ?? '';
-          }
-          
-          final request = UpdateAlbumRequest(
-            albumName: title,
-            coverImageUrl: coverImageUrl,
+        // Upload image if provided, otherwise use existing URL
+        String? coverImageUrl;
+        if (coverImage != null) {
+          final uploadResult = await _uploadImage(coverImage);
+          // If upload failed, return the failure immediately
+          final uploadUrlOrFailure = uploadResult.fold(
+            (failure) => null,
+            (url) => url,
           );
-          await dataSource.updateAlbum(albumId, request, token);
-          return const Right(null);
+
+          if (uploadUrlOrFailure == null) {
+            // Return failure from upload
+            return uploadResult.fold(
+              (failure) => Left(failure),
+              (_) => Left(UnknownFailure(message: 'Upload failed')),
+            );
+          }
+          coverImageUrl = uploadUrlOrFailure;
+        } else {
+          coverImageUrl = existingImageUrl ?? '';
+        }
+
+        final request = UpdateAlbumRequest(
+          albumName: title,
+          coverImageUrl: coverImageUrl,
+        );
+        await dataSource.updateAlbum(albumId, request, token);
+        return const Right(null);
         },
       );
     } on AppException catch (e) {
@@ -215,8 +215,8 @@ class AlbumRepository implements IAlbumRepository {
     } catch (e) {
       LogHandler.error('Repository: update album failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to update album',
-        technicalMessage: e.toString(),
+          message: 'Failed to update album',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -228,8 +228,8 @@ class AlbumRepository implements IAlbumRepository {
       return tokenResult.fold(
         (failure) => Left(failure),
         (token) async {
-          await dataSource.deleteAlbum(albumId, token);
-          return const Right(null);
+        await dataSource.deleteAlbum(albumId, token);
+        return const Right(null);
         },
       );
     } on AppException catch (e) {
@@ -237,8 +237,8 @@ class AlbumRepository implements IAlbumRepository {
     } catch (e) {
       LogHandler.error('Repository: delete album failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to delete album',
-        technicalMessage: e.toString(),
+          message: 'Failed to delete album',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -255,17 +255,17 @@ class AlbumRepository implements IAlbumRepository {
       return tokenResult.fold(
         (failure) => Left(failure),
         (token) async {
-          final request = CreateTreeRequest(
-            title: title,
-            difficulties: difficulties,
-            pathId: pathId,
-            albumId: albumId,
-          );
-          
-          final tree = await dataSource.createTree(request, token);
-          LogHandler.success('Tree created with ID: ${tree.treeId}');
-          
-          return Right(tree.treeId);
+        final request = CreateTreeRequest(
+          title: title,
+          difficulties: difficulties,
+          pathId: pathId,
+          albumId: albumId,
+        );
+
+        final tree = await dataSource.createTree(request, token);
+        LogHandler.success('Tree created with ID: ${tree.treeId}');
+
+        return Right(tree.treeId);
         },
       );
     } on AppException catch (e) {
@@ -273,8 +273,8 @@ class AlbumRepository implements IAlbumRepository {
     } catch (e) {
       LogHandler.error('Repository: create tree failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to create tree',
-        technicalMessage: e.toString(),
+          message: 'Failed to create tree',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -286,8 +286,8 @@ class AlbumRepository implements IAlbumRepository {
       return tokenResult.fold(
         (failure) => Left(failure),
         (token) async {
-          await dataSource.deleteTree(treeId, token);
-          return const Right(null);
+        await dataSource.deleteTree(treeId, token);
+        return const Right(null);
         },
       );
     } on AppException catch (e) {
@@ -295,8 +295,8 @@ class AlbumRepository implements IAlbumRepository {
     } catch (e) {
       LogHandler.error('Repository: delete tree failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to delete tree',
-        technicalMessage: e.toString(),
+          message: 'Failed to delete tree',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -312,9 +312,9 @@ class AlbumRepository implements IAlbumRepository {
       return tokenResult.fold(
         (failure) => Left(failure),
         (token) async {
-          await dataSource.updateTree(treeId, title, albumId, token);
-          LogHandler.success('Tree updated successfully');
-          return const Right(null);
+        await dataSource.updateTree(treeId, title, albumId, token);
+        LogHandler.success('Tree updated successfully');
+        return const Right(null);
         },
       );
     } on AppException catch (e) {
@@ -346,6 +346,37 @@ class AlbumRepository implements IAlbumRepository {
       return Left(
         UnknownFailure(
           message: 'Failed to retrieve tree',
+          technicalMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> pauseTree({
+    required String treeId,
+    required DateTime pauseFrom,
+    required DateTime resumeOn,
+  }) async {
+    try {
+      final tokenResult = await _getValidToken();
+      return tokenResult.fold((failure) => Left(failure), (token) async {
+        final remainingHearts = await dataSource.pauseTree(
+          treeId,
+          pauseFrom,
+          resumeOn,
+          token,
+        );
+        LogHandler.success('Tree paused successfully');
+        return Right(remainingHearts);
+      });
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository: pause tree failed', error: e);
+      return Left(
+        UnknownFailure(
+          message: 'Failed to pause tree',
           technicalMessage: e.toString(),
         ),
       );

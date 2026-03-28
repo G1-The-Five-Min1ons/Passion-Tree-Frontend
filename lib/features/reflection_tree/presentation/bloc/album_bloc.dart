@@ -15,6 +15,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
   final UpdateTreeUseCase updateTree;
   final DeleteTreeUseCase deleteTree;
   final RetrieveTreeUseCase retrieveTree;
+  final PauseTreeUseCase pauseTree;
 
   AlbumBloc({
     required this.getAlbumsByUserId,
@@ -26,6 +27,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     required this.updateTree,
     required this.deleteTree,
     required this.retrieveTree,
+    required this.pauseTree,
   }) : super(AlbumInitial()) {
     on<LoadAlbumsEvent>(_onLoadAlbums);
     on<LoadAlbumByIdEvent>(_onLoadAlbumById);
@@ -38,6 +40,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     on<UpdateTreeEvent>(_onUpdateTree);
     on<DeleteTreeEvent>(_onDeleteTree);
     on<RetrieveTreeEvent>(_onRetrieveTree);
+    on<PauseTreeEvent>(_onPauseTree);
   }
 
   Future<void> _onLoadAlbums(
@@ -331,6 +334,41 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
             AlbumDetailLoaded(
               album,
               message: 'Tree retrieved successfully',
+              remainingHeartCount: remainingHeartCount,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onPauseTree(
+    PauseTreeEvent event,
+    Emitter<AlbumState> emit,
+  ) async {
+    emit(AlbumOperationLoading());
+
+    final pauseResult = await pauseTree(
+      treeId: event.treeId,
+      pauseFrom: event.pauseFrom,
+      resumeOn: event.resumeOn,
+    );
+
+    await pauseResult.fold(
+      (failure) {
+        LogHandler.error('Failed to pause tree: ${failure.message}');
+        emit(AlbumError(failure.message));
+      },
+      (remainingHeartCount) async {
+        LogHandler.success('Tree paused: ${event.treeId}');
+
+        final albumResult = await getAlbumById(event.albumId);
+        albumResult.fold(
+          (failure) => emit(AlbumError(failure.message)),
+          (album) => emit(
+            AlbumDetailLoaded(
+              album,
+              message: 'Tree paused successfully',
               remainingHeartCount: remainingHeartCount,
             ),
           ),

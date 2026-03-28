@@ -9,6 +9,7 @@ import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.da
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/edit_tree_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/retrieve_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/resume_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/tree_status_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
@@ -31,6 +32,7 @@ class TreeAlbumCard extends StatelessWidget {
   final VoidCallback? onStatusTap;
   final VoidCallback? onCardTap;
   final VoidCallback? onDelete;
+  final bool isPaused;
   final String? resumeOn;
 
   const TreeAlbumCard({
@@ -50,6 +52,7 @@ class TreeAlbumCard extends StatelessWidget {
     this.onStatusTap,
     this.onCardTap,
     this.onDelete,
+    this.isPaused = false,
     this.resumeOn,
   });
 
@@ -65,13 +68,17 @@ class TreeAlbumCard extends StatelessWidget {
     return value.trim().toLowerCase() == 'died';
   }
 
+  String _normalizedStatus(String value) {
+    return value.trim().toLowerCase();
+  }
+
   @override
   Widget build(BuildContext context) {
-    bool isPaused = resumeOn != null;
+    final bool isTreePaused = isPaused;
     return Stack(
       children: [
         GestureDetector(
-          onTap: isPaused ? null : onCardTap,
+          onTap: isTreePaused ? null : onCardTap,
           child: PixelBaseCard(
             title: title,
             subtitle: subtitle,
@@ -147,6 +154,8 @@ class TreeAlbumCard extends StatelessWidget {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
+              final normalizedStatus = _normalizedStatus(statusText);
+
               if (_isDiedStatus(statusText)) {
                 RetrievePopup.show(
                   context,
@@ -154,7 +163,7 @@ class TreeAlbumCard extends StatelessWidget {
                     final userState = context.read<UserBloc>().state;
                     final int currentHeartCount = userState is UserLoaded
                         ? userState.heartCount
-                        : 5;
+                        : 0;
 
                     if (currentHeartCount < 5) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -185,6 +194,52 @@ class TreeAlbumCard extends StatelessWidget {
                 );
                 return;
               }
+
+              if (['growing', 'fading', 'dying'].contains(normalizedStatus)) {
+                TreeStatusPopup.show(
+                  context,
+                  normalizedStatus,
+                  onPauseSelected: (pauseFrom, resumeOn) {
+                    final userState = context.read<UserBloc>().state;
+                    final int currentHeartCount = userState is UserLoaded
+                        ? userState.heartCount
+                        : 0;
+
+                    if (currentHeartCount < 3) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Not enough hearts.',
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    if (treeId.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Tree ID is missing.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    context.read<AlbumBloc>().add(
+                      PauseTreeEvent(
+                        treeId: treeId,
+                        albumId: albumId,
+                        pauseFrom: pauseFrom,
+                        resumeOn: resumeOn,
+                      ),
+                    );
+                  },
+                );
+                return;
+              }
+
               onStatusTap?.call();
             },
             child: Padding(
@@ -208,7 +263,7 @@ class TreeAlbumCard extends StatelessWidget {
           ),
         ),
 
-        if (resumeOn != null)
+        if (isTreePaused)
           Positioned.fill(
             child: GestureDetector(
               onTap: () {
@@ -230,7 +285,7 @@ class TreeAlbumCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      "Resume on : $resumeOn",
+                      "Resume on : ${resumeOn ?? '-'}",
                       style: AppTypography.smallBodyRegular.copyWith(
                         color: AppColors.surface,
                       ),
