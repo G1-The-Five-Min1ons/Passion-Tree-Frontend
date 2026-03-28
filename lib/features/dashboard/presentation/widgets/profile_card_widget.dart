@@ -16,7 +16,9 @@ class ProfileCardWidget extends StatelessWidget {
   final int hours;
   final int streak;
   final int learningPathCount;
+  final int achievements;
   final String rankName;
+  final String memberSince;
   final VoidCallback onSettingsTap;
 
   const ProfileCardWidget({
@@ -34,7 +36,9 @@ class ProfileCardWidget extends StatelessWidget {
     required this.streak,
     required this.learningPathCount,
     required this.onSettingsTap,
+    this.achievements = 0,
     this.rankName = 'Beginner',
+    this.memberSince = '',
   });
 
   @override
@@ -49,23 +53,52 @@ class ProfileCardWidget extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBrand.withValues(alpha: 0.35),
-                  shape: BoxShape.circle,
-                  border:
-                      Border.all(color: AppColors.secondaryBrand, width: 2),
-                ),
-                child: Center(
-                  child: Text(
-                    fullName.isNotEmpty ? fullName[0].toUpperCase() : '?',
-                    style: AppTypography.h3SemiBold.copyWith(
-                      color: AppColors.secondaryBrand,
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryBrand.withValues(alpha: 0.35),
+                      shape: BoxShape.circle,
+                      border:
+                          Border.all(color: AppColors.secondaryBrand, width: 2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        fullName.isNotEmpty ? fullName[0].toUpperCase() : '?',
+                        style: AppTypography.h3SemiBold.copyWith(
+                          color: AppColors.secondaryBrand,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  Positioned(
+                    bottom: -4,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryBrand,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'Lv.$level',
+                          style: AppTypography.smallBodySemiBold.copyWith(
+                            color: AppColors.background,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -81,36 +114,21 @@ class ProfileCardWidget extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Text(
-                          roleLabel,
-                          style: AppTypography.bodyRegular.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        if (rankName.isNotEmpty) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 1,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.secondaryBrand
-                                  .withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              rankName,
-                              style: AppTypography.smallBodySemiBold.copyWith(
-                                color: AppColors.secondaryBrand,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                    Text(
+                      rankName,
+                      style: AppTypography.bodyRegular.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
+                    if (memberSince.isNotEmpty) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        'Member since $memberSince',
+                        style: AppTypography.smallBodyRegular.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -131,14 +149,16 @@ class ProfileCardWidget extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // --- Email (always shown) ---
-          _buildMiniInfo('Email', email),
-
-          // --- Location (hidden when empty) ---
-          if (location.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            _buildMiniInfo('Location', location),
-          ],
+          // --- Email & Location side by side ---
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _buildMiniInfo('Email', email)),
+              const SizedBox(width: 12),
+              if (location.isNotEmpty)
+                Expanded(child: _buildMiniInfo('Location', location)),
+            ],
+          ),
 
           // --- Bio (hidden when empty) ---
           if (bio.isNotEmpty) ...[
@@ -210,9 +230,9 @@ class ProfileCardWidget extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _buildStatTile(
-                  value: '$streak',
-                  label: 'Day Streak',
-                  icon: Icons.local_fire_department,
+                  value: '$achievements',
+                  label: 'Achievements',
+                  icon: Icons.emoji_events,
                 ),
               ),
             ],
@@ -222,17 +242,17 @@ class ProfileCardWidget extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildStatTile(
-                  value: '$learningPathCount',
-                  label: 'Paths',
-                  icon: Icons.menu_book,
+                  value: '$streak',
+                  label: 'Days Streak',
+                  icon: Icons.local_fire_department,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildStatTile(
-                  value: '$xp',
-                  label: 'Total XP',
-                  icon: Icons.star,
+                  value: '$learningPathCount',
+                  label: 'Learning Path',
+                  icon: Icons.menu_book,
                 ),
               ),
             ],

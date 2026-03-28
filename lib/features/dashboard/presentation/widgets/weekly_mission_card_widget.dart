@@ -20,6 +20,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (missions.isEmpty) {
       return PixelBorderContainer(
+        width: double.infinity,
         pixelSize: 3,
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -47,6 +48,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
     }
 
     return PixelBorderContainer(
+      width: double.infinity,
       pixelSize: 3,
       padding: const EdgeInsets.all(12),
       child: Column(

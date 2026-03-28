@@ -105,6 +105,24 @@ class _ProfilePageState extends State<ProfilePage> {
       _userProfile?.profile?.learningCount ??
       0;
 
+  String get _rankName {
+    final profileRank = _userProfile?.profile?.rankName;
+    if (profileRank != null && profileRank.isNotEmpty) return profileRank;
+    final dashRank = _dashboardData?.userInfo.rankName;
+    if (dashRank != null && dashRank.isNotEmpty) return dashRank;
+    return 'Beginner';
+  }
+
+  String get _memberSince {
+    final createdAt = _userProfile?.user.createdAt;
+    if (createdAt == null) return '';
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[createdAt.month - 1]} ${createdAt.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,11 +146,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       roleLabel: _roleLabel,
                       email: _userProfile?.user.email ?? 'you@example.com',
                       location:
-                          _userProfile?.profile?.location ??
-                          'Bangkok, Thailand',
+                          (_userProfile?.profile?.location?.isNotEmpty == true)
+                              ? _userProfile!.profile!.location!
+                              : 'Bangkok, Thailand',
                       bio:
-                          _userProfile?.profile?.bio ??
-                          'Passionate about creating digital experiences and learning new technologies.',
+                          (_userProfile?.profile?.bio?.isNotEmpty == true)
+                              ? _userProfile!.profile!.bio!
+                              : 'Passionate about creating digital experiences and learning new technologies.',
                       level: _level,
                       xp: _xp,
                       nextXp: _nextXp,
@@ -140,9 +160,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       hours: _hours,
                       streak: _streak,
                       learningPathCount: _learningPathCount,
+                      rankName: _rankName,
+                      memberSince: _memberSince,
                       onSettingsTap: _openSettings,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 14),
+                    const SectionTitle(title: 'My Garden'),
+                    const SizedBox(height: 8),
                     TreeCardWidget(
                       level: _level,
                       treeStats: _dashboardData?.treeCounter,
