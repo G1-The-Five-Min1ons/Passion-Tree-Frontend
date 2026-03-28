@@ -95,7 +95,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => BlocProvider.value(
+          builder: (_) => BlocProvider.value(
             value: bloc,
             child: const CreateLearningPathInputPage(),
           ),
@@ -115,9 +115,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Delete Learning Path'),
-          content: Text(
-            'Are you sure you want to delete "${path.title}"?',
-          ),
+          content: Text('Are you sure you want to delete "${path.title}"?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -139,10 +137,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
 
     if (!mounted) return;
     context.read<LearningPathBloc>().add(
-      DeleteLearningPathEvent(
-        pathId: path.id,
-        userId: widget.userId,
-      ),
+      DeleteLearningPathEvent(pathId: path.id, userId: widget.userId),
     );
   }
 
@@ -297,9 +292,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
 
         const SizedBox(height: 20),
 
-        // =====================================================
         // My Learning Paths - Drafts
-        // =====================================================
         _buildSectionHeader('Drafts', colors.secondary),
         _buildPathGrid(
           paths: inProgressCourses,
@@ -314,9 +307,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
 
         const SizedBox(height: 60),
 
-        // =====================================================
         // My Learning Paths - Published
-        // =====================================================
         _buildSectionHeader('Published', AppColors.status),
         _buildPathGrid(
           paths: completedCourses,

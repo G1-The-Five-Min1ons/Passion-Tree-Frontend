@@ -4,13 +4,6 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/layout/app_background.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
-import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button_white.dart';
-import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/home/presentation/bloc/home_bloc_provider.dart';
@@ -49,18 +42,21 @@ class MyApp extends StatelessWidget {
 }
 
 /// Gates the entire app behind authentication.
-/// Checks if a valid token exists — if yes, goes to HomeBarWidget;
-/// otherwise shows LoginPage.
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
   Future<Map<String, bool>> _init() async {
-    final prefs = await SharedPreferences.getInstance();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasOnboarded = prefs.getBool('hasOnboarded') ?? false;
+      final isLoggedIn = await getIt<IAuthRepository>().isLoggedIn();
 
-    final hasOnboarded = prefs.getBool('hasOnboarded') ?? false;
-    final isLoggedIn = await getIt<IAuthRepository>().isLoggedIn();
-
-    return {'hasOnboarded': hasOnboarded, 'isLoggedIn': isLoggedIn};
+      return {'hasOnboarded': hasOnboarded, 'isLoggedIn': isLoggedIn};
+    } catch (e) {
+      // ดักจับ Error กรณี SharedPreferences หรือเซิร์ฟเวอร์มีปัญหา
+      debugPrint('AuthGate Initialization Error: $e');
+      return {'hasOnboarded': false, 'isLoggedIn': false}; 
+    }
   }
 
   @override
@@ -69,6 +65,7 @@ class AuthGate extends StatelessWidget {
       future: _init(),
       builder: (context, snapshot) {
         
+        // 1. สถานะกำลังโหลด (Waiting)
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
             backgroundColor: AppColors.background,
@@ -88,122 +85,51 @@ class AuthGate extends StatelessWidget {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  // เพิ่มตัวหมุนโหลดให้ผู้ใช้รู้ว่าแอปกะลังทำงานอยู่
+                  const CircularProgressIndicator(color: Colors.white), 
                 ],
               ),
             ),
           );
         }
 
-        final hasOnboarded = snapshot.data!['hasOnboarded']!;
-        final isLoggedIn = snapshot.data!['isLoggedIn']!;
-
-        /// STEP 1: onboarding มาก่อนเสมอ
-        if (!hasOnboarded) {
-          return const OnboardingPage();
-        }
-
-        /// STEP 2: เช็ค login
-        if (!isLoggedIn) {
-          return const LoginPage();
-        }
-
-        /// STEP 3: เข้า app
-        return const HomeBlocProvider(child: HomeBarWidget());
-      },
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBarWidget(
-        title: "Learning Path",
-        showBackButton: true,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('TEST', style: Theme.of(context).textTheme.displaySmall),
-            Text('button:', style: AppPixelTypography.title),
-            const Text('You have pushed the button this many times:'),
-            Text(
-              'TEST',
-              style: const TextStyle(
-                fontFamily: 'PressStart2P',
-                fontSize: 20,
+        // 2. สถานะเกิด Error (ป้องกันจอแดง)
+        if (snapshot.hasError) {
+          return const Scaffold(
+            backgroundColor: AppColors.background,
+            body: Center(
+              child: Text(
+                'Something went wrong.\nPlease restart the app.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white),
               ),
             ),
+          );
+        }
 
-            // ===== Pixel Button =====
-            //text only 
-            AppButton(
-              variant: AppButtonVariant.text,
-              text: 'Text',
-              onPressed: () {
-                debugPrint('Submit pressed');
-              },
-            ),
+        // 3. สถานะโหลดสำเร็จและมีข้อมูล (Safe Unwrap)
+        if (snapshot.hasData) {
+          final hasOnboarded = snapshot.data!['hasOnboarded'] ?? false;
+          final isLoggedIn = snapshot.data!['isLoggedIn'] ?? false;
 
-            //textWithIcon
-            AppButton(
-              variant: AppButtonVariant.textWithIcon,
-              text: 'Like',
-              icon: const PixelIcon('assets/icons/Pixel_heart.png'),
-              onPressed: () {},
-            ),
+          /// STEP 1: onboarding มาก่อนเสมอ
+          if (!hasOnboarded) {
+            return const OnboardingPage();
+          }
 
-            //icon only
-            AppButton(
-              variant: AppButtonVariant.iconOnly,
-              icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
-              onPressed: () {},
-            ),
+          /// STEP 2: เช็ค login
+          if (!isLoggedIn) {
+            return const LoginPage();
+          }
 
-            // ===== Navigation Button =====
-            NavigationButton(
-                  direction: NavigationDirection.right,
-                  onPressed: () {
-                    debugPrint('Right pressed');
-                  },
-                ),
-            // ===== White Navigation Button =====
-            NavigationButtonWhite(
-                  direction: NavigationDirection.left,
-                  onPressed: () {
-                    debugPrint('Left pressed');
-                  },
-                ),
-            // ===== ปุ่มไปหน้า Reflection =====
-            AppButton(
-              variant: AppButtonVariant.text,
-              text: 'Go to Reflection',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ReflectionTreePage(),
-                  ),
-                );
-              },
-            ),
-            
+          /// STEP 3: เข้า app
+          return const HomeBlocProvider(child: HomeBarWidget());
+        }
 
-    
-          ],
-        ),
-      ),
+        // Fallback กรณีฉุกเฉิน
+        return const LoginPage();
+      },
     );
   }
 }
