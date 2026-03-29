@@ -12,6 +12,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/teache
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/features/setting/presentation/pages/teacher_verification_page.dart';
@@ -107,38 +108,6 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
         SnackBar(content: Text('Unable to check verification status: $e')),
       );
     }
-  }
-
-  Future<void> _confirmDeletePath(LearningPath path) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete Learning Path'),
-          content: Text('Are you sure you want to delete "${path.title}"?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
-              ),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldDelete != true) return;
-
-    if (!mounted) return;
-    context.read<LearningPathBloc>().add(
-      DeleteLearningPathEvent(pathId: path.id, userId: widget.userId),
-    );
   }
 
   /// Build section header with title and status
@@ -238,7 +207,9 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                 );
               },
               onDelete: () {
-                _confirmDeletePath(paths[index]);
+                context.read<LearningPathBloc>().add(
+                  DeleteLearningPathEvent(pathId: paths[index].id, userId: widget.userId),
+                );
               },
             );
           },
@@ -277,9 +248,17 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     final inProgressCourses = _draftPaths;
     final completedCourses = _publishedPaths;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return BlocListener<LearningPathBloc, LearningPathState>(
+      listener: (context, state) {
+        if (state is LearningPathDeleted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Learning path deleted successfully')),
+          );
+        }
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         // ===== Add button (top right) =====
         Align(
           alignment: Alignment.centerRight,
@@ -320,6 +299,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
           emptyMessage: 'No published paths found',
         ),
       ],
+      ),
     );
   }
 }
