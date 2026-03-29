@@ -131,6 +131,13 @@ class _CreateLearningPathInputPageState
       return;
     }
 
+    if (_uploadedImageUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload a cover image')),
+      );
+      return;
+    }
+
     if (_userId == null || _userId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User not authenticated')),
@@ -158,6 +165,13 @@ class _CreateLearningPathInputPageState
     if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    if (_uploadedImageUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please attach a cover image before creating a Learning Path')),
       );
       return;
     }
