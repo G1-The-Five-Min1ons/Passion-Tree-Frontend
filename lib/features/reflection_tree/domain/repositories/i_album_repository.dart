@@ -55,4 +55,7 @@ abstract class IAlbumRepository {
     required DateTime pauseFrom,
     required DateTime resumeOn,
   });
+
+  /// Resume a paused tree immediately
+  Future<Either<Failure, void>> resumeTree({required String treeId});
 }

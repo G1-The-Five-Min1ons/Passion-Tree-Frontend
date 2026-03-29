@@ -16,6 +16,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
   final DeleteTreeUseCase deleteTree;
   final RetrieveTreeUseCase retrieveTree;
   final PauseTreeUseCase pauseTree;
+  final ResumeTreeUseCase resumeTree;
 
   AlbumBloc({
     required this.getAlbumsByUserId,
@@ -28,6 +29,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     required this.deleteTree,
     required this.retrieveTree,
     required this.pauseTree,
+    required this.resumeTree,
   }) : super(AlbumInitial()) {
     on<LoadAlbumsEvent>(_onLoadAlbums);
     on<LoadAlbumByIdEvent>(_onLoadAlbumById);
@@ -41,6 +43,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     on<DeleteTreeEvent>(_onDeleteTree);
     on<RetrieveTreeEvent>(_onRetrieveTree);
     on<PauseTreeEvent>(_onPauseTree);
+    on<ResumeTreeEvent>(_onResumeTree);
   }
 
   Future<void> _onLoadAlbums(
@@ -370,6 +373,36 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
               album,
               message: 'Tree paused successfully',
               remainingHeartCount: remainingHeartCount,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onResumeTree(
+    ResumeTreeEvent event,
+    Emitter<AlbumState> emit,
+  ) async {
+    emit(AlbumOperationLoading());
+
+    final resumeResult = await resumeTree(treeId: event.treeId);
+
+    await resumeResult.fold(
+      (failure) {
+        LogHandler.error('Failed to resume tree: ${failure.message}');
+        emit(AlbumError(failure.message));
+      },
+      (_) async {
+        LogHandler.success('Tree resumed: ${event.treeId}');
+
+        final albumResult = await getAlbumById(event.albumId);
+        albumResult.fold(
+          (failure) => emit(AlbumError(failure.message)),
+          (album) => emit(
+            AlbumDetailLoaded(
+              album,
+              message: 'Tree resumed successfully',
             ),
           ),
         );

@@ -267,7 +267,14 @@ class TreeAlbumCard extends StatelessWidget {
           Positioned.fill(
             child: GestureDetector(
               onTap: () {
-                ResumePopup.show(context);
+                ResumePopup.show(
+                  context,
+                  onResume: () {
+                    context.read<AlbumBloc>().add(
+                      ResumeTreeEvent(treeId: treeId, albumId: albumId),
+                    );
+                  },
+                );
               },
               child: Container(
                 decoration: BoxDecoration(

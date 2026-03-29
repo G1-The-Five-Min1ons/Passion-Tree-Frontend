@@ -173,3 +173,14 @@ class PauseTreeUseCase {
     );
   }
 }
+
+/// Use case for resuming a paused tree
+class ResumeTreeUseCase {
+  final IAlbumRepository repository;
+
+  ResumeTreeUseCase(this.repository);
+
+  Future<Either<Failure, void>> call({required String treeId}) async {
+    return await repository.resumeTree(treeId: treeId);
+  }
+}

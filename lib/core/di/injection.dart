@@ -203,6 +203,10 @@ Future<void> initializeDependencies() async {
   getIt.registerFactory<PauseTreeUseCase>(
     () => PauseTreeUseCase(getIt<IAlbumRepository>()),
   );
+
+  getIt.registerFactory<ResumeTreeUseCase>(
+    () => ResumeTreeUseCase(getIt<IAlbumRepository>()),
+  );
   // Comment Feature
   getIt.registerLazySingleton<CommentRemoteDataSource>(
     () => CommentRemoteDataSource(),

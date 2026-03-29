@@ -382,4 +382,26 @@ class AlbumRepository implements IAlbumRepository {
       );
     }
   }
+
+  @override
+  Future<Either<Failure, void>> resumeTree({required String treeId}) async {
+    try {
+      final tokenResult = await _getValidToken();
+      return tokenResult.fold((failure) => Left(failure), (token) async {
+        await dataSource.resumeTree(treeId, token);
+        LogHandler.success('Tree resumed successfully');
+        return const Right(null);
+      });
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository: resume tree failed', error: e);
+      return Left(
+        UnknownFailure(
+          message: 'Failed to resume tree',
+          technicalMessage: e.toString(),
+        ),
+      );
+    }
+  }
 }

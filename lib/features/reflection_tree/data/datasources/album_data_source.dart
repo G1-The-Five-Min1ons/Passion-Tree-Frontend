@@ -338,6 +338,26 @@ class AlbumDataSource {
     throw createExceptionFromStatusCode(statusCode, msg);
   }
 
+  Future<void> resumeTree(String treeId, String token) async {
+    LogHandler.separator(title: 'TREE · RESUME');
+    final response = await _apiHandler.patch(
+      url: ApiConfig.pauseTree(treeId),
+      headers: ApiConfig.getAuthHeaders(token),
+      body: jsonEncode({}),
+      timeout: ApiConfig.connectionTimeout,
+    );
+
+    if (response.isSuccess) {
+      LogHandler.success('Tree resumed: $treeId');
+      return;
+    }
+
+    final msg = response.error ?? response.message ?? 'Failed to resume tree';
+    LogHandler.error('Resume tree failed: $msg');
+    final statusCode = response.statusCode;
+    throw createExceptionFromStatusCode(statusCode, msg);
+  }
+
   /// Get nodes by learning path ID
   Future<List<LearningPathNode>> getNodesByPathId(String pathId, String token) async {
     LogHandler.separator(title: 'NODES · GET BY PATH');

@@ -151,3 +151,13 @@ class PauseTreeEvent extends AlbumEvent {
   @override
   List<Object?> get props => [treeId, albumId, pauseFrom, resumeOn];
 }
+
+class ResumeTreeEvent extends AlbumEvent {
+  final String treeId;
+  final String albumId;
+
+  const ResumeTreeEvent({required this.treeId, required this.albumId});
+
+  @override
+  List<Object?> get props => [treeId, albumId];
+}
