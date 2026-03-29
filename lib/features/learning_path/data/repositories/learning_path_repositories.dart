@@ -37,7 +37,7 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
     String pathId,
     String userId,
   ) async {
-    final model = await dataSource.getLearningPathProgress(pathId, userId);
+    final model = await dataSource.getLearningPathProgress(pathId);
 
     return model.toEntity();
   }

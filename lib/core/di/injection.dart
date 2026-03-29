@@ -242,7 +242,10 @@ Future<void> initializeDependencies() async {
 
   // Learning Path Feature
   getIt.registerLazySingleton<LearningPathDataSource>(
-    () => LearningPathDataSource(),
+    () => LearningPathDataSource(
+      apiHandler: getIt<ApiHandler>(),
+      authLocalDataSource: getIt<AuthLocalDataSource>(),
+    ),
   );
 
   getIt.registerLazySingleton<LearningPathRepositoryImpl>(
