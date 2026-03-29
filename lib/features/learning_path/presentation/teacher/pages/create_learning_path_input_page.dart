@@ -279,7 +279,8 @@ class _CreateLearningPathInputPageState
               FetchLearningPathOverview(userId: _userId),
             );
           }
-          
+
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Learning path updated successfully')),
           );

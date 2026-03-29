@@ -403,8 +403,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             const SnackBar(content: Text('Learning path updated successfully')),
           );
 
-          // Navigate back to previous page - the parent page will handle refetch
-          Navigator.pop(context);
+          // Pop all pages back to the root (teacher_create_tab) in one shot
+          Navigator.popUntil(context, (route) => route.isFirst);
         } else if (state is LearningPathError) {
           setState(() {
             _pendingNodeIndex = null;
