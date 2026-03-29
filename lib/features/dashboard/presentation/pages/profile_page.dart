@@ -13,7 +13,6 @@ import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/le
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/weekly_mission_card_widget.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/recent_activity_card_widget.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/activity_heatmap_widget.dart';
-import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/dashboard_footer.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/section_title.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -148,11 +147,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       location:
                           (_userProfile?.profile?.location?.isNotEmpty == true)
                               ? _userProfile!.profile!.location!
-                              : 'Bangkok, Thailand',
+                              : '',
                       bio:
                           (_userProfile?.profile?.bio?.isNotEmpty == true)
                               ? _userProfile!.profile!.bio!
-                              : 'Passionate about creating digital experiences and learning new technologies.',
+                              : '',
                       level: _level,
                       xp: _xp,
                       nextXp: _nextXp,
@@ -194,7 +193,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       heatmapData: _dashboardData?.activitySummary ?? [],
                     ),
                     const SizedBox(height: 14),
-                    const DashboardFooter(),
                   ],
                 ),
               ),

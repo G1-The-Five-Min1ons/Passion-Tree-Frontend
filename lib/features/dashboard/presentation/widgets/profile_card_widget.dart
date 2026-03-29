@@ -115,7 +115,7 @@ class ProfileCardWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      rankName,
+                      roleLabel,
                       style: AppTypography.bodyRegular.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -155,16 +155,12 @@ class ProfileCardWidget extends StatelessWidget {
             children: [
               Expanded(child: _buildMiniInfo('Email', email)),
               const SizedBox(width: 12),
-              if (location.isNotEmpty)
-                Expanded(child: _buildMiniInfo('Location', location)),
+              Expanded(child: _buildMiniInfo('Location', location)),
             ],
           ),
 
-          // --- Bio (hidden when empty) ---
-          if (bio.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            _buildMiniInfo('Bio', bio),
-          ],
+          const SizedBox(height: 6),
+          _buildMiniInfo('Bio', bio),
 
           const SizedBox(height: 14),
 

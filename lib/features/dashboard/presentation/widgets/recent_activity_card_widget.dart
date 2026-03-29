@@ -12,13 +12,16 @@ class RecentActivityCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (activities.isEmpty) {
-      return PixelBorderContainer(
-        pixelSize: 3,
-        padding: const EdgeInsets.all(12),
-        child: Text(
-          'No recent activity',
-          style: AppTypography.bodyRegular.copyWith(
-            color: AppColors.textSecondary,
+      return SizedBox(
+        width: double.infinity,
+        child: PixelBorderContainer(
+          pixelSize: 3,
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            'No recent activity',
+            style: AppTypography.bodyRegular.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ),
       );

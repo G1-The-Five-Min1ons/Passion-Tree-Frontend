@@ -119,12 +119,20 @@ class CurrentPathItem {
   final String title;
   final String coverImgUrl;
   final double progressPercent;
+  final String instructor;
+  final String description;
+  final int completedModules;
+  final int totalModules;
 
   CurrentPathItem({
     required this.pathId,
     required this.title,
     required this.coverImgUrl,
     required this.progressPercent,
+    this.instructor = '',
+    this.description = '',
+    this.completedModules = 0,
+    this.totalModules = 0,
   });
 
   factory CurrentPathItem.fromJson(Map<String, dynamic> json) {
@@ -133,6 +141,10 @@ class CurrentPathItem {
       title: json['title'] as String? ?? '',
       coverImgUrl: json['cover_img_url'] as String? ?? '',
       progressPercent: (json['progress_percent'] as num?)?.toDouble() ?? 0.0,
+      instructor: json['instructor'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      completedModules: (json['completed_modules'] as num?)?.toInt() ?? 0,
+      totalModules: (json['total_modules'] as num?)?.toInt() ?? 0,
     );
   }
 }
