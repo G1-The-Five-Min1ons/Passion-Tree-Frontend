@@ -14,6 +14,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 // UI State class สำหรับจัดการ node ใน UI
 class NodeUiState {
@@ -383,9 +384,12 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             _pendingNodeIndex = null;
           });
 
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error: ${state.message}')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
         }
       },
       child: Scaffold(

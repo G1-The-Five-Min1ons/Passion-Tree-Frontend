@@ -11,6 +11,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/teache
 import 'package:passion_tree_frontend/core/common_widgets/popups/delete_popup.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
 import 'package:passion_tree_frontend/features/upload/upload_service.dart';
@@ -252,7 +253,10 @@ class _EditNodeModalState extends State<EditNodeModal> {
         if (!context.mounted) return;
         
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload files: $e')),
+          SnackBar(
+              content: Text('Failed to upload files: $e', style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
         );
       } finally {
         if (context.mounted) {
@@ -302,7 +306,10 @@ class _EditNodeModalState extends State<EditNodeModal> {
         if (!context.mounted) return;
         
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload files: $e')),
+          SnackBar(
+              content: Text('Failed to upload files: $e', style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
         );
       } finally {
         if (context.mounted) {
@@ -347,7 +354,10 @@ class _EditNodeModalState extends State<EditNodeModal> {
           }
         } else if (state is LearningPathError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${state.message}')),
+            SnackBar(
+              content: Text('Error: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
           );
         }
       },

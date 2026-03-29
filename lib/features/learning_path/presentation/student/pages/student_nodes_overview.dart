@@ -138,7 +138,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                           // แสดง snackbar เตือน
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(errorMessage),
+                              content: Text(errorMessage, style: const TextStyle(color: AppColors.textPrimary)),
                               backgroundColor: Theme.of(context).colorScheme.error,
                               duration: const Duration(seconds: 3),
                             ),

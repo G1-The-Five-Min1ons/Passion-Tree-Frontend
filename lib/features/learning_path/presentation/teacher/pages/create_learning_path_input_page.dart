@@ -116,7 +116,10 @@ class _CreateLearningPathInputPageState
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to upload image: $e')),
+            SnackBar(
+              content: Text('Failed to upload image: $e', style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
           );
         }
       }
@@ -286,7 +289,10 @@ class _CreateLearningPathInputPageState
             _isCreatingPath = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${state.message}')),
+            SnackBar(
+              content: Text('Error: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
           );
         }
       },

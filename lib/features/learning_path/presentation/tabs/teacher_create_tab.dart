@@ -254,6 +254,13 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Learning path deleted successfully')),
           );
+        } else if (state is LearningPathError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message, style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
         }
       },
       child: Column(

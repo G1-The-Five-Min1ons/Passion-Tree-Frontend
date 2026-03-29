@@ -63,7 +63,10 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
           );
         } else if (state is LearningPathError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${state.message}')),
+            SnackBar(
+              content: Text('Error: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
           );
         }
       },
