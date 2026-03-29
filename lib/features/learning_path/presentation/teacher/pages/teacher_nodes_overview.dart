@@ -56,6 +56,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   String? _userId;
   List<NodeDetail>? _cachedNodes; // Cache nodes from backend
   LearningPath? _cachedLearningPath; // Cache learning path details for updating
+  bool _pendingPublish = false; // รอ node สร้างเสร็จแล้วค่อย publish
+  bool _pendingSaveDraft = false; // รอ node สร้างเสร็จแล้วค่อย save draft
 
   @override
   void initState() {
@@ -196,16 +198,20 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       body: 'Are you sure to save draft',
       confirmText: 'Save',
       onConfirm: () {
-        // สร้าง nodes เฉพาะเมื่อยังไม่มี nodes ใน backend เลย
+        // ถ้ายังไม่มี nodes ใน backend ให้สร้างก่อน แล้วค่อย save draft
         if (_cachedNodes == null || _cachedNodes!.isEmpty) {
-          for (int i = 0; i < _uiNodes.length; i++) {
-            if (!_uiNodes[i].isCreated) {
-              _handleCreateNode(i);
+          final hasUncreated = _uiNodes.any((n) => !n.isCreated);
+          if (hasUncreated) {
+            setState(() => _pendingSaveDraft = true);
+            for (int i = 0; i < _uiNodes.length; i++) {
+              if (!_uiNodes[i].isCreated) {
+                _handleCreateNode(i);
+              }
             }
+            return; // รอ NodeCreated แล้วค่อย dispatch
           }
         }
 
-        // อัปเดต publish status เป็น draft
         context.read<LearningPathBloc>().add(
           UpdateLearningPathEvent(
             pathId: widget.pathId,
@@ -216,8 +222,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             publishStatus: 'draft',
           ),
         );
-
-        debugPrint('Saving draft...');
       },
     );
   }
@@ -246,16 +250,20 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       body: 'Are you sure to publish Learning Path',
       confirmText: 'Publish',
       onConfirm: () {
-        // สร้าง nodes เฉพาะเมื่อยังไม่มี nodes ใน backend เลย
+        // ถ้ายังไม่มี nodes ใน backend ให้สร้างก่อน แล้วค่อย publish
         if (_cachedNodes == null || _cachedNodes!.isEmpty) {
-          for (int i = 0; i < _uiNodes.length; i++) {
-            if (!_uiNodes[i].isCreated) {
-              _handleCreateNode(i);
+          final hasUncreated = _uiNodes.any((n) => !n.isCreated);
+          if (hasUncreated) {
+            setState(() => _pendingPublish = true);
+            for (int i = 0; i < _uiNodes.length; i++) {
+              if (!_uiNodes[i].isCreated) {
+                _handleCreateNode(i);
+              }
             }
+            return; // รอ NodeCreated แล้วค่อย dispatch
           }
         }
 
-        // อัปเดต publish status เป็น published
         context.read<LearningPathBloc>().add(
           UpdateLearningPathEvent(
             pathId: widget.pathId,
@@ -266,8 +274,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             publishStatus: 'published',
           ),
         );
-
-        debugPrint('Publishing learning path: ${widget.pathId}');
       },
     );
   }
@@ -341,6 +347,26 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
               _uiNodes[_pendingNodeIndex!].isCreated = true;
               _pendingNodeIndex = null;
             });
+          }
+
+          // ถ้ามี pending publish/draft ให้ dispatch UpdateLearningPathEvent ทันที
+          if (_pendingPublish || _pendingSaveDraft) {
+            final status = _pendingPublish ? 'published' : 'draft';
+            setState(() {
+              _pendingPublish = false;
+              _pendingSaveDraft = false;
+            });
+            context.read<LearningPathBloc>().add(
+              UpdateLearningPathEvent(
+                pathId: widget.pathId,
+                title: _cachedLearningPath!.title,
+                objective: _cachedLearningPath!.objective,
+                description: _cachedLearningPath!.description,
+                coverImgUrl: _cachedLearningPath!.coverImageUrl,
+                publishStatus: status,
+              ),
+            );
+            return;
           }
 
           // Refetch nodes with a small delay to ensure backend transaction is committed
