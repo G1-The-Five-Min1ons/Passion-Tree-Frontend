@@ -33,13 +33,7 @@ class GoalStep extends StatelessWidget {
               child: InkWell(
                 borderRadius: BorderRadius.zero,
                 onTap: () {
-                  final newSelected = List<String>.from(selected);
-                  if (isSelected) {
-                    newSelected.remove(e);
-                  } else {
-                    newSelected.add(e);
-                  }
-                  onSelect(newSelected);
+                  onSelect(isSelected ? [] : [e]);
                 },
                 child: PixelBorderContainer(
                   width: double.infinity,
