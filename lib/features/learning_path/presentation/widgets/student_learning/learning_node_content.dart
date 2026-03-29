@@ -38,20 +38,24 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
   void initState() {
     super.initState();
     // Extract video ID from YouTube URL
-    // Use video URL from backend if available, otherwise use default
     final videoUrl = widget.videoUrl ?? 'https://youtu.be/Yf4M3WZilRI?si=HU_zfUG1GzGMizNb';
     _videoId = YoutubePlayer.convertUrlToId(videoUrl) ?? '';
-  }
 
-  void _initializePlayer() {
+    // Initialize controller eagerly so YoutubePlayerBuilder can manage fullscreen
     if (_videoId != null && _videoId!.isNotEmpty) {
       _controller = YoutubePlayerController(
         initialVideoId: _videoId!,
         flags: const YoutubePlayerFlags(
-          autoPlay: true,
+          autoPlay: false,
           mute: false,
         ),
       );
+    }
+  }
+
+  void _initializePlayer() {
+    if (_controller != null) {
+      _controller!.play();
       setState(() {
         _showPlayer = true;
       });
@@ -64,8 +68,7 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildContent(BuildContext context, Widget? player) {
     final colors = Theme.of(context).colorScheme;
 
     return Column(
@@ -93,12 +96,8 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
           height: 180,
           borderColor: AppColors.cardBorder,
           fillColor: colors.surface,
-          child: _showPlayer && _controller != null
-              ? YoutubePlayer(
-                  controller: _controller!,
-                  showVideoProgressIndicator: true,
-                  progressIndicatorColor: colors.primary,
-                )
+          child: _showPlayer && player != null
+              ? player
               : GestureDetector(
                   onTap: _initializePlayer,
                   child: Stack(
@@ -112,14 +111,12 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
                           height: 240,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            // Fallback to lower quality thumbnail
                             return Image.network(
                               'https://img.youtube.com/vi/$_videoId/hqdefault.jpg',
                               width: double.infinity,
                               height: 240,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
-                                // If both fail, show placeholder
                                 return Container(
                                   color: colors.surface,
                                   child: const Center(
@@ -250,5 +247,20 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
         ),
       ],
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_controller != null) {
+      return YoutubePlayerBuilder(
+        player: YoutubePlayer(
+          controller: _controller!,
+          showVideoProgressIndicator: true,
+          progressIndicatorColor: Theme.of(context).colorScheme.primary,
+        ),
+        builder: (context, player) => _buildContent(context, player),
+      );
+    }
+    return _buildContent(context, null);
   }
 }
