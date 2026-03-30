@@ -189,6 +189,26 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     );
   }
 
+  void _handleReorder(int fromIndex, int toIndex) {
+    setState(() {
+      final item = _uiNodes.removeAt(fromIndex);
+      _uiNodes.insert(toIndex, item);
+      // Update sequences to reflect new order
+      for (int i = 0; i < _uiNodes.length; i++) {
+        _uiNodes[i].sequence = i + 1;
+      }
+      // Also reorder cached nodes to keep _displayNodes in sync
+      if (_cachedNodes != null && fromIndex < _cachedNodes!.length) {
+        final cachedItem = _cachedNodes!.removeAt(fromIndex);
+        if (toIndex <= _cachedNodes!.length) {
+          _cachedNodes!.insert(toIndex, cachedItem);
+        } else {
+          _cachedNodes!.add(cachedItem);
+        }
+      }
+    });
+  }
+
   void _confirmSaveDraft(BuildContext context) {
     if (_cachedLearningPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -446,10 +466,12 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
               /// ===== CORE =====
               NodesOverviewCore(
                 isEditable: true,
+                isDraggable: _cachedLearningPath?.publishStatus.toLowerCase() != 'published',
                 nodes: _displayNodes,
                 onNodeTap: (index) {
                   _openEditNodeModal(context, index: index);
                 },
+                onReorder: _handleReorder,
               ),
 
               /// ===== HEADER =====
