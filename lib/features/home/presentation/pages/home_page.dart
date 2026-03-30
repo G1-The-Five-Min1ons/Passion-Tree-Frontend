@@ -82,8 +82,17 @@ class _HomePageState extends State<HomePage> {
                       final hasEnrolledPaths =
                           overview.enrolledPaths.isNotEmpty;
 
+                      final enrolledPathIds = overview.enrolledPaths
+                          .map((e) => e.pathId.trim())
+                          .toSet();
+                      final unenrolledPaths = overview.allPaths
+                          .where((p) =>
+                              p.publishStatus.toLowerCase().trim() == 'published' &&
+                              !enrolledPathIds.contains(p.id.trim()))
+                          .toList();
+
                       return PopularLearningPathsSection(
-                        paths: overview.allPaths,
+                        paths: unenrolledPaths,
                         hasEnrolledPaths: hasEnrolledPaths,
                       );
                     }

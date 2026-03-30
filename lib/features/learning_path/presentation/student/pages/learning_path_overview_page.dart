@@ -155,10 +155,10 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
 
               // Filter out ALL enrolled paths (use original data to ensure complete filtering)
               final enrolledPathIds = overviewData.enrolledPaths
-                  .map((e) => e.pathId)
+                  .map((e) => e.pathId.trim())
                   .toSet();
               final filteredRecommended = filteredAll
-                  .where((path) => !enrolledPathIds.contains(path.id))
+                  .where((path) => !enrolledPathIds.contains(path.id.trim()))
                   .toList();
 
               // Use filtered courses (without enrolled) for "All Learning Paths" section
