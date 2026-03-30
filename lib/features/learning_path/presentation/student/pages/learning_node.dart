@@ -10,6 +10,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class LearningNodePage extends StatefulWidget {
   final String nodeId;
@@ -33,36 +34,50 @@ class LearningNodePage extends StatefulWidget {
 
 class _LearningNodePageState extends State<LearningNodePage> {
   NodeDetail? _cachedNodeDetail;
+  YoutubePlayerController? _videoController;
 
   @override
   void initState() {
     super.initState();
-
-    // Start node when page loads
     LogHandler.info('Action: User joined learning node ${widget.nodeId}');
     context.read<LearningPathBloc>().add(
       StartNodeEvent(nodeId: widget.nodeId, userId: widget.userId),
     );
-
-    // Fetch node detail when page loads
     context.read<LearningPathBloc>().add(
       FetchNodeDetail(nodeId: widget.nodeId, userId: widget.userId),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
+  }
+
+  void _initVideoController(String? videoUrl) {
+    if (_videoController != null) return;
+    final url = videoUrl ?? 'https://youtu.be/Yf4M3WZilRI?si=HU_zfUG1GzGMizNb';
+    final videoId = YoutubePlayer.convertUrlToId(url) ?? '';
+    if (videoId.isNotEmpty) {
+      setState(() {
+        _videoController = YoutubePlayerController(
+          initialVideoId: videoId,
+          flags: const YoutubePlayerFlags(autoPlay: false, mute: false),
+        );
+      });
+    }
+  }
+
+  Widget _buildScaffold(BuildContext context, {Widget? player}) {
     return Scaffold(
       appBar: const AppBarWidget(title: 'Learning Paths', showBackButton: true),
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            // Cache node detail when loaded
             if (state is NodeDetailLoaded) {
               _cachedNodeDetail = state.nodeDetail;
             }
 
-            // Show loading only if no cached data
             if ((state is LearningPathLoading || state is LearningPathInitial) &&
                 _cachedNodeDetail == null) {
               return const Center(child: CircularProgressIndicator());
@@ -72,7 +87,6 @@ class _LearningNodePageState extends State<LearningNodePage> {
               return Center(child: Text('Error: ${state.message}'));
             }
 
-            // Use cached node detail
             final nodeDetail = _cachedNodeDetail;
 
             if (nodeDetail != null) {
@@ -94,6 +108,8 @@ class _LearningNodePageState extends State<LearningNodePage> {
                         materials: nodeDetail.materials,
                         status: nodeDetail.status,
                         videoUrl: nodeDetail.linkVdo,
+                        controller: _videoController,
+                        player: player,
                         onTakeQuiz: () async {
                           final bloc = context.read<LearningPathBloc>();
                           await Navigator.push(
@@ -106,14 +122,12 @@ class _LearningNodePageState extends State<LearningNodePage> {
                                   title: nodeDetail.title,
                                   pathName: widget.pathName,
                                   totalNodes: widget.totalNodes,
-                                  currentNodeSequence:
-                                      widget.currentNodeSequence,
+                                  currentNodeSequence: widget.currentNodeSequence,
                                   userId: widget.userId,
                                 ),
                               ),
                             ),
                           );
-                          // Refetch node detail after returning from quiz
                           if (mounted) {
                             bloc.add(FetchNodeDetail(
                               nodeId: widget.nodeId,
@@ -136,11 +150,31 @@ class _LearningNodePageState extends State<LearningNodePage> {
               );
             }
 
-            // No node detail available
             return const Center(child: CircularProgressIndicator());
           },
         ),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<LearningPathBloc, LearningPathState>(
+      listener: (context, state) {
+        if (state is NodeDetailLoaded) {
+          _initVideoController(state.nodeDetail.linkVdo);
+        }
+      },
+      child: _videoController != null
+          ? YoutubePlayerBuilder(
+              player: YoutubePlayer(
+                controller: _videoController!,
+                showVideoProgressIndicator: true,
+                progressIndicatorColor: Theme.of(context).colorScheme.primary,
+              ),
+              builder: (context, player) => _buildScaffold(context, player: player),
+            )
+          : _buildScaffold(context),
     );
   }
 }
