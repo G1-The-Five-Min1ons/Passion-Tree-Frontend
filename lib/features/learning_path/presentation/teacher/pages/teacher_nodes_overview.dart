@@ -136,31 +136,24 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     String? sequence;
     NodeDetail? initialNode;
 
-    // ถ้ามี index (กดที่ node ที่มีอยู่แล้ว)
-    if (index != null && _cachedNodes != null && index < _cachedNodes!.length) {
-      // แก้ไข node ที่มีอยู่แล้วจาก backend
-      nodeId = _cachedNodes![index].nodeId;
-      isNewNode = false;
-      sequence = null;
-      initialNode = _cachedNodes![index]; // ส่งข้อมูลเดิมไปแสดงใน modal
-    } else if (index != null && index < _uiNodes.length) {
-      // Node ยังไม่ถูก sync กับ backend แต่มีข้อมูลใน _uiNodes (เช่น AI nodes)
-      final uiNode = _uiNodes[index];
-      nodeId = uiNode.realNodeId ?? 'new_node_${DateTime.now().millisecondsSinceEpoch}';
-      isNewNode = uiNode.realNodeId == null;
-      sequence = uiNode.realNodeId == null ? uiNode.sequence.toString() : null;
-      initialNode = NodeDetail(
-        nodeId: nodeId,
-        title: uiNode.title,
-        description: uiNode.description,
-        sequence: uiNode.sequence,
-        pathId: widget.pathId,
-        materials: const [],
-        questions: const [],
-        status: 'locked',
-        complete: 'false',
-        linkVdo: null,
-      );
+    if (index != null && index < _displayNodes.length) {
+      final displayNode = _displayNodes[index];
+      final isBackendNode =
+          _cachedNodes?.any((n) => n.nodeId == displayNode.nodeId) ?? false;
+
+      if (isBackendNode) {
+        // แก้ไข node ที่มีอยู่แล้วจาก backend
+        nodeId = displayNode.nodeId;
+        isNewNode = false;
+        sequence = null;
+        initialNode = displayNode;
+      } else {
+        // AI node ที่ยังไม่ถูกสร้างใน backend
+        nodeId = 'new_node_${DateTime.now().millisecondsSinceEpoch}';
+        isNewNode = true;
+        sequence = displayNode.sequence.toString();
+        initialNode = displayNode;
+      }
     } else {
       // สร้าง node ใหม่
       nodeId = 'new_node_${DateTime.now().millisecondsSinceEpoch}';
@@ -336,8 +329,31 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
   List<NodeDetail> get _displayNodes {
     final backendNodes = _cachedNodes;
+    final uncreatedNodes = _uiNodes.where((n) => !n.isCreated).toList();
+
     if (backendNodes != null && backendNodes.isNotEmpty) {
-      return backendNodes;
+      if (uncreatedNodes.isEmpty) return backendNodes;
+
+      // Merge backend nodes + uncreated AI nodes, sorted by sequence
+      final merged = [
+        ...backendNodes,
+        ...uncreatedNodes.map(
+          (uiNode) => NodeDetail(
+            nodeId: 'draft_node_${uiNode.sequence}',
+            title: uiNode.title,
+            description: uiNode.description,
+            sequence: uiNode.sequence,
+            pathId: widget.pathId,
+            materials: const [],
+            questions: const [],
+            status: 'locked',
+            complete: 'false',
+            linkVdo: null,
+          ),
+        ),
+      ];
+      merged.sort((a, b) => a.sequence.compareTo(b.sequence));
+      return merged;
     }
     return _buildFallbackNodesFromUiState();
   }
@@ -359,19 +375,24 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         if (state is NodesLoaded && state.pathId == widget.pathId) {
           setState(() {
             _cachedNodes = state.nodes;
-            // Sync _uiNodes with cached nodes from backend
+            // Only update _uiNodes that match backend nodes (by realNodeId or sequence)
+            // Keep uncreated AI nodes intact so they don't disappear
             if (state.nodes.isNotEmpty) {
-              _uiNodes = state.nodes
-                  .map(
-                    (node) => NodeUiState(
-                      title: node.title,
-                      description: node.description,
-                      sequence: node.sequence,
-                      realNodeId: node.nodeId,
-                      isCreated: true, // Nodes from backend are already created
-                    ),
-                  )
-                  .toList();
+              for (final backendNode in state.nodes) {
+                final uiIndex = _uiNodes.indexWhere(
+                  (n) =>
+                      n.realNodeId == backendNode.nodeId ||
+                      (n.realNodeId == null &&
+                          n.sequence == backendNode.sequence),
+                );
+                if (uiIndex >= 0) {
+                  _uiNodes[uiIndex].title = backendNode.title;
+                  _uiNodes[uiIndex].description = backendNode.description;
+                  _uiNodes[uiIndex].sequence = backendNode.sequence;
+                  _uiNodes[uiIndex].realNodeId = backendNode.nodeId;
+                  _uiNodes[uiIndex].isCreated = true;
+                }
+              }
             }
           });
         }
