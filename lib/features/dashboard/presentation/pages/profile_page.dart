@@ -4,8 +4,11 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_profile_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
 import 'package:passion_tree_frontend/features/dashboard/domain/usecases/get_dashboard_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_status.dart';
 import 'package:passion_tree_frontend/features/setting/presentation/pages/setting_page.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/profile_card_widget.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/tree_card_widget.dart';
@@ -25,10 +28,12 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final GetProfileUseCase _getProfileUseCase = getIt<GetProfileUseCase>();
   final GetDashboardUseCase _getDashboardUseCase = getIt<GetDashboardUseCase>();
+  final GetLearningPathStatus _getLearningPathStatus = getIt<GetLearningPathStatus>();
 
   bool _isLoading = true;
   UserProfile? _userProfile;
   DashboardResponse? _dashboardData;
+  List<EnrolledLearningPath> _enrolledPaths = [];
 
   @override
   void initState() {
@@ -37,12 +42,24 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadDashboardData() async {
-    // Fetch profile and dashboard data in parallel
+    // Fetch profile, dashboard, and enrolled paths in parallel
     final profileFuture = _getProfileUseCase.execute();
     final dashboardFuture = _getDashboardUseCase.execute();
+    final userIdFuture = getIt<IAuthRepository>().getUserId();
 
     final profileResult = await profileFuture;
     final dashboardResult = await dashboardFuture;
+    final userId = await userIdFuture;
+
+    // Fetch enrolled paths using the same API as Learn page
+    List<EnrolledLearningPath> enrolledPaths = [];
+    if (userId != null && userId.isNotEmpty) {
+      try {
+        enrolledPaths = await _getLearningPathStatus.call(userId);
+      } catch (_) {
+        // Fall back to empty list if fetch fails
+      }
+    }
 
     if (!mounted) return;
 
@@ -55,6 +72,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() {
       _dashboardData = dashboardResult;
+      _enrolledPaths = enrolledPaths;
       _isLoading = false;
     });
   }
@@ -100,9 +118,11 @@ class _ProfilePageState extends State<ProfilePage> {
       _dashboardData?.userInfo.learningStreak ??
       0;
   int get _learningPathCount =>
-      _dashboardData?.currentPaths.length ??
-      _userProfile?.profile?.learningCount ??
-      0;
+      _enrolledPaths.isNotEmpty
+          ? _enrolledPaths.length
+          : _dashboardData?.currentPaths.length ??
+            _userProfile?.profile?.learningCount ??
+            0;
 
   String get _rankName {
     final profileRank = _userProfile?.profile?.rankName;
@@ -174,7 +194,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SectionTitle(title: 'My Learning Path'),
                     const SizedBox(height: 8),
                     LearningPathCardWidget(
-                      paths: _dashboardData?.currentPaths ?? [],
+                      enrolledPaths: _enrolledPaths,
                     ),
                     const SizedBox(height: 14),
                     WeeklyMissionCardWidget(

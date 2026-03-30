@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
-import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
@@ -11,13 +10,13 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/core/di/injection.dart';
 
 class LearningPathCardWidget extends StatelessWidget {
-  final List<CurrentPathItem> paths;
+  final List<EnrolledLearningPath> enrolledPaths;
 
-  const LearningPathCardWidget({super.key, required this.paths});
+  const LearningPathCardWidget({super.key, required this.enrolledPaths});
 
   @override
   Widget build(BuildContext context) {
-    if (paths.isEmpty) {
+    if (enrolledPaths.isEmpty) {
       return PixelBorderContainer(
         width: double.infinity,
         pixelSize: 3,
@@ -31,8 +30,7 @@ class LearningPathCardWidget extends StatelessWidget {
       );
     }
 
-    // Show the first enrolled path as the "current" path
-    final path = paths.first;
+    final path = enrolledPaths.first;
     final progress = (path.progressPercent / 100).clamp(0.0, 1.0);
     final progressLabel = '${path.progressPercent.round()}%';
 
@@ -141,15 +139,15 @@ class LearningPathCardWidget extends StatelessWidget {
                   const SizedBox(height: 4),
                   // Module count
                   Text(
-                    '${path.completedModules}/${path.totalModules} modules',
+                    '${path.completedNodes}/${path.modules} modules',
                     style: AppTypography.smallBodyMedium.copyWith(
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  if (paths.length > 1) ...[
+                  if (enrolledPaths.length > 1) ...[
                     const SizedBox(height: 6),
                     Text(
-                      '+ ${paths.length - 1} more learning path${paths.length - 1 > 1 ? 's' : ''}',
+                      '+ ${enrolledPaths.length - 1} more learning path${enrolledPaths.length - 1 > 1 ? 's' : ''}',
                       style: AppTypography.smallBodyRegular.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -164,32 +162,19 @@ class LearningPathCardWidget extends StatelessWidget {
     );
   }
 
-  void _navigateToPath(BuildContext context, CurrentPathItem path) {
+  void _navigateToPath(BuildContext context, EnrolledLearningPath path) {
     final course = LearningPath(
       id: path.pathId,
       title: path.title,
       description: path.description,
       objective: '',
       coverImageUrl: path.coverImgUrl,
-      rating: 0,
+      rating: path.rating,
       publishStatus: 'published',
       instructor: path.instructor,
       students: 0,
-      modules: path.totalModules,
+      modules: path.modules,
       creatorId: '',
-    );
-
-    final enrolledPath = EnrolledLearningPath(
-      pathId: path.pathId,
-      title: path.title,
-      description: path.description,
-      instructor: path.instructor,
-      rating: 0,
-      coverImgUrl: path.coverImgUrl,
-      modules: path.totalModules,
-      completedNodes: path.completedModules,
-      progressPercent: path.progressPercent,
-      progressStatus: path.progressPercent >= 100 ? 'Completed' : 'In Progress',
     );
 
     Navigator.push(
@@ -199,7 +184,7 @@ class LearningPathCardWidget extends StatelessWidget {
           create: (_) => getIt<LearningPathBloc>(),
           child: LearningCoursePage(
             course: course,
-            enrolledPath: enrolledPath,
+            enrolledPath: path,
           ),
         ),
       ),
