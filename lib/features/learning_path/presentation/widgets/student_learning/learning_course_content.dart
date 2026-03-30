@@ -47,10 +47,9 @@ class LearningCourseContent extends StatelessWidget {
         ),
 
         /// ===== COURSE MAP PREVIEW =====
-        Container(
+        SizedBox(
           width: double.infinity,
           height: 400,
-          color: AppColors.background,
           child: nodes != null && nodes!.isNotEmpty
               ? Padding(
                   padding: const EdgeInsets.all(2.0),
