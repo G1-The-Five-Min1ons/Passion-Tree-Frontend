@@ -151,11 +151,14 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     final colors = Theme.of(context).colorScheme;
 
     if (paths.isEmpty) {
-      return Center(
-        child: Text(
-          emptyMessage,
-          style: AppTypography.subtitleSemiBold.copyWith(
-            color: colors.onPrimary,
+      return SizedBox(
+        height: 260,
+        child: Center(
+          child: Text(
+            emptyMessage,
+            style: AppTypography.subtitleSemiBold.copyWith(
+              color: colors.onPrimary,
+            ),
           ),
         ),
       );
