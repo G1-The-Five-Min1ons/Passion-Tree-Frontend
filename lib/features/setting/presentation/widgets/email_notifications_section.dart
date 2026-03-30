@@ -154,7 +154,7 @@ class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
           _updatingKeys.remove(key);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update notification: ${failure.message}')),
+          SnackBar(content: Text('Failed to update notification: ${failure.message}', style: const TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
         );
       },
       (_) {

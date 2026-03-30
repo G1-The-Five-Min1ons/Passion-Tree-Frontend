@@ -105,7 +105,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to check verification status: $e')),
+        SnackBar(content: Text('Unable to check verification status: $e', style: const TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
     }
   }
@@ -252,7 +252,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
       listener: (context, state) {
         if (state is LearningPathDeleted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Learning path deleted successfully')),
+            const SnackBar(content: Text('Learning path deleted successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
           );
         } else if (state is LearningPathError) {
           ScaffoldMessenger.of(context).showSnackBar(

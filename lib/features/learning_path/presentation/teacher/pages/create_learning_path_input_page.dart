@@ -105,7 +105,7 @@ class _CreateLearningPathInputPageState
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Image uploaded successfully')),
+            const SnackBar(content: Text('Image uploaded successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
           );
         }
       } catch (e) {
@@ -118,7 +118,7 @@ class _CreateLearningPathInputPageState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to upload image: $e', style: const TextStyle(color: AppColors.textPrimary)),
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: AppColors.cancel,
             ),
           );
         }
@@ -129,21 +129,21 @@ class _CreateLearningPathInputPageState
   void _handleCreateWithAI(BuildContext context) {
     if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(content: Text('Please fill in all fields', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
 
     if (_uploadedImageUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload a cover image')),
+        const SnackBar(content: Text('Please upload a cover image', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
 
     if (_userId == null || _userId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not authenticated')),
+        const SnackBar(content: Text('User not authenticated', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
@@ -167,21 +167,21 @@ class _CreateLearningPathInputPageState
   void _handleCreatePlainPath(BuildContext context) {
     if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(content: Text('Please fill in all fields', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
 
     if (_uploadedImageUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please attach a cover image before creating a Learning Path')),
+        const SnackBar(content: Text('Please attach a cover image before creating a Learning Path', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
 
     if (_userId == null || _userId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not authenticated')),
+        const SnackBar(content: Text('User not authenticated', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
@@ -201,14 +201,14 @@ class _CreateLearningPathInputPageState
   void _handleSave(BuildContext context) {
     if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(content: Text('Please fill in all fields', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
 
     if (!_isEditMode) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: Not in edit mode')),
+        const SnackBar(content: Text('Error: Not in edit mode', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
@@ -282,7 +282,7 @@ class _CreateLearningPathInputPageState
 
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Learning path updated successfully')),
+            const SnackBar(content: Text('Learning path updated successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
           );
           Navigator.pop(context);
         } else if (state is LearningPathError) {
@@ -292,7 +292,7 @@ class _CreateLearningPathInputPageState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: AppColors.cancel,
             ),
           );
         }

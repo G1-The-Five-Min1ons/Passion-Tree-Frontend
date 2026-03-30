@@ -46,6 +46,8 @@ class LearningCourseContent extends StatelessWidget {
           ),
         ),
 
+        const SizedBox(height: 32),
+
         /// ===== COURSE MAP PREVIEW =====
         SizedBox(
           width: double.infinity,
@@ -57,7 +59,7 @@ class LearningCourseContent extends StatelessWidget {
                     fit: BoxFit.cover,
                     child: SizedBox(
                       width: 600,
-                      height: 900,
+                      height: 800,
                       child: IgnorePointer(
                         child: NodesOverviewCore(
                           isEditable: false,
@@ -136,10 +138,9 @@ class LearningCourseContent extends StatelessWidget {
                 child: Text(
                   isEnrolled ? 'Continue Your Journey' : 'Ready To Explore?',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(color: AppColors.title),
+                  style: AppTypography.titleSemiBold.copyWith(
+                      color: colors.onSurface,
+                    ),
                 ),
               ),
             ),

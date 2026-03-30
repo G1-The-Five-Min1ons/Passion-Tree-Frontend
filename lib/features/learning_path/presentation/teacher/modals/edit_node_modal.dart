@@ -196,7 +196,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
   Future<void> _handleUpdate(BuildContext context) async {
     if (_title.isEmpty || _description.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Title and description are required')),
+        const SnackBar(content: Text('Title and description are required', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
@@ -205,7 +205,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
       // สร้าง node ใหม่
       if (widget.pathId == null || widget.sequence == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Missing path ID or sequence')),
+          const SnackBar(content: Text('Missing path ID or sequence', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
         );
         return;
       }
@@ -255,7 +255,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text('Failed to upload files: $e', style: const TextStyle(color: AppColors.textPrimary)),
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: AppColors.cancel,
             ),
         );
       } finally {
@@ -308,7 +308,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text('Failed to upload files: $e', style: const TextStyle(color: AppColors.textPrimary)),
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: AppColors.cancel,
             ),
         );
       } finally {
@@ -327,7 +327,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
       listener: (context, state) {
         if (state is NodeUpdated) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node updated successfully')),
+            const SnackBar(content: Text('Node updated successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
           );
           // Delay closing modal to allow parent listeners to process and refetch
           Future.delayed(const Duration(milliseconds: 300), () {
@@ -337,7 +337,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
           });
         } else if (state is NodeCreated) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node created successfully')),
+            const SnackBar(content: Text('Node created successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
           );
           // Delay closing modal to allow parent listeners to process and refetch
           Future.delayed(const Duration(milliseconds: 300), () {
@@ -347,7 +347,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
           });
         } else if (state is NodeDeleted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node deleted successfully')),
+            const SnackBar(content: Text('Node deleted successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
           );
           if (context.mounted) {
             Navigator.pop(context);
@@ -356,7 +356,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: AppColors.cancel,
             ),
           );
         }
