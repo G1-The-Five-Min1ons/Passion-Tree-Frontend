@@ -218,11 +218,14 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                         ),
                         const SizedBox(height: 40),
                         if (filteredEnrolled.isEmpty)
-                          Center(
-                            child: Text(
-                              'No enrolled paths found',
-                              style: AppTypography.subtitleSemiBold.copyWith(
-                                color: colors.onPrimary,
+                          SizedBox(
+                            height: 260,
+                            child: Center(
+                              child: Text(
+                                'No enrolled paths found',
+                                style: AppTypography.subtitleSemiBold.copyWith(
+                                  color: colors.onPrimary,
+                                ),
                               ),
                             ),
                           )
@@ -257,30 +260,29 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           ),
                         ),
                         const SizedBox(height: 40),
-                        SizedBox(
-                          height: BaseCourseCard.defaultHeight,
-                          child: filteredRecommended.isEmpty
-                              ? Center(
-                                  child: Text(
-                                    'No recommended paths found',
-                                    style: AppTypography.subtitleSemiBold
-                                        .copyWith(color: colors.onPrimary),
-                                  ),
-                                )
-                              : ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 0,
-                                  ),
-                                  itemCount: filteredRecommended.length,
-                                  separatorBuilder: (context, index) => const SizedBox(width: 12),
-                                  itemBuilder: (context, index) {
-                                    return PixelCourseCard(
-                                      course: filteredRecommended[index],
-                                    );
-                                  },
-                                ),
-                        ),
+                        if (filteredRecommended.isEmpty)
+                          Center(
+                            child: Text(
+                              'No recommended paths found',
+                              style: AppTypography.subtitleSemiBold
+                                  .copyWith(color: colors.onPrimary),
+                            ),
+                          )
+                        else
+                          SizedBox(
+                            height: BaseCourseCard.defaultHeight,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 0),
+                              itemCount: filteredRecommended.length,
+                              separatorBuilder: (context, index) => const SizedBox(width: 12),
+                              itemBuilder: (context, index) {
+                                return PixelCourseCard(
+                                  course: filteredRecommended[index],
+                                );
+                              },
+                            ),
+                          ),
                       ] else ...[
                         // Not logged in: Show Popular Learning Paths
                         Text(
@@ -290,29 +292,28 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           ),
                         ),
                         const SizedBox(height: 40),
-                        SizedBox(
-                          height: BaseCourseCard.defaultHeight,
-                          child: filteredRecommended.isEmpty
-                              ? Center(
-                                  child: Text(
-                                    'No popular paths found',
-                                    style: AppTypography.subtitleSemiBold
-                                        .copyWith(color: colors.onPrimary),
-                                  ),
-                                )
-                              : ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 0,
-                                  ),
-                                  itemCount: filteredRecommended.length,
-                                  separatorBuilder: (context, index) => const SizedBox(width: 12),
-                                  itemBuilder: (context, index) {
-                                    return PixelCourseCard(
-                                      course: filteredRecommended[index],
-                                    );
-                                  },
-                                ),
+                        if (filteredRecommended.isEmpty)
+                          Center(
+                            child: Text(
+                              'No popular paths found',
+                              style: AppTypography.subtitleSemiBold
+                                  .copyWith(color: colors.onPrimary),
+                            ),
+                          )
+                        else
+                          SizedBox(
+                            height: BaseCourseCard.defaultHeight,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 0),
+                              itemCount: filteredRecommended.length,
+                              separatorBuilder: (context, index) => const SizedBox(width: 12),
+                              itemBuilder: (context, index) {
+                                return PixelCourseCard(
+                                  course: filteredRecommended[index],
+                                );
+                              },
+                            ),
                         ),
                       ],
 
@@ -327,11 +328,14 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                       ),
                       const SizedBox(height: 40),
                       if (shownAllCourses.isEmpty)
-                        Center(
-                          child: Text(
-                            'No learning paths found',
-                            style: AppTypography.subtitleSemiBold.copyWith(
-                              color: colors.onPrimary,
+                        SizedBox(
+                          height: 260,
+                          child: Center(
+                            child: Text(
+                              'No learning paths found',
+                              style: AppTypography.subtitleSemiBold.copyWith(
+                                color: colors.onPrimary,
+                              ),
                             ),
                           ),
                         )
