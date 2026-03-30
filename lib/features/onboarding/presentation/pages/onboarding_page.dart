@@ -137,20 +137,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
               Stack(
                 children: [
-                  Align(
-                    alignment: Alignment.bottomLeft,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      iconSize: 32,
-                      onPressed: () {
-                        if (step == 0) {
-                          Navigator.of(context).pop();
-                        } else {
+                  if (step > 0)
+                    Align(
+                      alignment: Alignment.bottomLeft,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        iconSize: 32,
+                        onPressed: () {
                           setState(() => step--);
-                        }
-                      },
+                        },
+                      ),
                     ),
-                  ),
                   if (step != 0)
                     Align(
                       alignment: Alignment.bottomRight,
