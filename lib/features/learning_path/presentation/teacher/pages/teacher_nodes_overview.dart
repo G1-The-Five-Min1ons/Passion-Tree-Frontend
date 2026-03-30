@@ -143,12 +143,29 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       isNewNode = false;
       sequence = null;
       initialNode = _cachedNodes![index]; // ส่งข้อมูลเดิมไปแสดงใน modal
+    } else if (index != null && index < _uiNodes.length) {
+      // Node ยังไม่ถูก sync กับ backend แต่มีข้อมูลใน _uiNodes (เช่น AI nodes)
+      final uiNode = _uiNodes[index];
+      nodeId = uiNode.realNodeId ?? 'new_node_${DateTime.now().millisecondsSinceEpoch}';
+      isNewNode = uiNode.realNodeId == null;
+      sequence = uiNode.realNodeId == null ? uiNode.sequence.toString() : null;
+      initialNode = NodeDetail(
+        nodeId: nodeId,
+        title: uiNode.title,
+        description: uiNode.description,
+        sequence: uiNode.sequence,
+        pathId: widget.pathId,
+        materials: const [],
+        questions: const [],
+        status: 'locked',
+        complete: 'false',
+        linkVdo: null,
+      );
     } else {
       // สร้าง node ใหม่
       nodeId = 'new_node_${DateTime.now().millisecondsSinceEpoch}';
       isNewNode = true;
-      // กำหนด sequence เป็น node ถัดไปจาก _cachedNodes (ข้อมูลจริงจาก backend)
-      final currentNodeCount = _cachedNodes?.length ?? 0;
+      final currentNodeCount = _cachedNodes?.length ?? _uiNodes.length;
       sequence = (currentNodeCount + 1).toString();
       initialNode = null;
     }
