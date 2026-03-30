@@ -220,23 +220,30 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
 
                       const SizedBox(width: 12),
 
-                      AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'Save',
-                        onPressed: () {
-                          final bloc = context.read<LearningPathBloc>();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider.value(
-                                value: bloc,
-                                child: TeacherNodesOverviewPage(
-                                  title: widget.objective,
-                                  aiNodes: _nodes,
-                                  pathId: widget.pathId,
-                                ),
-                              ),
-                            ),
+                      BlocBuilder<LearningPathBloc, LearningPathState>(
+                        builder: (context, state) {
+                          final isLoading = state is LearningPathLoading;
+                          return AppButton(
+                            variant: AppButtonVariant.text,
+                            text: 'Save',
+                            onPressed: isLoading || _nodes.isEmpty
+                                ? null
+                                : () {
+                                    final bloc = context.read<LearningPathBloc>();
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => BlocProvider.value(
+                                          value: bloc,
+                                          child: TeacherNodesOverviewPage(
+                                            title: widget.objective,
+                                            aiNodes: _nodes,
+                                            pathId: widget.pathId,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
                           );
                         },
                       ),
