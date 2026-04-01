@@ -26,6 +26,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   /// cache overview state เพื่อกัน section หายตอน push/pop
   LearningPathOverviewLoaded? _cachedOverview;
+  bool _hasRequestedInitialLoad = false;
 
   @override
   void initState() {
@@ -38,6 +39,15 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadData() async {
+    if (_hasRequestedInitialLoad) return;
+
+    final currentState = context.read<LearningPathBloc>().state;
+    if (currentState is LearningPathOverviewLoaded ||
+        currentState is LearningPathLoading) {
+      return;
+    }
+
+    _hasRequestedInitialLoad = true;
     final userId = await getIt<IAuthRepository>().getUserId();
 
     if (!mounted) return;
@@ -81,10 +91,17 @@ class _HomePageState extends State<HomePage> {
                     if (overview != null) {
                       final hasEnrolledPaths =
                           overview.enrolledPaths.isNotEmpty;
+                      final hasRecommendedPaths =
+                          overview.recommendedPaths.isNotEmpty;
+                      final displayRecommended =
+                          hasEnrolledPaths && hasRecommendedPaths;
+                      final displayPaths = displayRecommended
+                          ? overview.recommendedPaths
+                          : overview.allPaths;
 
                       return PopularLearningPathsSection(
-                        paths: overview.allPaths,
-                        hasEnrolledPaths: hasEnrolledPaths,
+                        paths: displayPaths,
+                        hasEnrolledPaths: displayRecommended,
                       );
                     }
 

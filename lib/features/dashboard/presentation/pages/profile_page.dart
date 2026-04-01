@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
@@ -28,7 +29,8 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final GetProfileUseCase _getProfileUseCase = getIt<GetProfileUseCase>();
   final GetDashboardUseCase _getDashboardUseCase = getIt<GetDashboardUseCase>();
-  final GetLearningPathStatus _getLearningPathStatus = getIt<GetLearningPathStatus>();
+  final GetLearningPathStatus _getLearningPathStatus =
+      getIt<GetLearningPathStatus>();
 
   bool _isLoading = true;
   UserProfile? _userProfile;
@@ -63,12 +65,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (!mounted) return;
 
-    profileResult.fold(
-      (_) {},
-      (profile) {
-        _userProfile = profile;
-      },
-    );
+    profileResult.fold((_) {}, (profile) {
+      _userProfile = profile;
+    });
 
     setState(() {
       _dashboardData = dashboardResult;
@@ -82,6 +81,42 @@ class _ProfilePageState extends State<ProfilePage> {
       context,
       MaterialPageRoute(builder: (context) => const SettingsPage()),
     );
+  }
+
+  void _openLearningSource() {
+    HomeTabNavigationNotifier.jumpToTab(1);
+  }
+
+  void _openReflectSource() {
+    HomeTabNavigationNotifier.jumpToTab(2);
+  }
+
+  void _showNotReadyMessage(String title) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$title: source page is not available yet.')),
+    );
+  }
+
+  void _onActivityTap(ActivityItem item) {
+    switch (item.activityType) {
+      case 'enroll_path':
+      case 'complete_node':
+        _openLearningSource();
+        return;
+      case 'complete_mission':
+        _openLearningSource();
+        return;
+      case 'reflection':
+      case 'create_reflection':
+        _openReflectSource();
+        return;
+      default:
+        _showNotReadyMessage(item.typeLabel);
+    }
+  }
+
+  void _onMissionTap(MissionItem mission) {
+    _openLearningSource();
   }
 
   String get _fullName {
@@ -106,8 +141,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   int get _level =>
       _userProfile?.profile?.level ?? _dashboardData?.userInfo.level ?? 1;
-  int get _xp =>
-      _userProfile?.profile?.xp ?? _dashboardData?.userInfo.xp ?? 0;
+  int get _xp => _userProfile?.profile?.xp ?? _dashboardData?.userInfo.xp ?? 0;
   int get _nextXp => ((_xp ~/ 1000) + 1) * 1000;
   int get _hours =>
       _userProfile?.profile?.hourLearned ??
@@ -117,10 +151,9 @@ class _ProfilePageState extends State<ProfilePage> {
       _userProfile?.profile?.learningStreak ??
       _dashboardData?.userInfo.learningStreak ??
       0;
-  int get _learningPathCount =>
-      _enrolledPaths.isNotEmpty
-          ? _enrolledPaths.length
-          : _dashboardData?.currentPaths.length ??
+  int get _learningPathCount => _enrolledPaths.isNotEmpty
+      ? _enrolledPaths.length
+      : _dashboardData?.currentPaths.length ??
             _userProfile?.profile?.learningCount ??
             0;
 
@@ -136,8 +169,18 @@ class _ProfilePageState extends State<ProfilePage> {
     final createdAt = _userProfile?.user.createdAt;
     if (createdAt == null) return '';
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[createdAt.month - 1]} ${createdAt.year}';
   }
@@ -166,12 +209,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       email: _userProfile?.user.email ?? 'you@example.com',
                       location:
                           (_userProfile?.profile?.location?.isNotEmpty == true)
-                              ? _userProfile!.profile!.location!
-                              : '',
-                      bio:
-                          (_userProfile?.profile?.bio?.isNotEmpty == true)
-                              ? _userProfile!.profile!.bio!
-                              : '',
+                          ? _userProfile!.profile!.location!
+                          : '',
+                      bio: (_userProfile?.profile?.bio?.isNotEmpty == true)
+                          ? _userProfile!.profile!.bio!
+                          : '',
                       level: _level,
                       xp: _xp,
                       nextXp: _nextXp,
@@ -193,18 +235,18 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 14),
                     const SectionTitle(title: 'My Learning Path'),
                     const SizedBox(height: 8),
-                    LearningPathCardWidget(
-                      enrolledPaths: _enrolledPaths,
-                    ),
+                    LearningPathCardWidget(enrolledPaths: _enrolledPaths),
                     const SizedBox(height: 14),
                     WeeklyMissionCardWidget(
                       missions: _dashboardData?.weeklyMissions ?? [],
+                      onMissionTap: _onMissionTap,
                     ),
                     const SizedBox(height: 14),
                     const SectionTitle(title: 'Recent Activity'),
                     const SizedBox(height: 8),
                     RecentActivityCardWidget(
                       activities: _dashboardData?.recentActivity ?? [],
+                      onActivityTap: _onActivityTap,
                     ),
                     const SizedBox(height: 14),
                     const SectionTitle(title: 'Activity'),

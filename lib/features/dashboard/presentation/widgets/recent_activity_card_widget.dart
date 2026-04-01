@@ -6,8 +6,13 @@ import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_r
 
 class RecentActivityCardWidget extends StatelessWidget {
   final List<ActivityItem> activities;
+  final ValueChanged<ActivityItem>? onActivityTap;
 
-  const RecentActivityCardWidget({super.key, required this.activities});
+  const RecentActivityCardWidget({
+    super.key,
+    required this.activities,
+    this.onActivityTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,47 +38,58 @@ class RecentActivityCardWidget extends StatelessWidget {
       child: Column(
         children: activities
             .map(
-              (item) => Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.cardBorder),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.title,
-                            style: AppTypography.bodySemiBold.copyWith(
+              (item) => Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onActivityTap == null
+                      ? null
+                      : () => onActivityTap!(item),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.cardBorder),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.title,
+                                style: AppTypography.bodySemiBold.copyWith(
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                item.timeAgo,
+                                style: AppTypography.smallBodyRegular.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          color: AppColors.primaryBrand,
+                          child: Text(
+                            item.typeLabel,
+                            style: AppTypography.smallBodySemiBold.copyWith(
                               color: AppColors.textPrimary,
                             ),
                           ),
-                          Text(
-                            item.timeAgo,
-                            style: AppTypography.smallBodyRegular.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      color: AppColors.primaryBrand,
-                      child: Text(
-                        item.typeLabel,
-                        style: AppTypography.smallBodySemiBold.copyWith(
-                          color: AppColors.textPrimary,
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             )

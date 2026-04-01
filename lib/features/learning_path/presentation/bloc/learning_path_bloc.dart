@@ -63,7 +63,6 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.updateLearningPathUseCase,
     this.updateNodeUseCase,
   ) : super(LearningPathInitial()) {
-    
     /// Helper method to handle errors consistently
     void handleError(
       Emitter<LearningPathState> emit,
@@ -73,7 +72,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
       LogHandler.error('[BLoC] Error in $operation: $error');
       emit(LearningPathError(error.toString()));
     }
-    
+
     /// Helper method to execute async operations with error handling
     Future<void> safeExecute(
       Emitter<LearningPathState> emit,
@@ -86,375 +85,356 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         handleError(emit, operation, e);
       }
     }
-    
+
     // ===== EVENT HANDLERS =====
-    
+
     ///  FETCH ALL LEARNING PATHS
-    
-    on<FetchLearningPaths>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] FetchLearningPaths event received');
-        emit(LearningPathLoading());
 
-        try {
-          final paths = await getAllLearningPaths();
-          LogHandler.debug('[BLoC] Loaded ${paths.length} paths');
-          emit(LearningPathLoaded(paths));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error fetching paths: $e');
-          emit(LearningPathError(e.toString()));
-        }
-      },
-      transformer: restartable(),
-    );
+    on<FetchLearningPaths>((event, emit) async {
+      LogHandler.debug('[BLoC] FetchLearningPaths event received');
+      emit(LearningPathLoading());
 
-    
+      try {
+        final paths = await getAllLearningPaths();
+        LogHandler.debug('[BLoC] Loaded ${paths.length} paths');
+        emit(LearningPathLoaded(paths));
+      } catch (e) {
+        LogHandler.error('[BLoC] Error fetching paths: $e');
+        emit(LearningPathError(e.toString()));
+      }
+    }, transformer: restartable());
+
     /// FETCH STATUS (WITH PROGRESS)
-    
-    on<FetchLearningPathStatus>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] FetchLearningPathStatus event received');
-        emit(LearningPathLoading());
 
-        try {
-          final result = await getLearningPathStatus(event.userId);
-          LogHandler.debug('[BLoC] Loaded ${result.length} enrolled paths');
-          emit(LearningPathStatusLoaded(result));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error fetching status: $e');
-          emit(LearningPathError(e.toString()));
-        }
-      },
-      transformer: restartable(),
-    );
+    on<FetchLearningPathStatus>((event, emit) async {
+      LogHandler.debug('[BLoC] FetchLearningPathStatus event received');
+      emit(LearningPathLoading());
+
+      try {
+        final result = await getLearningPathStatus(event.userId);
+        LogHandler.debug('[BLoC] Loaded ${result.length} enrolled paths');
+        emit(LearningPathStatusLoaded(result));
+      } catch (e) {
+        LogHandler.error('[BLoC] Error fetching status: $e');
+        emit(LearningPathError(e.toString()));
+      }
+    }, transformer: restartable());
 
     /// FETCH OVERVIEW (ALL PATHS + ENROLLED PATHS)
-    
-    on<FetchLearningPathOverview>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] FetchLearningPathOverview event received');
-        emit(LearningPathLoading());
 
-        try {
-          // Always fetch recommendedPaths (API will use auth header)
-          final List<dynamic> results = await Future.wait([
-            getAllLearningPaths(),
-            getLearningPathStatus(event.userId!),
-            getRecommendedLearningPaths(),
-          ]);
-          final List<LearningPath> allPaths = List<LearningPath>.from(results[0] as List);
-          final List<EnrolledLearningPath> enrolledPaths = List<EnrolledLearningPath>.from(results[1] as List);
-          final List<LearningPath> recommendedPaths = List<LearningPath>.from(results[2] as List);
-          LogHandler.debug('[BLoC] Overview: \\${allPaths.length} all, \\${enrolledPaths.length} enrolled, \\${recommendedPaths.length} recommended');
-          emit(LearningPathOverviewLoaded(
+    on<FetchLearningPathOverview>((event, emit) async {
+      LogHandler.debug('[BLoC] FetchLearningPathOverview event received');
+      emit(LearningPathLoading());
+
+      try {
+        // Load data required for first paint first.
+        final List<dynamic> results = await Future.wait([
+          getAllLearningPaths(),
+          getLearningPathStatus(event.userId!),
+        ]);
+        final List<LearningPath> allPaths = List<LearningPath>.from(
+          results[0] as List,
+        );
+        final List<EnrolledLearningPath> enrolledPaths =
+            List<EnrolledLearningPath>.from(results[1] as List);
+
+        LogHandler.debug(
+          '[BLoC] Overview base: \\${allPaths.length} all, \\${enrolledPaths.length} enrolled',
+        );
+        emit(
+          LearningPathOverviewLoaded(
             allPaths: allPaths,
             enrolledPaths: enrolledPaths,
-            recommendedPaths: recommendedPaths,
-          ));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error fetching overview: $e');
-          emit(LearningPathError(e.toString()));
+            recommendedPaths: const <LearningPath>[],
+          ),
+        );
+
+        // Fetch recommended paths after first paint to avoid blocking Home UI.
+        if (enrolledPaths.isNotEmpty) {
+          try {
+            final recommendedPaths = await getRecommendedLearningPaths();
+            LogHandler.debug(
+              '[BLoC] Overview recommended: \\${recommendedPaths.length}',
+            );
+            emit(
+              LearningPathOverviewLoaded(
+                allPaths: allPaths,
+                enrolledPaths: enrolledPaths,
+                recommendedPaths: recommendedPaths,
+              ),
+            );
+          } catch (e) {
+            LogHandler.warning(
+              '[BLoC] Recommended paths fetch failed (non-blocking): $e',
+            );
+          }
         }
-      },
-      transformer: restartable(),
-    );
+      } catch (e) {
+        LogHandler.error('[BLoC] Error fetching overview: $e');
+        emit(LearningPathError(e.toString()));
+      }
+    }, transformer: restartable());
 
     /// FETCH NODES FOR PATH
-    
-    on<FetchNodesForPath>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] FetchNodesForPath: ${event.pathId}');
-        emit(LearningPathLoading());
 
-        try {
-          final nodes = await getNodesForPath(event.pathId, event.userId);
-          LogHandler.debug('[BLoC] Loaded ${nodes.length} nodes');
-          emit(NodesLoaded(
-            pathId: event.pathId,
-            nodes: nodes,
-          ));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error fetching nodes: $e');
-          emit(LearningPathError(e.toString()));
-        }
-      },
-      transformer: restartable(),
-    );
+    on<FetchNodesForPath>((event, emit) async {
+      LogHandler.debug('[BLoC] FetchNodesForPath: ${event.pathId}');
+      emit(LearningPathLoading());
+
+      try {
+        final nodes = await getNodesForPath(event.pathId, event.userId);
+        LogHandler.debug('[BLoC] Loaded ${nodes.length} nodes');
+        emit(NodesLoaded(pathId: event.pathId, nodes: nodes));
+      } catch (e) {
+        LogHandler.error('[BLoC] Error fetching nodes: $e');
+        emit(LearningPathError(e.toString()));
+      }
+    }, transformer: restartable());
 
     /// FETCH NODE DETAIL
-    
-    on<FetchNodeDetail>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] FetchNodeDetail: ${event.nodeId}');
-        emit(LearningPathLoading());
 
-        try {
-          final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
-          LogHandler.debug('[BLoC] Loaded node detail: ${nodeDetail.title}');
-          emit(NodeDetailLoaded(nodeDetail));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error fetching node detail: $e');
-          emit(LearningPathError(e.toString()));
-        }
-      },
-      transformer: restartable(),
-    );
+    on<FetchNodeDetail>((event, emit) async {
+      LogHandler.debug('[BLoC] FetchNodeDetail: ${event.nodeId}');
+      emit(LearningPathLoading());
+
+      try {
+        final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
+        LogHandler.debug('[BLoC] Loaded node detail: ${nodeDetail.title}');
+        emit(NodeDetailLoaded(nodeDetail));
+      } catch (e) {
+        LogHandler.error('[BLoC] Error fetching node detail: $e');
+        emit(LearningPathError(e.toString()));
+      }
+    }, transformer: restartable());
 
     /// START NODE
-    
-    on<StartNodeEvent>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] StartNodeEvent: ${event.nodeId}');
-        emit(StartingNode(event.nodeId));
-        
-        await safeExecute(emit, 'start node', () async {
-          await startNode(event.nodeId, event.userId);
-          // Refetch node detail to get updated status
-          final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
-          LogHandler.debug('[BLoC] Node started successfully');
-          emit(NodeDetailLoaded(nodeDetail));
-        });
-      },
-      transformer: droppable(),
-    );
+
+    on<StartNodeEvent>((event, emit) async {
+      LogHandler.debug('[BLoC] StartNodeEvent: ${event.nodeId}');
+      emit(StartingNode(event.nodeId));
+
+      await safeExecute(emit, 'start node', () async {
+        await startNode(event.nodeId, event.userId);
+        // Refetch node detail to get updated status
+        final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
+        LogHandler.debug('[BLoC] Node started successfully');
+        emit(NodeDetailLoaded(nodeDetail));
+      });
+    }, transformer: droppable());
 
     /// ENROLL PATH
-    
-    on<EnrollPathEvent>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] EnrollPathEvent: ${event.pathId}');
-        emit(EnrollingPath(event.pathId));
-        
-        await safeExecute(emit, 'enroll path', () async {
-          // Step 1: Enroll in the path
-          await enrollPath(event.pathId, event.userId);
-          LogHandler.info('[BLoC] Enrolled in path: ${event.pathId}');
-          
-          // Step 2: Fetch updated enrolled paths to get the enrolled data
-          final enrolledPaths = await getLearningPathStatus(event.userId);
-          
-          // Step 3: Find the newly enrolled path
-          final enrolledPath = enrolledPaths.firstWhere(
-            (path) => path.pathId == event.pathId,
-            orElse: () => throw Exception('Enrolled path not found after enrollment'),
-          );
-          
-          LogHandler.debug('[BLoC] Fetched enrolled path data: ${enrolledPath.title}');
-          emit(PathEnrolled(
+
+    on<EnrollPathEvent>((event, emit) async {
+      LogHandler.debug('[BLoC] EnrollPathEvent: ${event.pathId}');
+      emit(EnrollingPath(event.pathId));
+
+      await safeExecute(emit, 'enroll path', () async {
+        // Step 1: Enroll in the path
+        await enrollPath(event.pathId, event.userId);
+        LogHandler.info('[BLoC] Enrolled in path: ${event.pathId}');
+
+        // Step 2: Fetch updated enrolled paths to get the enrolled data
+        final enrolledPaths = await getLearningPathStatus(event.userId);
+
+        // Step 3: Find the newly enrolled path
+        final enrolledPath = enrolledPaths.firstWhere(
+          (path) => path.pathId == event.pathId,
+          orElse: () =>
+              throw Exception('Enrolled path not found after enrollment'),
+        );
+
+        LogHandler.debug(
+          '[BLoC] Fetched enrolled path data: ${enrolledPath.title}',
+        );
+        emit(
+          PathEnrolled(
             pathId: event.pathId,
             userId: event.userId,
             enrolledPath: enrolledPath,
-          ));
-        });
-      },
-      transformer: droppable(),
-    );
+          ),
+        );
+      });
+    }, transformer: droppable());
 
     /// COMPLETE NODE
-    
-    on<CompleteNodeEvent>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] CompleteNodeEvent: ${event.nodeId}');
-        emit(CompletingNode(event.nodeId));
-        
-        await safeExecute(emit, 'complete node', () async {
-          await completeNode(event.nodeId, event.userId);
-          // Refetch node detail to get updated status
-          final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
-          LogHandler.debug('[BLoC] Node completed successfully');
-          emit(NodeDetailLoaded(nodeDetail));
-        });
-      },
-      transformer: droppable(),
-    );
+
+    on<CompleteNodeEvent>((event, emit) async {
+      LogHandler.debug('[BLoC] CompleteNodeEvent: ${event.nodeId}');
+      emit(CompletingNode(event.nodeId));
+
+      await safeExecute(emit, 'complete node', () async {
+        await completeNode(event.nodeId, event.userId);
+        // Refetch node detail to get updated status
+        final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
+        LogHandler.debug('[BLoC] Node completed successfully');
+        emit(NodeDetailLoaded(nodeDetail));
+      });
+    }, transformer: droppable());
 
     /// DELETE LEARNING PATH
-    
-    on<DeleteLearningPathEvent>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] DeleteLearningPathEvent: ${event.pathId}');
-        emit(DeletingLearningPath(event.pathId));
-        
-        await safeExecute(emit, 'delete learning path', () async {
-          await deleteLearningPath(event.pathId);
-          LogHandler.info('[BLoC] Deleted path: ${event.pathId}');
-          
-          // Refresh overview if userId is provided
-          if (event.userId != null) {
-            // Fetch both in parallel using Future.wait
-            final results = await Future.wait([
-              getAllLearningPaths(),
-              getLearningPathStatus(event.userId!),
-            ]);
-            
-            final allPaths = results[0] as List<LearningPath>;
-            final enrolledPaths = results[1] as List<EnrolledLearningPath>;
-            
-            emit(LearningPathOverviewLoaded(
+
+    on<DeleteLearningPathEvent>((event, emit) async {
+      LogHandler.debug('[BLoC] DeleteLearningPathEvent: ${event.pathId}');
+      emit(DeletingLearningPath(event.pathId));
+
+      await safeExecute(emit, 'delete learning path', () async {
+        await deleteLearningPath(event.pathId);
+        LogHandler.info('[BLoC] Deleted path: ${event.pathId}');
+
+        // Refresh overview if userId is provided
+        if (event.userId != null) {
+          // Fetch both in parallel using Future.wait
+          final results = await Future.wait([
+            getAllLearningPaths(),
+            getLearningPathStatus(event.userId!),
+          ]);
+
+          final allPaths = results[0] as List<LearningPath>;
+          final enrolledPaths = results[1] as List<EnrolledLearningPath>;
+
+          emit(
+            LearningPathOverviewLoaded(
               allPaths: allPaths,
               enrolledPaths: enrolledPaths,
               recommendedPaths: <LearningPath>[],
-            ));
-          } else {
-            emit(LearningPathDeleted('Learning path deleted successfully'));
-          }
-        });
-      },
-      transformer: droppable(),
-    );
+            ),
+          );
+        } else {
+          emit(LearningPathDeleted('Learning path deleted successfully'));
+        }
+      });
+    }, transformer: droppable());
 
-    on<DeleteNodeEvent>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] DeleteNodeEvent: ${event.nodeId}');
-        emit(DeletingNode(event.nodeId));
+    on<DeleteNodeEvent>((event, emit) async {
+      LogHandler.debug('[BLoC] DeleteNodeEvent: ${event.nodeId}');
+      emit(DeletingNode(event.nodeId));
 
-        await safeExecute(emit, 'delete node', () async {
-          await deleteNodeUseCase(event.nodeId);
-          LogHandler.info('[BLoC] Deleted node: ${event.nodeId}');
-          emit(NodeDeleted(event.nodeId));
-        });
-      },
-      transformer: droppable(),
-    );
+      await safeExecute(emit, 'delete node', () async {
+        await deleteNodeUseCase(event.nodeId);
+        LogHandler.info('[BLoC] Deleted node: ${event.nodeId}');
+        emit(NodeDeleted(event.nodeId));
+      });
+    }, transformer: droppable());
 
     // ===== TEACHER EVENT HANDLERS =====
 
-    on<CreateLearningPathEvent>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] CreateLearningPathEvent received');
-        emit(CreatingLearningPath());
+    on<CreateLearningPathEvent>((event, emit) async {
+      LogHandler.debug('[BLoC] CreateLearningPathEvent received');
+      emit(CreatingLearningPath());
 
-        await safeExecute(emit, 'create learning path', () async {
-          final learningPath = CreateLearningPath(
-            title: event.title,
-            objective: event.objective,
-            description: event.description,
-            creatorId: event.creatorId,
-            coverImgUrl: event.coverImgUrl,
-            publishStatus: event.publishStatus,
-          );
-          
-          LogHandler.debug('Creating learning path...');
-          final pathId = await createLearningPathUseCase(learningPath);
-          LogHandler.debug('[BLoC] Learning path created: $pathId');
-          emit(LearningPathCreated(pathId));
-        });
-      },
-      transformer: droppable(),
-    );
+      await safeExecute(emit, 'create learning path', () async {
+        final learningPath = CreateLearningPath(
+          title: event.title,
+          objective: event.objective,
+          description: event.description,
+          creatorId: event.creatorId,
+          coverImgUrl: event.coverImgUrl,
+          publishStatus: event.publishStatus,
+        );
 
-    on<GenerateNodesWithAIEvent>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] GenerateNodesWithAIEvent received');
-        LogHandler.debug('Topic: ${event.topic}');
-        emit(GeneratingNodesWithAI());
+        LogHandler.debug('Creating learning path...');
+        final pathId = await createLearningPathUseCase(learningPath);
+        LogHandler.debug('[BLoC] Learning path created: $pathId');
+        emit(LearningPathCreated(pathId));
+      });
+    }, transformer: droppable());
 
-        await safeExecute(emit, 'generate nodes with AI', () async {
-          LogHandler.debug('Generating nodes with AI...');
-          final response = await generateNodesWithAIUseCase(event.topic);
-          LogHandler.debug('[BLoC] Generated ${response.nodes.length} nodes');
-          emit(NodesGeneratedWithAI(
-            topic: response.topic,
-            nodes: response.nodes,
-          ));
-        });
-      },
-      transformer: restartable(),
-    );
+    on<GenerateNodesWithAIEvent>((event, emit) async {
+      LogHandler.debug('[BLoC] GenerateNodesWithAIEvent received');
+      LogHandler.debug('Topic: ${event.topic}');
+      emit(GeneratingNodesWithAI());
 
-    on<CreateNodeEvent>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] CreateNodeEvent received');
-        emit(CreatingNode());
+      await safeExecute(emit, 'generate nodes with AI', () async {
+        LogHandler.debug('Generating nodes with AI...');
+        final response = await generateNodesWithAIUseCase(event.topic);
+        LogHandler.debug('[BLoC] Generated ${response.nodes.length} nodes');
+        emit(
+          NodesGeneratedWithAI(topic: response.topic, nodes: response.nodes),
+        );
+      });
+    }, transformer: restartable());
 
-        await safeExecute(emit, 'create node', () async {
-          final node = CreateNode(
-            title: event.title,
-            description: event.description,
-            pathId: event.pathId,
-            sequence: event.sequence,
-            linkvdo: event.linkvdo,
-            materials: event.materials,
-            questions: null,
-          );
-          
-          LogHandler.debug('Creating node...');
-          final nodeId = await createNodeUseCase(node);
+    on<CreateNodeEvent>((event, emit) async {
+      LogHandler.debug('[BLoC] CreateNodeEvent received');
+      emit(CreatingNode());
 
-          if (event.questions != null && event.questions!.isNotEmpty) {
-            LogHandler.debug('Creating quiz questions for node...');
-            await createNodeQuestionsUseCase(nodeId, event.questions!);
-          }
+      await safeExecute(emit, 'create node', () async {
+        final node = CreateNode(
+          title: event.title,
+          description: event.description,
+          pathId: event.pathId,
+          sequence: event.sequence,
+          linkvdo: event.linkvdo,
+          materials: event.materials,
+          questions: null,
+        );
 
-          LogHandler.debug('[BLoC] Node created: $nodeId');
-          emit(NodeCreated(nodeId));
-        });
-      },
-      transformer: droppable(),
-    );
+        LogHandler.debug('Creating node...');
+        final nodeId = await createNodeUseCase(node);
 
-    on<GetLearningPathByIdEvent>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] GetLearningPathByIdEvent received');
-        LogHandler.debug('Path ID: ${event.pathId}');
-        emit(LearningPathLoading());
-
-        try {
-          LogHandler.debug('Fetching learning path by ID...');
-          final learningPath = await getLearningPathByIdUseCase(event.pathId);
-          LogHandler.debug('[BLoC] Learning path loaded: ${learningPath.id}');
-          emit(LearningPathDetailLoaded(learningPath));
-        } catch (e) {
-          LogHandler.error('[BLoC] Error fetching learning path: $e');
-          emit(LearningPathError(e.toString()));
+        if (event.questions != null && event.questions!.isNotEmpty) {
+          LogHandler.debug('Creating quiz questions for node...');
+          await createNodeQuestionsUseCase(nodeId, event.questions!);
         }
-      },
-      transformer: restartable(),
-    );
 
-    on<UpdateNodeEvent>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] UpdateNodeEvent received');
-        LogHandler.debug('Node ID: ${event.nodeId}');
-        emit(UpdatingNode(event.nodeId));
+        LogHandler.debug('[BLoC] Node created: $nodeId');
+        emit(NodeCreated(nodeId));
+      });
+    }, transformer: droppable());
 
-        await safeExecute(emit, 'update node', () async {
-          LogHandler.debug('Updating node...');
-          await updateNodeUseCase(
-            event.nodeId,
-            event.title,
-            event.description,
-            linkvdo: event.linkvdo,
-            materials: event.materials,
-          );
-          LogHandler.debug('[BLoC] Node updated: ${event.nodeId}');
-          emit(NodeUpdated(event.nodeId));
-        });
-      },
-      transformer: droppable(),
-    );
+    on<GetLearningPathByIdEvent>((event, emit) async {
+      LogHandler.debug('[BLoC] GetLearningPathByIdEvent received');
+      LogHandler.debug('Path ID: ${event.pathId}');
+      emit(LearningPathLoading());
 
-    on<UpdateLearningPathEvent>(
-      (event, emit) async {
-        LogHandler.debug('[BLoC] UpdateLearningPathEvent received');
-        LogHandler.debug('Path ID: ${event.pathId}');
-        emit(UpdatingLearningPath(event.pathId));
+      try {
+        LogHandler.debug('Fetching learning path by ID...');
+        final learningPath = await getLearningPathByIdUseCase(event.pathId);
+        LogHandler.debug('[BLoC] Learning path loaded: ${learningPath.id}');
+        emit(LearningPathDetailLoaded(learningPath));
+      } catch (e) {
+        LogHandler.error('[BLoC] Error fetching learning path: $e');
+        emit(LearningPathError(e.toString()));
+      }
+    }, transformer: restartable());
 
-        await safeExecute(emit, 'update learning path', () async {
-          LogHandler.debug('Updating learning path...');
-          await updateLearningPathUseCase(
-            event.pathId,
-            event.title,
-            event.objective,
-            event.description,
-            event.coverImgUrl,
-            event.publishStatus,
-          );
-          LogHandler.debug('[BLoC] Learning path updated: ${event.pathId}');
-          emit(LearningPathUpdated(event.pathId));
-        });
-      },
-      transformer: droppable(),
-    );
+    on<UpdateNodeEvent>((event, emit) async {
+      LogHandler.debug('[BLoC] UpdateNodeEvent received');
+      LogHandler.debug('Node ID: ${event.nodeId}');
+      emit(UpdatingNode(event.nodeId));
+
+      await safeExecute(emit, 'update node', () async {
+        LogHandler.debug('Updating node...');
+        await updateNodeUseCase(
+          event.nodeId,
+          event.title,
+          event.description,
+          linkvdo: event.linkvdo,
+          materials: event.materials,
+        );
+        LogHandler.debug('[BLoC] Node updated: ${event.nodeId}');
+        emit(NodeUpdated(event.nodeId));
+      });
+    }, transformer: droppable());
+
+    on<UpdateLearningPathEvent>((event, emit) async {
+      LogHandler.debug('[BLoC] UpdateLearningPathEvent received');
+      LogHandler.debug('Path ID: ${event.pathId}');
+      emit(UpdatingLearningPath(event.pathId));
+
+      await safeExecute(emit, 'update learning path', () async {
+        LogHandler.debug('Updating learning path...');
+        await updateLearningPathUseCase(
+          event.pathId,
+          event.title,
+          event.objective,
+          event.description,
+          event.coverImgUrl,
+          event.publishStatus,
+        );
+        LogHandler.debug('[BLoC] Learning path updated: ${event.pathId}');
+        emit(LearningPathUpdated(event.pathId));
+      });
+    }, transformer: droppable());
   }
 }

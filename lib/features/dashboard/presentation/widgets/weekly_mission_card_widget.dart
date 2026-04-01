@@ -6,8 +6,13 @@ import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_r
 
 class WeeklyMissionCardWidget extends StatelessWidget {
   final List<MissionItem> missions;
+  final ValueChanged<MissionItem>? onMissionTap;
 
-  const WeeklyMissionCardWidget({super.key, required this.missions});
+  const WeeklyMissionCardWidget({
+    super.key,
+    required this.missions,
+    this.onMissionTap,
+  });
 
   int get _completedCount => missions.where((m) => m.isCompleted).length;
 
@@ -86,9 +91,12 @@ class WeeklyMissionCardWidget extends StatelessWidget {
                     (mission) => Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: _buildMissionProgress(
-                        mission.detail,
-                        mission.isCompleted ? 1.0 : 0.0,
-                        mission.isCompleted ? 'Done' : '${mission.rewardXp} XP',
+                        mission: mission,
+                        title: mission.detail,
+                        value: mission.isCompleted ? 1.0 : 0.0,
+                        trailing: mission.isCompleted
+                            ? 'Done'
+                            : '${mission.rewardXp} XP',
                       ),
                     ),
                   )
@@ -99,41 +107,52 @@ class WeeklyMissionCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildMissionProgress(String title, double value, String trailing) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+  Widget _buildMissionProgress({
+    required MissionItem mission,
+    required String title,
+    required double value,
+    required String trailing,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onMissionTap == null ? null : () => onMissionTap!(mission),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: AppTypography.bodyRegular.copyWith(
-                    color: AppColors.textPrimary,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: AppTypography.bodyRegular.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ),
-                ),
+                  Text(
+                    trailing,
+                    style: AppTypography.smallBodyRegular.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                trailing,
-                style: AppTypography.smallBodyRegular.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+              const SizedBox(height: 4),
+              LinearProgressIndicator(
+                value: value,
+                backgroundColor: AppColors.cardBorder,
+                color: AppColors.secondaryBrand,
+                minHeight: 6,
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          LinearProgressIndicator(
-            value: value,
-            backgroundColor: AppColors.cardBorder,
-            color: AppColors.secondaryBrand,
-            minHeight: 6,
-          ),
-        ],
+        ),
       ),
     );
   }
