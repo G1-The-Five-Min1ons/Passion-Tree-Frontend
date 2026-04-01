@@ -24,6 +24,7 @@ abstract class LearningPathRepository {
   Future<void> completeNode(String nodeId, String userId);
   Future<void> deleteNode(String nodeId);
   Future<void> deleteLearningPath(String pathId);
+  Future<void> reorderNodes(String pathId, List<String> nodeIds);
   
   // Teacher features
   Future<String> createLearningPath(CreateLearningPath learningPath);

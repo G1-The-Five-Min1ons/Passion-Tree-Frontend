@@ -284,6 +284,15 @@ class LearningPathDataSource {
     _throwIfError(response, 'DELETE node/$nodeId');
   }
 
+  Future<void> reorderNodes(String pathId, List<String> nodeIds) async {
+    final response = await _apiHandler.put(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/nodes/reorder',
+      headers: await _getAuthHeaders(),
+      body: {'node_ids': nodeIds},
+    );
+    _throwIfError(response, 'PUT reorder nodes/$pathId');
+  }
+
   // ── Questions ─────────────────────────────────────────────────────────────
 
   Future<List<QuizQuestionApiModel>> getNodeQuestions(String nodeId) async {

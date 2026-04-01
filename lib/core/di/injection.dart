@@ -47,6 +47,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/sta
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/reorder_nodes_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_questions_usecase.dart';
@@ -301,6 +302,9 @@ Future<void> initializeDependencies() async {
   getIt.registerFactory<UpdateLearningPathUseCase>(
     () => UpdateLearningPathUseCase(getIt<LearningPathRepositoryImpl>()),
   );
+  getIt.registerFactory<ReorderNodesUseCase>(
+    () => ReorderNodesUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
   getIt.registerFactory<GetNodeQuestions>(
     () => GetNodeQuestions(getIt<LearningPathRepositoryImpl>()),
   );
@@ -335,6 +339,7 @@ Future<void> initializeDependencies() async {
       getIt<GetLearningPathByIdUseCase>(),
       getIt<UpdateLearningPathUseCase>(),
       getIt<UpdateNodeUseCase>(),
+      getIt<ReorderNodesUseCase>(),
     ),
   );
 

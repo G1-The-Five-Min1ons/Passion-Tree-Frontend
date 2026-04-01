@@ -58,6 +58,13 @@ class DeleteNodeEvent extends LearningPathEvent {
   DeleteNodeEvent({required this.nodeId});
 }
 
+class ReorderNodesEvent extends LearningPathEvent {
+  final String pathId;
+  final List<String> nodeIds;
+
+  ReorderNodesEvent({required this.pathId, required this.nodeIds});
+}
+
 // ===== TEACHER EVENTS =====
 
 class CreateLearningPathEvent extends LearningPathEvent {

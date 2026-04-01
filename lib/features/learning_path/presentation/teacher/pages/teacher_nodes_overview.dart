@@ -200,6 +200,18 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         }
       }
     });
+
+    // Sync new order to backend using realNodeIds only (skip draft nodes)
+    final orderedNodeIds = _uiNodes
+        .where((n) => n.realNodeId != null)
+        .map((n) => n.realNodeId!)
+        .toList();
+
+    if (orderedNodeIds.isNotEmpty) {
+      context.read<LearningPathBloc>().add(
+        ReorderNodesEvent(pathId: widget.pathId, nodeIds: orderedNodeIds),
+      );
+    }
   }
 
   void _confirmSaveDraft(BuildContext context) {

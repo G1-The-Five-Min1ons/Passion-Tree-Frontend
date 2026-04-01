@@ -20,6 +20,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/gen
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_learning_path_by_id_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_learning_path_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/reorder_nodes_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_learning_path.dart';
@@ -43,6 +44,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GetLearningPathByIdUseCase getLearningPathByIdUseCase;
   final UpdateNodeUseCase updateNodeUseCase;
   final UpdateLearningPathUseCase updateLearningPathUseCase;
+  final ReorderNodesUseCase reorderNodesUseCase;
 
   LearningPathBloc(
     this.getAllLearningPaths,
@@ -62,6 +64,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.getLearningPathByIdUseCase,
     this.updateLearningPathUseCase,
     this.updateNodeUseCase,
+    this.reorderNodesUseCase,
   ) : super(LearningPathInitial()) {
     
     /// Helper method to handle errors consistently
@@ -319,6 +322,19 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           await deleteNodeUseCase(event.nodeId);
           LogHandler.info('[BLoC] Deleted node: ${event.nodeId}');
           emit(NodeDeleted(event.nodeId));
+        });
+      },
+      transformer: droppable(),
+    );
+
+    on<ReorderNodesEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] ReorderNodesEvent: ${event.pathId}');
+
+        await safeExecute(emit, 'reorder nodes', () async {
+          await reorderNodesUseCase(event.pathId, event.nodeIds);
+          LogHandler.info('[BLoC] Nodes reordered: ${event.pathId}');
+          emit(NodesReordered(event.pathId));
         });
       },
       transformer: droppable(),

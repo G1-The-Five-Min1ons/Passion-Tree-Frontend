@@ -158,6 +158,11 @@ class NodeDeleted extends LearningPathState {
   NodeDeleted(this.nodeId);
 }
 
+class NodesReordered extends LearningPathState {
+  final String pathId;
+  NodesReordered(this.pathId);
+}
+
 class LearningPathUpdated extends LearningPathState {
   final String pathId;
   

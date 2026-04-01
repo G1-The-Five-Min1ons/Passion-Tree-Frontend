@@ -87,6 +87,11 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   }
 
   @override
+  Future<void> reorderNodes(String pathId, List<String> nodeIds) async {
+    return await dataSource.reorderNodes(pathId, nodeIds);
+  }
+
+  @override
   Future<void> deleteLearningPath(String pathId) async {
     return await dataSource.deleteLearningPath(pathId);
   }
