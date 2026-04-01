@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:passion_tree_frontend/features/onboarding/presentation/widgets/steps/intro_step.dart';
@@ -29,16 +30,30 @@ class _OnboardingPageState extends State<OnboardingPage> {
   List<String> learningStyle = [];
   List<String> reflection = [];
 
+  Future<void> _finishOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasOnboarded', true);
+    // Save answers as pending to be sent after login
+    await prefs.setString('pending_onboarding', jsonEncode({
+      'subjects': subject,
+      'knowledge_level': knowledge.isNotEmpty ? knowledge.first : '',
+      'motivation': motivation.isNotEmpty ? motivation.first : '',
+      'daily_goal': goal.isNotEmpty ? goal.first : '',
+      'learning_styles': learningStyle,
+      'reflection_habit': reflection.isNotEmpty ? reflection.first : '',
+    }));
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  }
+
   void nextStep() async {
     if (step < 6) {
       setState(() => step++);
     } else {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('hasOnboarded', true);
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginPage()),
-        (route) => false,
-      );
+      await _finishOnboarding();
     }
   }
 
@@ -170,16 +185,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                     color: canProceed() ? Colors.white : Colors.grey.shade400,
                                   ),
                                   iconSize: 32,
-                                  onPressed: canProceed()
-                                      ? () async {
-                                          final prefs = await SharedPreferences.getInstance();
-                                          await prefs.setBool('hasOnboarded', true);
-                                          Navigator.of(context).pushAndRemoveUntil(
-                                            MaterialPageRoute(builder: (_) => const LoginPage()),
-                                            (route) => false,
-                                          );
-                                        }
-                                      : null,
+                                  onPressed: canProceed() ? _finishOnboarding : null,
                                 ),
                               ],
                             )

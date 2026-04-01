@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:passion_tree_frontend/core/config/api_config.dart';
 import 'package:passion_tree_frontend/core/network/api_handler.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
@@ -75,6 +77,7 @@ class AuthRepositoryImpl implements IAuthRepository {
     await _localDataSource.saveUserId(userId);
     await _localDataSource.saveUsername(username);
     await _localDataSource.saveRole(role);
+    await _sendPendingOnboarding(token);
 
     // Try to fetch full profile, but don't let it block login
     try {
@@ -155,6 +158,31 @@ class AuthRepositoryImpl implements IAuthRepository {
     final response = await _remoteDataSource.verifyEmail(request);
     await _localDataSource.saveToken(response.accessToken);
     await _localDataSource.saveRefreshToken(response.refreshToken);
+    await _sendPendingOnboarding(response.accessToken);
+  }
+
+  /// After any successful auth that yields a token, send pending onboarding data
+  Future<void> _sendPendingOnboarding(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('pending_onboarding');
+      if (raw == null || raw.isEmpty) return;
+
+      final body = jsonDecode(raw) as Map<String, dynamic>;
+      final response = await _apiHandler.post(
+        url: ApiConfig.onboarding,
+        headers: ApiConfig.getAuthHeaders(token),
+        body: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await prefs.remove('pending_onboarding');
+        LogHandler.info('AuthRepository: Onboarding data sent successfully');
+      }
+    } catch (e) {
+      // Non-fatal: log and continue — data remains in SharedPreferences for retry
+      LogHandler.error('AuthRepository: Failed to send pending onboarding: $e');
+    }
   }
 
   @override

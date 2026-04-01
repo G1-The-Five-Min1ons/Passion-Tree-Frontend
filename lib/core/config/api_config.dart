@@ -55,6 +55,9 @@ class ApiConfig {
       '$apiBackendUrl/auth/teacher/verification-status';
   static String get authApplyTeacher => '$apiBackendUrl/auth/teacher/apply';
 
+  // Onboarding endpoint
+  static String get onboarding => '$apiBackendUrl/onboarding';
+
   // Dashboard endpoint
   static String get dashboard => '$apiBackendUrl/dashboard';
 
