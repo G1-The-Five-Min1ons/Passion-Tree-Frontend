@@ -279,9 +279,14 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           await deleteLearningPath(event.pathId);
           LogHandler.info('[BLoC] Deleted path: ${event.pathId}');
 
+          // Always emit deleted with appropriate message first
+          final deleteMessage = event.publishStatus?.toLowerCase() == 'draft'
+              ? 'Learning path draft deleted successfully'
+              : 'Learning path deleted successfully';
+          emit(LearningPathDeleted(deleteMessage));
+
           // Refresh overview if userId is provided
           if (event.userId != null) {
-            // Fetch all three in parallel, including fresh recommendations
             final results = await Future.wait([
               getAllLearningPaths(),
               getLearningPathStatus(event.userId!),
@@ -290,7 +295,6 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
             final allPaths = results[0] as List<LearningPath>;
             final enrolledPaths = results[1] as List<EnrolledLearningPath>;
-            // Filter out the deleted path in case the API still returns it
             final recommendedPaths = (results[2] as List<LearningPath>)
                 .where((p) => p.id != event.pathId)
                 .toList();
@@ -300,8 +304,6 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
               enrolledPaths: enrolledPaths,
               recommendedPaths: recommendedPaths,
             ));
-          } else {
-            emit(LearningPathDeleted('Learning path deleted successfully'));
           }
         });
       },

@@ -397,6 +397,15 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           });
         }
 
+        if (state is NodeDeleted) {
+          // Refetch nodes after deletion
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted && _userId != null && _userId!.isNotEmpty) {
+              _fetchNodes(_userId!);
+            }
+          });
+        }
+
         if (state is NodeCreated) {
           // Node ถูกสร้างสำเร็จ อัพเดท UI state
           if (_pendingNodeIndex != null) {

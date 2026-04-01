@@ -211,7 +211,11 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
               },
               onDelete: () {
                 context.read<LearningPathBloc>().add(
-                  DeleteLearningPathEvent(pathId: paths[index].id, userId: widget.userId),
+                  DeleteLearningPathEvent(
+                    pathId: paths[index].id,
+                    userId: widget.userId,
+                    publishStatus: paths[index].publishStatus,
+                  ),
                 );
               },
             );
@@ -253,11 +257,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
 
     return BlocListener<LearningPathBloc, LearningPathState>(
       listener: (context, state) {
-        if (state is LearningPathDeleted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Learning path deleted successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
-          );
-        } else if (state is LearningPathError) {
+        if (state is LearningPathError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message, style: const TextStyle(color: AppColors.textPrimary)),

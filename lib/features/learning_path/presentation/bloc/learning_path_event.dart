@@ -48,7 +48,8 @@ class CompleteNodeEvent extends LearningPathEvent {
 class DeleteLearningPathEvent extends LearningPathEvent {
   final String pathId;
   final String? userId; // For refreshing overview after delete
-  DeleteLearningPathEvent({required this.pathId, this.userId});
+  final String? publishStatus; // 'draft' or 'published' for snackbar message
+  DeleteLearningPathEvent({required this.pathId, this.userId, this.publishStatus});
 }
 
 class DeleteNodeEvent extends LearningPathEvent {
