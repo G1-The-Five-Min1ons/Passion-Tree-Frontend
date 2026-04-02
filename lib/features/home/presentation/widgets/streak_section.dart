@@ -3,8 +3,8 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:passion_tree_frontend/features/dashboard/presentation/pages/profile_page.dart';
 
 class StreakSection extends StatelessWidget {
   const StreakSection({super.key});
@@ -48,12 +48,7 @@ class StreakSection extends StatelessWidget {
                     variant: AppButtonVariant.text,
                     text: "Get a reward",
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ProfilePage(),
-                        ),
-                      );
+                      HomeBarWidget.switchToTab(context, 3);
                     },
                     fullWidth: true,
                   ),

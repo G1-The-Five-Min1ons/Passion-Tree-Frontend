@@ -86,9 +86,12 @@ class _HomePageState extends State<HomePage> {
                           .map((e) => e.pathId.trim())
                           .toSet();
                       final unenrolledPaths = overview.allPaths
-                          .where((p) =>
-                              p.publishStatus.toLowerCase().trim() == 'published' &&
-                              !enrolledPathIds.contains(p.id.trim()))
+                          .where(
+                            (p) =>
+                                p.publishStatus.toLowerCase().trim() ==
+                                    'published' &&
+                                !enrolledPathIds.contains(p.id.trim()),
+                          )
                           .toList();
 
                       return PopularLearningPathsSection(

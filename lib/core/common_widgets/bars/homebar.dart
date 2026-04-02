@@ -10,6 +10,16 @@ import 'package:passion_tree_frontend/features/dashboard/presentation/pages/prof
 class HomeBarWidget extends StatefulWidget {
   const HomeBarWidget({super.key});
 
+  static bool switchToTab(BuildContext context, int index) {
+    final state = context.findAncestorStateOfType<_HomeBarWidgetState>();
+    if (state == null) {
+      return false;
+    }
+
+    state._setSelectedIndex(index);
+    return true;
+  }
+
   @override
   State<HomeBarWidget> createState() => _HomeBarWidgetState();
 }
@@ -18,11 +28,11 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
   int _selectedIndex = 0;
 
   final List<GlobalKey<NavigatorState>> _navigatorKeys = [
-  GlobalKey<NavigatorState>(),
-  GlobalKey<NavigatorState>(),
-  GlobalKey<NavigatorState>(),
-  GlobalKey<NavigatorState>(),
-];
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+  ];
 
   // ใส่หน้าของตัวเองตรงนี้
   late final List<Widget> _pages = [
@@ -36,32 +46,34 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
     return Navigator(
       key: _navigatorKeys[index],
       onGenerateRoute: (routeSettings) {
-        return MaterialPageRoute(
-          builder: (context) => rootPage,
-        );
+        return MaterialPageRoute(builder: (context) => rootPage);
       },
     );
   }
 
+  void _setSelectedIndex(int index) {
+    if (index < 0 || index >= _pages.length || _selectedIndex == index) {
+      return;
+    }
+
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-      index: _selectedIndex,
-      children: _pages,
-    ),
-      
+      body: IndexedStack(index: _selectedIndex, children: _pages),
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
+          _setSelectedIndex(index);
         },
-        type: BottomNavigationBarType.fixed, 
+        type: BottomNavigationBarType.fixed,
         backgroundColor: AppColors.homeBarColor,
-        selectedItemColor:  Theme.of(context).colorScheme.onPrimary,
+        selectedItemColor: Theme.of(context).colorScheme.onPrimary,
         unselectedItemColor: AppColors.iconbar,
 
         selectedLabelStyle: AppPixelTypography.littleSmall,
@@ -77,17 +89,21 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
     );
   }
 
-      BottomNavigationBarItem _buildNavItem(String label, String assetPath, int index) {
-        return BottomNavigationBarItem(
-          icon: Padding(
-          padding: const EdgeInsets.only(bottom: 5),
-          child: PixelIcon(
-            assetPath,
-            size: 24,
-            color: _selectedIndex == index ? Colors.white : null,
-            ),
-          ),
-          label: label,
-        );
-      }
+  BottomNavigationBarItem _buildNavItem(
+    String label,
+    String assetPath,
+    int index,
+  ) {
+    return BottomNavigationBarItem(
+      icon: Padding(
+        padding: const EdgeInsets.only(bottom: 5),
+        child: PixelIcon(
+          assetPath,
+          size: 24,
+          color: _selectedIndex == index ? Colors.white : null,
+        ),
+      ),
+      label: label,
+    );
   }
+}
