@@ -325,9 +325,6 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
             // Mark node as completed
             bloc.add(CompleteNodeEvent(nodeId: widget.nodeId, userId: userId));
 
-            // Wait for backend to process completion (1 second)
-            await Future.delayed(const Duration(milliseconds: 1000));
-
             if (!scaffoldContext.mounted) return;
 
             // Navigate to status page after completion
