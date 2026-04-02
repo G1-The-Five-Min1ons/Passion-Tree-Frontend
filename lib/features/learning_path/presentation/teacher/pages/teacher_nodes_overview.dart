@@ -244,6 +244,19 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     }
   }
 
+  bool _hasIncompletePlainPathNodes() {
+    if (widget.aiNodes != null && widget.aiNodes!.isNotEmpty) {
+      return false;
+    }
+
+    return _uiNodes.any(
+      (node) =>
+          node.title.trim().isEmpty ||
+          node.description.trim().isEmpty ||
+          node.title.trim() == 'New Node',
+    );
+  }
+
   void _confirmSaveDraft(BuildContext context) {
     if (_cachedLearningPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -264,6 +277,19 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         const SnackBar(
           content: Text(
             'Cannot save as draft. This learning path is already published.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+      return;
+    }
+
+    if (_hasIncompletePlainPathNodes()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please fill in all node details.',
             style: TextStyle(color: AppColors.textPrimary),
           ),
           backgroundColor: AppColors.cancel,
