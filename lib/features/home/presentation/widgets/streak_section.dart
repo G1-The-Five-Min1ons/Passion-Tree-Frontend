@@ -4,6 +4,8 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/pages/profile_page.dart';
+
 class StreakSection extends StatelessWidget {
   const StreakSection({super.key});
 
@@ -37,20 +39,27 @@ class StreakSection extends StatelessWidget {
             ),
 
             const SizedBox(height: 20),
-                            Center(
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: Align(
-                                  alignment: Alignment.center,
-                                  child: AppButton(
-                                    variant: AppButtonVariant.text,
-                                    text: "Get a reward",
-                                    onPressed: () {},
-                                    fullWidth: true,
-                                  ),
-                                ),
-                              ),
-                            ),
+            Center(
+              child: SizedBox(
+                width: double.infinity,
+                child: Align(
+                  alignment: Alignment.center,
+                  child: AppButton(
+                    variant: AppButtonVariant.text,
+                    text: "Get a reward",
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProfilePage(),
+                        ),
+                      );
+                    },
+                    fullWidth: true,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
