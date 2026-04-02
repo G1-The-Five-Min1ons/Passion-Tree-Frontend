@@ -257,6 +257,15 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     );
   }
 
+  bool _hasIncompleteNodes() {
+    return _uiNodes.any(
+      (node) =>
+          node.title.trim().isEmpty ||
+          node.description.trim().isEmpty ||
+          node.title.trim() == 'New Node',
+    );
+  }
+
   void _confirmSaveDraft(BuildContext context) {
     if (_cachedLearningPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -290,6 +299,19 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         const SnackBar(
           content: Text(
             'Please fill in all node details.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+      return;
+    }
+
+    if (_hasIncompleteNodes()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please fill in all node details before publishing.',
             style: TextStyle(color: AppColors.textPrimary),
           ),
           backgroundColor: AppColors.cancel,
