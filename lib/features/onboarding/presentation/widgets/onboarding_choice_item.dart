@@ -51,11 +51,9 @@ class _OnboardingChoiceItemState extends State<OnboardingChoiceItem>
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textColor = widget.isSelected ? AppColors.background : colors.onPrimary;
+    final textColor = widget.isSelected ? colors.primary : colors.onSurface;
     final borderColor = widget.isSelected ? colors.onPrimary : AppColors.cardBorder;
-    final fillColor = widget.isSelected
-        ? colors.onPrimary.withValues(alpha: 0.55)
-        : colors.surface;
+    final fillColor = widget.isSelected ? colors.onPrimary : colors.surface;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),

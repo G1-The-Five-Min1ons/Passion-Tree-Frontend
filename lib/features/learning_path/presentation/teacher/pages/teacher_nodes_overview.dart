@@ -387,24 +387,46 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         if (state is NodesLoaded && state.pathId == widget.pathId) {
           setState(() {
             _cachedNodes = state.nodes;
-            // Only update _uiNodes that match backend nodes (by realNodeId or sequence)
-            // Keep uncreated AI nodes intact so they don't disappear
+            // Rebuild _uiNodes to include ALL backend nodes so that
+            // _handleReorder works correctly for both plain path and AI path.
+            // Uncreated UI nodes (draft AI nodes not yet saved) are preserved.
             if (state.nodes.isNotEmpty) {
+              final newUiNodes = <NodeUiState>[];
               for (final backendNode in state.nodes) {
-                final uiIndex = _uiNodes.indexWhere(
+                final existingIndex = _uiNodes.indexWhere(
                   (n) =>
                       n.realNodeId == backendNode.nodeId ||
                       (n.realNodeId == null &&
                           n.sequence == backendNode.sequence),
                 );
-                if (uiIndex >= 0) {
-                  _uiNodes[uiIndex].title = backendNode.title;
-                  _uiNodes[uiIndex].description = backendNode.description;
-                  _uiNodes[uiIndex].sequence = backendNode.sequence;
-                  _uiNodes[uiIndex].realNodeId = backendNode.nodeId;
-                  _uiNodes[uiIndex].isCreated = true;
+                if (existingIndex >= 0) {
+                  _uiNodes[existingIndex].title = backendNode.title;
+                  _uiNodes[existingIndex].description = backendNode.description;
+                  _uiNodes[existingIndex].sequence = backendNode.sequence;
+                  _uiNodes[existingIndex].realNodeId = backendNode.nodeId;
+                  _uiNodes[existingIndex].isCreated = true;
+                  newUiNodes.add(_uiNodes[existingIndex]);
+                } else {
+                  // Backend node has no matching UI entry (plain path case):
+                  // create a new NodeUiState for it so _uiNodes mirrors all nodes.
+                  newUiNodes.add(NodeUiState(
+                    title: backendNode.title,
+                    description: backendNode.description,
+                    sequence: backendNode.sequence,
+                    realNodeId: backendNode.nodeId,
+                    isCreated: true,
+                  ));
                 }
               }
+              // Preserve uncreated draft nodes that have no backend equivalent yet
+              for (final ui in _uiNodes) {
+                if (!ui.isCreated &&
+                    !newUiNodes.any((n) => n.sequence == ui.sequence)) {
+                  newUiNodes.add(ui);
+                }
+              }
+              newUiNodes.sort((a, b) => a.sequence.compareTo(b.sequence));
+              _uiNodes = newUiNodes;
             }
           });
         }
