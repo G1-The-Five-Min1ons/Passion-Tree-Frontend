@@ -290,9 +290,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
               builder: (ratingDialogContext) => RatingPopup(
                 pathName: widget.pathName!,
                 onSubmit: () async {
-                  Navigator.of(
-                    ratingDialogContext,
-                  ).pop(); // Close rating popup first
+                  Navigator.of(ratingDialogContext).pop();
 
                   LogHandler.info(
                     'Action: User completed and tracked progress for node ${widget.nodeId}',
@@ -302,12 +300,9 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                     CompleteNodeEvent(nodeId: widget.nodeId, userId: userId),
                   );
 
-                  // Wait for backend to process completion (1 second)
-                  await Future.delayed(const Duration(milliseconds: 1000));
-
                   if (!scaffoldContext.mounted) return;
 
-                  // Navigate to status page after completion
+                  // Navigate to status page immediately after submitting rating
                   Navigator.of(scaffoldContext).pushAndRemoveUntil(
                     MaterialPageRoute(
                       builder: (_) => BlocProvider.value(
@@ -334,7 +329,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
             await Future.delayed(const Duration(milliseconds: 1000));
 
             if (!scaffoldContext.mounted) return;
-            
+
             // Navigate to status page after completion
             Navigator.of(scaffoldContext).pushAndRemoveUntil(
               MaterialPageRoute(
