@@ -58,10 +58,12 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   LearningPath? _cachedLearningPath; // Cache learning path details for updating
   bool _pendingPublish = false; // รอ node สร้างเสร็จแล้วค่อย publish
   bool _pendingSaveDraft = false; // รอ node สร้างเสร็จแล้วค่อย save draft
+  late String _displayTitle; // Title ที่แสดงใน header (อัพเดทจาก backend เมื่อโหลดเสร็จ)
 
   @override
   void initState() {
     super.initState();
+    _displayTitle = widget.title;
     _loadUserAndFetchNodes();
 
     // ถ้ามี AI nodes ให้ใช้ ถ้าไม่มีให้สร้าง default node เปล่าๆ
@@ -380,6 +382,9 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         if (state is LearningPathDetailLoaded) {
           setState(() {
             _cachedLearningPath = state.learningPath;
+            if (state.learningPath.title.isNotEmpty) {
+              _displayTitle = state.learningPath.title;
+            }
           });
         }
 
@@ -544,7 +549,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                 left: 0,
                 right: 0,
                 child: HeaderBar(
-                  title: widget.title,
+                  title: _displayTitle,
                   showAddButton:
                       _cachedLearningPath?.publishStatus.toLowerCase() !=
                       'published',
