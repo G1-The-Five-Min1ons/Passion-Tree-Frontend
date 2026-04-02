@@ -18,6 +18,8 @@ import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/we
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/recent_activity_card_widget.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/activity_heatmap_widget.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/section_title.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/mock/mock_missions.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/pages/mission_center_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -116,7 +118,23 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _onMissionTap(MissionItem mission) {
-    _openLearningSource();
+    final missions = resolveWeeklyMissions(
+      _dashboardData?.weeklyMissions ?? [],
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MissionCenterPage(
+          missions: missions,
+          highlightedMissionId: mission.missionId,
+        ),
+      ),
+    );
+  }
+
+  List<MissionItem> get _weeklyMissions {
+    return resolveWeeklyMissions(_dashboardData?.weeklyMissions ?? []);
   }
 
   String get _fullName {
@@ -133,37 +151,53 @@ class _ProfilePageState extends State<ProfilePage> {
     return 'Student';
   }
 
+  _ResolvedProfileStats get _resolvedStats {
+    final profile = _userProfile?.profile;
+    final userInfo = _dashboardData?.userInfo;
+
+    if (profile != null) {
+      return _ResolvedProfileStats(
+        level: profile.level,
+        xp: profile.xp,
+        hours: profile.hourLearned,
+        streak: profile.learningStreak,
+        learningPathCount: profile.learningCount,
+      );
+    }
+
+    if (userInfo != null) {
+      return _ResolvedProfileStats(
+        level: userInfo.level,
+        xp: userInfo.xp,
+        hours: userInfo.hourLearned,
+        streak: userInfo.learningStreak,
+        learningPathCount: _dashboardData?.currentPaths.length ?? 0,
+      );
+    }
+
+    return const _ResolvedProfileStats(
+      level: 1,
+      xp: 0,
+      hours: 0,
+      streak: 0,
+      learningPathCount: 0,
+    );
+  }
+
   double get _xpProgress {
-    final xp = _userProfile?.profile?.xp ?? _dashboardData?.userInfo.xp ?? 0;
+    final xp = _resolvedStats.xp;
     final nextXp = ((xp ~/ 1000) + 1) * 1000;
     return (xp / nextXp).clamp(0, 1);
   }
 
-  int get _level =>
-      _userProfile?.profile?.level ?? _dashboardData?.userInfo.level ?? 1;
-  int get _xp => _userProfile?.profile?.xp ?? _dashboardData?.userInfo.xp ?? 0;
+  int get _level => _resolvedStats.level;
+  int get _xp => _resolvedStats.xp;
   int get _nextXp => ((_xp ~/ 1000) + 1) * 1000;
-  int get _hours =>
-      _userProfile?.profile?.hourLearned ??
-      _dashboardData?.userInfo.hourLearned ??
-      0;
-  int get _streak =>
-      _userProfile?.profile?.learningStreak ??
-      _dashboardData?.userInfo.learningStreak ??
-      0;
+  int get _hours => _resolvedStats.hours;
+  int get _streak => _resolvedStats.streak;
   int get _learningPathCount => _enrolledPaths.isNotEmpty
       ? _enrolledPaths.length
-      : _dashboardData?.currentPaths.length ??
-            _userProfile?.profile?.learningCount ??
-            0;
-
-  String get _rankName {
-    final profileRank = _userProfile?.profile?.rankName;
-    if (profileRank != null && profileRank.isNotEmpty) return profileRank;
-    final dashRank = _dashboardData?.userInfo.rankName;
-    if (dashRank != null && dashRank.isNotEmpty) return dashRank;
-    return 'Beginner';
-  }
+      : _resolvedStats.learningPathCount;
 
   String get _memberSince {
     final createdAt = _userProfile?.user.createdAt;
@@ -207,6 +241,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       fullName: _fullName,
                       roleLabel: _roleLabel,
                       email: _userProfile?.user.email ?? 'you@example.com',
+                      avatarUrl: _userProfile?.profile?.avatarUrl ?? '',
                       location:
                           (_userProfile?.profile?.location?.isNotEmpty == true)
                           ? _userProfile!.profile!.location!
@@ -221,7 +256,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       hours: _hours,
                       streak: _streak,
                       learningPathCount: _learningPathCount,
-                      rankName: _rankName,
                       memberSince: _memberSince,
                       onSettingsTap: _openSettings,
                     ),
@@ -238,7 +272,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     LearningPathCardWidget(enrolledPaths: _enrolledPaths),
                     const SizedBox(height: 14),
                     WeeklyMissionCardWidget(
-                      missions: _dashboardData?.weeklyMissions ?? [],
+                      missions: _weeklyMissions,
                       onMissionTap: _onMissionTap,
                     ),
                     const SizedBox(height: 14),
@@ -261,4 +295,20 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
     );
   }
+}
+
+class _ResolvedProfileStats {
+  const _ResolvedProfileStats({
+    required this.level,
+    required this.xp,
+    required this.hours,
+    required this.streak,
+    required this.learningPathCount,
+  });
+
+  final int level;
+  final int xp;
+  final int hours;
+  final int streak;
+  final int learningPathCount;
 }

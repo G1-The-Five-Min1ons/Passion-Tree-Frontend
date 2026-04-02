@@ -44,33 +44,7 @@ class LearningPathCardWidget extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            path.coverImgUrl.isNotEmpty
-                ? Image.network(
-                    path.coverImgUrl,
-                    width: double.infinity,
-                    height: 100,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: double.infinity,
-                      height: 100,
-                      color: AppColors.primaryBrand,
-                      child: const Icon(
-                        Icons.school,
-                        size: 48,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  )
-                : Container(
-                    width: double.infinity,
-                    height: 100,
-                    color: AppColors.primaryBrand,
-                    child: const Icon(
-                      Icons.school,
-                      size: 48,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+            _buildCoverImage(path.coverImgUrl),
             Padding(
               padding: const EdgeInsets.all(10),
               child: Column(
@@ -158,6 +132,33 @@ class LearningPathCardWidget extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCoverImage(String coverImgUrl) {
+    if (coverImgUrl.isEmpty) {
+      return _buildCoverPlaceholder();
+    }
+
+    return Image.network(
+      coverImgUrl,
+      width: double.infinity,
+      height: 100,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _buildCoverPlaceholder(),
+    );
+  }
+
+  Widget _buildCoverPlaceholder() {
+    return Container(
+      width: double.infinity,
+      height: 100,
+      color: AppColors.primaryBrand,
+      child: const Icon(
+        Icons.school,
+        size: 48,
+        color: AppColors.textSecondary,
       ),
     );
   }

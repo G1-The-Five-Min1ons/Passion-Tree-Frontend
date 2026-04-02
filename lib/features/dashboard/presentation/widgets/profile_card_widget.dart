@@ -17,6 +17,7 @@ class ProfileCardWidget extends StatelessWidget {
   final int streak;
   final int learningPathCount;
   final int achievements;
+  final String avatarUrl;
   final String rankName;
   final String memberSince;
   final VoidCallback onSettingsTap;
@@ -37,6 +38,7 @@ class ProfileCardWidget extends StatelessWidget {
     required this.learningPathCount,
     required this.onSettingsTap,
     this.achievements = 0,
+    this.avatarUrl = '',
     this.rankName = 'Beginner',
     this.memberSince = '',
   });
@@ -56,24 +58,7 @@ class ProfileCardWidget extends StatelessWidget {
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryBrand.withValues(alpha: 0.35),
-                      shape: BoxShape.circle,
-                      border:
-                          Border.all(color: AppColors.secondaryBrand, width: 2),
-                    ),
-                    child: Center(
-                      child: Text(
-                        fullName.isNotEmpty ? fullName[0].toUpperCase() : '?',
-                        style: AppTypography.h3SemiBold.copyWith(
-                          color: AppColors.secondaryBrand,
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildAvatar(),
                   Positioned(
                     bottom: -4,
                     left: 0,
@@ -278,6 +263,40 @@ class ProfileCardWidget extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAvatar() {
+    final hasAvatar = avatarUrl.trim().isNotEmpty;
+
+    return Container(
+      width: 54,
+      height: 54,
+      decoration: BoxDecoration(
+        color: AppColors.primaryBrand.withValues(alpha: 0.35),
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.secondaryBrand, width: 2),
+      ),
+      child: ClipOval(
+        child: hasAvatar
+            ? Image.network(
+                avatarUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _buildAvatarFallback(),
+              )
+            : _buildAvatarFallback(),
+      ),
+    );
+  }
+
+  Widget _buildAvatarFallback() {
+    return Center(
+      child: Text(
+        fullName.isNotEmpty ? fullName[0].toUpperCase() : '?',
+        style: AppTypography.h3SemiBold.copyWith(
+          color: AppColors.secondaryBrand,
+        ),
+      ),
     );
   }
 

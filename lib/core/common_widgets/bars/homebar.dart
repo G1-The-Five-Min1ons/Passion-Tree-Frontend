@@ -1,23 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
-import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier.dart';
+import 'package:passion_tree_frontend/core/services/startup_prefetch_service.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
-import 'package:passion_tree_frontend/features/dashboard/domain/usecases/get_dashboard_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_role_entry_page.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_status.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/home/presentation/pages/home_wrapper.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/domain/usecases/album_usecases.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree_wrapper.dart';
-import 'package:passion_tree_frontend/features/setting/domain/usecases/get_settings_usecase.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/pages/profile_page.dart';
 
 class HomeBarWidget extends StatefulWidget {
@@ -85,76 +77,10 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
     if (_hasStartedPrefetch) return;
     _hasStartedPrefetch = true;
 
-    final authRepository = getIt<IAuthRepository>();
-    final userId = await authRepository.getUserId();
-    if (userId == null || userId.isEmpty) {
-      return;
-    }
-
-    await _prefetchHome(userId);
-    await _prefetchLearningPath(userId);
-    await _prefetchReflect();
-    await _prefetchDashboard();
-    await _prefetchSetting();
-  }
-
-  Future<void> _prefetchHome(String userId) async {
-    try {
-      final bloc = context.read<LearningPathBloc>();
-      final state = bloc.state;
-
-      if (state is LearningPathOverviewLoaded || state is LearningPathLoading) {
-        return;
-      }
-
-      bloc.add(FetchLearningPathOverview(userId: userId));
-
-      await bloc.stream.firstWhere(
-        (s) => s is LearningPathOverviewLoaded || s is LearningPathError,
-      );
-    } catch (e) {
-      LogHandler.warning('Startup prefetch HOME failed: $e');
-    }
-  }
-
-  Future<void> _prefetchLearningPath(String userId) async {
-    try {
-      await getIt<GetAllLearningPaths>().call();
-      await getIt<GetLearningPathStatus>().call(userId);
-      await getIt<GetRecommendedLearningPaths>().call();
-    } catch (e) {
-      LogHandler.warning('Startup prefetch LEARNING_PATH failed: $e');
-    }
-  }
-
-  Future<void> _prefetchReflect() async {
-    try {
-      final result = await getIt<GetAlbumsByUserIdUseCase>().call();
-      result.fold(
-        (failure) => LogHandler.warning(
-          'Startup prefetch REFLECT failed: ${failure.message}',
-        ),
-        (_) {},
-      );
-    } catch (e) {
-      LogHandler.warning('Startup prefetch REFLECT failed: $e');
-    }
-  }
-
-  Future<void> _prefetchDashboard() async {
-    try {
-      await getIt<GetDashboardUseCase>().execute();
-    } catch (e) {
-      LogHandler.warning('Startup prefetch DASHBOARD failed: $e');
-    }
-  }
-
-  Future<void> _prefetchSetting() async {
-    try {
-      await getIt<GetSettingsUseCase>().execute();
-    } catch (e) {
-      LogHandler.warning('Startup prefetch SETTING failed: $e');
-    }
+    final startupPrefetchService = getIt<StartupPrefetchService>();
+    await startupPrefetchService.runInOrder(
+      learningPathBloc: context.read<LearningPathBloc>(),
+    );
   }
 
   Widget _buildTabNavigator(int index, Widget rootPage) {
