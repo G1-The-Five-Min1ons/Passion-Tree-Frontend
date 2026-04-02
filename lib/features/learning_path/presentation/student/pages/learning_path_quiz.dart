@@ -157,7 +157,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                     'Quiz',
                     style: Theme.of(
                       context,
-                    ).textTheme.displaySmall?.copyWith(color: colors.primary),
+                    ).textTheme.displaySmall?.copyWith(color: colors.onPrimary),
                   ),
 
                   const SizedBox(height: 24),
