@@ -59,7 +59,11 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   LearningPath? _cachedLearningPath; // Cache learning path details for updating
   bool _pendingPublish = false; // รอ node สร้างเสร็จแล้วค่อย publish
   bool _pendingSaveDraft = false; // รอ node สร้างเสร็จแล้วค่อย save draft
-  late String _displayTitle; // Title ที่แสดงใน header (อัพเดทจาก backend เมื่อโหลดเสร็จ)
+  late String
+  _displayTitle; // Title ที่แสดงใน header (อัพเดทจาก backend เมื่อโหลดเสร็จ)
+
+  bool get _isPublished =>
+      _cachedLearningPath?.publishStatus.toLowerCase() == 'published';
 
   @override
   void initState() {
@@ -144,6 +148,19 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   }
 
   void _openEditNodeModal(BuildContext context, {int? index}) {
+    if (_isPublished) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Cannot edit nodes. This learning path is already published.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+      return;
+    }
+
     String nodeId;
     bool isNewNode;
     String? sequence;
@@ -230,7 +247,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   void _confirmSaveDraft(BuildContext context) {
     if (_cachedLearningPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Loading learning path data...', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
+        const SnackBar(
+          content: Text(
+            'Loading learning path data...',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+        ),
       );
       return;
     }
@@ -239,7 +262,10 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     if (_cachedLearningPath!.publishStatus.toLowerCase() == 'published') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Cannot save as draft. This learning path is already published.', style: TextStyle(color: AppColors.textPrimary)),
+          content: Text(
+            'Cannot save as draft. This learning path is already published.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
           backgroundColor: AppColors.cancel,
         ),
       );
@@ -280,7 +306,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   void _confirmPublish(BuildContext context) {
     if (_cachedLearningPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Loading learning path data...', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
+        const SnackBar(
+          content: Text(
+            'Loading learning path data...',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+        ),
       );
       return;
     }
@@ -289,7 +321,10 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     if (_cachedLearningPath!.publishStatus.toLowerCase() == 'published') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('This learning path is already published.', style: TextStyle(color: AppColors.textPrimary)),
+          content: Text(
+            'This learning path is already published.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
           backgroundColor: AppColors.cancel,
         ),
       );
@@ -419,13 +454,15 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                 } else {
                   // Backend node has no matching UI entry (plain path case):
                   // create a new NodeUiState for it so _uiNodes mirrors all nodes.
-                  newUiNodes.add(NodeUiState(
-                    title: backendNode.title,
-                    description: backendNode.description,
-                    sequence: backendNode.sequence,
-                    realNodeId: backendNode.nodeId,
-                    isCreated: true,
-                  ));
+                  newUiNodes.add(
+                    NodeUiState(
+                      title: backendNode.title,
+                      description: backendNode.description,
+                      sequence: backendNode.sequence,
+                      realNodeId: backendNode.nodeId,
+                      isCreated: true,
+                    ),
+                  );
                 }
               }
               // Preserve uncreated draft nodes that have no backend equivalent yet
@@ -488,7 +525,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node created successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
+            const SnackBar(
+              content: Text(
+                'Node created successfully',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
           );
         } else if (state is NodeUpdated) {
           // Node ถูกอัพเดทสำเร็จ
@@ -506,12 +549,24 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node updated successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
+            const SnackBar(
+              content: Text(
+                'Node updated successfully',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
           );
         } else if (state is LearningPathUpdated) {
           // Learning path updated successfully
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Learning path updated successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
+            const SnackBar(
+              content: Text(
+                'Learning path updated successfully',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
           );
 
           // Pop all pages back to the root (teacher_create_tab) in one shot
@@ -523,7 +578,10 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
+              content: Text(
+                'Error: ${state.message}',
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
               backgroundColor: AppColors.cancel,
             ),
           );
@@ -540,11 +598,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
               /// ===== CORE =====
               NodesOverviewCore(
                 isEditable: true,
-                isDraggable: _cachedLearningPath?.publishStatus.toLowerCase() != 'published',
+                isDraggable: !_isPublished,
                 nodes: _displayNodes,
-                onNodeTap: (index) {
-                  _openEditNodeModal(context, index: index);
-                },
+                onNodeTap: _isPublished
+                    ? null
+                    : (index) {
+                        _openEditNodeModal(context, index: index);
+                      },
                 onReorder: _handleReorder,
               ),
 
@@ -555,9 +615,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                 right: 0,
                 child: HeaderBar(
                   title: _displayTitle,
-                  showAddButton:
-                      _cachedLearningPath?.publishStatus.toLowerCase() !=
-                      'published',
+                  showAddButton: !_isPublished,
                   onPressed: () => _openEditNodeModal(context),
                 ),
               ),
@@ -571,9 +629,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                   builder: (bottomContext) => BottomBar(
                     onSaveDraft: () => _confirmSaveDraft(bottomContext),
                     onPublish: () => _confirmPublish(bottomContext),
-                    isPublished:
-                        _cachedLearningPath?.publishStatus.toLowerCase() ==
-                        'published',
+                    isPublished: _isPublished,
                   ),
                 ),
               ),
