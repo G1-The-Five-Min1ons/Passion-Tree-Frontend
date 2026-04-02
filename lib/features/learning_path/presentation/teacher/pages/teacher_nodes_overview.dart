@@ -52,7 +52,8 @@ class TeacherNodesOverviewPage extends StatefulWidget {
 
 class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   late List<NodeUiState> _uiNodes;
-  int? _pendingNodeIndex; // เก็บ index ของ node ที่รอ response จาก BLoC
+  int? _pendingNodeIndex; // เก็บ index ของ node ที่กำลังสร้างอยู่
+  final List<int> _createQueue = []; // คิว index ของ nodes ที่รอสร้างตามลำดับ
   String? _userId;
   List<NodeDetail>? _cachedNodes; // Cache nodes from backend
   LearningPath? _cachedLearningPath; // Cache learning path details for updating
@@ -130,6 +131,16 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         materials: null, // Materials จะถูกเพิ่มผ่าน EditNodeModal
       ),
     );
+  }
+
+  /// สร้าง nodes ทีละตัวตามลำดับ (sequential) เพื่อหลีกเลี่ยง droppable transformer
+  /// ที่จะ drop events ที่ส่งพร้อมกัน
+  void _startSequentialCreate(List<int> indices) {
+    _createQueue.clear();
+    _createQueue.addAll(indices);
+    if (_createQueue.isNotEmpty) {
+      _handleCreateNode(_createQueue.removeAt(0));
+    }
   }
 
   void _openEditNodeModal(BuildContext context, {int? index}) {
@@ -241,18 +252,15 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       body: 'Are you sure to save draft',
       confirmText: 'Save',
       onConfirm: () {
-        // ถ้ายังไม่มี nodes ใน backend ให้สร้างก่อน แล้วค่อย save draft
-        if (_cachedNodes == null || _cachedNodes!.isEmpty) {
-          final hasUncreated = _uiNodes.any((n) => !n.isCreated);
-          if (hasUncreated) {
-            setState(() => _pendingSaveDraft = true);
-            for (int i = 0; i < _uiNodes.length; i++) {
-              if (!_uiNodes[i].isCreated) {
-                _handleCreateNode(i);
-              }
-            }
-            return; // รอ NodeCreated แล้วค่อย dispatch
-          }
+        // ถ้ายังไม่มี nodes ใน backend ให้สร้างทีละตัวตามลำดับ แล้วค่อย save draft
+        final uncreatedIndices = [
+          for (int i = 0; i < _uiNodes.length; i++)
+            if (!_uiNodes[i].isCreated) i,
+        ];
+        if (uncreatedIndices.isNotEmpty) {
+          setState(() => _pendingSaveDraft = true);
+          _startSequentialCreate(uncreatedIndices);
+          return; // รอ NodeCreated ครบทุกตัวแล้วค่อย dispatch
         }
 
         context.read<LearningPathBloc>().add(
@@ -294,18 +302,15 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       body: 'Are you sure to publish Learning Path',
       confirmText: 'Publish',
       onConfirm: () {
-        // ถ้ายังไม่มี nodes ใน backend ให้สร้างก่อน แล้วค่อย publish
-        if (_cachedNodes == null || _cachedNodes!.isEmpty) {
-          final hasUncreated = _uiNodes.any((n) => !n.isCreated);
-          if (hasUncreated) {
-            setState(() => _pendingPublish = true);
-            for (int i = 0; i < _uiNodes.length; i++) {
-              if (!_uiNodes[i].isCreated) {
-                _handleCreateNode(i);
-              }
-            }
-            return; // รอ NodeCreated แล้วค่อย dispatch
-          }
+        // ถ้ายังไม่มี nodes ใน backend ให้สร้างทีละตัวตามลำดับ แล้วค่อย publish
+        final uncreatedIndices = [
+          for (int i = 0; i < _uiNodes.length; i++)
+            if (!_uiNodes[i].isCreated) i,
+        ];
+        if (uncreatedIndices.isNotEmpty) {
+          setState(() => _pendingPublish = true);
+          _startSequentialCreate(uncreatedIndices);
+          return; // รอ NodeCreated ครบทุกตัวแล้วค่อย dispatch
         }
 
         context.read<LearningPathBloc>().add(
