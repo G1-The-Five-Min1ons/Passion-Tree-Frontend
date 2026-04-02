@@ -25,14 +25,16 @@ import 'package:passion_tree_frontend/core/di/injection.dart';
 class EditNodeModal extends StatefulWidget {
   final String nodeId;
   final bool isNewNode;
+  final bool isAiPath;
   final String? pathId;
   final String? sequence;
   final NodeDetail? initialNode;
-  
+
   const EditNodeModal({
     super.key,
     required this.nodeId,
     this.isNewNode = false,
+    this.isAiPath = false,
     this.pathId,
     this.sequence,
     this.initialNode,
@@ -53,13 +55,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
   @override
   void initState() {
     super.initState();
-    
+
     // โหลดข้อมูลเดิมถ้าเป็นการแก้ไขโหนด
     if (widget.initialNode != null) {
       _title = widget.initialNode!.title;
       _description = widget.initialNode!.description;
       _videoUrl = widget.initialNode!.linkVdo ?? '';
-      
+
       // โหลด materials (files ที่มีอยู่แล้ว)
       for (final material in widget.initialNode!.materials) {
         if (material.type == 'file') {
@@ -79,7 +81,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
         // หา correct choice index
         int correctIndex = 0;
         Map<int, String> reasons = {};
-        
+
         for (int i = 0; i < question.choices.length; i++) {
           final choice = question.choices[i];
           if (choice.isCorrect) {
@@ -139,6 +141,15 @@ class _EditNodeModalState extends State<EditNodeModal> {
     }
   }
 
+  bool get _isPlainPathFirstNode {
+    if (widget.isAiPath) return false;
+
+    final sequence = widget.sequence?.trim();
+    if (sequence == '1') return true;
+
+    return widget.initialNode?.sequence == 1;
+  }
+
   //  ===== FILE FUNCTIONS  =====
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(allowMultiple: true);
@@ -169,7 +180,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
     if (_quizzes.isEmpty) return null;
 
     // กรองเอาแต่ questions ที่มีข้อความ
-    final validQuizzes = _quizzes.where((q) => q.question.trim().isNotEmpty).toList();
+    final validQuizzes = _quizzes
+        .where((q) => q.question.trim().isNotEmpty)
+        .toList();
     if (validQuizzes.isEmpty) return null;
 
     return validQuizzes.map((quiz) {
@@ -178,12 +191,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
           .entries
           .where((entry) => entry.value.trim().isNotEmpty)
           .map((entry) {
-        return CreateChoice(
-          choiceText: entry.value,
-          isCorrect: entry.key == quiz.selectedIndex,
-          reasoning: quiz.reasons[entry.key] ?? '',
-        );
-      }).toList();
+            return CreateChoice(
+              choiceText: entry.value,
+              isCorrect: entry.key == quiz.selectedIndex,
+              reasoning: quiz.reasons[entry.key] ?? '',
+            );
+          })
+          .toList();
 
       return CreateQuestionWithChoices(
         questionText: quiz.question,
@@ -196,7 +210,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
   Future<void> _handleUpdate(BuildContext context) async {
     if (_title.isEmpty || _description.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Title and description are required', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
+        const SnackBar(
+          content: Text(
+            'Title and description are required',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+        ),
       );
       return;
     }
@@ -205,13 +225,18 @@ class _EditNodeModalState extends State<EditNodeModal> {
       // สร้าง node ใหม่
       if (widget.pathId == null || widget.sequence == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Missing path ID or sequence', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
+          const SnackBar(
+            content: Text(
+              'Missing path ID or sequence',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
+          ),
         );
         return;
       }
 
       setState(() => _isUploading = true);
-      
 
       try {
         // Upload files และรวม materials
@@ -251,12 +276,15 @@ class _EditNodeModalState extends State<EditNodeModal> {
         );
       } catch (e) {
         if (!context.mounted) return;
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Failed to upload files: $e', style: const TextStyle(color: AppColors.textPrimary)),
-              backgroundColor: AppColors.cancel,
+            content: Text(
+              'Failed to upload files: $e',
+              style: const TextStyle(color: AppColors.textPrimary),
             ),
+            backgroundColor: AppColors.cancel,
+          ),
         );
       } finally {
         if (context.mounted) {
@@ -304,12 +332,15 @@ class _EditNodeModalState extends State<EditNodeModal> {
         );
       } catch (e) {
         if (!context.mounted) return;
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Failed to upload files: $e', style: const TextStyle(color: AppColors.textPrimary)),
-              backgroundColor: AppColors.cancel,
+            content: Text(
+              'Failed to upload files: $e',
+              style: const TextStyle(color: AppColors.textPrimary),
             ),
+            backgroundColor: AppColors.cancel,
+          ),
         );
       } finally {
         if (context.mounted) {
@@ -327,7 +358,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
       listener: (context, state) {
         if (state is NodeUpdated) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node updated successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
+            const SnackBar(
+              content: Text(
+                'Node updated successfully',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
           );
           // Delay closing modal to allow parent listeners to process and refetch
           Future.delayed(const Duration(milliseconds: 300), () {
@@ -337,7 +374,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
           });
         } else if (state is NodeCreated) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node created successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
+            const SnackBar(
+              content: Text(
+                'Node created successfully',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
           );
           // Delay closing modal to allow parent listeners to process and refetch
           Future.delayed(const Duration(milliseconds: 300), () {
@@ -347,7 +390,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
           });
         } else if (state is NodeDeleted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node deleted successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
+            const SnackBar(
+              content: Text(
+                'Node deleted successfully',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
           );
           if (context.mounted) {
             Navigator.pop(context);
@@ -355,7 +404,10 @@ class _EditNodeModalState extends State<EditNodeModal> {
         } else if (state is LearningPathError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
+              content: Text(
+                'Error: ${state.message}',
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
               backgroundColor: AppColors.cancel,
             ),
           );
@@ -387,9 +439,12 @@ class _EditNodeModalState extends State<EditNodeModal> {
                     NodeInfoSection(
                       // ===== NODE INFO =====
                       initialTitle: _title.isEmpty ? null : _title,
-                      initialDescription: _description.isEmpty ? null : _description,
+                      initialDescription: _description.isEmpty
+                          ? null
+                          : _description,
                       onTitleChanged: (v) => setState(() => _title = v),
-                      onDescriptionChanged: (v) => setState(() => _description = v),
+                      onDescriptionChanged: (v) =>
+                          setState(() => _description = v),
 
                       // ===== VIDEO URL =====
                       videoUrlValue: _videoUrl.isEmpty ? null : _videoUrl,
@@ -400,7 +455,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                       onUploadFile: _pickFile,
                       onRemoveFile: _removeFile,
                     ),
-                    
+
                     const SizedBox(height: 14),
                     NodeQuizSection(
                       initialQuizzes: _quizzes.isNotEmpty ? _quizzes : null,
@@ -415,8 +470,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
                     BlocBuilder<LearningPathBloc, LearningPathState>(
                       builder: (context, state) {
-                        final isLoading = state is LearningPathLoading || _isUploading;
-                        
+                        final isLoading =
+                            state is LearningPathLoading || _isUploading;
+
                         return NodeFooter(
                           onDelete: () {
                             DeletePopUp.show(
@@ -425,6 +481,21 @@ class _EditNodeModalState extends State<EditNodeModal> {
                               body:
                                   'Are you sure you want to delete?\nThis Process cannot be undone.',
                               onDelete: () {
+                                if (_isPlainPathFirstNode) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Can not remove โหนดต้น',
+                                        style: TextStyle(
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      backgroundColor: AppColors.cancel,
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 if (widget.isNewNode) {
                                   Navigator.pop(context);
                                   return;
@@ -436,7 +507,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
                               },
                             );
                           },
-                          onSave: isLoading ? () {} : () => _handleUpdate(context),
+                          onSave: isLoading
+                              ? () {}
+                              : () => _handleUpdate(context),
                         );
                       },
                     ),

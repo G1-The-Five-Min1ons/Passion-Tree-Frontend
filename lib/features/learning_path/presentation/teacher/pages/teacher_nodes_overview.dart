@@ -65,6 +65,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   bool get _isPublished =>
       _cachedLearningPath?.publishStatus.toLowerCase() == 'published';
 
+  bool get _isAiPath => widget.aiNodes != null && widget.aiNodes!.isNotEmpty;
+
   @override
   void initState() {
     super.initState();
@@ -204,6 +206,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         child: EditNodeModal(
           nodeId: nodeId,
           isNewNode: isNewNode,
+          isAiPath: _isAiPath,
           pathId: widget.pathId,
           sequence: sequence,
           initialNode: initialNode, // ส่งข้อมูลเดิมไปยัง modal
