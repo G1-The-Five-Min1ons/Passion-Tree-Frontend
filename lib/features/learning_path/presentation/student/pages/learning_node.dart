@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/learning_node_content.dart';
@@ -35,6 +36,7 @@ class LearningNodePage extends StatefulWidget {
 class _LearningNodePageState extends State<LearningNodePage> {
   NodeDetail? _cachedNodeDetail;
   YoutubePlayerController? _videoController;
+  bool _isFullscreen = false;
 
   @override
   void initState() {
@@ -50,8 +52,31 @@ class _LearningNodePageState extends State<LearningNodePage> {
 
   @override
   void dispose() {
+    _videoController?.removeListener(_onVideoControllerUpdate);
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    );
     _videoController?.dispose();
     super.dispose();
+  }
+
+  void _onVideoControllerUpdate() {
+    final controller = _videoController;
+    if (controller == null) return;
+
+    final isFullscreen = controller.value.isFullScreen;
+    if (isFullscreen == _isFullscreen) return;
+
+    _isFullscreen = isFullscreen;
+    if (isFullscreen) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    } else {
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: SystemUiOverlay.values,
+      );
+    }
   }
 
   void _initVideoController(String? videoUrl) {
@@ -59,11 +84,14 @@ class _LearningNodePageState extends State<LearningNodePage> {
     final url = videoUrl ?? 'https://youtu.be/Yf4M3WZilRI?si=HU_zfUG1GzGMizNb';
     final videoId = YoutubePlayer.convertUrlToId(url) ?? '';
     if (videoId.isNotEmpty) {
+      final controller = YoutubePlayerController(
+        initialVideoId: videoId,
+        flags: const YoutubePlayerFlags(autoPlay: false, mute: false),
+      );
+      controller.addListener(_onVideoControllerUpdate);
+
       setState(() {
-        _videoController = YoutubePlayerController(
-          initialVideoId: videoId,
-          flags: const YoutubePlayerFlags(autoPlay: false, mute: false),
-        );
+        _videoController = controller;
       });
     }
   }
@@ -78,7 +106,8 @@ class _LearningNodePageState extends State<LearningNodePage> {
               _cachedNodeDetail = state.nodeDetail;
             }
 
-            if ((state is LearningPathLoading || state is LearningPathInitial) &&
+            if ((state is LearningPathLoading ||
+                    state is LearningPathInitial) &&
                 _cachedNodeDetail == null) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -122,17 +151,20 @@ class _LearningNodePageState extends State<LearningNodePage> {
                                   title: nodeDetail.title,
                                   pathName: widget.pathName,
                                   totalNodes: widget.totalNodes,
-                                  currentNodeSequence: widget.currentNodeSequence,
+                                  currentNodeSequence:
+                                      widget.currentNodeSequence,
                                   userId: widget.userId,
                                 ),
                               ),
                             ),
                           );
                           if (mounted) {
-                            bloc.add(FetchNodeDetail(
-                              nodeId: widget.nodeId,
-                              userId: widget.userId,
-                            ));
+                            bloc.add(
+                              FetchNodeDetail(
+                                nodeId: widget.nodeId,
+                                userId: widget.userId,
+                              ),
+                            );
                           }
                         },
                       ),
@@ -172,7 +204,8 @@ class _LearningNodePageState extends State<LearningNodePage> {
                 showVideoProgressIndicator: true,
                 progressIndicatorColor: Theme.of(context).colorScheme.primary,
               ),
-              builder: (context, player) => _buildScaffold(context, player: player),
+              builder: (context, player) =>
+                  _buildScaffold(context, player: player),
             )
           : _buildScaffold(context),
     );
