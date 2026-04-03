@@ -18,6 +18,7 @@ class AlbumBlocProvider extends StatelessWidget {
       create: (context) => AlbumBloc(
         getAlbumsByUserId: getIt<GetAlbumsByUserIdUseCase>(),
         getAlbumById: getIt<GetAlbumByIdUseCase>(),
+        getHeartCount: getIt<GetHeartCountUseCase>(),
         createAlbum: getIt<CreateAlbumUseCase>(),
         updateAlbum: getIt<UpdateAlbumUseCase>(),
         deleteAlbum: getIt<DeleteAlbumUseCase>(),

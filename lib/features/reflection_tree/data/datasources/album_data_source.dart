@@ -42,7 +42,24 @@ class AlbumDataSource {
 
   DateTime _endOfDay(DateTime value) {
     final local = value.toLocal();
-    return DateTime(local.year, local.month, local.day, 23, 59, 0);
+    return DateTime(local.year, local.month, local.day, 23, 59, 59);
+  }
+
+  int _extractHeartCountOrThrow(
+    Map<String, dynamic> data, {
+    required String successContext,
+    required String errorContext,
+  }) {
+    final dynamic heartCount = data['heart_count'];
+    if (heartCount is int) {
+      return heartCount;
+    }
+    if (heartCount is num) {
+      return heartCount.toInt();
+    }
+
+    LogHandler.error('$successContext succeeded but heart_count missing in response');
+    throw createExceptionFromStatusCode(500, 'Missing heart_count in $errorContext response');
   }
 
   /// Create a new album
@@ -258,28 +275,13 @@ class AlbumDataSource {
 
     if (response.isSuccess) {
       final data = response.data as Map<String, dynamic>? ?? {};
-      final dynamic heartCount = data['heart_count'];
-      if (heartCount is int) {
-        LogHandler.success(
-          'Tree retrieved: $treeId (remaining hearts: $heartCount)',
-        );
-        return heartCount;
-      }
-      if (heartCount is num) {
-        final parsedHeartCount = heartCount.toInt();
-        LogHandler.success(
-          'Tree retrieved: $treeId (remaining hearts: $parsedHeartCount)',
-        );
-        return parsedHeartCount;
-      }
-
-      LogHandler.error(
-        'Retrieve tree succeeded but heart_count missing in response',
+      final heartCount = _extractHeartCountOrThrow(
+        data,
+        successContext: 'Retrieve tree',
+        errorContext: 'retrieve',
       );
-      throw createExceptionFromStatusCode(
-        500,
-        'Missing heart_count in retrieve response',
-      );
+      LogHandler.success('Tree retrieved: $treeId (remaining hearts: $heartCount)');
+      return heartCount;
     }
 
     final msg = response.error ?? response.message ?? 'Failed to retrieve tree';
@@ -299,37 +301,22 @@ class AlbumDataSource {
     final response = await _apiHandler.patch(
       url: ApiConfig.pauseTree(treeId),
       headers: ApiConfig.getAuthHeaders(token),
-      body: jsonEncode({
+      body: {
         'pause_from': _toRfc3339WithLocalOffset(pauseFrom),
         'paused_at': _toRfc3339WithLocalOffset(resumeOnEndOfDay),
-      }),
+      },
       timeout: ApiConfig.connectionTimeout,
     );
 
     if (response.isSuccess) {
       final data = response.data as Map<String, dynamic>? ?? {};
-      final dynamic heartCount = data['heart_count'];
-      if (heartCount is int) {
-        LogHandler.success(
-          'Tree paused: $treeId (remaining hearts: $heartCount)',
-        );
-        return heartCount;
-      }
-      if (heartCount is num) {
-        final parsedHeartCount = heartCount.toInt();
-        LogHandler.success(
-          'Tree paused: $treeId (remaining hearts: $parsedHeartCount)',
-        );
-        return parsedHeartCount;
-      }
-
-      LogHandler.error(
-        'Pause tree succeeded but heart_count missing in response',
+      final heartCount = _extractHeartCountOrThrow(
+        data,
+        successContext: 'Pause tree',
+        errorContext: 'pause',
       );
-      throw createExceptionFromStatusCode(
-        500,
-        'Missing heart_count in pause response',
-      );
+      LogHandler.success('Tree paused: $treeId (remaining hearts: $heartCount)');
+      return heartCount;
     }
 
     final msg = response.error ?? response.message ?? 'Failed to pause tree';
@@ -343,7 +330,7 @@ class AlbumDataSource {
     final response = await _apiHandler.patch(
       url: ApiConfig.pauseTree(treeId),
       headers: ApiConfig.getAuthHeaders(token),
-      body: jsonEncode({}),
+      body: {},
       timeout: ApiConfig.connectionTimeout,
     );
 

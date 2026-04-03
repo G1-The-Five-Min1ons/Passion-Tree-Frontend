@@ -169,6 +169,10 @@ Future<void> initializeDependencies() async {
     () => GetAlbumByIdUseCase(getIt<IAlbumRepository>()),
   );
 
+  getIt.registerFactory<GetHeartCountUseCase>(
+    () => GetHeartCountUseCase(getIt<IAuthRepository>()),
+  );
+
   getIt.registerFactory<CreateAlbumUseCase>(
     () => CreateAlbumUseCase(
       getIt<IAlbumRepository>(),

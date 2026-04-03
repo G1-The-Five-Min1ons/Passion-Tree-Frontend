@@ -93,30 +93,29 @@ class CreateTreeEvent extends AlbumEvent {
   List<Object?> get props => [title, difficulties, pathId, albumId];
 }
 
-/// Event to delete a tree
-class DeleteTreeEvent extends AlbumEvent {
+abstract class TreeAlbumEvent extends AlbumEvent {
   final String treeId;
   final String albumId;
 
-  const DeleteTreeEvent({
-    required this.treeId,
-    required this.albumId,
-  });
+  const TreeAlbumEvent({required this.treeId, required this.albumId});
 
   @override
   List<Object?> get props => [treeId, albumId];
 }
 
+/// Event to delete a tree
+class DeleteTreeEvent extends TreeAlbumEvent {
+  const DeleteTreeEvent({required super.treeId, required super.albumId});
+}
+
 /// Event to update a tree
-class UpdateTreeEvent extends AlbumEvent {
-  final String treeId;
-  final String albumId;
+class UpdateTreeEvent extends TreeAlbumEvent {
   final String title;
   final String? newAlbumId;
 
   const UpdateTreeEvent({
-    required this.treeId,
-    required this.albumId,
+    required super.treeId,
+    required super.albumId,
     required this.title,
     this.newAlbumId,
   });
@@ -125,25 +124,17 @@ class UpdateTreeEvent extends AlbumEvent {
   List<Object?> get props => [treeId, albumId, title, newAlbumId];
 }
 
-class RetrieveTreeEvent extends AlbumEvent {
-  final String treeId;
-  final String albumId;
-
-  const RetrieveTreeEvent({required this.treeId, required this.albumId});
-
-  @override
-  List<Object?> get props => [treeId, albumId];
+class RetrieveTreeEvent extends TreeAlbumEvent {
+  const RetrieveTreeEvent({required super.treeId, required super.albumId});
 }
 
-class PauseTreeEvent extends AlbumEvent {
-  final String treeId;
-  final String albumId;
+class PauseTreeEvent extends TreeAlbumEvent {
   final DateTime pauseFrom;
   final DateTime resumeOn;
 
   const PauseTreeEvent({
-    required this.treeId,
-    required this.albumId,
+    required super.treeId,
+    required super.albumId,
     required this.pauseFrom,
     required this.resumeOn,
   });
@@ -152,12 +143,6 @@ class PauseTreeEvent extends AlbumEvent {
   List<Object?> get props => [treeId, albumId, pauseFrom, resumeOn];
 }
 
-class ResumeTreeEvent extends AlbumEvent {
-  final String treeId;
-  final String albumId;
-
-  const ResumeTreeEvent({required this.treeId, required this.albumId});
-
-  @override
-  List<Object?> get props => [treeId, albumId];
+class ResumeTreeEvent extends TreeAlbumEvent {
+  const ResumeTreeEvent({required super.treeId, required super.albumId});
 }

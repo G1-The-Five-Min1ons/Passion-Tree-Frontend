@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:passion_tree_frontend/core/error/failures.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/repositories/i_album_repository.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 
 /// Use case for creating a new album
@@ -58,6 +59,17 @@ class GetAlbumByIdUseCase {
 
   Future<Either<Failure, Album>> call(String albumId) async {
     return await repository.getAlbumById(albumId);
+  }
+}
+
+/// Use case for getting the current heart count
+class GetHeartCountUseCase {
+  final IAuthRepository repository;
+
+  GetHeartCountUseCase(this.repository);
+
+  Future<int> call() async {
+    return await repository.getHeartCount();
   }
 }
 

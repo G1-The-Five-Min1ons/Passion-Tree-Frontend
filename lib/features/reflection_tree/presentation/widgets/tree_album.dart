@@ -13,8 +13,6 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
-import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
-import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_state.dart';
 
 class TreeAlbumCard extends StatelessWidget {
   final String title;
@@ -160,32 +158,6 @@ class TreeAlbumCard extends StatelessWidget {
                 RetrievePopup.show(
                   context,
                   onConfirm: () {
-                    final userState = context.read<UserBloc>().state;
-                    final int currentHeartCount = userState is UserLoaded
-                        ? userState.heartCount
-                        : 0;
-
-                    if (currentHeartCount < 5) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Not enough hearts.',
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-
-                    if (treeId.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Tree ID is missing.'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
 
                     context.read<AlbumBloc>().add(
                       RetrieveTreeEvent(treeId: treeId, albumId: albumId),
@@ -200,32 +172,6 @@ class TreeAlbumCard extends StatelessWidget {
                   context,
                   normalizedStatus,
                   onPauseSelected: (pauseFrom, resumeOn) {
-                    final userState = context.read<UserBloc>().state;
-                    final int currentHeartCount = userState is UserLoaded
-                        ? userState.heartCount
-                        : 0;
-
-                    if (currentHeartCount < 3) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Not enough hearts.',
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-
-                    if (treeId.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Tree ID is missing.'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
 
                     context.read<AlbumBloc>().add(
                       PauseTreeEvent(
