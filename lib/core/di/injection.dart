@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:passion_tree_frontend/core/network/api_handler.dart';
+import 'package:passion_tree_frontend/core/services/startup_prefetch_service.dart';
 import 'package:passion_tree_frontend/core/services/upload_service.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/album_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/repositories/album_repository.dart';
@@ -364,6 +365,18 @@ Future<void> initializeDependencies() async {
   );
   getIt.registerFactory<GetDashboardUseCase>(
     () => GetDashboardUseCase(getIt<IDashboardRepository>()),
+  );
+
+  getIt.registerLazySingleton<StartupPrefetchService>(
+    () => StartupPrefetchService(
+      authRepository: getIt<IAuthRepository>(),
+      getAllLearningPaths: getIt<GetAllLearningPaths>(),
+      getLearningPathStatus: getIt<GetLearningPathStatus>(),
+      getRecommendedLearningPaths: getIt<GetRecommendedLearningPaths>(),
+      getAlbumsByUserIdUseCase: getIt<GetAlbumsByUserIdUseCase>(),
+      getDashboardUseCase: getIt<GetDashboardUseCase>(),
+      getSettingsUseCase: getIt<GetSettingsUseCase>(),
+    ),
   );
 }
 
