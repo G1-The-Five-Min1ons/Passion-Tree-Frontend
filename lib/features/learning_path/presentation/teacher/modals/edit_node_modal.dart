@@ -487,7 +487,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
-                                        'Can not remove โหนดต้น',
+                                        'Unable to remove primary node',
                                         style: TextStyle(
                                           color: AppColors.textPrimary,
                                         ),
