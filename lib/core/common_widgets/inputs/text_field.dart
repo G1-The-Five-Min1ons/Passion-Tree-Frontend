@@ -23,6 +23,7 @@ class PixelTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final bool obscureText;
   final int? maxLines;
+  final int? maxLength;
 
   const PixelTextField({
     super.key,
@@ -43,6 +44,7 @@ class PixelTextField extends StatefulWidget {
     this.onChanged, //สำหรับเก็บฟังก์ชัน onChanged ไม่ส่งค่าก้ไม่เป้นไร
     this.obscureText = false,
     this.maxLines,
+    this.maxLength,
   });
 
   @override
@@ -61,6 +63,11 @@ class _PixelTextFieldState extends State<PixelTextField> {
 
     _controller =
         widget.controller ?? TextEditingController(text: widget.value ?? '');
+    
+    // เพิ่ม listener เพื่อให้ counter อัปเดตแบบ real-time
+    _controller.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -90,24 +97,41 @@ class _PixelTextFieldState extends State<PixelTextField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (widget.label != null && widget.label!.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.only(left: 10),
-            child: RichText(
-              text: TextSpan(
-                style: (widget.labelTextStyle ?? AppTypography.titleSemiBold).copyWith(color: activeLabelColor),
-                children: [
-                  TextSpan(text: widget.label!.replaceFirst('*', '').trim()),
-                  if (widget.label!.contains('*'))
-                    const TextSpan(
-                      text: ' *',
-                      style: TextStyle(
-                        color: AppColors.cancel,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10),
+                    child: RichText(
+                      text: TextSpan(
+                        style: (widget.labelTextStyle ?? AppTypography.titleSemiBold).copyWith(color: activeLabelColor),
+                        children: [
+                          TextSpan(text: widget.label!.replaceFirst('*', '').trim()),
+                          if (widget.label!.contains('*'))
+                            const TextSpan(
+                              text: ' *',
+                              style: TextStyle(
+                                color: AppColors.cancel,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                ],
-              ),
+                  ),
+                ),
+                if (widget.maxLength != null)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: Text(
+                      '${_controller.text.length}/${widget.maxLength}',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: activeHintColor,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          ),
           const SizedBox(height: 8),
         ],
         PixelBorderContainer(
@@ -124,6 +148,7 @@ class _PixelTextFieldState extends State<PixelTextField> {
               controller: _controller,
               scrollController: scrollController,
               maxLines: widget.obscureText ? 1 : widget.maxLines,
+              maxLength: widget.maxLength,
               expands: widget.obscureText ? false : (widget.maxLines == null),
               obscureText: widget.obscureText,
               onChanged: widget.onChanged,
@@ -137,6 +162,7 @@ class _PixelTextFieldState extends State<PixelTextField> {
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
+                counterText: '',
               ),
             ),
           ),

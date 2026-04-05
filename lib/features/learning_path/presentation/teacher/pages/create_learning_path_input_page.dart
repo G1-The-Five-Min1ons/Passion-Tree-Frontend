@@ -369,6 +369,7 @@ class _CreateLearningPathInputPageState
                   hintText: 'Enter learning path title',
                   value: _title,
                   height: 35,
+                  maxLength: 40,
                   onChanged: (value) {
                     setState(() {
                       _title = value;
