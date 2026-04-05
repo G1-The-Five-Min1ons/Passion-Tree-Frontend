@@ -262,7 +262,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
   }
 
   void _finishQuiz() {
-    final userId = widget.userId;
+    
 
     // Check if this is the last node (sequence starts from 1)
 

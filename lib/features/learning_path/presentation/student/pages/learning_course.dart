@@ -46,6 +46,11 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
   }
 
   Future<void> _loadUserAndFetchNodes() async {
+    // Load nodes for preview map on this page.
+    context.read<LearningPathBloc>().add(
+      FetchNodesForPath(pathId: widget.course.id),
+    );
+
     final storedUserId = await getIt<IAuthRepository>().getUserId();
     if (!mounted) return;
     setState(() => _userId = storedUserId ?? '');
@@ -76,6 +81,11 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
       if (userId.isNotEmpty) {
         context.read<LearningPathBloc>().add(FetchLearningPathOverview());
       }
+
+      // Refetch nodes so preview reflects latest progress/state after returning.
+      context.read<LearningPathBloc>().add(
+        FetchNodesForPath(pathId: widget.course.id),
+      );
     });
   }
 
