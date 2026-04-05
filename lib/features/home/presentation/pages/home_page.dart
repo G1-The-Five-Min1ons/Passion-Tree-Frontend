@@ -42,9 +42,7 @@ class _HomePageState extends State<HomePage> {
 
     if (!mounted) return;
 
-    context.read<LearningPathBloc>().add(
-      FetchLearningPathOverview(userId: userId),
-    );
+    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
   }
 
   @override
