@@ -10,16 +10,6 @@ import 'package:passion_tree_frontend/features/dashboard/presentation/pages/prof
 class HomeBarWidget extends StatefulWidget {
   const HomeBarWidget({super.key});
 
-  static bool switchToTab(BuildContext context, int index) {
-    final state = context.findAncestorStateOfType<_HomeBarWidgetState>();
-    if (state == null) {
-      return false;
-    }
-
-    state._setSelectedIndex(index);
-    return true;
-  }
-
   @override
   State<HomeBarWidget> createState() => _HomeBarWidgetState();
 }
