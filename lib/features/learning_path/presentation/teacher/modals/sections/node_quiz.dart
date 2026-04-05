@@ -94,7 +94,20 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Question (Optional)', style: AppTypography.titleSemiBold),
+        RichText(
+          text: TextSpan(
+            style: AppTypography.titleSemiBold.copyWith(
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            children: const [
+              TextSpan(text: 'Question'),
+              TextSpan(
+                text: ' *',
+                style: TextStyle(color: AppColors.cancel),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 8),
 
         // ===== QUIZ LIST =====

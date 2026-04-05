@@ -52,6 +52,21 @@ class _EditNodeModalState extends State<EditNodeModal> {
   List<NodeQuiz> _quizzes = []; //ส่วนเพิ่ม quiz
   bool _isUploading = false;
 
+  bool get _hasRequiredQuiz {
+    return _quizzes.any(
+      (quiz) =>
+          quiz.question.trim().isNotEmpty &&
+          quiz.choices.where((choice) => choice.trim().isNotEmpty).length >= 2,
+    );
+  }
+
+  bool get _isSaveEnabled {
+    return _title.trim().isNotEmpty &&
+        _description.trim().isNotEmpty &&
+        _videoUrl.trim().isNotEmpty &&
+        _hasRequiredQuiz;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -208,19 +223,6 @@ class _EditNodeModalState extends State<EditNodeModal> {
   }
 
   Future<void> _handleUpdate(BuildContext context) async {
-    if (_title.isEmpty || _description.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Title and description are required',
-            style: TextStyle(color: AppColors.textPrimary),
-          ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
-      return;
-    }
-
     if (widget.isNewNode) {
       // สร้าง node ใหม่
       if (widget.pathId == null || widget.sequence == null) {
@@ -507,8 +509,8 @@ class _EditNodeModalState extends State<EditNodeModal> {
                               },
                             );
                           },
-                          onSave: isLoading
-                              ? () {}
+                          onSave: isLoading || !_isSaveEnabled
+                              ? null
                               : () => _handleUpdate(context),
                         );
                       },

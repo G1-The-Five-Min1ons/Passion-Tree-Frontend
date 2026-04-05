@@ -7,8 +7,7 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/uploaded_file.dart';
 
 class NodeInfoSection extends StatelessWidget {
-
-   final ValueChanged<String> onTitleChanged;
+  final ValueChanged<String> onTitleChanged;
   final ValueChanged<String> onDescriptionChanged;
   final String? initialTitle;
   final String? initialDescription;
@@ -42,10 +41,15 @@ class NodeInfoSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        
+        Text(
+          '* Required fields',
+          style: AppTypography.smallBodyMedium.copyWith(color: AppColors.cancel),
+        ),
+        const SizedBox(height: 8),
+
         // ===== NODE TITLE =====
         PixelTextField(
-          label: 'Node Title',
+          label: 'Node Title *',
           hintText: 'Enter node title',
           height: 35,
           value: initialTitle,
@@ -56,7 +60,7 @@ class NodeInfoSection extends StatelessWidget {
 
         // ===== NODE DESCRIPTION =====
         PixelTextField(
-          label: 'Node Description',
+          label: 'Node Description *',
           hintText: 'Enter node description',
           height: 35,
           value: initialDescription,
@@ -67,7 +71,7 @@ class NodeInfoSection extends StatelessWidget {
 
         // ===== VIDEO URL =====
         PixelTextField(
-          label: 'Video URL (Optional)',
+          label: 'Video URL *',
           hintText: 'Enter YouTube video URL',
           height: 35,
           value: videoUrlValue,

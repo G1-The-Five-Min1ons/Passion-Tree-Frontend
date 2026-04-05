@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
@@ -54,11 +55,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   late List<NodeUiState> _uiNodes;
   int? _pendingNodeIndex; // เก็บ index ของ node ที่กำลังสร้างอยู่
   final List<int> _createQueue = []; // คิว index ของ nodes ที่รอสร้างตามลำดับ
+  Timer? _draftAutoSaveTimer;
   String? _userId;
   List<NodeDetail>? _cachedNodes; // Cache nodes from backend
   LearningPath? _cachedLearningPath; // Cache learning path details for updating
   bool _pendingPublish = false; // รอ node สร้างเสร็จแล้วค่อย publish
   bool _pendingSaveDraft = false; // รอ node สร้างเสร็จแล้วค่อย save draft
+  bool _isAutoSavingDraft = false;
   late String
   _displayTitle; // Title ที่แสดงใน header (อัพเดทจาก backend เมื่อโหลดเสร็จ)
 
@@ -66,6 +69,12 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       _cachedLearningPath?.publishStatus.toLowerCase() == 'published';
 
   bool get _isAiPath => widget.aiNodes != null && widget.aiNodes!.isNotEmpty;
+
+  @override
+  void dispose() {
+    _draftAutoSaveTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -245,31 +254,62 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         ReorderNodesEvent(pathId: widget.pathId, nodeIds: orderedNodeIds),
       );
     }
+
+    _scheduleDraftAutoSave();
   }
 
-  bool _hasIncompletePlainPathNodes() {
-    if (widget.aiNodes != null && widget.aiNodes!.isNotEmpty) {
-      return false;
+  bool _hasIncompleteNodesForPublish() {
+    return _displayNodes.any(
+      (node) {
+        final hasTitle =
+            node.title.trim().isNotEmpty && node.title.trim() != 'New Node';
+        final hasDescription = node.description.trim().isNotEmpty;
+        final hasVideoLink = (node.linkVdo ?? '').trim().isNotEmpty;
+        final hasQuestions = node.questions.any(
+          (question) =>
+              question.questionText.trim().isNotEmpty &&
+              question.choices
+                  .where((choice) => choice.choiceText.trim().isNotEmpty)
+                  .length >= 2,
+        );
+
+        return !(hasTitle && hasDescription && hasVideoLink && hasQuestions);
+      },
+    );
+  }
+
+  void _scheduleDraftAutoSave() {
+    if (_cachedLearningPath == null || _isPublished) {
+      return;
     }
 
-    return _uiNodes.any(
-      (node) =>
-          node.title.trim().isEmpty ||
-          node.description.trim().isEmpty ||
-          node.title.trim() == 'New Node',
-    );
-  }
+    if (_pendingPublish || _pendingSaveDraft) {
+      return;
+    }
 
-  bool _hasIncompleteNodes() {
-    return _uiNodes.any(
-      (node) =>
-          node.title.trim().isEmpty ||
-          node.description.trim().isEmpty ||
-          node.title.trim() == 'New Node',
-    );
+    _draftAutoSaveTimer?.cancel();
+    _draftAutoSaveTimer = Timer(const Duration(milliseconds: 900), () {
+      if (!mounted || _cachedLearningPath == null || _isPublished) {
+        return;
+      }
+
+      _isAutoSavingDraft = true;
+      context.read<LearningPathBloc>().add(
+        UpdateLearningPathEvent(
+          pathId: widget.pathId,
+          title: _cachedLearningPath!.title,
+          objective: _cachedLearningPath!.objective,
+          description: _cachedLearningPath!.description,
+          coverImgUrl: _cachedLearningPath!.coverImageUrl,
+          publishStatus: 'draft',
+        ),
+      );
+    });
   }
 
   void _confirmSaveDraft(BuildContext context) {
+    _draftAutoSaveTimer?.cancel();
+
     if (_cachedLearningPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -289,32 +329,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         const SnackBar(
           content: Text(
             'Cannot save as draft. This learning path is already published.',
-            style: TextStyle(color: AppColors.textPrimary),
-          ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
-      return;
-    }
-
-    if (_hasIncompletePlainPathNodes()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please fill in all node details.',
-            style: TextStyle(color: AppColors.textPrimary),
-          ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
-      return;
-    }
-
-    if (_hasIncompleteNodes()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please fill in all node details before publishing.',
             style: TextStyle(color: AppColors.textPrimary),
           ),
           backgroundColor: AppColors.cancel,
@@ -355,6 +369,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   }
 
   void _confirmPublish(BuildContext context) {
+    _draftAutoSaveTimer?.cancel();
+
     if (_cachedLearningPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -374,6 +390,19 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         const SnackBar(
           content: Text(
             'This learning path is already published.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+      return;
+    }
+
+    if (_hasIncompleteNodesForPublish()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please complete every node before publishing: title, description, video, and quiz are required. Materials are optional.',
             style: TextStyle(color: AppColors.textPrimary),
           ),
           backgroundColor: AppColors.cancel,
@@ -568,6 +597,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             return;
           }
 
+          _scheduleDraftAutoSave();
+
           // Refetch nodes with a small delay to ensure backend transaction is committed
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted && _userId != null && _userId!.isNotEmpty) {
@@ -592,6 +623,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             });
           }
 
+          _scheduleDraftAutoSave();
+
           // Refetch nodes with a small delay to ensure backend transaction is committed
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted && _userId != null && _userId!.isNotEmpty) {
@@ -609,6 +642,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             ),
           );
         } else if (state is LearningPathUpdated) {
+          if (_isAutoSavingDraft) {
+            setState(() {
+              _isAutoSavingDraft = false;
+            });
+            return;
+          }
+
           // Learning path updated successfully
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -625,6 +665,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         } else if (state is LearningPathError) {
           setState(() {
             _pendingNodeIndex = null;
+            _isAutoSavingDraft = false;
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
