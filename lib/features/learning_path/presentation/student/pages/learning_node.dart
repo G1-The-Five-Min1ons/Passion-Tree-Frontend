@@ -15,6 +15,7 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class LearningNodePage extends StatefulWidget {
   final String nodeId;
+  final String pathId;
   final String? pathName;
   final int? totalNodes;
   final int? currentNodeSequence;
@@ -23,6 +24,7 @@ class LearningNodePage extends StatefulWidget {
   const LearningNodePage({
     super.key,
     required this.nodeId,
+    required this.pathId,
     this.pathName,
     this.totalNodes,
     this.currentNodeSequence,
@@ -148,6 +150,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
                                 value: bloc,
                                 child: LearningPathQuizPage(
                                   nodeId: widget.nodeId,
+                                  pathId: widget.pathId,
                                   title: nodeDetail.title,
                                   pathName: widget.pathName,
                                   totalNodes: widget.totalNodes,

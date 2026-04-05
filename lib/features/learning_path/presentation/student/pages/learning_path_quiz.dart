@@ -22,6 +22,7 @@ enum QuizViewState { loading, answering, result, error }
 
 class LearningPathQuizPage extends StatefulWidget {
   final String nodeId;
+  final String pathId;
   final String? title;
   final String? pathName;
   final int? totalNodes;
@@ -31,6 +32,7 @@ class LearningPathQuizPage extends StatefulWidget {
   const LearningPathQuizPage({
     super.key,
     required this.nodeId,
+    required this.pathId,
     this.title,
     this.pathName,
     this.totalNodes,
@@ -289,12 +291,24 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
               barrierDismissible: false,
               builder: (ratingDialogContext) => RatingPopup(
                 pathName: widget.pathName!,
-                onSubmit: () async {
+                onSubmit: (contentQuality, instructor, overall) async {
                   Navigator.of(ratingDialogContext).pop();
 
                   LogHandler.info(
                     'Action: User completed and tracked progress for node ${widget.nodeId}',
                   );
+                  
+                  // Submit review with ratings
+                  bloc.add(
+                    SubmitReviewEvent(
+                      pathId: widget.pathId,
+                      userId: userId,
+                      contentQualityRating: contentQuality,
+                      instructorRating: instructor,
+                      overallRating: overall,
+                    ),
+                  );
+                  
                   // Mark node as completed
                   bloc.add(
                     CompleteNodeEvent(nodeId: widget.nodeId, userId: userId),

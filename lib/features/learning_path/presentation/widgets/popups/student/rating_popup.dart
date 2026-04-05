@@ -6,7 +6,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 
 class RatingPopup extends StatefulWidget {
   final String pathName;
-  final VoidCallback onSubmit;
+  final Function(int contentQuality, int instructorRating, int overallRating) onSubmit;
 
   const RatingPopup({
     super.key,
@@ -52,7 +52,11 @@ class _RatingPopupState extends State<RatingPopup> {
     setState(() {
       _errorMessage = null;
     });
-    widget.onSubmit();
+    widget.onSubmit(
+      _contentQualityRating!,
+      _instructorRating!,
+      _overallRating!,
+    );
   }
 
   @override

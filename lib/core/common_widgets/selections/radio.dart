@@ -137,6 +137,14 @@ class _PixelRadioGroupState extends State<PixelRadioGroup> {
   }
 
   @override
+  void didUpdateWidget(PixelRadioGroup oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialValue != widget.initialValue) {
+      _currentValue = widget.initialValue;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

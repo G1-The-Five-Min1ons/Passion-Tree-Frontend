@@ -153,8 +153,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                             builder: (_) => BlocProvider.value(
                               value: context.read<LearningPathBloc>(),
                               child: LearningNodePage(
-                                nodeId: currentNode.nodeId,
-                                pathName: widget.course.title,
+                                nodeId: currentNode.nodeId,                              pathId: widget.course.id,                                pathName: widget.course.title,
                                 totalNodes: nodes.length,
                                 currentNodeSequence: currentSequence,
                                 userId: _userId ?? '',

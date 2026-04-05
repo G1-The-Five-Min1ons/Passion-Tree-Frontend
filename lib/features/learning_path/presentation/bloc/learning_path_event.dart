@@ -45,6 +45,22 @@ class CompleteNodeEvent extends LearningPathEvent {
   CompleteNodeEvent({required this.nodeId, required this.userId});
 }
 
+class SubmitReviewEvent extends LearningPathEvent {
+  final String pathId;
+  final String userId;
+  final int contentQualityRating;
+  final int instructorRating;
+  final int overallRating;
+  
+  SubmitReviewEvent({
+    required this.pathId,
+    required this.userId,
+    required this.contentQualityRating,
+    required this.instructorRating,
+    required this.overallRating,
+  });
+}
+
 class DeleteLearningPathEvent extends LearningPathEvent {
   final String pathId;
   final String? userId; // For refreshing overview after delete
