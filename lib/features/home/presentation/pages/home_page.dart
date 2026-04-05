@@ -13,9 +13,6 @@ import 'package:passion_tree_frontend/features/home/presentation/widgets/popular
 
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/weekly_mission_card_widget.dart';
 
-import 'package:passion_tree_frontend/core/di/injection.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -38,8 +35,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadData() async {
-    final userId = await getIt<IAuthRepository>().getUserId();
-
     if (!mounted) return;
 
     context.read<LearningPathBloc>().add(FetchLearningPathOverview());
@@ -95,11 +90,16 @@ class _HomePageState extends State<HomePage> {
                       return PopularLearningPathsSection(
                         paths: unenrolledPaths,
                         hasEnrolledPaths: hasEnrolledPaths,
+                        isLoading: state is LearningPathLoading,
                       );
                     }
 
                     if (state is LearningPathLoading) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const PopularLearningPathsSection(
+                        paths: [],
+                        hasEnrolledPaths: false,
+                        isLoading: true,
+                      );
                     }
 
                     return const SizedBox();
