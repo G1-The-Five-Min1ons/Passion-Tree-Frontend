@@ -275,9 +275,7 @@ class _CreateLearningPathInputPageState
         } else if (state is LearningPathUpdated) {
           // Refresh the learning paths list
           if (_userId != null) {
-            context.read<LearningPathBloc>().add(
-              FetchLearningPathOverview(userId: _userId),
-            );
+            context.read<LearningPathBloc>().add(FetchLearningPathOverview());
           }
 
           if (!context.mounted) return;

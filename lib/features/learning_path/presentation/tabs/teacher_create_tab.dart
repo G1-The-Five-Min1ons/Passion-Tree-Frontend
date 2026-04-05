@@ -213,7 +213,6 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                 context.read<LearningPathBloc>().add(
                   DeleteLearningPathEvent(
                     pathId: paths[index].id,
-                    userId: widget.userId,
                     publishStatus: paths[index].publishStatus,
                   ),
                 );

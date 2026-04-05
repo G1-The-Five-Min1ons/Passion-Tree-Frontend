@@ -50,9 +50,7 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
     if (!mounted) return;
     setState(() => _userId = storedUserId ?? '');
     if (storedUserId != null && storedUserId.isNotEmpty) {
-      context.read<LearningPathBloc>().add(
-        FetchNodesForPath(pathId: widget.course.id, userId: storedUserId),
-      );
+      context.read<LearningPathBloc>().add(FetchLearningPathOverview());
     }
   }
 
@@ -76,9 +74,7 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
       if (!mounted) return;
       final userId = _userId ?? '';
       if (userId.isNotEmpty) {
-        context.read<LearningPathBloc>().add(
-          FetchLearningPathOverview(userId: userId),
-        );
+        context.read<LearningPathBloc>().add(FetchLearningPathOverview());
       }
     });
   }
@@ -91,7 +87,7 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
     if (_enrolledPath == null) {
       setState(() => _isEnrolling = true);
       context.read<LearningPathBloc>().add(
-        EnrollPathEvent(pathId: widget.course.id, userId: userId),
+        EnrollPathEvent(pathId: widget.course.id),
       );
     } else {
       // Already enrolled, navigate directly

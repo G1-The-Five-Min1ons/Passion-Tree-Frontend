@@ -118,7 +118,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     if (userId.isEmpty) return;
     // Fetch existing nodes from backend
     context.read<LearningPathBloc>().add(
-      FetchNodesForPath(pathId: widget.pathId, userId: userId),
+      FetchNodesForPath(pathId: widget.pathId),
     );
   }
 

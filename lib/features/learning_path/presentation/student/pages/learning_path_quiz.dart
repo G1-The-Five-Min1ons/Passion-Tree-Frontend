@@ -302,7 +302,6 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                   bloc.add(
                     SubmitReviewEvent(
                       pathId: widget.pathId,
-                      userId: userId,
                       contentQualityRating: contentQuality,
                       instructorRating: instructor,
                       overallRating: overall,
@@ -311,7 +310,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                   
                   // Mark node as completed
                   bloc.add(
-                    CompleteNodeEvent(nodeId: widget.nodeId, userId: userId),
+                    CompleteNodeEvent(nodeId: widget.nodeId),
                   );
 
                   if (!scaffoldContext.mounted) return;
@@ -337,7 +336,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
               'Action: User completed and tracked progress for node ${widget.nodeId}',
             );
             // Mark node as completed
-            bloc.add(CompleteNodeEvent(nodeId: widget.nodeId, userId: userId));
+            bloc.add(CompleteNodeEvent(nodeId: widget.nodeId));
 
             if (!scaffoldContext.mounted) return;
 
@@ -362,7 +361,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
       );
       // Mark node as completed
       context.read<LearningPathBloc>().add(
-        CompleteNodeEvent(nodeId: widget.nodeId, userId: userId),
+        CompleteNodeEvent(nodeId: widget.nodeId),
       );
 
       Navigator.pop(context); // Pop quiz page

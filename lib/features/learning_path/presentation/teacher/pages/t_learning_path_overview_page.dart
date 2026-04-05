@@ -51,9 +51,7 @@ class _TeacherLearningPathOverviewPageState
     setState(() => _userId = storedUserId);
     
     // Fetch overview data from backend
-    context.read<LearningPathBloc>().add(
-      FetchLearningPathOverview(userId: storedUserId),
-    );
+    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
   }
 
   @override
@@ -101,9 +99,7 @@ class _TeacherLearningPathOverviewPageState
               if (_userId != null && _userId!.isNotEmpty) {
                 Future.delayed(const Duration(milliseconds: 500), () {
                   if (context.mounted) {
-                    context.read<LearningPathBloc>().add(
-                      FetchLearningPathOverview(userId: _userId),
-                    );
+                    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
                   }
                 });
               }

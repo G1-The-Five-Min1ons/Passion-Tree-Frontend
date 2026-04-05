@@ -45,10 +45,10 @@ class _LearningNodePageState extends State<LearningNodePage> {
     super.initState();
     LogHandler.info('Action: User joined learning node ${widget.nodeId}');
     context.read<LearningPathBloc>().add(
-      StartNodeEvent(nodeId: widget.nodeId, userId: widget.userId),
+      StartNodeEvent(nodeId: widget.nodeId),
     );
     context.read<LearningPathBloc>().add(
-      FetchNodeDetail(nodeId: widget.nodeId, userId: widget.userId),
+      FetchNodeDetail(nodeId: widget.nodeId),
     );
   }
 
@@ -165,7 +165,6 @@ class _LearningNodePageState extends State<LearningNodePage> {
                             bloc.add(
                               FetchNodeDetail(
                                 nodeId: widget.nodeId,
-                                userId: widget.userId,
                               ),
                             );
                           }

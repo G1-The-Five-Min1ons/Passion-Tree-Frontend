@@ -5,56 +5,43 @@ abstract class LearningPathEvent {}
 
 class FetchLearningPaths extends LearningPathEvent {}
 
-class FetchLearningPathStatus extends LearningPathEvent {
-  final String userId;
-  FetchLearningPathStatus({required this.userId});
-}
+class FetchLearningPathStatus extends LearningPathEvent {}
 
-class FetchLearningPathOverview extends LearningPathEvent {
-  final String? userId; // null if not logged in
-  FetchLearningPathOverview({this.userId});
-}
+class FetchLearningPathOverview extends LearningPathEvent {}
 
 class FetchNodesForPath extends LearningPathEvent {
   final String pathId;
-  final String userId;
-  FetchNodesForPath({required this.pathId, required this.userId});
+  FetchNodesForPath({required this.pathId});
 }
 
 class FetchNodeDetail extends LearningPathEvent {
   final String nodeId;
-  final String userId;
-  FetchNodeDetail({required this.nodeId, required this.userId});
+  FetchNodeDetail({required this.nodeId});
 }
 
 class StartNodeEvent extends LearningPathEvent {
   final String nodeId;
-  final String userId;
-  StartNodeEvent({required this.nodeId, required this.userId});
+  StartNodeEvent({required this.nodeId});
 }
 
 class EnrollPathEvent extends LearningPathEvent {
   final String pathId;
-  final String userId;
-  EnrollPathEvent({required this.pathId, required this.userId});
+  EnrollPathEvent({required this.pathId});
 }
 
 class CompleteNodeEvent extends LearningPathEvent {
   final String nodeId;
-  final String userId;
-  CompleteNodeEvent({required this.nodeId, required this.userId});
+  CompleteNodeEvent({required this.nodeId});
 }
 
 class SubmitReviewEvent extends LearningPathEvent {
   final String pathId;
-  final String userId;
   final int contentQualityRating;
   final int instructorRating;
   final int overallRating;
   
   SubmitReviewEvent({
     required this.pathId,
-    required this.userId,
     required this.contentQualityRating,
     required this.instructorRating,
     required this.overallRating,
@@ -63,9 +50,8 @@ class SubmitReviewEvent extends LearningPathEvent {
 
 class DeleteLearningPathEvent extends LearningPathEvent {
   final String pathId;
-  final String? userId; // For refreshing overview after delete
   final String? publishStatus; // 'draft' or 'published' for snackbar message
-  DeleteLearningPathEvent({required this.pathId, this.userId, this.publishStatus});
+  DeleteLearningPathEvent({required this.pathId, this.publishStatus});
 }
 
 class DeleteNodeEvent extends LearningPathEvent {

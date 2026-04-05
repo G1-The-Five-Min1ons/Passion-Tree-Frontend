@@ -59,7 +59,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
     if (userId.isEmpty) return;
     // Always fetch fresh nodes to ensure up-to-date status
     context.read<LearningPathBloc>().add(
-      FetchNodesForPath(pathId: widget.course.id, userId: userId),
+      FetchNodesForPath(pathId: widget.course.id),
     );
   }
 
@@ -166,9 +166,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                           if (_userId != null && _userId!.isNotEmpty) {
                             _fetchNodes(_userId!);
                             // Also refetch overview to update enrolled path progress
-                            context.read<LearningPathBloc>().add(
-                              FetchLearningPathOverview(userId: _userId),
-                            );
+                            context.read<LearningPathBloc>().add(FetchLearningPathOverview());
                           }
                         });
                       }

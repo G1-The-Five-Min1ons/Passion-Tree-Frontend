@@ -45,7 +45,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
     if (storedUserId != null && storedUserId.isNotEmpty) {
       setState(() => userId = storedUserId);
       context.read<LearningPathBloc>().add(
-        FetchLearningPathStatus(userId: storedUserId),
+        FetchLearningPathStatus(),
       );
     }
   }

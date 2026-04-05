@@ -2,6 +2,8 @@ import 'package:passion_tree_frontend/core/network/log_handler.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_usecases.dart';
@@ -120,7 +122,8 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(LearningPathLoading());
 
         try {
-          final result = await getLearningPathStatus(event.userId);
+          final userId = await getIt<IAuthRepository>().getUserId();
+          final result = await getLearningPathStatus(userId ?? '');
           LogHandler.debug('[BLoC] Loaded ${result.length} enrolled paths');
           emit(LearningPathStatusLoaded(result));
         } catch (e) {
@@ -139,10 +142,11 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(LearningPathLoading());
 
         try {
+          final userId = await getIt<IAuthRepository>().getUserId();
           // Always fetch recommendedPaths (API will use auth header)
           final List<dynamic> results = await Future.wait([
             getAllLearningPaths(),
-            getLearningPathStatus(event.userId!),
+            getLearningPathStatus(userId ?? ''),
             getRecommendedLearningPaths(),
           ]);
           final List<LearningPath> allPaths = List<LearningPath>.from(results[0] as List);
@@ -170,7 +174,8 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(LearningPathLoading());
 
         try {
-          final nodes = await getNodesForPath(event.pathId, event.userId);
+          final userId = await getIt<IAuthRepository>().getUserId();
+          final nodes = await getNodesForPath(event.pathId, userId ?? '');
           LogHandler.debug('[BLoC] Loaded ${nodes.length} nodes');
           emit(NodesLoaded(
             pathId: event.pathId,
@@ -192,7 +197,8 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(LearningPathLoading());
 
         try {
-          final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
+          final userId = await getIt<IAuthRepository>().getUserId();
+          final nodeDetail = await getNodeDetail(event.nodeId, userId ?? '');
           LogHandler.debug('[BLoC] Loaded node detail: ${nodeDetail.title}');
           emit(NodeDetailLoaded(nodeDetail));
         } catch (e) {
@@ -211,9 +217,10 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(StartingNode(event.nodeId));
         
         await safeExecute(emit, 'start node', () async {
-          await startNode(event.nodeId, event.userId);
+          final userId = await getIt<IAuthRepository>().getUserId();
+          await startNode(event.nodeId, userId ?? '');
           // Refetch node detail to get updated status
-          final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
+          final nodeDetail = await getNodeDetail(event.nodeId, userId ?? '');
           LogHandler.debug('[BLoC] Node started successfully');
           emit(NodeDetailLoaded(nodeDetail));
         });
@@ -229,12 +236,13 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(EnrollingPath(event.pathId));
         
         await safeExecute(emit, 'enroll path', () async {
+          final userId = await getIt<IAuthRepository>().getUserId();
           // Step 1: Enroll in the path
-          await enrollPath(event.pathId, event.userId);
+          await enrollPath(event.pathId, userId ?? '');
           LogHandler.info('[BLoC] Enrolled in path: ${event.pathId}');
           
           // Step 2: Fetch updated enrolled paths to get the enrolled data
-          final enrolledPaths = await getLearningPathStatus(event.userId);
+          final enrolledPaths = await getLearningPathStatus(userId ?? '');
           
           // Step 3: Find the newly enrolled path
           final enrolledPath = enrolledPaths.firstWhere(
@@ -245,7 +253,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           LogHandler.debug('[BLoC] Fetched enrolled path data: ${enrolledPath.title}');
           emit(PathEnrolled(
             pathId: event.pathId,
-            userId: event.userId,
+            userId: userId ?? '',
             enrolledPath: enrolledPath,
           ));
         });
@@ -261,9 +269,10 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(CompletingNode(event.nodeId));
         
         await safeExecute(emit, 'complete node', () async {
-          await completeNode(event.nodeId, event.userId);
+          final userId = await getIt<IAuthRepository>().getUserId();
+          await completeNode(event.nodeId, userId ?? '');
           // Refetch node detail to get updated status
-          final nodeDetail = await getNodeDetail(event.nodeId, event.userId);
+          final nodeDetail = await getNodeDetail(event.nodeId, userId ?? '');
           LogHandler.debug('[BLoC] Node completed successfully');
           emit(NodeDetailLoaded(nodeDetail));
         });
@@ -288,11 +297,12 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
               : 'Learning path deleted successfully';
           emit(LearningPathDeleted(deleteMessage));
 
-          // Refresh overview if userId is provided
-          if (event.userId != null) {
+          // Refresh overview
+          final userId = await getIt<IAuthRepository>().getUserId();
+          if (userId != null && userId.isNotEmpty) {
             final results = await Future.wait([
               getAllLearningPaths(),
-              getLearningPathStatus(event.userId!),
+              getLearningPathStatus(userId),
               getRecommendedLearningPaths(),
             ]);
 

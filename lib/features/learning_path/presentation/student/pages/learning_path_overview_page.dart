@@ -48,9 +48,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     }
     if (!mounted) return;
     setState(() => userId = storedUserId);
-    context.read<LearningPathBloc>().add(
-      FetchLearningPathOverview(userId: userId),
-    );
+    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
   }
 
   List<LearningPath> _filterCourses(List<LearningPath> courses) {
@@ -100,9 +98,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                 // Add a small delay to ensure backend is updated
                 Future.delayed(const Duration(milliseconds: 500), () {
                   if (context.mounted) {
-                    context.read<LearningPathBloc>().add(
-                      FetchLearningPathOverview(userId: userId),
-                    );
+                    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
                   }
                 });
               }
@@ -209,7 +205,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                                   );
                                   // Refetch overview data when returning
                                   if (mounted && userId != null) {
-                                    bloc.add(FetchLearningPathOverview(userId: userId));
+                                    bloc.add(FetchLearningPathOverview());
                                   }
                                 },
                               ),
