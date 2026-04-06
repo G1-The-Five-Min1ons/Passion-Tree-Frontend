@@ -298,6 +298,33 @@ class ApiHandler {
     );
   }
 
+    /// Make PATCH request
+    Future<ApiResponse<T>> patch<T>({
+      required String url,
+      Map<String, String>? headers,
+      dynamic body,
+      T Function(dynamic)? fromJson,
+      Duration timeout = const Duration(seconds: 30),
+    }) async {
+      LogHandler.request(method: 'PATCH', url: url, body: body);
+      return _requestWithRetry<T>(
+        method: 'PATCH',
+        url: url,
+        headers: headers,
+        fromJson: fromJson,
+        performRequest: (reqHeaders) => _client
+            .patch(
+              Uri.parse(url),
+              headers: reqHeaders,
+              body: body == null
+                  ? null
+                  : (body is String ? body : jsonEncode(body)),
+            )
+            .timeout(timeout),
+      );
+    }
+  
+
   /// Handle HTTP response
   ApiResponse<T> _handleResponse<T>(
     http.Response response,

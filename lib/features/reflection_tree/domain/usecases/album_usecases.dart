@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:passion_tree_frontend/core/error/failures.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/repositories/i_album_repository.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 
 /// Use case for creating a new album
@@ -22,7 +23,7 @@ class CreateAlbumUseCase {
         message: 'User not authenticated',
       ));
     }
-    
+
     return await repository.createAlbum(
       userId: userId,
       title: title,
@@ -45,7 +46,7 @@ class GetAlbumsByUserIdUseCase {
         message: 'User not authenticated',
       ));
     }
-    
+
     return await repository.getAlbumsByUserId(userId);
   }
 }
@@ -58,6 +59,17 @@ class GetAlbumByIdUseCase {
 
   Future<Either<Failure, Album>> call(String albumId) async {
     return await repository.getAlbumById(albumId);
+  }
+}
+
+/// Use case for getting the current heart count
+class GetHeartCountUseCase {
+  final IAuthRepository repository;
+
+  GetHeartCountUseCase(this.repository);
+
+  Future<int> call() async {
+    return await repository.getHeartCount();
   }
 }
 
@@ -141,5 +153,46 @@ class UpdateTreeUseCase {
       title: title,
       albumId: albumId,
     );
+  }
+}
+
+/// Use case for retrieving a dead tree
+class RetrieveTreeUseCase {
+  final IAlbumRepository repository;
+
+  RetrieveTreeUseCase(this.repository);
+
+  Future<Either<Failure, int>> call({required String treeId}) async {
+    return await repository.retrieveTree(treeId: treeId);
+  }
+}
+
+/// Use case for pausing a tree
+class PauseTreeUseCase {
+  final IAlbumRepository repository;
+
+  PauseTreeUseCase(this.repository);
+
+  Future<Either<Failure, int>> call({
+    required String treeId,
+    required DateTime pauseFrom,
+    required DateTime resumeOn,
+  }) async {
+    return await repository.pauseTree(
+      treeId: treeId,
+      pauseFrom: pauseFrom,
+      resumeOn: resumeOn,
+    );
+  }
+}
+
+/// Use case for resuming a paused tree
+class ResumeTreeUseCase {
+  final IAlbumRepository repository;
+
+  ResumeTreeUseCase(this.repository);
+
+  Future<Either<Failure, void>> call({required String treeId}) async {
+    return await repository.resumeTree(treeId: treeId);
   }
 }

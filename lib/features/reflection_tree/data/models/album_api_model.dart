@@ -190,6 +190,7 @@ class TreeApiModel {
   final int nodeCount;
   final DateTime createdAt;
   final DateTime lastUpdate;
+  final DateTime? pausedAt;
   final String albumId;
   final List<TreeNodeApiModel>? nodes;
 
@@ -204,6 +205,7 @@ class TreeApiModel {
     required this.nodeCount,
     required this.createdAt,
     required this.lastUpdate,
+    this.pausedAt,
     required this.albumId,
     this.nodes,
   });
@@ -233,6 +235,9 @@ class TreeApiModel {
         lastUpdate: json['last_update'] != null
             ? DateTime.parse(json['last_update'])
             : DateTime.now(),
+        pausedAt: json['paused_at'] != null
+            ? DateTime.parse(json['paused_at'])
+            : null,
         albumId: json['album_id'] ?? '',
         nodes: nodesList,
       );

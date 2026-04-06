@@ -18,12 +18,16 @@ class AlbumBlocProvider extends StatelessWidget {
       create: (context) => AlbumBloc(
         getAlbumsByUserId: getIt<GetAlbumsByUserIdUseCase>(),
         getAlbumById: getIt<GetAlbumByIdUseCase>(),
+        getHeartCount: getIt<GetHeartCountUseCase>(),
         createAlbum: getIt<CreateAlbumUseCase>(),
         updateAlbum: getIt<UpdateAlbumUseCase>(),
         deleteAlbum: getIt<DeleteAlbumUseCase>(),
         createTree: getIt<CreateTreeUseCase>(),
         updateTree: getIt<UpdateTreeUseCase>(),
         deleteTree: getIt<DeleteTreeUseCase>(),
+        retrieveTree: getIt<RetrieveTreeUseCase>(),
+        pauseTree: getIt<PauseTreeUseCase>(),
+        resumeTree: getIt<ResumeTreeUseCase>(),
       ),
       child: child,
     );

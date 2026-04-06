@@ -170,6 +170,10 @@ Future<void> initializeDependencies() async {
     () => GetAlbumByIdUseCase(getIt<IAlbumRepository>()),
   );
 
+  getIt.registerFactory<GetHeartCountUseCase>(
+    () => GetHeartCountUseCase(getIt<IAuthRepository>()),
+  );
+
   getIt.registerFactory<CreateAlbumUseCase>(
     () => CreateAlbumUseCase(
       getIt<IAlbumRepository>(),
@@ -195,6 +199,18 @@ Future<void> initializeDependencies() async {
 
   getIt.registerFactory<DeleteTreeUseCase>(
     () => DeleteTreeUseCase(getIt<IAlbumRepository>()),
+  );
+
+  getIt.registerFactory<RetrieveTreeUseCase>(
+    () => RetrieveTreeUseCase(getIt<IAlbumRepository>()),
+  );
+
+  getIt.registerFactory<PauseTreeUseCase>(
+    () => PauseTreeUseCase(getIt<IAlbumRepository>()),
+  );
+
+  getIt.registerFactory<ResumeTreeUseCase>(
+    () => ResumeTreeUseCase(getIt<IAlbumRepository>()),
   );
   // Comment Feature
   getIt.registerLazySingleton<CommentRemoteDataSource>(

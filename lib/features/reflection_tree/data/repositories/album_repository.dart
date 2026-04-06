@@ -39,8 +39,8 @@ class AlbumRepository implements IAlbumRepository {
     } catch (e) {
       LogHandler.error('Failed to get token', error: e);
       return Left(AuthFailure(
-        message: 'Failed to retrieve authentication',
-        technicalMessage: e.toString(),
+          message: 'Failed to retrieve authentication',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -49,23 +49,50 @@ class AlbumRepository implements IAlbumRepository {
   Future<Either<Failure, String>> _uploadImage(File imageFile) async {
     try {
       LogHandler.info('Uploading album cover image...');
-      
+
       final fileName = path.basename(imageFile.path);
       final bytes = await imageFile.readAsBytes();
       final urls = await uploadService.getPresignedUrl(fileName, 'reflect');
       await uploadService.uploadFileToBlob(urls['upload_url']!, bytes, fileName);
-      
+
       final publicUrl = urls['public_url']!;
       LogHandler.success('Album cover uploaded successfully');
-      
+
       return Right(publicUrl);
     } catch (e) {
       LogHandler.error('Failed to upload image', error: e);
       return Left(ServerFailure(
-        message: ErrorUtils.extractErrorMessage(e),
-        technicalMessage: e.toString(),
+          message: ErrorUtils.extractErrorMessage(e),
+          technicalMessage: e.toString(),
       ));
     }
+  }
+
+  Failure _extractFailureOrUnknown<T>(
+    Either<Failure, T> result, {
+    required String fallbackMessage,
+  }) {
+    return result.fold(
+      (failure) => failure,
+      (_) => UnknownFailure(message: fallbackMessage),
+    );
+  }
+
+  Future<Either<Failure, T>> _withValidToken<T>(
+    Future<Either<Failure, T>> Function(String token) operation,
+  ) async {
+    final tokenResult = await _getValidToken();
+    if (tokenResult.isLeft()) {
+      return Left(
+        _extractFailureOrUnknown(
+          tokenResult,
+          fallbackMessage: 'Authentication failed',
+        ),
+      );
+    }
+
+    final token = tokenResult.getOrElse(() => '');
+    return operation(token);
   }
 
   @override
@@ -75,47 +102,38 @@ class AlbumRepository implements IAlbumRepository {
     File? coverImage,
   }) async {
     try {
-      final tokenResult = await _getValidToken();
-      return tokenResult.fold(
-        (failure) => Left(failure), // Return auth failure
-        (token) async {
-          // Upload image if provided
-          String coverImageUrl = '';
-          if (coverImage != null) {
-            final uploadResult = await _uploadImage(coverImage);
-            // If upload failed, return the failure immediately
-            final uploadUrlOrFailure = uploadResult.fold(
-              (failure) => null,
-              (url) => url,
+      return _withValidToken((token) async {
+        // Upload image if provided
+        String coverImageUrl = '';
+        if (coverImage != null) {
+          final uploadResult = await _uploadImage(coverImage);
+          if (uploadResult.isLeft()) {
+            return Left(
+              _extractFailureOrUnknown(
+                uploadResult,
+                fallbackMessage: 'Upload failed',
+              ),
             );
-            
-            if (uploadUrlOrFailure == null) {
-              // Return failure from upload
-              return uploadResult.fold(
-                (failure) => Left(failure),
-                (_) => Left(UnknownFailure(message: 'Upload failed')),
-              );
-            }
-            coverImageUrl = uploadUrlOrFailure;
           }
-          
-          // Proceed with album creation
-          final request = CreateAlbumRequest(
-            userId: userId,
-            albumName: title,
-            coverImageUrl: coverImageUrl,
-          );
-          final apiModel = await dataSource.createAlbum(request, token);
-          return Right(AlbumMapper.toAlbum(apiModel));
-        },
-      );
+          coverImageUrl = uploadResult.getOrElse(() => '');
+        }
+
+        // Proceed with album creation
+        final request = CreateAlbumRequest(
+          userId: userId,
+          albumName: title,
+          coverImageUrl: coverImageUrl,
+        );
+        final apiModel = await dataSource.createAlbum(request, token);
+        return Right(AlbumMapper.toAlbum(apiModel));
+      });
     } on AppException catch (e) {
       return Left(FailureMapper.fromException(e));
     } catch (e) {
       LogHandler.error('Repository: create album failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to create album',
-        technicalMessage: e.toString(),
+          message: 'Failed to create album',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -123,25 +141,21 @@ class AlbumRepository implements IAlbumRepository {
   @override
   Future<Either<Failure, Album>> getAlbumById(String albumId) async {
     try {
-      final tokenResult = await _getValidToken();
-      return tokenResult.fold(
-        (failure) => Left(failure),
-        (token) async {
-          final albumApiModel = await dataSource.getAlbumById(albumId, token);
-          final treesApiModels = await dataSource.getTreesByAlbumId(albumId, token);
-          
-          final items = TreeMapper.toAlbumItemList(treesApiModels);
-          
-          return Right(AlbumMapper.toAlbumWithItems(albumApiModel, items));
-        },
-      );
+      return _withValidToken((token) async {
+        final albumApiModel = await dataSource.getAlbumById(albumId, token);
+        final treesApiModels = await dataSource.getTreesByAlbumId(albumId, token);
+
+        final items = TreeMapper.toAlbumItemList(treesApiModels);
+
+        return Right(AlbumMapper.toAlbumWithItems(albumApiModel, items));
+      });
     } on AppException catch (e) {
       return Left(FailureMapper.fromException(e));
     } catch (e) {
       LogHandler.error('Repository: get album failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to get album',
-        technicalMessage: e.toString(),
+          message: 'Failed to get album',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -149,21 +163,17 @@ class AlbumRepository implements IAlbumRepository {
   @override
   Future<Either<Failure, List<Album>>> getAlbumsByUserId(String userId) async {
     try {
-      final tokenResult = await _getValidToken();
-      return tokenResult.fold(
-        (failure) => Left(failure),
-        (token) async {
-          final apiModels = await dataSource.getAlbumsByUserId(userId, token);
-          return Right(AlbumMapper.toAlbumList(apiModels));
-        },
-      );
+      return _withValidToken((token) async {
+        final apiModels = await dataSource.getAlbumsByUserId(userId, token);
+        return Right(AlbumMapper.toAlbumList(apiModels));
+      });
     } on AppException catch (e) {
       return Left(FailureMapper.fromException(e));
     } catch (e) {
       LogHandler.error('Repository: get albums failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to get albums',
-        technicalMessage: e.toString(),
+          message: 'Failed to get albums',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -176,47 +186,38 @@ class AlbumRepository implements IAlbumRepository {
     String? existingImageUrl,
   }) async {
     try {
-      final tokenResult = await _getValidToken();
-      return tokenResult.fold(
-        (failure) => Left(failure),
-        (token) async {
-          // Upload image if provided, otherwise use existing URL
-          String? coverImageUrl;
-          if (coverImage != null) {
-            final uploadResult = await _uploadImage(coverImage);
-            // If upload failed, return the failure immediately
-            final uploadUrlOrFailure = uploadResult.fold(
-              (failure) => null,
-              (url) => url,
+      return _withValidToken((token) async {
+        // Upload image if provided, otherwise use existing URL
+        String? coverImageUrl;
+        if (coverImage != null) {
+          final uploadResult = await _uploadImage(coverImage);
+          if (uploadResult.isLeft()) {
+            return Left(
+              _extractFailureOrUnknown(
+                uploadResult,
+                fallbackMessage: 'Upload failed',
+              ),
             );
-            
-            if (uploadUrlOrFailure == null) {
-              // Return failure from upload
-              return uploadResult.fold(
-                (failure) => Left(failure),
-                (_) => Left(UnknownFailure(message: 'Upload failed')),
-              );
-            }
-            coverImageUrl = uploadUrlOrFailure;
-          } else {
-            coverImageUrl = existingImageUrl ?? '';
           }
-          
-          final request = UpdateAlbumRequest(
-            albumName: title,
-            coverImageUrl: coverImageUrl,
-          );
-          await dataSource.updateAlbum(albumId, request, token);
-          return const Right(null);
-        },
-      );
+          coverImageUrl = uploadResult.getOrElse(() => '');
+        } else {
+          coverImageUrl = existingImageUrl ?? '';
+        }
+
+        final request = UpdateAlbumRequest(
+          albumName: title,
+          coverImageUrl: coverImageUrl,
+        );
+        await dataSource.updateAlbum(albumId, request, token);
+        return const Right(null);
+      });
     } on AppException catch (e) {
       return Left(FailureMapper.fromException(e));
     } catch (e) {
       LogHandler.error('Repository: update album failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to update album',
-        technicalMessage: e.toString(),
+          message: 'Failed to update album',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -224,21 +225,17 @@ class AlbumRepository implements IAlbumRepository {
   @override
   Future<Either<Failure, void>> deleteAlbum(String albumId) async {
     try {
-      final tokenResult = await _getValidToken();
-      return tokenResult.fold(
-        (failure) => Left(failure),
-        (token) async {
-          await dataSource.deleteAlbum(albumId, token);
-          return const Right(null);
-        },
-      );
+      return _withValidToken((token) async {
+        await dataSource.deleteAlbum(albumId, token);
+        return const Right(null);
+      });
     } on AppException catch (e) {
       return Left(FailureMapper.fromException(e));
     } catch (e) {
       LogHandler.error('Repository: delete album failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to delete album',
-        technicalMessage: e.toString(),
+          message: 'Failed to delete album',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -251,30 +248,26 @@ class AlbumRepository implements IAlbumRepository {
     required String albumId,
   }) async {
     try {
-      final tokenResult = await _getValidToken();
-      return tokenResult.fold(
-        (failure) => Left(failure),
-        (token) async {
-          final request = CreateTreeRequest(
-            title: title,
-            difficulties: difficulties,
-            pathId: pathId,
-            albumId: albumId,
-          );
-          
-          final tree = await dataSource.createTree(request, token);
-          LogHandler.success('Tree created with ID: ${tree.treeId}');
-          
-          return Right(tree.treeId);
-        },
-      );
+      return _withValidToken((token) async {
+        final request = CreateTreeRequest(
+          title: title,
+          difficulties: difficulties,
+          pathId: pathId,
+          albumId: albumId,
+        );
+
+        final tree = await dataSource.createTree(request, token);
+        LogHandler.success('Tree created with ID: ${tree.treeId}');
+
+        return Right(tree.treeId);
+      });
     } on AppException catch (e) {
       return Left(FailureMapper.fromException(e));
     } catch (e) {
       LogHandler.error('Repository: create tree failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to create tree',
-        technicalMessage: e.toString(),
+          message: 'Failed to create tree',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -282,21 +275,17 @@ class AlbumRepository implements IAlbumRepository {
   @override
   Future<Either<Failure, void>> deleteTree(String treeId) async {
     try {
-      final tokenResult = await _getValidToken();
-      return tokenResult.fold(
-        (failure) => Left(failure),
-        (token) async {
-          await dataSource.deleteTree(treeId, token);
-          return const Right(null);
-        },
-      );
+      return _withValidToken((token) async {
+        await dataSource.deleteTree(treeId, token);
+        return const Right(null);
+      });
     } on AppException catch (e) {
       return Left(FailureMapper.fromException(e));
     } catch (e) {
       LogHandler.error('Repository: delete tree failed', error: e);
       return Left(UnknownFailure(
-        message: 'Failed to delete tree',
-        technicalMessage: e.toString(),
+          message: 'Failed to delete tree',
+          technicalMessage: e.toString(),
       ));
     }
   }
@@ -308,23 +297,93 @@ class AlbumRepository implements IAlbumRepository {
     String? albumId,
   }) async {
     try {
-      final tokenResult = await _getValidToken();
-      return tokenResult.fold(
-        (failure) => Left(failure),
-        (token) async {
-          await dataSource.updateTree(treeId, title, albumId, token);
-          LogHandler.success('Tree updated successfully');
-          return const Right(null);
-        },
-      );
+      return _withValidToken((token) async {
+        await dataSource.updateTree(treeId, title, albumId, token);
+        LogHandler.success('Tree updated successfully');
+        return const Right(null);
+      });
     } on AppException catch (e) {
       return Left(FailureMapper.fromException(e));
     } catch (e) {
       LogHandler.error('Repository: update tree failed', error: e);
-      return Left(UnknownFailure(
-        message: 'Failed to update tree',
-        technicalMessage: e.toString(),
-      ));
+      return Left(
+        UnknownFailure(
+          message: 'Failed to update tree',
+          technicalMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> retrieveTree({required String treeId}) async {
+    try {
+      return _withValidToken((token) async {
+        final remainingHearts = await dataSource.retrieveTree(treeId, token);
+        LogHandler.success('Tree retrieved successfully');
+        return Right(remainingHearts);
+      });
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository: retrieve tree failed', error: e);
+      return Left(
+        UnknownFailure(
+          message: 'Failed to retrieve tree',
+          technicalMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> pauseTree({
+    required String treeId,
+    required DateTime pauseFrom,
+    required DateTime resumeOn,
+  }) async {
+    try {
+      return _withValidToken((token) async {
+        final remainingHearts = await dataSource.pauseTree(
+          treeId,
+          pauseFrom,
+          resumeOn,
+          token,
+        );
+        LogHandler.success('Tree paused successfully');
+        return Right(remainingHearts);
+      });
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository: pause tree failed', error: e);
+      return Left(
+        UnknownFailure(
+          message: 'Failed to pause tree',
+          technicalMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> resumeTree({required String treeId}) async {
+    try {
+      return _withValidToken((token) async {
+        await dataSource.resumeTree(treeId, token);
+        LogHandler.success('Tree resumed successfully');
+        return const Right(null);
+      });
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository: resume tree failed', error: e);
+      return Left(
+        UnknownFailure(
+          message: 'Failed to resume tree',
+          technicalMessage: e.toString(),
+        ),
+      );
     }
   }
 }
