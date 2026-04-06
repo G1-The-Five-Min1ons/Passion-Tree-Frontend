@@ -9,6 +9,7 @@ class PixelBorderContainer extends StatelessWidget {
   final Color? fillColor;
   final Gradient? gradient; // optional gradient fill
   final EdgeInsetsGeometry padding;
+  final bool clipContent;
 
   const PixelBorderContainer({
     super.key,
@@ -19,7 +20,8 @@ class PixelBorderContainer extends StatelessWidget {
     this.borderColor,
     this.fillColor,
     this.gradient,
-    this.padding = const EdgeInsets.all(12), 
+    this.padding = const EdgeInsets.all(12),
+    this.clipContent = false,
   });
 
   @override
@@ -49,10 +51,18 @@ class PixelBorderContainer extends StatelessWidget {
               ),
             ),
           // content
-          Padding(
-            padding: padding,
-            child: child,
-          ),
+          clipContent
+              ? ClipPath(
+                  clipper: _PixelBorderClipper(pixelSize),
+                  child: Padding(
+                    padding: padding,
+                    child: child,
+                  ),
+                )
+              : Padding(
+                  padding: padding,
+                  child: child,
+                ),
         ],
       ),
     );

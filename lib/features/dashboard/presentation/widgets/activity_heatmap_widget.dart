@@ -4,141 +4,84 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
 
-class ActivityHeatmapWidget extends StatelessWidget {
+class ActivityHeatmapWidget extends StatefulWidget {
   final List<ActivityHeatmapItem> heatmapData;
 
   const ActivityHeatmapWidget({super.key, required this.heatmapData});
 
   @override
-  Widget build(BuildContext context) {
-    // Build a 7-row x 14-column grid from real data (last ~98 days)
-    final grid = _buildGrid();
-    final monthLabels = _getMonthLabels();
+  State<ActivityHeatmapWidget> createState() => _ActivityHeatmapWidgetState();
+}
 
-    return PixelBorderContainer(
-      pixelSize: 3,
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: monthLabels
-                .map(
-                  (label) => Text(
-                    label,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 8),
-          ...grid.map(
-            (row) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                children: row
-                    .map(
-                      (cell) => Container(
-                        width: 11,
-                        height: 11,
-                        margin: const EdgeInsets.only(right: 3),
-                        color: _getColor(cell),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                'LESS',
-                style: AppTypography.smallBodyRegular.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(width: 8),
-              ...[0, 1, 2, 3].map(
-                (level) => Container(
-                  width: 10,
-                  height: 10,
-                  margin: const EdgeInsets.only(right: 3),
-                  color: _getColor(level),
-                ),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                'MORE',
-                style: AppTypography.smallBodyRegular.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+class _ActivityHeatmapWidgetState extends State<ActivityHeatmapWidget> {
+  static const _rows = 7;
+  static const _cols = 16;
+  static const _totalDays = _rows * _cols;
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
 
-  /// Convert raw heatmap data into a 7x14 grid.
-  /// Each cell is an activity level (0-3).
-  List<List<int>> _buildGrid() {
-    // Build a date->count map from API data
-    final counts = <String, int>{};
-    for (final item in heatmapData) {
-      counts[item.date] = item.count;
-    }
+  String? _selectedInfo;
 
-    const rows = 7;
-    const cols = 14;
-    const totalDays = rows * cols; // 98 days
+  late final DateTime _startDate;
+  late final Map<String, int> _counts;
 
+  @override
+  void initState() {
+    super.initState();
     final today = DateTime.now();
-    final startDate = today.subtract(const Duration(days: totalDays - 1));
+    // Align start to a Monday
+    final rawStart = today.subtract(const Duration(days: _totalDays - 1));
+    _startDate = rawStart.subtract(Duration(days: rawStart.weekday - 1));
 
-    // Fill grid column by column (each column = 1 week of 7 days)
-    final grid = List.generate(rows, (_) => List.filled(cols, 0));
-
-    for (int col = 0; col < cols; col++) {
-      for (int row = 0; row < rows; row++) {
-        final dayIndex = col * rows + row;
-        final date = startDate.add(Duration(days: dayIndex));
-        final dateStr =
-            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-        final count = counts[dateStr] ?? 0;
-        // Map count to activity level 0-3
-        grid[row][col] = _countToLevel(count);
-      }
+    _counts = {};
+    for (final item in widget.heatmapData) {
+      _counts[item.date] = item.count;
     }
-
-    return grid;
   }
 
-  int _countToLevel(int count) {
+  DateTime _dateAt(int col, int row) {
+    return _startDate.add(Duration(days: col * _rows + row));
+  }
+
+  String _dateStr(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  int _levelAt(int col, int row) {
+    final date = _dateAt(col, row);
+    final count = _counts[_dateStr(date)] ?? 0;
     if (count == 0) return 0;
     if (count <= 1) return 1;
     if (count <= 3) return 2;
     return 3;
   }
 
-  List<String> _getMonthLabels() {
-    const totalDays = 98;
-    final today = DateTime.now();
-    final startDate = today.subtract(const Duration(days: totalDays - 1));
-    const months = [
-      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
-    ];
+  void _onCellTap(int col, int row) {
+    final date = _dateAt(col, row);
+    final count = _counts[_dateStr(date)] ?? 0;
+    setState(() {
+      _selectedInfo =
+          '${date.day} ${_months[date.month - 1]} ${date.year} — $count activit${count == 1 ? 'y' : 'ies'}';
+    });
+  }
 
-    final labels = <String>{};
-    for (int i = 0; i < totalDays; i += 14) {
-      final date = startDate.add(Duration(days: i));
-      labels.add(months[date.month - 1]);
+  List<String> _getMonthLabels() {
+    final labels = <_MonthLabel>[];
+    int? lastMonth;
+
+    for (int col = 0; col < _cols; col++) {
+      final date = _dateAt(col, 0);
+      if (date.month != lastMonth) {
+        labels.add(_MonthLabel(_months[date.month - 1], col));
+        lastMonth = date.month;
+      }
     }
-    return labels.toList();
+    return List.generate(_cols, (col) {
+      final match = labels.where((l) => l.col == col);
+      return match.isNotEmpty ? match.first.label : '';
+    });
   }
 
   Color _getColor(int level) {
@@ -147,4 +90,122 @@ class ActivityHeatmapWidget extends StatelessWidget {
     if (level == 2) return AppColors.activitytwo;
     return AppColors.activityone;
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final monthLabels = _getMonthLabels();
+
+    return PixelBorderContainer(
+      width: double.infinity,
+      pixelSize: 3,
+      padding: const EdgeInsets.all(10),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final cellGap = 3.0;
+          final totalGap = cellGap * (_cols - 1);
+          final cellSize = (constraints.maxWidth - totalGap) / _cols;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- Month labels ---
+              Row(
+                children: List.generate(_cols, (col) {
+                  final label = monthLabels[col];
+                  return SizedBox(
+                    width: col < _cols - 1 ? cellSize + cellGap : cellSize,
+                    child: label.isNotEmpty
+                        ? Text(
+                            label.toUpperCase(),
+                            style: AppTypography.smallBodyRegular.copyWith(
+                              color: AppColors.textPrimary,
+                              fontSize: 10,
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  );
+                }),
+              ),
+              const SizedBox(height: 6),
+
+              // --- Heatmap grid ---
+              ...List.generate(_rows, (row) {
+                return Padding(
+                  padding: EdgeInsets.only(bottom: row < _rows - 1 ? cellGap : 0),
+                  child: Row(
+                    children: List.generate(_cols, (col) {
+                      final level = _levelAt(col, row);
+                      return GestureDetector(
+                        onTap: () => _onCellTap(col, row),
+                        child: Container(
+                          width: cellSize,
+                          height: cellSize,
+                          margin: EdgeInsets.only(
+                            right: col < _cols - 1 ? cellGap : 0,
+                          ),
+                          color: _getColor(level),
+                        ),
+                      );
+                    }),
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
+
+              // --- Selected date info + legend ---
+              Row(
+                children: [
+                  Expanded(
+                    child: _selectedInfo != null
+                        ? Text(
+                            _selectedInfo!,
+                            style: AppTypography.smallBodyRegular.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                          )
+                        : Text(
+                            'Tap a cell to see date',
+                            style: AppTypography.smallBodyRegular.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                  ),
+                  Text(
+                    'LESS',
+                    style: AppTypography.smallBodyRegular.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  ...[0, 1, 2, 3].map(
+                    (level) => Container(
+                      width: 10,
+                      height: 10,
+                      margin: const EdgeInsets.only(right: 2),
+                      color: _getColor(level),
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    'MORE',
+                    style: AppTypography.smallBodyRegular.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MonthLabel {
+  final String label;
+  final int col;
+  _MonthLabel(this.label, this.col);
 }

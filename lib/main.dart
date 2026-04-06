@@ -5,6 +5,7 @@ import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/layout/app_background.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/core/services/session_expiry_notifier.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/home/presentation/bloc/home_bloc_provider.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
@@ -12,30 +13,62 @@ import 'package:passion_tree_frontend/features/authentication/domain/repositorie
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:passion_tree_frontend/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/pages/forest_preview_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize all dependencies (GetIt)
   await initializeDependencies();
-  
+
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    SessionExpiryNotifier.changes.addListener(_handleSessionExpired);
+  }
+
+  @override
+  void dispose() {
+    SessionExpiryNotifier.changes.removeListener(_handleSessionExpired);
+    super.dispose();
+  }
+
+  void _handleSessionExpired() {
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) return;
+
+    navigator.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<UserBloc>(),
       child: MaterialApp(
+        navigatorKey: _navigatorKey,
         debugShowCheckedModeBanner: false,
         title: 'Passion Tree',
         theme: AppTheme.lightTheme,
         themeMode: ThemeMode.light,
         builder: (context, child) => AppBackground(child: child!),
         home: const AuthGate(),
+        // home: const ForestPreviewPage(),
       ),
     );
   }
@@ -55,7 +88,7 @@ class AuthGate extends StatelessWidget {
     } catch (e) {
       // ดักจับ Error กรณี SharedPreferences หรือเซิร์ฟเวอร์มีปัญหา
       debugPrint('AuthGate Initialization Error: $e');
-      return {'hasOnboarded': false, 'isLoggedIn': false}; 
+      return {'hasOnboarded': false, 'isLoggedIn': false};
     }
   }
 
@@ -64,7 +97,6 @@ class AuthGate extends StatelessWidget {
     return FutureBuilder<Map<String, bool>>(
       future: _init(),
       builder: (context, snapshot) {
-        
         // 1. สถานะกำลังโหลด (Waiting)
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
@@ -87,7 +119,7 @@ class AuthGate extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   // เพิ่มตัวหมุนโหลดให้ผู้ใช้รู้ว่าแอปกะลังทำงานอยู่
-                  const CircularProgressIndicator(color: Colors.white), 
+                  const CircularProgressIndicator(color: Colors.white),
                 ],
               ),
             ),

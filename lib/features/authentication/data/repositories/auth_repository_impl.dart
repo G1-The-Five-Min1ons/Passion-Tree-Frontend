@@ -2,6 +2,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:passion_tree_frontend/core/config/api_config.dart';
 import 'package:passion_tree_frontend/core/network/api_handler.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
+import 'package:passion_tree_frontend/core/services/session_expiry_notifier.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_remote_data_source.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/register_request.dart';
@@ -38,6 +39,12 @@ class AuthRepositoryImpl implements IAuthRepository {
     // Inject token refresh logic into the shared ApiHandler
     _apiHandler.getToken = () => _localDataSource.getToken();
     _apiHandler.onTokenRefresh = _handleTokenRefresh;
+    _apiHandler.onSessionExpired = _handleSessionExpired;
+  }
+
+  Future<void> _handleSessionExpired() async {
+    await _localDataSource.clearAuth();
+    SessionExpiryNotifier.notifyExpired();
   }
 
   /// Handles the silent token refresh flow
@@ -53,8 +60,7 @@ class AuthRepositoryImpl implements IAuthRepository {
       await _localDataSource.saveRefreshToken(response.refreshToken);
       return true;
     } catch (e) {
-      // If refresh fails (e.g., token expired), clear auth to force logout
-      await _localDataSource.clearAuth();
+      LogHandler.warning('AuthRepository: silent refresh failed: $e');
       return false;
     }
   }
@@ -142,9 +148,14 @@ class AuthRepositoryImpl implements IAuthRepository {
     required String password,
     bool confirmReactivate = false,
   }) async {
-    LogHandler.info('AuthRepository: Attempting login for $identifier${confirmReactivate ? ' (with reactivation)' : ''}');
+    LogHandler.info(
+      'AuthRepository: Attempting login for $identifier${confirmReactivate ? ' (with reactivation)' : ''}',
+    );
     final request = LoginRequest(identifier: identifier, password: password);
-    final response = await _remoteDataSource.login(request, confirmReactivate: confirmReactivate);
+    final response = await _remoteDataSource.login(
+      request,
+      confirmReactivate: confirmReactivate,
+    );
     LogHandler.success('AuthRepository: Login successful');
     return response.message;
   }
@@ -268,7 +279,9 @@ class AuthRepositoryImpl implements IAuthRepository {
       try {
         await _remoteDataSource.logout(token);
       } catch (e) {
-        LogHandler.warning('AuthRepository: remote logout failed, clearing local auth anyway: $e');
+        LogHandler.warning(
+          'AuthRepository: remote logout failed, clearing local auth anyway: $e',
+        );
       }
     }
     await _localDataSource.clearAuth();
@@ -276,10 +289,12 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<UserProfile> nativeGoogleSignIn(String idToken) async {
-    LogHandler.info('AuthRepository: Starting nativeGoogleSignIn with backend...');
+    LogHandler.info(
+      'AuthRepository: Starting nativeGoogleSignIn with backend...',
+    );
     final response = await _remoteDataSource.nativeGoogleSignIn(idToken);
     LogHandler.success('AuthRepository: Backend returned success');
-    
+
     return _handleOAuthLogin(
       token: response.token,
       userId: response.userId,
@@ -294,7 +309,9 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<UserProfile> nativeDiscordSignIn(String code) async {
-    LogHandler.info('AuthRepository: Starting nativeDiscordSignIn with backend code...');
+    LogHandler.info(
+      'AuthRepository: Starting nativeDiscordSignIn with backend code...',
+    );
     final response = await _remoteDataSource.nativeDiscordSignIn(code);
     LogHandler.success('AuthRepository: Backend returned success');
 
