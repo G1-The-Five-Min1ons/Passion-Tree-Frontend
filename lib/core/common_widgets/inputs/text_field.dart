@@ -18,12 +18,17 @@ class PixelTextField extends StatefulWidget {
   final Color? labelColor;
   final Color? textColor;
   final Color? hintColor;
+  final Color? fillColor;
   final TextStyle? textStyle;
   final TextStyle? labelTextStyle;
   final ValueChanged<String>? onChanged;
   final bool obscureText;
   final int? maxLines;
+  final int? minLines;
   final int? maxLength;
+  final FocusNode? focusNode;
+  final TextInputAction? textInputAction;
+  final EdgeInsets? contentPadding;
 
   const PixelTextField({
     super.key,
@@ -39,12 +44,17 @@ class PixelTextField extends StatefulWidget {
     this.labelColor,
     this.textColor,
     this.hintColor,
+    this.fillColor,
     this.textStyle,
     this.labelTextStyle,
     this.onChanged, //สำหรับเก็บฟังก์ชัน onChanged ไม่ส่งค่าก้ไม่เป้นไร
     this.obscureText = false,
     this.maxLines,
+    this.minLines,
     this.maxLength,
+    this.focusNode,
+    this.textInputAction,
+    this.contentPadding,
   });
 
   @override
@@ -92,6 +102,9 @@ class _PixelTextFieldState extends State<PixelTextField> {
     final activeLabelColor = widget.labelColor ?? colorScheme.onSurface;
     final activeTextColor = widget.textColor ?? colorScheme.onSurface;
     final activeHintColor =widget.hintColor ?? AppColors.textSecondary.withValues(alpha: 0.5);
+    final activeFillColor = widget.fillColor ?? colorScheme.primary;
+    final activeContentPadding =
+      widget.contentPadding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,18 +152,21 @@ class _PixelTextFieldState extends State<PixelTextField> {
           height: widget.height,
           pixelSize: widget.pixelSize,
           borderColor: activeBorderColor,
-          fillColor: colorScheme.primary,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          fillColor: activeFillColor,
+          padding: activeContentPadding,
           child: Scrollbar(
             controller: scrollController,
             thumbVisibility: true,
             child: TextField(
               controller: _controller,
+              focusNode: widget.focusNode,
               scrollController: scrollController,
+              minLines: widget.obscureText ? 1 : widget.minLines,
               maxLines: widget.obscureText ? 1 : widget.maxLines,
               maxLength: widget.maxLength,
               expands: widget.obscureText ? false : (widget.maxLines == null),
               obscureText: widget.obscureText,
+              textInputAction: widget.textInputAction,
               onChanged: widget.onChanged,
               style: (widget.textStyle ?? AppTypography.bodyRegular).copyWith(
                 color: activeTextColor,
