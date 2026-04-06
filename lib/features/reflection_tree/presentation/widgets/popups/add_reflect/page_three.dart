@@ -61,7 +61,7 @@ class _PageThreeViewState extends State<PageThreeView>
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      "Learning Progress : ",
+                      "Knowledge Gained : ",
                       style: AppTypography.titleSemiBold,
                     ),
                   ),

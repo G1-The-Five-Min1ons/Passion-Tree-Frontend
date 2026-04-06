@@ -44,6 +44,10 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
   final ReflectionDataSource _reflectionDataSource = ReflectionDataSource();
   final AuthLocalDataSource _authLocalDataSource = getIt<AuthLocalDataSource>();
 
+  bool _isDiedStatus(String? value) {
+    return (value ?? '').trim().toLowerCase() == 'died';
+  }
+
   void _updateCurrentItem(AlbumItem item) {
     if (!mounted) return;
     setState(() {
@@ -358,6 +362,20 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                   title: item.subjectName,
                   actionIcon: Symbols.add_rounded,
                   onActionPressed: () {
+                    final bool isTreeDied =
+                        _isDiedStatus(item.status) ||
+                        _isDiedStatus(item.overallStatus);
+
+                    if (isTreeDied) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Retrieve the tree to add a new node'),
+                          backgroundColor: AppColors.cancel,
+                        ),
+                      );
+                      return;
+                    }
+
                     final albumBloc = context.read<AlbumBloc>();
                     
                     AddNodePopup.show(

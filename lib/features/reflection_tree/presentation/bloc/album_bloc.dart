@@ -74,7 +74,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     result.fold(
       (failure) {
         LogHandler.error('Failed to load albums: ${failure.message}');
-        emit(AlbumError(failure.message));
+          emit(AlbumError(failure.message));
       },
       (albums) {
         LogHandler.success('Loaded ${albums.length} albums');
@@ -94,7 +94,7 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     result.fold(
       (failure) {
         LogHandler.error('Failed to load album: ${failure.message}');
-        emit(AlbumError(failure.message));
+          emit(AlbumError(failure.message));
       },
       (album) {
         LogHandler.success('Loaded album: ${album.albumId}');
@@ -344,14 +344,14 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     if (event.treeId.isEmpty) {
       const message = 'Tree ID is missing.';
       LogHandler.error(message);
-      emit(const AlbumError(message));
+        emit(AlbumError(message));
       return;
     }
 
     final canRetrieve = await _ensureEnoughHearts(
       emit,
       minimumHearts: 5,
-      message: 'Not enough hearts.',
+      message: 'Not enough hearts',
     );
     if (!canRetrieve) return;
 
@@ -393,14 +393,14 @@ class AlbumBloc extends Bloc<AlbumEvent, AlbumState> {
     if (event.treeId.isEmpty) {
       const message = 'Tree ID is missing.';
       LogHandler.error(message);
-      emit(const AlbumError(message));
+        emit(AlbumError(message));
       return;
     }
 
     final canPause = await _ensureEnoughHearts(
       emit,
       minimumHearts: 3,
-      message: 'Not enough hearts.',
+      message: 'Not enough hearts',
     );
     if (!canPause) return;
 

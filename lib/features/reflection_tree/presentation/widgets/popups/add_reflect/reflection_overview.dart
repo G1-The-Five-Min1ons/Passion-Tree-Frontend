@@ -61,7 +61,7 @@ class ReflectionOverview extends StatelessWidget {
             const SizedBox(height: 8),
             Text(feel, style: AppTypography.subtitleRegular),
             const SizedBox(height: 20),
-            _buildScoreRow("Learning Progress", progress),
+            _buildScoreRow("Knowledge Gained", progress),
             const SizedBox(height: 12),
             _buildScoreRow("Challenging Level", challenge),
           ],

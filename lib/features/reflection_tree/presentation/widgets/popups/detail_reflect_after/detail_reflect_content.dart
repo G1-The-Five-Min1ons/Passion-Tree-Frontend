@@ -46,7 +46,7 @@ class DetailReflectContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 30),
-        _buildScoreLine("Progress", progress),
+        _buildScoreLine("Knowledge Gained", progress),
         const SizedBox(height: 15),
         _buildScoreLine("Challenge", challenge),
       ],
