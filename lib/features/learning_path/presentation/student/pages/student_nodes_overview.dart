@@ -118,34 +118,6 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                         final currentNode = nodes[index];
                         final currentSequence = currentNode.sequence;
 
-                        // Check if user can access this node
-                        bool canAccess = true;
-                        String? errorMessage;
-
-                        // Node แรก (index = 0) เปิดได้เสมอ
-                        if (index > 0) {
-                          // หา node ก่อนหน้าจาก index ในลิสต์
-                          final previousNode = nodes[index - 1];
-
-                          // ตรวจสอบว่า node ก่อนหน้าเรียนจบแล้วหรือยัง
-                          if (previousNode.complete.toLowerCase() != 'true') {
-                            canAccess = false;
-                            errorMessage = 'Please complete "${previousNode.title}" first';
-                          }
-                        }
-
-                        if (!canAccess && errorMessage != null) {
-                          // แสดง snackbar เตือน
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(errorMessage, style: const TextStyle(color: AppColors.textPrimary)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                              duration: const Duration(seconds: 3),
-                            ),
-                          );
-                          return;
-                        }
-
                         // เปิด node ได้
                         Navigator.push(
                           context,

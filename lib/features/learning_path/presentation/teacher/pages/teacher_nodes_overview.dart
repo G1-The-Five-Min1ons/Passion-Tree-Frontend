@@ -577,7 +577,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             });
           }
 
-          // ถ้ามี pending publish/draft ให้ dispatch UpdateLearningPathEvent ทันที
+          // ถ้ายังมี node ที่ต้องสร้างต่อ ให้ทำทีละตัวตามลำดับก่อน finalize
+          if (_createQueue.isNotEmpty) {
+            _handleCreateNode(_createQueue.removeAt(0));
+            return;
+          }
+
+          // ถ้ามี pending publish/draft ให้ dispatch UpdateLearningPathEvent หลังสร้างครบทุก node
           if (_pendingPublish || _pendingSaveDraft) {
             final status = _pendingPublish ? 'published' : 'draft';
             setState(() {

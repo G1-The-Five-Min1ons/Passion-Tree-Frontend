@@ -9,6 +9,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/homebar_visibility.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
@@ -55,6 +56,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
   @override
   void dispose() {
     _videoController?.removeListener(_onVideoControllerUpdate);
+    homeBarVisibilityNotifier.value = true;
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.manual,
       overlays: SystemUiOverlay.values,
@@ -72,12 +74,14 @@ class _LearningNodePageState extends State<LearningNodePage> {
 
     _isFullscreen = isFullscreen;
     if (isFullscreen) {
+      homeBarVisibilityNotifier.value = false;
       // Hide all system overlays while video is in fullscreen.
       SystemChrome.setEnabledSystemUIMode(
         SystemUiMode.manual,
         overlays: const [],
       );
     } else {
+      homeBarVisibilityNotifier.value = true;
       SystemChrome.setEnabledSystemUIMode(
         SystemUiMode.manual,
         overlays: SystemUiOverlay.values,
