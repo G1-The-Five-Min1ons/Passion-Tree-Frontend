@@ -251,6 +251,8 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
           treeId: item.treeId ?? '',
           albumId: album.albumId,
           isPaused: item.isPaused,
+          pauseFrom: item.pauseFrom,
+          pauseTo: item.pauseTo,
           resumeOn: item.resumeOn,
           dataDisplay: const SizedBox.shrink(),
 

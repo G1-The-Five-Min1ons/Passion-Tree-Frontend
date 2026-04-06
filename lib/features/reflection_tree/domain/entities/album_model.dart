@@ -26,6 +26,8 @@ class AlbumItem {
   final String overallStatus;
   final double? treeScore;
   final bool isPaused;
+  final String? pauseFrom;
+  final String? pauseTo;
   final String? resumeOn;
   final String? pathId;
 
@@ -38,6 +40,8 @@ class AlbumItem {
     required this.overallStatus,
     this.treeScore,
     this.isPaused = false,
+    this.pauseFrom,
+    this.pauseTo,
     this.resumeOn,
     this.pathId,
   });

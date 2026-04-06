@@ -7,6 +7,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
 import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/edit_tree_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/pause_period.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/retrieve_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/resume_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/tree_status_popup.dart';
@@ -31,6 +32,8 @@ class TreeAlbumCard extends StatelessWidget {
   final VoidCallback? onCardTap;
   final VoidCallback? onDelete;
   final bool isPaused;
+  final String? pauseFrom;
+  final String? pauseTo;
   final String? resumeOn;
 
   const TreeAlbumCard({
@@ -51,6 +54,8 @@ class TreeAlbumCard extends StatelessWidget {
     this.onCardTap,
     this.onDelete,
     this.isPaused = false,
+    this.pauseFrom,
+    this.pauseTo,
     this.resumeOn,
   });
 
@@ -70,9 +75,45 @@ class TreeAlbumCard extends StatelessWidget {
     return value.trim().toLowerCase();
   }
 
+  DateTime? _parseDisplayDate(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+
+    final parts = value.trim().split('/');
+    if (parts.length != 3) {
+      return null;
+    }
+
+    final day = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final year = int.tryParse(parts[2]);
+
+    if (day == null || month == null || year == null) {
+      return null;
+    }
+
+    return DateTime(year, month, day);
+  }
+
+  bool _isFutureDisplayDate(String? value) {
+    final parsedDate = _parseDisplayDate(value);
+    if (parsedDate == null) {
+      return false;
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return parsedDate.isAfter(today);
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isTreePaused = isPaused;
+    final bool isBeforePauseStart = _isFutureDisplayDate(pauseFrom);
+    final bool hasPendingPauseWindow = _isFutureDisplayDate(resumeOn);
+    final bool shouldBlockPauseAction =
+        isTreePaused || isBeforePauseStart || hasPendingPauseWindow;
     return Stack(
       children: [
         GestureDetector(
@@ -152,6 +193,15 @@ class TreeAlbumCard extends StatelessWidget {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
+              if (shouldBlockPauseAction) {
+                PausePeriod.show(
+                  context,
+                  pauseFrom: pauseFrom,
+                  pauseTo: pauseTo,
+                );
+                return;
+              }
+
               final normalizedStatus = _normalizedStatus(statusText);
 
               if (_isDiedStatus(statusText)) {
