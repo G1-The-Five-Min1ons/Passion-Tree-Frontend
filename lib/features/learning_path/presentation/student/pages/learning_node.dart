@@ -72,7 +72,11 @@ class _LearningNodePageState extends State<LearningNodePage> {
 
     _isFullscreen = isFullscreen;
     if (isFullscreen) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      // Hide all system overlays while video is in fullscreen.
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: const [],
+      );
     } else {
       SystemChrome.setEnabledSystemUIMode(
         SystemUiMode.manual,
