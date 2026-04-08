@@ -14,6 +14,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 
@@ -219,7 +220,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           isAiPath: _isAiPath,
           pathId: widget.pathId,
           sequence: sequence,
-          initialNode: initialNode, // ส่งข้อมูลเดิมไปยัง modal
+          initialNode: initialNode,
         ),
       ),
     );
@@ -266,15 +267,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             node.title.trim().isNotEmpty && node.title.trim() != 'New Node';
         final hasDescription = node.description.trim().isNotEmpty;
         final hasVideoLink = (node.linkVdo ?? '').trim().isNotEmpty;
-        final hasQuestions = node.questions.any(
-          (question) =>
-              question.questionText.trim().isNotEmpty &&
-              question.choices
-                  .where((choice) => choice.choiceText.trim().isNotEmpty)
-                  .length >= 2,
-        );
 
-        return !(hasTitle && hasDescription && hasVideoLink && hasQuestions);
+        return !(hasTitle && hasDescription && hasVideoLink);
       },
     );
   }
@@ -403,7 +397,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Please complete every node before publishing: title, description, video, and quiz are required. Materials are optional.',
+            'Please complete every node',
             style: TextStyle(color: AppColors.textPrimary),
           ),
           backgroundColor: AppColors.cancel,
@@ -417,29 +411,70 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       title: 'Publish\n Confirmation',
       body: 'Are you sure to publish Learning Path',
       confirmText: 'Publish',
-      onConfirm: () {
-        // ถ้ายังไม่มี nodes ใน backend ให้สร้างทีละตัวตามลำดับ แล้วค่อย publish
-        final uncreatedIndices = [
-          for (int i = 0; i < _uiNodes.length; i++)
-            if (!_uiNodes[i].isCreated) i,
-        ];
-        if (uncreatedIndices.isNotEmpty) {
-          setState(() => _pendingPublish = true);
-          _startSequentialCreate(uncreatedIndices);
-          return; // รอ NodeCreated ครบทุกตัวแล้วค่อย dispatch
-        }
+      onConfirm: _validateQuestionsAndPublish,
+    );
+  }
 
-        context.read<LearningPathBloc>().add(
-          UpdateLearningPathEvent(
-            pathId: widget.pathId,
-            title: _cachedLearningPath!.title,
-            objective: _cachedLearningPath!.objective,
-            description: _cachedLearningPath!.description,
-            coverImgUrl: _cachedLearningPath!.coverImageUrl,
-            publishStatus: 'published',
+  Future<void> _validateQuestionsAndPublish() async {
+    final getNodeQuestions = getIt<GetNodeQuestions>();
+
+    for (final node in _displayNodes) {
+      try {
+        final questions = await getNodeQuestions(node.nodeId);
+        final hasValidQuestion = questions.any(
+          (q) =>
+              q.questionText.trim().isNotEmpty &&
+              q.choices.where((c) => c.choiceText.trim().isNotEmpty).length >= 2,
+        );
+        if (!hasValidQuestion) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Node "${node.title}" ต้องมีอย่างน้อย 1 คำถามและ 2 ตัวเลือก',
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.cancel,
+            ),
+          );
+          return;
+        }
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'ไม่สามารถตรวจสอบ quiz ของ node "${node.title}" ได้',
+              style: const TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
         );
-      },
+        return;
+      }
+    }
+
+    if (!mounted) return;
+
+    final uncreatedIndices = [
+      for (int i = 0; i < _uiNodes.length; i++)
+        if (!_uiNodes[i].isCreated) i,
+    ];
+    if (uncreatedIndices.isNotEmpty) {
+      setState(() => _pendingPublish = true);
+      _startSequentialCreate(uncreatedIndices);
+      return;
+    }
+
+    context.read<LearningPathBloc>().add(
+      UpdateLearningPathEvent(
+        pathId: widget.pathId,
+        title: _cachedLearningPath!.title,
+        objective: _cachedLearningPath!.objective,
+        description: _cachedLearningPath!.description,
+        coverImgUrl: _cachedLearningPath!.coverImageUrl,
+        publishStatus: 'published',
+      ),
     );
   }
 

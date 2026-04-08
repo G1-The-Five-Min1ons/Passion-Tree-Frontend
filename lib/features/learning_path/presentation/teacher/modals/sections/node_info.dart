@@ -41,12 +41,6 @@ class NodeInfoSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '* Required fields',
-          style: AppTypography.smallBodyMedium.copyWith(color: AppColors.cancel),
-        ),
-        const SizedBox(height: 8),
-
         // ===== NODE TITLE =====
         PixelTextField(
           label: 'Node Title *',
