@@ -92,7 +92,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                       child: Text(
                         'Node review',
                         style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: colors.onPrimary,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -177,13 +177,13 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                                     child: RichText(
                                       text: TextSpan(
                                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Colors.white,
                                         ),
                                         children: [
                                           TextSpan(
                                             text: 'Node${index + 1} : ',
                                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                              color: Theme.of(context).colorScheme.primary,
+                                              color: Colors.white,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),

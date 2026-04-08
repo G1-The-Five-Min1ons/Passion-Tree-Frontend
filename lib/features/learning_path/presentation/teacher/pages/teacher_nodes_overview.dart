@@ -62,6 +62,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   bool _pendingPublish = false; // รอ node สร้างเสร็จแล้วค่อย publish
   bool _pendingSaveDraft = false; // รอ node สร้างเสร็จแล้วค่อย save draft
   bool _isAutoSavingDraft = false;
+  bool _isPathLoaded = false; // รอข้อมูล publish status จาก backend ก่อนแสดงปุ่ม
   late String
   _displayTitle; // Title ที่แสดงใน header (อัพเดทจาก backend เมื่อโหลดเสร็จ)
 
@@ -502,6 +503,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         if (state is LearningPathDetailLoaded) {
           setState(() {
             _cachedLearningPath = state.learningPath;
+            _isPathLoaded = true;
             if (state.learningPath.title.isNotEmpty) {
               _displayTitle = state.learningPath.title;
             }
@@ -713,7 +715,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                 right: 0,
                 child: HeaderBar(
                   title: _displayTitle,
-                  showAddButton: !_isPublished,
+                  showAddButton: _isPathLoaded && !_isPublished,
                   onPressed: () => _openEditNodeModal(context),
                 ),
               ),
@@ -727,7 +729,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                   builder: (bottomContext) => BottomBar(
                     onSaveDraft: () => _confirmSaveDraft(bottomContext),
                     onPublish: () => _confirmPublish(bottomContext),
-                    isPublished: _isPublished,
+                    isPublished: !_isPathLoaded || _isPublished,
                   ),
                 ),
               ),
