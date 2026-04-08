@@ -110,6 +110,52 @@ class LearningPathDataSource {
     }
   }
 
+  /// Fetch recommended learning paths for a specific reflection tree
+  Future<List<LearningPathApiModel>> getRecommendedLearningPathsForTree(
+    String treeId,
+  ) async {
+    return await _makeGetRequest(
+      endpoint: '/reflect/recommendation?tree_id=$treeId',
+      fromJson: (data) {
+        final raw = data['data'];
+
+        if (raw == null) return [];
+
+        /// Handle backend response format
+        if (raw is Map<String, dynamic>) {
+          final recommendedPaths = raw['recommended_paths'];
+
+          if (recommendedPaths is List) {
+            return recommendedPaths
+                .map((pathData) {
+                  /// The backend returns RecommendedPath with embedded LearningPath
+                  /// We need to extract the learning_path field
+                  if (pathData is Map<String, dynamic> &&
+                      pathData.containsKey('learning_path')) {
+                    return LearningPathApiModel.fromJson(
+                      pathData['learning_path'],
+                    );
+                  }
+                  /// Fallback if structure is different
+                  return LearningPathApiModel.fromJson(pathData);
+                })
+                .toList();
+          }
+        }
+
+        /// Fallback: if API sends List directly
+        if (raw is List) {
+          return raw
+              .map((path) => LearningPathApiModel.fromJson(path))
+              .toList();
+        }
+
+        return [];
+      },
+      errorMessage: 'Failed to get recommended learning paths for tree',
+    );
+  }
+
   /// Generic GET request handler
   Future<T> _makeGetRequest<T>({
     required String endpoint,

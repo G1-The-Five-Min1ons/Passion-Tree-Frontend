@@ -16,6 +16,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_node_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/add_reflect_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/detail_reflect_after/reflect_detail_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/recommend_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/status_badge.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
@@ -39,6 +40,8 @@ class TreeDetailPage extends StatefulWidget {
 }
 
 class _TreeDetailPageState extends State<TreeDetailPage> {
+  static const double _recommendPopupThreshold = 0.6;
+
   AlbumItem? _currentItem;
   final Map<String, _ReflectionViewData> _latestReflectionByNodeId = {};
   final ReflectionDataSource _reflectionDataSource = ReflectionDataSource();
@@ -48,11 +51,38 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
     return (value ?? '').trim().toLowerCase() == 'died';
   }
 
+  bool _isTreeDied(AlbumItem item) {
+    return _isDiedStatus(item.status) || _isDiedStatus(item.overallStatus);
+  }
+
+  void _showTreeDiedSnackbar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Retrieve the tree to continue'),
+        backgroundColor: AppColors.cancel,
+      ),
+    );
+  }
+
   void _updateCurrentItem(AlbumItem item) {
     if (!mounted) return;
     setState(() {
       _currentItem = item;
     });
+  }
+
+  double _nonStandaloneReflectionProgress(List<Chapter> chapters) {
+    final nonStandaloneNodes = chapters
+        .where((chapter) => !chapter.isStandalone)
+        .toList();
+    if (nonStandaloneNodes.isEmpty) {
+      return 0;
+    }
+
+    final reflectedCount = nonStandaloneNodes
+        .where((chapter) => chapter.hasReflection)
+        .length;
+    return reflectedCount / nonStandaloneNodes.length;
   }
 
   void _syncCurrentItemFromState(AlbumState state) {
@@ -101,6 +131,10 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
     final currentItem = _currentItem;
     if (currentItem == null) return;
 
+    final previousProgress = _nonStandaloneReflectionProgress(
+      currentItem.chapters,
+    );
+
     final reflectedChapterId = createdReflection.reflectId.trim();
     final updatedChapters = currentItem.chapters.map((itemChapter) {
       if (itemChapter.treeNodeId != chapter.treeNodeId) return itemChapter;
@@ -133,6 +167,18 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
         pathId: currentItem.pathId,
       ),
     );
+
+    final updatedProgress = _nonStandaloneReflectionProgress(updatedChapters);
+    final crossedThreshold =
+        previousProgress < _recommendPopupThreshold &&
+        updatedProgress >= _recommendPopupThreshold;
+
+    if (crossedThreshold && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        RecommendPopup.show(context, treeId: widget.treeId!);
+      });
+    }
   }
 
   Future<void> _fetchAndShowReflectionDetail(Chapter chapter) async {
@@ -179,7 +225,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
         lastEdited:'Edited just now',
         chapters: [],
       );
-    
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (widget.albumId != null) {
           context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId!));
@@ -267,6 +313,11 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                                       : 'assets/images/trees/node_notenrolled.png',
                                   size: 90,
                                   onTap: () {
+                                    if (_isTreeDied(item)) {
+                                      _showTreeDiedSnackbar();
+                                      return;
+                                    }
+
                                     if (!chapter.canReflect) {
                                       // Learning Path not completed
                                       ScaffoldMessenger.of(context).showSnackBar(
@@ -310,7 +361,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                                       // Node completed but no reflection yet - add new reflection
                                       AddReflectPopup.show(
                                         context,
-                                        treeNodeId: chapter.treeNodeId,    
+                                        treeNodeId: chapter.treeNodeId,
                                         nodeName: chapter.name,
                                         onReflectionCreated:
                                             (createdReflection, request) {
@@ -364,22 +415,13 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                   title: item.subjectName,
                   actionIcon: Symbols.add_rounded,
                   onActionPressed: () {
-                    final bool isTreeDied =
-                        _isDiedStatus(item.status) ||
-                        _isDiedStatus(item.overallStatus);
-
-                    if (isTreeDied) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Retrieve the tree to add a new node'),
-                          backgroundColor: AppColors.cancel,
-                        ),
-                      );
+                    if (_isTreeDied(item)) {
+                      _showTreeDiedSnackbar();
                       return;
                     }
 
                     final albumBloc = context.read<AlbumBloc>();
-                    
+
                     AddNodePopup.show(
                       context,
                       treeId: item.treeId!,

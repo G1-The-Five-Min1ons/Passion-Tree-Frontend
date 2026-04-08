@@ -43,6 +43,24 @@ class _AddReflectPageState extends State<AddReflectPage>{
   List<String> _availableAlbumNames = [];
   List<dynamic> _availableAlbums = [];
 
+  Set<String> _extractUsedPathIdsFromAlbums(List<dynamic> albums) {
+    final usedPathIds = <String>{};
+
+    for (final album in albums) {
+      final items = album.items;
+      if (items == null) continue;
+
+      for (final item in items) {
+        final pathId = item.pathId;
+        if (pathId != null && pathId.isNotEmpty) {
+          usedPathIds.add(pathId);
+        }
+      }
+    }
+
+    return usedPathIds;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -143,13 +161,22 @@ class _AddReflectPageState extends State<AddReflectPage>{
           return BlocBuilder<LearningPathBloc, LearningPathState>(
             builder: (context, learningPathState) {
               final bool isLoadingPaths = learningPathState is LearningPathLoading;
+              final usedPathIds = _extractUsedPathIdsFromAlbums(_availableAlbums);
               
               final learningPaths = learningPathState is LearningPathStatusLoaded 
                   ? learningPathState.paths 
                   : [];
               final availableLearningPaths = learningPaths.where((path) {
-                return path.completedNodes == 0 && path.progressPercent <= 0;
+                final isNotUsedInAnyTree = !usedPathIds.contains(path.pathId);
+                return isNotUsedInAnyTree;
               }).toList();
+
+              if (_selectedPathId != null &&
+                  !availableLearningPaths.any((path) => path.pathId == _selectedPathId)) {
+                _selectedPathId = null;
+                _categoryController.clear();
+              }
+
               final List<String> availableLearningPathTitles =
                   availableLearningPaths
                     .map<String>((path) => path.title as String)
