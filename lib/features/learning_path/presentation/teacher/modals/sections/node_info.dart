@@ -15,6 +15,7 @@ class NodeInfoSection extends StatelessWidget {
   // Video URL
   final String? videoUrlValue;
   final ValueChanged<String>? onVideoUrlChanged;
+  final String? videoUrlWarningText;
 
   // Files
   final VoidCallback onUploadFile;
@@ -29,6 +30,7 @@ class NodeInfoSection extends StatelessWidget {
     this.initialDescription,
     this.videoUrlValue,
     this.onVideoUrlChanged,
+    this.videoUrlWarningText,
     required this.onUploadFile,
     required this.files,
     required this.onRemoveFile,
@@ -71,6 +73,17 @@ class NodeInfoSection extends StatelessWidget {
           value: videoUrlValue,
           onChanged: onVideoUrlChanged ?? (_) {},
         ),
+
+        if (videoUrlWarningText != null && videoUrlWarningText!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 10),
+            child: Text(
+              videoUrlWarningText!,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.cancel,
+              ),
+            ),
+          ),
 
         const SizedBox(height: 12),
 

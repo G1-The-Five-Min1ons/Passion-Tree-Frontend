@@ -53,6 +53,22 @@ class _EditNodeModalState extends State<EditNodeModal> {
   bool _isUploading = false;
   bool _isSubmitting = false;
 
+  bool get _isValidVideoUrl {
+    final value = _videoUrl.trim();
+    if (value.isEmpty) return false;
+    final uri = Uri.tryParse(value);
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.hasAuthority;
+  }
+
+  String? get _videoUrlWarningText {
+    final value = _videoUrl.trim();
+    if (value.isEmpty) return null;
+    if (_isValidVideoUrl) return null;
+    return 'Video URL ต้องเป็นลิงก์เท่านั้น (http/https)';
+  }
+
   bool get _hasRequiredQuiz {
     return _quizzes.any(
       (quiz) =>
@@ -64,7 +80,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
   bool get _isSaveEnabled {
     return _title.trim().isNotEmpty &&
         _description.trim().isNotEmpty &&
-        _videoUrl.trim().isNotEmpty &&
+      _isValidVideoUrl &&
         _hasRequiredQuiz;
   }
 
@@ -227,6 +243,20 @@ class _EditNodeModalState extends State<EditNodeModal> {
     // Guard against double-tap / duplicate submit while the first request is in-flight.
     if (_isSubmitting) return;
     setState(() => _isSubmitting = true);
+
+    if (!_isValidVideoUrl) {
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Video URL ต้องเป็นลิงก์เท่านั้น (http/https)',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+      return;
+    }
 
     if (widget.isNewNode) {
       // สร้าง node ใหม่
@@ -472,6 +502,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                       // ===== VIDEO URL =====
                       videoUrlValue: _videoUrl.isEmpty ? null : _videoUrl,
                       onVideoUrlChanged: (v) => setState(() => _videoUrl = v),
+                      videoUrlWarningText: _videoUrlWarningText,
 
                       // ===== FILE UPLOAD =====
                       files: _files,
