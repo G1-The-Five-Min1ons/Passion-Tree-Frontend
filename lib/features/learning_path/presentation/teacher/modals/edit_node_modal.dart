@@ -113,9 +113,11 @@ class _EditNodeModalState extends State<EditNodeModal> {
         // หา correct choice index
         int correctIndex = 0;
         Map<int, String> reasons = {};
+        final choiceIds = <String>[];
 
         for (int i = 0; i < question.choices.length; i++) {
           final choice = question.choices[i];
+          choiceIds.add(choice.choiceId);
           if (choice.isCorrect) {
             correctIndex = i;
             if (choice.reasoning.isNotEmpty) {
@@ -129,6 +131,8 @@ class _EditNodeModalState extends State<EditNodeModal> {
           choices: question.choices.map((c) => c.choiceText).toList(),
           selectedIndex: correctIndex,
           reasons: reasons,
+          questionId: question.questionId,
+          choiceIds: choiceIds,
         );
       }).toList();
 
@@ -146,9 +150,11 @@ class _EditNodeModalState extends State<EditNodeModal> {
       final quizzesFromApi = questions.map((question) {
         int correctIndex = 0;
         final reasons = <int, String>{};
+        final choiceIds = <String>[];
 
         for (int i = 0; i < question.choices.length; i++) {
           final choice = question.choices[i];
+          choiceIds.add(choice.choiceId);
           if (choice.isCorrect) {
             correctIndex = i;
             if (choice.reasoning.isNotEmpty) {
@@ -162,6 +168,8 @@ class _EditNodeModalState extends State<EditNodeModal> {
           choices: question.choices.map((c) => c.choiceText).toList(),
           selectedIndex: correctIndex,
           reasons: reasons,
+          questionId: question.questionId,
+          choiceIds: choiceIds,
         );
       }).toList();
 
@@ -359,8 +367,6 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
         if (!context.mounted) return;
 
-        final questions = _convertQuizzesToQuestions();
-
         context.read<LearningPathBloc>().add(
           UpdateNodeEvent(
             nodeId: widget.nodeId,
@@ -368,7 +374,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             description: _description,
             linkvdo: _videoUrl.isNotEmpty ? _videoUrl : null,
             materials: materials.isNotEmpty ? materials : null,
-            questions: questions,
+            quizzes: _quizzes,
           ),
         );
       } catch (e) {

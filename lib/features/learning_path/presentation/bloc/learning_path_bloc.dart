@@ -23,10 +23,16 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/reorder_nodes_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_choice_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_choice_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_node.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_choice.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_question_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_choice_usecase.dart';
 
 class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GetAllLearningPaths getAllLearningPaths;
@@ -47,6 +53,10 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final UpdateNodeUseCase updateNodeUseCase;
   final UpdateLearningPathUseCase updateLearningPathUseCase;
   final ReorderNodesUseCase reorderNodesUseCase;
+  final UpdateQuestionUseCase updateQuestionUseCase;
+  final UpdateChoiceUseCase updateChoiceUseCase;
+  final CreateChoiceUseCase createChoiceUseCase;
+  final DeleteChoiceUseCase deleteChoiceUseCase;
 
   LearningPathBloc(
     this.getAllLearningPaths,
@@ -67,6 +77,10 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.updateLearningPathUseCase,
     this.updateNodeUseCase,
     this.reorderNodesUseCase,
+    this.updateQuestionUseCase,
+    this.updateChoiceUseCase,
+    this.createChoiceUseCase,
+    this.deleteChoiceUseCase,
   ) : super(LearningPathInitial()) {
     
     /// Helper method to handle errors consistently
@@ -460,6 +474,101 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             linkvdo: event.linkvdo,
             materials: event.materials,
           );
+
+          // Keep backward compatibility: update existing quiz IDs and create newly added quizzes.
+          final quizzes = event.quizzes ?? const [];
+          if (quizzes.isNotEmpty) {
+            LogHandler.debug('Updating ${quizzes.length} quizzes...');
+            final List<CreateQuestionWithChoices> newQuestions = [];
+
+            for (final quiz in quizzes) {
+              if (quiz.questionId == null || quiz.questionId!.isEmpty) {
+                final newChoices = quiz.choices
+                    .asMap()
+                    .entries
+                    .where((entry) => entry.value.trim().isNotEmpty)
+                    .map(
+                      (entry) => CreateChoice(
+                        choiceText: entry.value,
+                        isCorrect: entry.key == quiz.selectedIndex,
+                        reasoning: quiz.reasons[entry.key] ?? '',
+                      ),
+                    )
+                    .toList();
+
+                if (quiz.question.trim().isNotEmpty && newChoices.isNotEmpty) {
+                  newQuestions.add(
+                    CreateQuestionWithChoices(
+                      questionText: quiz.question,
+                      type: 'multiple_choice',
+                      choices: newChoices,
+                    ),
+                  );
+                }
+                continue;
+              }
+
+              await updateQuestionUseCase(
+                quiz.questionId!,
+                quiz.question,
+                'multiple_choice',
+              );
+
+              final choiceIds = quiz.choiceIds == null
+                  ? <String>[]
+                  : List<String>.from(quiz.choiceIds!);
+              final currentChoices = quiz.choices;
+
+              final sharedCount = choiceIds.length < currentChoices.length
+                  ? choiceIds.length
+                  : currentChoices.length;
+
+              for (var i = 0; i < sharedCount; i++) {
+                final choiceId = choiceIds[i];
+                if (choiceId.isEmpty) {
+                  await createChoiceUseCase(
+                    quiz.questionId!,
+                    currentChoices[i],
+                    i == quiz.selectedIndex,
+                    quiz.reasons[i] ?? '',
+                  );
+                  continue;
+                }
+
+                await updateChoiceUseCase(
+                  choiceId,
+                  currentChoices[i],
+                  i == quiz.selectedIndex,
+                  quiz.reasons[i] ?? '',
+                );
+              }
+
+              if (currentChoices.length > choiceIds.length) {
+                for (var i = choiceIds.length; i < currentChoices.length; i++) {
+                  if (currentChoices[i].trim().isEmpty) continue;
+                  await createChoiceUseCase(
+                    quiz.questionId!,
+                    currentChoices[i],
+                    i == quiz.selectedIndex,
+                    quiz.reasons[i] ?? '',
+                  );
+                }
+              }
+
+              if (choiceIds.length > currentChoices.length) {
+                for (var i = currentChoices.length; i < choiceIds.length; i++) {
+                  final choiceId = choiceIds[i];
+                  if (choiceId.isEmpty) continue;
+                  await deleteChoiceUseCase(choiceId);
+                }
+              }
+            }
+
+            if (newQuestions.isNotEmpty) {
+              await createNodeQuestionsUseCase(event.nodeId, newQuestions);
+            }
+          }
+
           LogHandler.debug('[BLoC] Node updated: ${event.nodeId}');
           emit(NodeUpdated(event.nodeId));
         });

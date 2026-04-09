@@ -51,11 +51,15 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/reo
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/generate_nodes_with_ai_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_learning_path_by_id_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_learning_path_usecase.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_question_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_choice_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_choice_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_choice_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enrolled_learning_paths.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_progress_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
@@ -318,6 +322,12 @@ Future<void> initializeDependencies() async {
   getIt.registerFactory<GetRecommendedLearningPaths>(
     () => GetRecommendedLearningPaths(getIt<LearningPathRepositoryImpl>()),
   );
+  getIt.registerFactory<UpdateQuestionUseCase>(
+    () => UpdateQuestionUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<UpdateChoiceUseCase>(
+    () => UpdateChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
 
   // Learning Path Bloc
   getIt.registerFactory<LearningPathBloc>(
@@ -340,6 +350,10 @@ Future<void> initializeDependencies() async {
       getIt<UpdateLearningPathUseCase>(),
       getIt<UpdateNodeUseCase>(),
       getIt<ReorderNodesUseCase>(),
+      getIt<UpdateQuestionUseCase>(),
+      getIt<UpdateChoiceUseCase>(),
+      getIt<CreateChoiceUseCase>(),
+      getIt<DeleteChoiceUseCase>(),
     ),
   );
 

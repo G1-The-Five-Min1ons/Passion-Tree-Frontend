@@ -375,6 +375,71 @@ class LearningPathDataSource {
     }
   }
 
+  Future<void> updateQuestion(
+    String questionId,
+    String questionText,
+    String type,
+  ) async {
+    final response = await _apiHandler.put(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/questions/$questionId',
+      headers: await _getAuthHeaders(),
+      body: {
+        'question_text': questionText,
+        'type': type,
+      },
+    );
+    _throwIfError(response, 'PUT question/$questionId');
+  }
+
+  Future<void> updateChoice(
+    String choiceId,
+    String choiceText,
+    bool isCorrect,
+    String reasoning,
+  ) async {
+    final response = await _apiHandler.put(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/questions/choices/$choiceId',
+      headers: await _getAuthHeaders(),
+      body: {
+        'choice_text': choiceText,
+        'is_correct': isCorrect,
+        'reasoning': reasoning,
+      },
+    );
+    _throwIfError(response, 'PUT choice/$choiceId');
+  }
+
+  Future<String> createChoice(
+    String questionId,
+    String choiceText,
+    bool isCorrect,
+    String reasoning,
+  ) async {
+    final response = await _apiHandler.post(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/questions/$questionId/choices',
+      headers: await _getAuthHeaders(),
+      body: {
+        'choice_text': choiceText,
+        'is_correct': isCorrect,
+        'reasoning': reasoning,
+      },
+    );
+    _throwIfError(response, 'POST choice/$questionId');
+    final choiceId = (response.data as Map<String, dynamic>?)?['choice_id'] as String?;
+    if (choiceId == null || choiceId.isEmpty) {
+      throw ServerException(message: 'Choice ID not returned from server');
+    }
+    return choiceId;
+  }
+
+  Future<void> deleteChoice(String choiceId) async {
+    final response = await _apiHandler.delete(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/questions/choices/$choiceId',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'DELETE choice/$choiceId');
+  }
+
   // ── AI ────────────────────────────────────────────────────────────────────
 
   Future<AIGenerateResponseApiModel> generateNodesWithAI(String topic) async {

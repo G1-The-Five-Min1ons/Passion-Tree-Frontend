@@ -65,7 +65,10 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
   void _addChoice(int qIndex) {
     final quiz = _quizzes[qIndex];
     setState(() {
-      _quizzes[qIndex] = quiz.copyWith(choices: [...quiz.choices, '']);
+      _quizzes[qIndex] = quiz.copyWith(
+        choices: [...quiz.choices, ''],
+        choiceIds: [...?quiz.choiceIds, ''],
+      );
     });
     _notifyChange();
   }
@@ -74,14 +77,21 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
     final quiz = _quizzes[qIndex];
     final newChoices = [...quiz.choices]..removeAt(cIndex);
     final newReasons = Map<int, String>.from(quiz.reasons)..remove(cIndex);
+    final newChoiceIds = quiz.choiceIds == null
+        ? null
+        : ([...quiz.choiceIds!]..removeAt(cIndex));
+    final newSelectedIndex = quiz.selectedIndex == cIndex
+        ? (newChoices.isEmpty ? 0 : (cIndex >= newChoices.length ? newChoices.length - 1 : cIndex))
+        : (quiz.selectedIndex > cIndex
+            ? quiz.selectedIndex - 1
+            : quiz.selectedIndex);
 
     setState(() {
       _quizzes[qIndex] = quiz.copyWith(
         choices: newChoices,
         reasons: newReasons,
-        selectedIndex: quiz.selectedIndex >= newChoices.length
-            ? 0
-            : quiz.selectedIndex,
+        selectedIndex: newSelectedIndex < 0 ? 0 : newSelectedIndex,
+        choiceIds: newChoiceIds,
       );
     });
     _notifyChange();

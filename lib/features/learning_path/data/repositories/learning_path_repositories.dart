@@ -172,5 +172,49 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
     final models = await dataSource.getRecommendedLearningPaths();
     return models.map((e) => e.toEntity()).toList();
   }
+
+  @override
+  Future<void> updateQuestion(
+    String questionId,
+    String questionText,
+    String type,
+  ) async {
+    return await dataSource.updateQuestion(questionId, questionText, type);
+  }
+
+  @override
+  Future<void> updateChoice(
+    String choiceId,
+    String choiceText,
+    bool isCorrect,
+    String reasoning,
+  ) async {
+    return await dataSource.updateChoice(
+      choiceId,
+      choiceText,
+      isCorrect,
+      reasoning,
+    );
+  }
+
+  @override
+  Future<String> createChoice(
+    String questionId,
+    String choiceText,
+    bool isCorrect,
+    String reasoning,
+  ) async {
+    return await dataSource.createChoice(
+      questionId,
+      choiceText,
+      isCorrect,
+      reasoning,
+    );
+  }
+
+  @override
+  Future<void> deleteChoice(String choiceId) async {
+    return await dataSource.deleteChoice(choiceId);
+  }
 }
 
