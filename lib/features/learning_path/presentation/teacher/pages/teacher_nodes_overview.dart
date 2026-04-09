@@ -86,11 +86,15 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
     // ถ้ามี AI nodes ให้ใช้ ถ้าไม่มีให้สร้าง default node เปล่าๆ
     if (widget.aiNodes != null && widget.aiNodes!.isNotEmpty) {
-      _uiNodes = widget.aiNodes!.map((aiNode) {
+      // Keep sequence unique and stable in UI order to avoid draft-node loss
+      // when AI-generated sequence values are duplicated.
+      _uiNodes = widget.aiNodes!.asMap().entries.map((entry) {
+        final index = entry.key;
+        final aiNode = entry.value;
         return NodeUiState(
           title: aiNode.title,
           description: "",
-          sequence: aiNode.sequence,
+          sequence: index + 1,
           isCreated: false,
         );
       }).toList();
@@ -499,17 +503,30 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
   List<NodeDetail> get _displayNodes {
     final backendNodes = _cachedNodes;
-    final uncreatedNodes = _uiNodes.where((n) => !n.isCreated).toList();
+    final cachedNodeIds =
+        backendNodes?.map((n) => n.nodeId).toSet() ?? <String>{};
+
+    // Include any _uiNode whose realNodeId is not yet reflected in _cachedNodes.
+    // This covers both uncreated draft nodes AND nodes that were just created
+    // sequentially but whose realNodeId hasn't appeared in a fresh fetch yet,
+    // preventing them from disappearing during the Save Draft sequential flow.
+    final pendingUiNodes = _uiNodes
+        .where(
+          (n) =>
+              n.realNodeId == null ||
+              !cachedNodeIds.contains(n.realNodeId),
+        )
+        .toList();
 
     if (backendNodes != null && backendNodes.isNotEmpty) {
-      if (uncreatedNodes.isEmpty) return backendNodes;
+      if (pendingUiNodes.isEmpty) return backendNodes;
 
-      // Merge backend nodes + uncreated AI nodes, sorted by sequence
+      // Merge backend nodes + pending UI nodes, sorted by sequence
       final merged = [
         ...backendNodes,
-        ...uncreatedNodes.map(
+        ...pendingUiNodes.map(
           (uiNode) => NodeDetail(
-            nodeId: 'draft_node_${uiNode.sequence}',
+            nodeId: uiNode.realNodeId ?? 'draft_node_${uiNode.sequence}',
             title: uiNode.title,
             description: uiNode.description,
             sequence: uiNode.sequence,
@@ -554,14 +571,42 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             // Uncreated UI nodes (draft AI nodes not yet saved) are preserved.
             if (state.nodes.isNotEmpty) {
               final newUiNodes = <NodeUiState>[];
+              final matchedUiIndices = <int>{};
+
+              int findMatchIndex(NodeDetail backendNode) {
+                // 1) Prefer exact real ID match
+                for (int i = 0; i < _uiNodes.length; i++) {
+                  if (matchedUiIndices.contains(i)) continue;
+                  if (_uiNodes[i].realNodeId == backendNode.nodeId) return i;
+                }
+
+                // 2) Then match unsaved drafts by sequence + title
+                for (int i = 0; i < _uiNodes.length; i++) {
+                  if (matchedUiIndices.contains(i)) continue;
+                  final ui = _uiNodes[i];
+                  if (ui.realNodeId == null &&
+                      ui.sequence == backendNode.sequence &&
+                      ui.title.trim() == backendNode.title.trim()) {
+                    return i;
+                  }
+                }
+
+                // 3) Fallback to sequence-only for legacy behavior
+                for (int i = 0; i < _uiNodes.length; i++) {
+                  if (matchedUiIndices.contains(i)) continue;
+                  final ui = _uiNodes[i];
+                  if (ui.realNodeId == null && ui.sequence == backendNode.sequence) {
+                    return i;
+                  }
+                }
+
+                return -1;
+              }
+
               for (final backendNode in state.nodes) {
-                final existingIndex = _uiNodes.indexWhere(
-                  (n) =>
-                      n.realNodeId == backendNode.nodeId ||
-                      (n.realNodeId == null &&
-                          n.sequence == backendNode.sequence),
-                );
+                final existingIndex = findMatchIndex(backendNode);
                 if (existingIndex >= 0) {
+                  matchedUiIndices.add(existingIndex);
                   _uiNodes[existingIndex].title = backendNode.title;
                   _uiNodes[existingIndex].description = backendNode.description;
                   _uiNodes[existingIndex].sequence = backendNode.sequence;
@@ -582,13 +627,16 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                   );
                 }
               }
-              // Preserve uncreated draft nodes that have no backend equivalent yet
-              for (final ui in _uiNodes) {
-                if (!ui.isCreated &&
-                    !newUiNodes.any((n) => n.sequence == ui.sequence)) {
+
+              // Preserve every unmatched, uncreated draft node.
+              for (int i = 0; i < _uiNodes.length; i++) {
+                if (matchedUiIndices.contains(i)) continue;
+                final ui = _uiNodes[i];
+                if (!ui.isCreated) {
                   newUiNodes.add(ui);
                 }
               }
+
               newUiNodes.sort((a, b) => a.sequence.compareTo(b.sequence));
               _uiNodes = newUiNodes;
             }
