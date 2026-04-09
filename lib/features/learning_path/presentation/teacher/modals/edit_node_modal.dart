@@ -51,6 +51,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
   List<NodeQuiz> _quizzes = []; //ส่วนเพิ่ม quiz
   bool _isUploading = false;
+  bool _isSubmitting = false;
 
   bool get _hasRequiredQuiz {
     return _quizzes.any(
@@ -223,9 +224,14 @@ class _EditNodeModalState extends State<EditNodeModal> {
   }
 
   Future<void> _handleUpdate(BuildContext context) async {
+    // Guard against double-tap / duplicate submit while the first request is in-flight.
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
+
     if (widget.isNewNode) {
       // สร้าง node ใหม่
       if (widget.pathId == null || widget.sequence == null) {
+        setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -288,6 +294,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
             backgroundColor: AppColors.cancel,
           ),
         );
+        if (context.mounted) {
+          setState(() => _isSubmitting = false);
+        }
       } finally {
         if (context.mounted) {
           setState(() => _isUploading = false);
@@ -344,6 +353,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
             backgroundColor: AppColors.cancel,
           ),
         );
+        if (context.mounted) {
+          setState(() => _isSubmitting = false);
+        }
       } finally {
         if (context.mounted) {
           setState(() => _isUploading = false);
@@ -359,6 +371,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
     return BlocListener<LearningPathBloc, LearningPathState>(
       listener: (context, state) {
         if (state is NodeUpdated) {
+          if (context.mounted) {
+            setState(() => _isSubmitting = false);
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -375,6 +390,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
             }
           });
         } else if (state is NodeCreated) {
+          if (context.mounted) {
+            setState(() => _isSubmitting = false);
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -404,6 +422,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
             Navigator.pop(context);
           }
         } else if (state is LearningPathError) {
+          if (context.mounted) {
+            setState(() => _isSubmitting = false);
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -473,10 +494,14 @@ class _EditNodeModalState extends State<EditNodeModal> {
                     BlocBuilder<LearningPathBloc, LearningPathState>(
                       builder: (context, state) {
                         final isLoading =
-                            state is LearningPathLoading || _isUploading;
+                            state is LearningPathLoading ||
+                            _isUploading ||
+                            _isSubmitting;
 
                         return NodeFooter(
-                          onDelete: () {
+                          onDelete: isLoading
+                              ? null
+                              : () {
                             DeletePopUp.show(
                               context,
                               title: 'Delete?',

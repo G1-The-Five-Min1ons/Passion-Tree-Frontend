@@ -4,7 +4,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class NodeFooter extends StatelessWidget {
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
   final VoidCallback? onSave;
 
   const NodeFooter({super.key, required this.onDelete, required this.onSave});
@@ -23,8 +23,8 @@ class NodeFooter extends StatelessWidget {
           AppButton(
             variant: AppButtonVariant.text,
             text: 'Delete',
-            backgroundColor: colors.error, 
-            textColor: colors.onError,
+            backgroundColor: onDelete == null ? AppColors.scale : colors.error,
+            textColor: onDelete == null ? AppColors.textDisabled : colors.onError,
             onPressed: onDelete,
           ),
 

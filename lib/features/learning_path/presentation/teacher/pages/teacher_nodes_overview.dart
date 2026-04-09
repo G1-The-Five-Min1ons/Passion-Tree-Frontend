@@ -55,7 +55,7 @@ class TeacherNodesOverviewPage extends StatefulWidget {
 class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   late List<NodeUiState> _uiNodes;
   int? _pendingNodeIndex; // เก็บ index ของ node ที่กำลังสร้างอยู่
-  final List<int> _createQueue = []; // คิว index ของ nodes ที่รอสร้างตามลำดับ
+  final List<int> _createQueue = []; // คิว sequence ของ nodes ที่รอสร้างตามลำดับ
   Timer? _draftAutoSaveTimer;
   String? _userId;
   List<NodeDetail>? _cachedNodes; // Cache nodes from backend
@@ -135,7 +135,18 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     );
   }
 
-  void _handleCreateNode(int index) {
+  void _handleCreateNode(int sequence) {
+    final index = _uiNodes.indexWhere(
+      (n) => n.sequence == sequence && !n.isCreated,
+    );
+    if (index < 0) {
+      // Node might already be created from a concurrent refresh; continue queue.
+      if (_createQueue.isNotEmpty) {
+        _handleCreateNode(_createQueue.removeAt(0));
+      }
+      return;
+    }
+
     final node = _uiNodes[index];
 
     setState(() {
@@ -156,9 +167,9 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
   /// สร้าง nodes ทีละตัวตามลำดับ (sequential) เพื่อหลีกเลี่ยง droppable transformer
   /// ที่จะ drop events ที่ส่งพร้อมกัน
-  void _startSequentialCreate(List<int> indices) {
+  void _startSequentialCreate(List<int> sequences) {
     _createQueue.clear();
-    _createQueue.addAll(indices);
+    _createQueue.addAll(sequences);
     if (_createQueue.isNotEmpty) {
       _handleCreateNode(_createQueue.removeAt(0));
     }
@@ -343,13 +354,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       confirmText: 'Save',
       onConfirm: () {
         // ถ้ายังไม่มี nodes ใน backend ให้สร้างทีละตัวตามลำดับ แล้วค่อย save draft
-        final uncreatedIndices = [
+        final uncreatedSequences = [
           for (int i = 0; i < _uiNodes.length; i++)
-            if (!_uiNodes[i].isCreated) i,
+            if (!_uiNodes[i].isCreated) _uiNodes[i].sequence,
         ];
-        if (uncreatedIndices.isNotEmpty) {
+        if (uncreatedSequences.isNotEmpty) {
           setState(() => _pendingSaveDraft = true);
-          _startSequentialCreate(uncreatedIndices);
+          _startSequentialCreate(uncreatedSequences);
           return; // รอ NodeCreated ครบทุกตัวแล้วค่อย dispatch
         }
 
@@ -460,13 +471,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
     if (!mounted) return;
 
-    final uncreatedIndices = [
+    final uncreatedSequences = [
       for (int i = 0; i < _uiNodes.length; i++)
-        if (!_uiNodes[i].isCreated) i,
+        if (!_uiNodes[i].isCreated) _uiNodes[i].sequence,
     ];
-    if (uncreatedIndices.isNotEmpty) {
+    if (uncreatedSequences.isNotEmpty) {
       setState(() => _pendingPublish = true);
-      _startSequentialCreate(uncreatedIndices);
+      _startSequentialCreate(uncreatedSequences);
       return;
     }
 
