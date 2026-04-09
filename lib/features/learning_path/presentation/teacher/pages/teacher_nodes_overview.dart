@@ -63,6 +63,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   bool _pendingPublish = false; // รอ node สร้างเสร็จแล้วค่อย publish
   bool _pendingSaveDraft = false; // รอ node สร้างเสร็จแล้วค่อย save draft
   bool _isAutoSavingDraft = false;
+  bool _shouldExitAfterPathUpdate = false;
   bool _isPathLoaded = false; // รอข้อมูล publish status จาก backend ก่อนแสดงปุ่ม
   late String
   _displayTitle; // Title ที่แสดงใน header (อัพเดทจาก backend เมื่อโหลดเสร็จ)
@@ -347,11 +348,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             if (!_uiNodes[i].isCreated) _uiNodes[i].sequence,
         ];
         if (uncreatedSequences.isNotEmpty) {
+          _shouldExitAfterPathUpdate = true;
           setState(() => _pendingSaveDraft = true);
           _startSequentialCreate(uncreatedSequences);
           return; // รอ NodeCreated ครบทุกตัวแล้วค่อย dispatch
         }
 
+        _shouldExitAfterPathUpdate = true;
         context.read<LearningPathBloc>().add(
           UpdateLearningPathEvent(
             pathId: widget.pathId,
@@ -464,11 +467,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         if (!_uiNodes[i].isCreated) _uiNodes[i].sequence,
     ];
     if (uncreatedSequences.isNotEmpty) {
+      _shouldExitAfterPathUpdate = true;
       setState(() => _pendingPublish = true);
       _startSequentialCreate(uncreatedSequences);
       return;
     }
 
+    _shouldExitAfterPathUpdate = true;
     context.read<LearningPathBloc>().add(
       UpdateLearningPathEvent(
         pathId: widget.pathId,
@@ -739,6 +744,12 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             return;
           }
 
+          if (!_shouldExitAfterPathUpdate) {
+            return;
+          }
+
+          _shouldExitAfterPathUpdate = false;
+
           // Learning path updated successfully
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -756,6 +767,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           setState(() {
             _pendingNodeIndex = null;
             _isAutoSavingDraft = false;
+            _shouldExitAfterPathUpdate = false;
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
