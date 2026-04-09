@@ -29,6 +29,7 @@ class EditNodeModal extends StatefulWidget {
   final String? pathId;
   final String? sequence;
   final NodeDetail? initialNode;
+  final bool isReadOnly;
 
   const EditNodeModal({
     super.key,
@@ -38,6 +39,7 @@ class EditNodeModal extends StatefulWidget {
     this.pathId,
     this.sequence,
     this.initialNode,
+    this.isReadOnly = false,
   });
 
   @override
@@ -491,7 +493,10 @@ class _EditNodeModalState extends State<EditNodeModal> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    NodeModalHeader(isNewNode: widget.isNewNode),
+                    NodeModalHeader(
+                      isNewNode: widget.isNewNode,
+                      isReadOnly: widget.isReadOnly,
+                    ),
                     const SizedBox(height: 10),
 
                     // ===== INFO + MATERIALS =====
@@ -509,6 +514,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                       videoUrlValue: _videoUrl.isEmpty ? null : _videoUrl,
                       onVideoUrlChanged: (v) => setState(() => _videoUrl = v),
                       videoUrlWarningText: _videoUrlWarningText,
+                      isReadOnly: widget.isReadOnly,
 
                       // ===== FILE UPLOAD =====
                       files: _files,
@@ -519,6 +525,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                     const SizedBox(height: 14),
                     NodeQuizSection(
                       initialQuizzes: _quizzes.isNotEmpty ? _quizzes : null,
+                      isReadOnly: widget.isReadOnly,
                       onQuizzesChanged: (quizzes) {
                         setState(() {
                           _quizzes = quizzes;
@@ -528,55 +535,56 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
                     const SizedBox(height: 14),
 
-                    BlocBuilder<LearningPathBloc, LearningPathState>(
-                      builder: (context, state) {
-                        final isLoading =
-                            state is LearningPathLoading ||
-                            _isUploading ||
-                            _isSubmitting;
+                    if (!widget.isReadOnly)
+                      BlocBuilder<LearningPathBloc, LearningPathState>(
+                        builder: (context, state) {
+                          final isLoading =
+                              state is LearningPathLoading ||
+                              _isUploading ||
+                              _isSubmitting;
 
-                        return NodeFooter(
-                          onDelete: isLoading
-                              ? null
-                              : () {
-                            DeletePopUp.show(
-                              context,
-                              title: 'Delete?',
-                              body:
-                                  'Are you sure you want to delete?\nThis Process cannot be undone.',
-                              onDelete: () {
-                                if (_isPlainPathFirstNode) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Unable to remove primary node',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                      backgroundColor: AppColors.cancel,
-                                    ),
-                                  );
-                                  return;
-                                }
+                          return NodeFooter(
+                            onDelete: isLoading
+                                ? null
+                                : () {
+                                    DeletePopUp.show(
+                                      context,
+                                      title: 'Delete?',
+                                      body:
+                                          'Are you sure you want to delete?\nThis Process cannot be undone.',
+                                      onDelete: () {
+                                        if (_isPlainPathFirstNode) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Unable to remove primary node',
+                                                style: TextStyle(
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                              ),
+                                              backgroundColor: AppColors.cancel,
+                                            ),
+                                          );
+                                          return;
+                                        }
 
-                                if (widget.isNewNode) {
-                                  Navigator.pop(context);
-                                  return;
-                                }
+                                        if (widget.isNewNode) {
+                                          Navigator.pop(context);
+                                          return;
+                                        }
 
-                                context.read<LearningPathBloc>().add(
-                                  DeleteNodeEvent(nodeId: widget.nodeId),
-                                );
-                              },
-                            );
-                          },
-                          onSave: isLoading || !_isSaveEnabled
-                              ? null
-                              : () => _handleUpdate(context),
-                        );
-                      },
-                    ),
+                                        context.read<LearningPathBloc>().add(
+                                          DeleteNodeEvent(nodeId: widget.nodeId),
+                                        );
+                                      },
+                                    );
+                                  },
+                            onSave: isLoading || !_isSaveEnabled
+                                ? null
+                                : () => _handleUpdate(context),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ),

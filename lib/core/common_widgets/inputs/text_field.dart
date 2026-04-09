@@ -29,6 +29,7 @@ class PixelTextField extends StatefulWidget {
   final FocusNode? focusNode;
   final TextInputAction? textInputAction;
   final EdgeInsets? contentPadding;
+  final bool readOnly;
 
   const PixelTextField({
     super.key,
@@ -55,6 +56,7 @@ class PixelTextField extends StatefulWidget {
     this.focusNode,
     this.textInputAction,
     this.contentPadding,
+    this.readOnly = false,
   });
 
   @override
@@ -166,6 +168,7 @@ class _PixelTextFieldState extends State<PixelTextField> {
               maxLength: widget.maxLength,
               expands: widget.obscureText ? false : (widget.maxLines == null),
               obscureText: widget.obscureText,
+              readOnly: widget.readOnly,
               textInputAction: widget.textInputAction,
               onChanged: widget.onChanged,
               style: (widget.textStyle ?? AppTypography.bodyRegular).copyWith(

@@ -176,19 +176,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   }
 
   void _openEditNodeModal(BuildContext context, {int? index}) {
-    if (_isPublished) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Cannot edit nodes. This learning path is already published.',
-            style: TextStyle(color: AppColors.textPrimary),
-          ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
-      return;
-    }
-
     String nodeId;
     bool isNewNode;
     String? sequence;
@@ -236,6 +223,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           pathId: widget.pathId,
           sequence: sequence,
           initialNode: initialNode,
+          isReadOnly: _isPublished,
         ),
       ),
     );
@@ -794,11 +782,9 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                 isEditable: true,
                 isDraggable: !_isPublished,
                 nodes: _displayNodes,
-                onNodeTap: _isPublished
-                    ? null
-                    : (index) {
-                        _openEditNodeModal(context, index: index);
-                      },
+                onNodeTap: (index) {
+                  _openEditNodeModal(context, index: index);
+                },
                 onReorder: _handleReorder,
               ),
 

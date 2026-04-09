@@ -21,6 +21,7 @@ class NodeInfoSection extends StatelessWidget {
   final VoidCallback onUploadFile;
   final List<UploadedFileItem> files;
   final Function(int) onRemoveFile;
+  final bool isReadOnly;
 
   const NodeInfoSection({
     super.key,
@@ -34,6 +35,7 @@ class NodeInfoSection extends StatelessWidget {
     required this.onUploadFile,
     required this.files,
     required this.onRemoveFile,
+    this.isReadOnly = false,
   });
 
   @override
@@ -49,7 +51,8 @@ class NodeInfoSection extends StatelessWidget {
           hintText: 'Enter node title',
           height: 35,
           value: initialTitle,
-          onChanged: onTitleChanged,
+          onChanged: isReadOnly ? null : onTitleChanged,
+          readOnly: isReadOnly,
         ),
 
         const SizedBox(height: 12),
@@ -60,7 +63,8 @@ class NodeInfoSection extends StatelessWidget {
           hintText: 'Enter node description',
           height: 35,
           value: initialDescription,
-          onChanged: onDescriptionChanged,
+          onChanged: isReadOnly ? null : onDescriptionChanged,
+          readOnly: isReadOnly,
         ),
 
         const SizedBox(height: 12),
@@ -71,7 +75,8 @@ class NodeInfoSection extends StatelessWidget {
           hintText: 'Enter YouTube video URL',
           height: 35,
           value: videoUrlValue,
-          onChanged: onVideoUrlChanged ?? (_) {},
+          onChanged: isReadOnly ? null : (onVideoUrlChanged ?? (_) {}),
+          readOnly: isReadOnly,
         ),
 
         if (videoUrlWarningText != null && videoUrlWarningText!.isNotEmpty)
@@ -99,7 +104,7 @@ class NodeInfoSection extends StatelessWidget {
 
         // ===== UPLOAD FILE =====
         GestureDetector(
-          onTap: onUploadFile,
+          onTap: isReadOnly ? null : onUploadFile,
           child: PixelBorderContainer(
             width: double.infinity,
             height: 150,
@@ -146,10 +151,12 @@ class NodeInfoSection extends StatelessWidget {
                     ),
                     IconTheme(
                       data: const IconThemeData(size: 18),
-                      child: CloseIcon(
-                        color: colors.error,
-                        onPressed: () => onRemoveFile(index),
-                      ),
+                      child: isReadOnly
+                          ? const SizedBox.shrink()
+                          : CloseIcon(
+                              color: colors.error,
+                              onPressed: () => onRemoveFile(index),
+                            ),
                     ),
 
                   ],
