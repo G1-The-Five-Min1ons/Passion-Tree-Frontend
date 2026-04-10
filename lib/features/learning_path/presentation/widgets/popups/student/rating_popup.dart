@@ -142,6 +142,7 @@ class _RatingPopupState extends State<RatingPopup> {
               SaveCancel(
                 saveText: 'Submit',
                 cancelText: 'Cancel',
+                cancelTextColor: Colors.white,
                 onCancel: () => Navigator.pop(context),
                 onSave: _handleSubmit,
               ),

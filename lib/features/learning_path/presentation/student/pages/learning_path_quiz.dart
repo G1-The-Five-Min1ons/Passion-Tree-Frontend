@@ -315,16 +315,9 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
 
                   if (!scaffoldContext.mounted) return;
 
-                  // Navigate to status page immediately after submitting rating
-                  Navigator.of(scaffoldContext).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: bloc,
-                        child: const LearningPathStatusPage(),
-                      ),
-                    ),
-                    (route) => route.isFirst,
-                  );
+                  // Return to nodes overview: pop quiz page and learning node page.
+                  Navigator.of(scaffoldContext).pop();
+                  Navigator.of(scaffoldContext).pop();
                 },
               ),
             );

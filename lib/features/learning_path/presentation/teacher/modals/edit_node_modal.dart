@@ -539,16 +539,14 @@ class _EditNodeModalState extends State<EditNodeModal> {
                     // ===== INFO + MATERIALS =====
                     NodeInfoSection(
                       // ===== NODE INFO =====
-                      initialTitle: _title.isEmpty ? null : _title,
-                      initialDescription: _description.isEmpty
-                          ? null
-                          : _description,
+                      initialTitle: _title,
+                      initialDescription: _description,
                       onTitleChanged: (v) => setState(() => _title = v),
                       onDescriptionChanged: (v) =>
                           setState(() => _description = v),
 
                       // ===== VIDEO URL =====
-                      videoUrlValue: _videoUrl.isEmpty ? null : _videoUrl,
+                      videoUrlValue: _videoUrl,
                       onVideoUrlChanged: (v) => setState(() => _videoUrl = v),
                       videoUrlWarningText: _videoUrlWarningText,
                       isReadOnly: widget.isReadOnly,
