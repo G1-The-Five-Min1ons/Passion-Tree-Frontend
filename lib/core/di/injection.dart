@@ -328,6 +328,12 @@ Future<void> initializeDependencies() async {
   getIt.registerFactory<UpdateChoiceUseCase>(
     () => UpdateChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
   );
+  getIt.registerFactory<CreateChoiceUseCase>(
+    () => CreateChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<DeleteChoiceUseCase>(
+    () => DeleteChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
 
   // Learning Path Bloc
   getIt.registerFactory<LearningPathBloc>(
