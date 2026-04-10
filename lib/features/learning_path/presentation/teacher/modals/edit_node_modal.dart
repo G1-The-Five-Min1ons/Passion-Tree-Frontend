@@ -63,6 +63,23 @@ class _EditNodeModalState extends State<EditNodeModal> {
     return hasScheme ? trimmed : 'https://$trimmed';
   }
 
+  bool _isRemoteUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return false;
+
+    final uri = Uri.tryParse(trimmed);
+    if (uri != null && uri.hasScheme) {
+      return (uri.scheme == 'http' || uri.scheme == 'https') &&
+          uri.hasAuthority;
+    }
+
+    final normalized = _normalizeVideoUrl(trimmed);
+    final normalizedUri = Uri.tryParse(normalized);
+    return normalizedUri != null &&
+        normalizedUri.hasAuthority &&
+        normalizedUri.host.contains('.');
+  }
+
   bool get _isValidVideoUrl {
     final value = _videoUrl.trim();
     if (value.isEmpty) return false;
@@ -302,9 +319,17 @@ class _EditNodeModalState extends State<EditNodeModal> {
           final uploadService = UploadApiService();
 
           for (final fileItem in _files) {
-            final path = fileItem.path;
-            if (path != null && path.isNotEmpty) {
-              final file = File(path);
+            final filePath = fileItem.path;
+            if (filePath != null && filePath.isNotEmpty) {
+              if (_isRemoteUrl(filePath)) {
+                // Keep already-uploaded materials as-is.
+                materials.add(
+                  CreateMaterial(type: 'file', url: _normalizeVideoUrl(filePath)),
+                );
+                continue;
+              }
+
+              final file = File(filePath);
               final publicUrl = await uploadService.uploadImage(
                 file,
                 'materials-nodes',
@@ -326,7 +351,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             pathId: widget.pathId!,
             sequence: widget.sequence!,
             linkvdo: normalizedVideoUrl,
-            materials: materials.isNotEmpty ? materials : null,
+            materials: materials,
             questions: questions,
           ),
         );
@@ -363,9 +388,17 @@ class _EditNodeModalState extends State<EditNodeModal> {
           final uploadService = UploadApiService();
 
           for (final fileItem in _files) {
-            final path = fileItem.path;
-            if (path != null && path.isNotEmpty) {
-              final file = File(path);
+            final filePath = fileItem.path;
+            if (filePath != null && filePath.isNotEmpty) {
+              if (_isRemoteUrl(filePath)) {
+                // Keep already-uploaded materials as-is.
+                materials.add(
+                  CreateMaterial(type: 'file', url: _normalizeVideoUrl(filePath)),
+                );
+                continue;
+              }
+
+              final file = File(filePath);
               final publicUrl = await uploadService.uploadImage(
                 file,
                 'materials-nodes',
@@ -385,7 +418,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             title: _title,
             description: _description,
             linkvdo: _videoUrl.isNotEmpty ? normalizedVideoUrl : null,
-            materials: materials.isNotEmpty ? materials : null,
+            materials: materials,
             quizzes: _quizzes,
           ),
         );

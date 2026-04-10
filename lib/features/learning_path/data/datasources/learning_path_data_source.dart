@@ -262,7 +262,7 @@ class LearningPathDataSource {
     if (linkvdo != null && linkvdo.isNotEmpty) {
       body['link_vdo'] = linkvdo;
     }
-    if (materials != null && materials.isNotEmpty) {
+    if (materials != null) {
       body['material'] = materials
           .map((m) => CreateMaterialRequestApiModel(type: m.type, url: m.url).toJson())
           .toList();
