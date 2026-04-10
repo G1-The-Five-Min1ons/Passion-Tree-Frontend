@@ -47,6 +47,8 @@ class _CreateLearningPathInputPageState
   bool _isUploadingImage = false;
   String _uploadedImageUrl = '';
 
+  bool _isPendingUpdate = false;
+
   bool get _isEditMode => widget.existingPath != null;
 
   @override
@@ -213,6 +215,7 @@ class _CreateLearningPathInputPageState
       return;
     }
 
+    setState(() => _isPendingUpdate = true);
     context.read<LearningPathBloc>().add(
       UpdateLearningPathEvent(
         pathId: widget.existingPath!.id,
@@ -273,6 +276,9 @@ class _CreateLearningPathInputPageState
             );
           }
         } else if (state is LearningPathUpdated) {
+          if (!_isPendingUpdate) return;
+          setState(() => _isPendingUpdate = false);
+
           // Refresh the learning paths list
           if (_userId != null) {
             context.read<LearningPathBloc>().add(FetchLearningPathOverview());
@@ -286,6 +292,7 @@ class _CreateLearningPathInputPageState
         } else if (state is LearningPathError) {
           setState(() {
             _isCreatingPath = false;
+            _isPendingUpdate = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

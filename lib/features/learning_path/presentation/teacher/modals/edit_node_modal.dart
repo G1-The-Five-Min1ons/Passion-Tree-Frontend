@@ -452,9 +452,6 @@ class _EditNodeModalState extends State<EditNodeModal> {
     return BlocListener<LearningPathBloc, LearningPathState>(
       listener: (context, state) {
         if (state is NodeUpdated) {
-          if (context.mounted) {
-            setState(() => _isSubmitting = false);
-          }
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -471,9 +468,6 @@ class _EditNodeModalState extends State<EditNodeModal> {
             }
           });
         } else if (state is NodeCreated) {
-          if (context.mounted) {
-            setState(() => _isSubmitting = false);
-          }
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
