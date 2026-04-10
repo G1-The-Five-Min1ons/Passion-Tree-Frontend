@@ -85,6 +85,12 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
     return reflectedCount / nonStandaloneNodes.length;
   }
 
+  bool _shouldShowRecommendationBadge(AlbumItem item) {
+    final treeId = item.treeId ?? widget.treeId;
+    if (treeId == null || treeId.isEmpty) return false;
+    return _nonStandaloneReflectionProgress(item.chapters) >= _recommendPopupThreshold;
+  }
+
   void _syncCurrentItemFromState(AlbumState state) {
     if (state is AlbumDetailLoaded) {
       final album = state.album;
@@ -288,7 +294,29 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
 
                   Transform.translate(
                     offset: const Offset(0, -10),
-                    child: StatusBadge(status: item.status),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        StatusBadge(status: item.status),
+                        if (_shouldShowRecommendationBadge(item)) ...[
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              final treeId = item.treeId ?? widget.treeId;
+                              if (treeId == null || treeId.isEmpty) return;
+                              RecommendPopup.show(context, treeId: treeId);
+                            },
+                            child: const StatusBadge(
+                              status: 'growing',
+                              label: 'recommendations',
+                              badgeColor: AppColors.title,                              labelColor: AppColors.textPrimary,
+                              width: 170,
+                              horizontalPadding: 8,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
 
                   if (item.chapters.isNotEmpty)
