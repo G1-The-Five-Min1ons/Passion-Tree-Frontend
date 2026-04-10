@@ -42,6 +42,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
   bool _isFullscreen = false;
   Duration? _savedPosition;
   bool _wasPlaying = false;
+  bool _prevIsPlaying = false;
 
   @override
   void initState() {
@@ -72,19 +73,27 @@ class _LearningNodePageState extends State<LearningNodePage> {
     if (controller == null) return;
 
     final isFullscreen = controller.value.isFullScreen;
-    if (isFullscreen == _isFullscreen) return;
+    final isPlaying = controller.value.isPlaying;
+
+    // Track _wasPlaying only when fullscreen is stable (not transitioning).
+    // This avoids capturing the automatic pause that the package triggers
+    // during fullscreen transitions.
+    if (isFullscreen == _isFullscreen) {
+      if (isPlaying != _prevIsPlaying) {
+        _wasPlaying = isPlaying;
+        _prevIsPlaying = isPlaying;
+      }
+      return;
+    }
 
     _isFullscreen = isFullscreen;
     if (isFullscreen) {
       _savedPosition = controller.value.position;
-      _wasPlaying = controller.value.isPlaying;
       homeBarVisibilityNotifier.value = false;
-      // Hide all system overlays while video is in fullscreen.
       SystemChrome.setEnabledSystemUIMode(
         SystemUiMode.manual,
         overlays: const [],
       );
-      // Seek to saved position in case the player restarts on fullscreen entry.
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && _savedPosition != null) {
           controller.seekTo(_savedPosition!);
@@ -93,8 +102,10 @@ class _LearningNodePageState extends State<LearningNodePage> {
       });
     } else {
       // Save current position (watched in fullscreen) before the rebuild resets it.
+      // Do NOT read isPlaying here — the package already paused the player as
+      // part of the fullscreen exit, so isPlaying would incorrectly be false.
+      // _wasPlaying still holds the last stable playing state from inside fullscreen.
       _savedPosition = controller.value.position;
-      _wasPlaying = controller.value.isPlaying;
       homeBarVisibilityNotifier.value = true;
       SystemChrome.setEnabledSystemUIMode(
         SystemUiMode.manual,
