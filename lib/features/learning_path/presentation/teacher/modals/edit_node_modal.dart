@@ -55,20 +55,27 @@ class _EditNodeModalState extends State<EditNodeModal> {
   bool _isUploading = false;
   bool _isSubmitting = false;
 
+  String _normalizeVideoUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return trimmed;
+
+    final hasScheme = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://').hasMatch(trimmed);
+    return hasScheme ? trimmed : 'https://$trimmed';
+  }
+
   bool get _isValidVideoUrl {
     final value = _videoUrl.trim();
     if (value.isEmpty) return false;
-    final uri = Uri.tryParse(value);
-    return uri != null &&
-        (uri.scheme == 'http' || uri.scheme == 'https') &&
-        uri.hasAuthority;
+    final normalized = _normalizeVideoUrl(value);
+    final uri = Uri.tryParse(normalized);
+    return uri != null && uri.hasAuthority && uri.host.contains('.');
   }
 
   String? get _videoUrlWarningText {
     final value = _videoUrl.trim();
     if (value.isEmpty) return null;
     if (_isValidVideoUrl) return null;
-    return 'Video URL ต้องเป็นลิงก์เท่านั้น (http/https)';
+    return 'Video URL ต้องเป็นลิงก์ที่ถูกต้อง เช่น youtube.com/...';
   }
 
   bool get _hasRequiredQuiz {
@@ -259,7 +266,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Video URL ต้องเป็นลิงก์เท่านั้น (http/https)',
+            'Video URL ต้องเป็นลิงก์ที่ถูกต้อง เช่น youtube.com/...',
             style: TextStyle(color: AppColors.textPrimary),
           ),
           backgroundColor: AppColors.cancel,
@@ -310,6 +317,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
         if (!context.mounted) return;
 
         final questions = _convertQuizzesToQuestions();
+        final normalizedVideoUrl = _normalizeVideoUrl(_videoUrl);
 
         context.read<LearningPathBloc>().add(
           CreateNodeEvent(
@@ -317,7 +325,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             description: _description,
             pathId: widget.pathId!,
             sequence: widget.sequence!,
-            linkvdo: _videoUrl,
+            linkvdo: normalizedVideoUrl,
             materials: materials.isNotEmpty ? materials : null,
             questions: questions,
           ),
@@ -369,12 +377,14 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
         if (!context.mounted) return;
 
+        final normalizedVideoUrl = _normalizeVideoUrl(_videoUrl);
+
         context.read<LearningPathBloc>().add(
           UpdateNodeEvent(
             nodeId: widget.nodeId,
             title: _title,
             description: _description,
-            linkvdo: _videoUrl.isNotEmpty ? _videoUrl : null,
+            linkvdo: _videoUrl.isNotEmpty ? normalizedVideoUrl : null,
             materials: materials.isNotEmpty ? materials : null,
             quizzes: _quizzes,
           ),
