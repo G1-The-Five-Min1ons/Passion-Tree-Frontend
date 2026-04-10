@@ -41,6 +41,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
   YoutubePlayerController? _videoController;
   bool _isFullscreen = false;
   Duration? _savedPosition;
+  bool _wasPlaying = false;
 
   @override
   void initState() {
@@ -76,6 +77,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
     _isFullscreen = isFullscreen;
     if (isFullscreen) {
       _savedPosition = controller.value.position;
+      _wasPlaying = controller.value.isPlaying;
       homeBarVisibilityNotifier.value = false;
       // Hide all system overlays while video is in fullscreen.
       SystemChrome.setEnabledSystemUIMode(
@@ -86,11 +88,13 @@ class _LearningNodePageState extends State<LearningNodePage> {
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && _savedPosition != null) {
           controller.seekTo(_savedPosition!);
+          if (_wasPlaying) controller.play();
         }
       });
     } else {
       // Save current position (watched in fullscreen) before the rebuild resets it.
       _savedPosition = controller.value.position;
+      _wasPlaying = controller.value.isPlaying;
       homeBarVisibilityNotifier.value = true;
       SystemChrome.setEnabledSystemUIMode(
         SystemUiMode.manual,
@@ -99,6 +103,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && _savedPosition != null) {
           controller.seekTo(_savedPosition!);
+          if (_wasPlaying) controller.play();
           _savedPosition = null;
         }
       });
