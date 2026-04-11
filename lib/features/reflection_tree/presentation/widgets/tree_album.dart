@@ -7,11 +7,12 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/main_tree_image.dart';
 import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/edit_tree_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/retrieve_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/resume_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/tree_status_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
-
 
 class TreeAlbumCard extends StatelessWidget {
   final String title;
@@ -29,6 +30,7 @@ class TreeAlbumCard extends StatelessWidget {
   final VoidCallback? onStatusTap;
   final VoidCallback? onCardTap;
   final VoidCallback? onDelete;
+  final bool isPaused;
   final String? resumeOn;
 
   const TreeAlbumCard({
@@ -48,78 +50,96 @@ class TreeAlbumCard extends StatelessWidget {
     this.onStatusTap,
     this.onCardTap,
     this.onDelete,
+    this.isPaused = false,
     this.resumeOn,
   });
 
+  String _capitalizeStatus(String value) {
+    final trimmedValue = value.trim();
+    if (trimmedValue.isEmpty) {
+      return trimmedValue;
+    }
+    return '${trimmedValue[0].toUpperCase()}${trimmedValue.substring(1)}';
+  }
+
+  bool _isDiedStatus(String value) {
+    return value.trim().toLowerCase() == 'died';
+  }
+
+  String _normalizedStatus(String value) {
+    return value.trim().toLowerCase();
+  }
+
   @override
   Widget build(BuildContext context) {
-    bool isPaused = resumeOn != null;
+    final bool isTreePaused = isPaused;
     return Stack(
       children: [
         GestureDetector(
-        onTap: isPaused ? null : onCardTap,
-        child: PixelBaseCard(
-          title: title,
-          subtitle: subtitle,
-          actionIcon: IconButton(
-          constraints: const BoxConstraints(),
-          padding: EdgeInsets.zero,
-          splashRadius: 20,
-          icon: const MoreIcon(),
-          onPressed: () {
-            ActionPopUp.show(
-              context,
-              onEdit: () {
-                EditTreePopUp.show(
+          onTap: isTreePaused ? null : onCardTap,
+          child: PixelBaseCard(
+            title: title,
+            subtitle: subtitle,
+            actionIcon: IconButton(
+              constraints: const BoxConstraints(),
+              padding: EdgeInsets.zero,
+              splashRadius: 20,
+              icon: const MoreIcon(),
+              onPressed: () {
+                ActionPopUp.show(
                   context,
-                  initialName: title,
-                  initialPath: currentAlbumname,
-                  pathOptions: albumOptions.isEmpty 
-                      ? ['No albums available'] 
-                      : albumOptions,
-                  onSave: (newTitle, selectedAlbumName) {
-                    String? newAlbumId;
-                    if (selectedAlbumName != currentAlbumname && availableAlbums.isNotEmpty) {
-                      try {
-                        final selectedAlbum = availableAlbums.firstWhere(
-                          (album) => album.title == selectedAlbumName,
+                  onEdit: () {
+                    EditTreePopUp.show(
+                      context,
+                      initialName: title,
+                      initialPath: currentAlbumname,
+                      pathOptions: albumOptions.isEmpty
+                          ? ['No albums available']
+                          : albumOptions,
+                      onSave: (newTitle, selectedAlbumName) {
+                        String? newAlbumId;
+                        if (selectedAlbumName != currentAlbumname &&
+                            availableAlbums.isNotEmpty) {
+                          try {
+                            final selectedAlbum = availableAlbums.firstWhere(
+                              (album) => album.title == selectedAlbumName,
+                            );
+                            newAlbumId = selectedAlbum.albumId;
+                          } catch (e) {
+                            // If not found, don't change album
+                            newAlbumId = null;
+                          }
+                        }
+
+                        context.read<AlbumBloc>().add(
+                          UpdateTreeEvent(
+                            treeId: treeId,
+                            albumId: albumId,
+                            title: newTitle,
+                            newAlbumId: newAlbumId,
+                          ),
                         );
-                        newAlbumId = selectedAlbum.albumId;
-                      } catch (e) {
-                        // If not found, don't change album
-                        newAlbumId = null;
-                      }
-                    }
-                    
-                    context.read<AlbumBloc>().add(
-                      UpdateTreeEvent(
-                        treeId: treeId,
-                        albumId: albumId,
-                        title: newTitle,
-                        newAlbumId: newAlbumId,
-                      ),
+                      },
                     );
+                  },
+                  onDelete: () {
+                    onDelete?.call();
                   },
                 );
               },
-              onDelete: () {
-                onDelete?.call();
-                },
-              );
-            },
-          ),
-          topContent: Container(
-            width: double.infinity,
-            height: double.infinity,
-            color: AppColors.surface,
-            child: Stack(
-              children: [
+            ),
+            topContent: Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: AppColors.surface,
+              child: Stack(
+                children: [
                   Center(
                     child: MainTreeImage(
                       status: treeStatus,
                       treeScore: treeScore,
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -132,6 +152,40 @@ class TreeAlbumCard extends StatelessWidget {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
+              final normalizedStatus = _normalizedStatus(statusText);
+
+              if (_isDiedStatus(statusText)) {
+                RetrievePopup.show(
+                  context,
+                  onConfirm: () {
+
+                    context.read<AlbumBloc>().add(
+                      RetrieveTreeEvent(treeId: treeId, albumId: albumId),
+                    );
+                  },
+                );
+                return;
+              }
+
+              if (['growing', 'fading', 'dying'].contains(normalizedStatus)) {
+                TreeStatusPopup.show(
+                  context,
+                  normalizedStatus,
+                  onPauseSelected: (pauseFrom, resumeOn) {
+
+                    context.read<AlbumBloc>().add(
+                      PauseTreeEvent(
+                        treeId: treeId,
+                        albumId: albumId,
+                        pauseFrom: pauseFrom,
+                        resumeOn: resumeOn,
+                      ),
+                    );
+                  },
+                );
+                return;
+              }
+
               onStatusTap?.call();
             },
             child: Padding(
@@ -144,7 +198,7 @@ class TreeAlbumCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  statusText,
+                  _capitalizeStatus(statusText),
                   textAlign: TextAlign.center,
                   style: AppPixelTypography.littleSmall.copyWith(
                     color: Theme.of(context).colorScheme.onPrimary,
@@ -155,34 +209,45 @@ class TreeAlbumCard extends StatelessWidget {
           ),
         ),
 
-        if (resumeOn != null)
-        Positioned.fill(
-          child: GestureDetector(
-            onTap: () {
-              ResumePopup.show(context);
-            },
-            child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.textDisabled.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Paused",
-                  style: AppPixelTypography.smallTitle.copyWith(color: AppColors.surface),
+        if (isTreePaused)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                ResumePopup.show(
+                  context,
+                  onResume: () {
+                    context.read<AlbumBloc>().add(
+                      ResumeTreeEvent(treeId: treeId, albumId: albumId),
+                    );
+                  },
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.textDisabled.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  "Resume on : $resumeOn",
-                  style: AppTypography.smallBodyRegular.copyWith(color: AppColors.surface),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Paused",
+                      style: AppPixelTypography.smallTitle.copyWith(
+                        color: AppColors.surface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Resume on : ${resumeOn ?? '-'}",
+                      style: AppTypography.smallBodyRegular.copyWith(
+                        color: AppColors.surface,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-          ),
-        ),
       ],
     );
   }

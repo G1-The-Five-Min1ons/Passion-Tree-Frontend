@@ -1,0 +1,129 @@
+import 'package:flutter/material.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
+import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
+
+class MissionCenterPage extends StatelessWidget {
+  const MissionCenterPage({
+    super.key,
+    required this.missions,
+    this.highlightedMissionId,
+  });
+
+  final List<MissionItem> missions;
+  final String? highlightedMissionId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: const AppBarWidget(title: 'Mission Center', showBackButton: true),
+      body: missions.isEmpty
+          ? Center(
+              child: Text(
+                'No missions available',
+                style: AppTypography.bodyRegular.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: missions.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final mission = missions[index];
+                return _MissionTile(
+                  mission: mission,
+                  highlighted: mission.missionId == highlightedMissionId,
+                );
+              },
+            ),
+    );
+  }
+}
+
+class _MissionTile extends StatelessWidget {
+  const _MissionTile({required this.mission, required this.highlighted});
+
+  final MissionItem mission;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    final statusText = mission.isCompleted ? 'Completed' : 'In progress';
+    final expireText = mission.expireAt == null
+        ? 'No deadline'
+        : 'Due ${mission.expireAt!.day}/${mission.expireAt!.month}/${mission.expireAt!.year}';
+
+    return PixelBorderContainer(
+      width: double.infinity,
+      pixelSize: 3,
+      padding: const EdgeInsets.all(12),
+      child: Container(
+        decoration: BoxDecoration(
+          border: highlighted
+              ? Border.all(color: AppColors.secondaryBrand, width: 1.5)
+              : null,
+        ),
+        padding: const EdgeInsets.all(6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    mission.detail,
+                    style: AppTypography.bodySemiBold.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${mission.rewardXp} XP',
+                  style: AppTypography.smallBodySemiBold.copyWith(
+                    color: AppColors.secondaryBrand,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              statusText,
+              style: AppTypography.smallBodyRegular.copyWith(
+                color: mission.isCompleted
+                    ? AppColors.secondaryBrand
+                    : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              expireText,
+              style: AppTypography.smallBodyRegular.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: mission.isCompleted
+                    ? null
+                    : () {
+                        Navigator.pop(context);
+                        HomeTabNavigationNotifier.jumpToTab(1);
+                      },
+                child: Text(mission.isCompleted ? 'Completed' : 'Go to Learn'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

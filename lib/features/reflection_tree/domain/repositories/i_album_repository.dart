@@ -45,4 +45,17 @@ abstract class IAlbumRepository {
     required String title,
     String? albumId,
   });
+
+  /// Retrieve a dead tree by spending hearts
+  Future<Either<Failure, int>> retrieveTree({required String treeId});
+
+  /// Pause a tree until resume date by spending hearts
+  Future<Either<Failure, int>> pauseTree({
+    required String treeId,
+    required DateTime pauseFrom,
+    required DateTime resumeOn,
+  });
+
+  /// Resume a paused tree immediately
+  Future<Either<Failure, void>> resumeTree({required String treeId});
 }

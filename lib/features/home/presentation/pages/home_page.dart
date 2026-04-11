@@ -12,6 +12,9 @@ import 'package:passion_tree_frontend/features/home/presentation/widgets/streak_
 import 'package:passion_tree_frontend/features/home/presentation/widgets/popular_learning_path.dart';
 
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/weekly_mission_card_widget.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/pages/mission_center_page.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/mock/mock_missions.dart';
+import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,10 +26,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   /// cache overview state เพื่อกัน section หายตอน push/pop
   LearningPathOverviewLoaded? _cachedOverview;
+  bool _hasRequestedInitialLoad = false;
+  late final List<MissionItem> _homeMissions;
 
   @override
   void initState() {
     super.initState();
+    _homeMissions = buildMockWeeklyMissions();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -34,10 +40,47 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _openMissionCenter({MissionItem? highlightedMission}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MissionCenterPage(
+          missions: _homeMissions,
+          highlightedMissionId: highlightedMission?.missionId,
+        ),
+      ),
+    );
+  }
+
+  void _onMissionTap(MissionItem mission) {
+    _openMissionCenter(highlightedMission: mission);
+  }
+
   Future<void> _loadData() async {
     if (!mounted) return;
 
     context.read<LearningPathBloc>().add(FetchLearningPathOverview());
+  }
+
+  void _clearCachedOverview() {
+    if (!mounted || _cachedOverview == null) return;
+    setState(() {
+      _cachedOverview = null;
+    });
+  }
+
+  void _handleOverviewState(LearningPathState state) {
+    if (state is LearningPathOverviewLoaded && mounted) {
+      setState(() {
+        _cachedOverview = state;
+      });
+      return;
+    }
+
+    if (state is LearningPathError) {
+      _clearCachedOverview();
+      _hasRequestedInitialLoad = false;
+    }
   }
 
   @override

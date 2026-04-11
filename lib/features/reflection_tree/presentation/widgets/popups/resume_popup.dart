@@ -5,12 +5,14 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 
 class ResumePopup extends StatelessWidget{
-  const ResumePopup({super.key});
+  final VoidCallback? onResume;
 
-  static void show(BuildContext context) {
+  const ResumePopup({super.key, this.onResume});
+
+  static void show(BuildContext context, {VoidCallback? onResume}) {
     showDialog(
       context: context,
-      builder: (context) => const ResumePopup(),
+      builder: (context) => ResumePopup(onResume: onResume),
     );
   }
 
@@ -48,7 +50,7 @@ class ResumePopup extends StatelessWidget{
                 cancelText: 'Cancel',
                 onSave: (){
                   Navigator.pop(context);
-                  //TODO: add logic
+                  onResume?.call();
                 }, onCancel: () => Navigator.pop(context),
               )
             ],

@@ -65,6 +65,9 @@ typedef RefreshTokenCallback = Future<bool> Function();
 /// Callback to get the current access token
 typedef GetTokenCallback = Future<String?> Function();
 
+/// Callback to notify app-level auth expiry (e.g. force navigation to login)
+typedef SessionExpiredCallback = FutureOr<void> Function();
+
 /// API Handler for HTTP requests with logging and silent refresh support
 class ApiHandler {
   final http.Client _client;
@@ -72,13 +75,18 @@ class ApiHandler {
   // Callbacks for token management
   RefreshTokenCallback? onTokenRefresh;
   GetTokenCallback? getToken;
+  SessionExpiredCallback? onSessionExpired;
 
   // State for handling concurrent refreshes
   bool _isRefreshing = false;
   final List<Completer<bool>> _refreshQueue = [];
 
-  ApiHandler({http.Client? client, this.onTokenRefresh, this.getToken})
-    : _client = client ?? http.Client();
+  ApiHandler({
+    http.Client? client,
+    this.onTokenRefresh,
+    this.getToken,
+    this.onSessionExpired,
+  }) : _client = client ?? http.Client();
 
   /// Wait if a token refresh is currently in progress
   Future<void> _waitForRefresh() async {
@@ -155,6 +163,7 @@ class ApiHandler {
 
         if (!refreshSuccess) {
           LogHandler.error('ApiHandler: Token refresh failed. Logging out...');
+          await onSessionExpired?.call();
           return response; // Return the original 401 response
         }
       }
@@ -279,16 +288,42 @@ class ApiHandler {
       url: url,
       headers: headers,
       fromJson: fromJson,
-      performRequest: (reqHeaders) =>
-          _client
-              .delete(
-                Uri.parse(url),
-                headers: reqHeaders,
-                body: body is String ? body : jsonEncode(body),
-              )
-              .timeout(timeout),
+      performRequest: (reqHeaders) => _client
+          .delete(
+            Uri.parse(url),
+            headers: reqHeaders,
+            body: body is String ? body : jsonEncode(body),
+          )
+          .timeout(timeout),
     );
   }
+
+    /// Make PATCH request
+    Future<ApiResponse<T>> patch<T>({
+      required String url,
+      Map<String, String>? headers,
+      dynamic body,
+      T Function(dynamic)? fromJson,
+      Duration timeout = const Duration(seconds: 30),
+    }) async {
+      LogHandler.request(method: 'PATCH', url: url, body: body);
+      return _requestWithRetry<T>(
+        method: 'PATCH',
+        url: url,
+        headers: headers,
+        fromJson: fromJson,
+        performRequest: (reqHeaders) => _client
+            .patch(
+              Uri.parse(url),
+              headers: reqHeaders,
+              body: body == null
+                  ? null
+                  : (body is String ? body : jsonEncode(body)),
+            )
+            .timeout(timeout),
+      );
+    }
+  
 
   /// Handle HTTP response
   ApiResponse<T> _handleResponse<T>(
@@ -318,12 +353,13 @@ class ApiHandler {
       if (apiResponse.isSuccess) {
         LogHandler.success('$method $url completed successfully');
       } else if (apiResponse.isError) {
-          final errorMsg = '$method $url failed ($statusCode): ${apiResponse.error ?? "Unknown error"}';
-          if (statusCode >= 400 && statusCode < 500) {
-            LogHandler.warning(errorMsg);
-          } else {
-            LogHandler.error(errorMsg);
-          }
+        final errorMsg =
+            '$method $url failed ($statusCode): ${apiResponse.error ?? "Unknown error"}';
+        if (statusCode >= 400 && statusCode < 500) {
+          LogHandler.warning(errorMsg);
+        } else {
+          LogHandler.error(errorMsg);
+        }
       }
 
       return apiResponse;

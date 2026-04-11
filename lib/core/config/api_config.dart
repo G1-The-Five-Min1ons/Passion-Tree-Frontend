@@ -14,7 +14,7 @@ class ApiConfig {
     'AI_BASE_URL',
     defaultValue: _devAIUrl,
   );
-  
+
   // OAuth Configuration
   static const String googleWebClientId = String.fromEnvironment(
     'GOOGLE_WEB_CLIENT_ID',
@@ -85,6 +85,8 @@ class ApiConfig {
   // Tree endpoints
   static String get trees => '$apiBackendUrl/trees';
   static String treeById(String treeId) => '$apiBackendUrl/trees/$treeId';
+  static String retrieveTree(String treeId) =>
+      '$apiBackendUrl/trees/$treeId/retrieve';
   static String treesByAlbumId(String albumId) =>
       '$apiBackendUrl/trees?album_id=$albumId';
   static String pauseTree(String treeId) =>
