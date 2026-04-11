@@ -273,6 +273,44 @@ class _EditNodeModalState extends State<EditNodeModal> {
     }).toList();
   }
 
+  Future<List<CreateMaterial>> _buildMaterialsForSubmit({
+    required bool preserveExistingNonFileMaterials,
+  }) async {
+    final materials = <CreateMaterial>[];
+
+    if (preserveExistingNonFileMaterials && widget.initialNode != null) {
+      for (final material in widget.initialNode!.materials) {
+        if (material.type != 'file' && material.url.trim().isNotEmpty) {
+          materials.add(
+            CreateMaterial(type: material.type, url: material.url.trim()),
+          );
+        }
+      }
+    }
+
+    if (_files.isEmpty) return materials;
+
+    final uploadService = UploadApiService();
+    for (final fileItem in _files) {
+      final filePath = fileItem.path;
+      if (filePath == null || filePath.isEmpty) continue;
+
+      if (_isRemoteUrl(filePath)) {
+        // Keep already-uploaded materials as-is.
+        materials.add(
+          CreateMaterial(type: 'file', url: _normalizeVideoUrl(filePath)),
+        );
+        continue;
+      }
+
+      final file = File(filePath);
+      final publicUrl = await uploadService.uploadImage(file, 'materials-nodes');
+      materials.add(CreateMaterial(type: 'file', url: publicUrl));
+    }
+
+    return materials;
+  }
+
   Future<void> _handleUpdate(BuildContext context) async {
     // Guard against double-tap / duplicate submit while the first request is in-flight.
     if (_isSubmitting) return;
@@ -311,33 +349,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
       setState(() => _isUploading = true);
 
       try {
-        // Upload files และรวม materials
-        List<CreateMaterial> materials = [];
-
-        // Upload files และเพิ่ม URLs
-        if (_files.isNotEmpty) {
-          final uploadService = UploadApiService();
-
-          for (final fileItem in _files) {
-            final filePath = fileItem.path;
-            if (filePath != null && filePath.isNotEmpty) {
-              if (_isRemoteUrl(filePath)) {
-                // Keep already-uploaded materials as-is.
-                materials.add(
-                  CreateMaterial(type: 'file', url: _normalizeVideoUrl(filePath)),
-                );
-                continue;
-              }
-
-              final file = File(filePath);
-              final publicUrl = await uploadService.uploadImage(
-                file,
-                'materials-nodes',
-              );
-              materials.add(CreateMaterial(type: 'file', url: publicUrl));
-            }
-          }
-        }
+        final materials = await _buildMaterialsForSubmit(
+          preserveExistingNonFileMaterials: false,
+        );
 
         if (!context.mounted) return;
 
@@ -380,33 +394,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
       setState(() => _isUploading = true);
 
       try {
-        // Upload files และรวม materials
-        List<CreateMaterial> materials = [];
-
-        // Upload files และเพิ่ม URLs
-        if (_files.isNotEmpty) {
-          final uploadService = UploadApiService();
-
-          for (final fileItem in _files) {
-            final filePath = fileItem.path;
-            if (filePath != null && filePath.isNotEmpty) {
-              if (_isRemoteUrl(filePath)) {
-                // Keep already-uploaded materials as-is.
-                materials.add(
-                  CreateMaterial(type: 'file', url: _normalizeVideoUrl(filePath)),
-                );
-                continue;
-              }
-
-              final file = File(filePath);
-              final publicUrl = await uploadService.uploadImage(
-                file,
-                'materials-nodes',
-              );
-              materials.add(CreateMaterial(type: 'file', url: publicUrl));
-            }
-          }
-        }
+        final materials = await _buildMaterialsForSubmit(
+          preserveExistingNonFileMaterials: true,
+        );
 
         if (!context.mounted) return;
 
