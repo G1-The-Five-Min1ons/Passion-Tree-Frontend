@@ -136,8 +136,9 @@ class NodeInfoSection extends StatelessWidget {
             final file = files[index];
 
             return Padding(
-              padding: const EdgeInsets.only(bottom: 8, left: 10),
+              padding: const EdgeInsets.only(bottom: 8),
               child: PixelBorderContainer(
+                width: double.infinity,
                 height: 40,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(

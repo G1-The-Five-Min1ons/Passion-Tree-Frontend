@@ -27,18 +27,23 @@ class NodeDetailApiModel {
   });
 
   factory NodeDetailApiModel.fromJson(Map<String, dynamic> json) {
+    final rawMaterials = json['materials'] ?? json['material'];
+    final rawQuestions = json['questions'];
+
     return NodeDetailApiModel(
       nodeId: json['node_id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       sequence: json['sequence'] ?? 0,
       pathId: json['path_id']?.toString() ?? '',
-      materials: (json['materials'] as List<dynamic>?)
-              ?.map((m) => MaterialApiModel.fromJson(m as Map<String, dynamic>))
+      materials: (rawMaterials as List<dynamic>?)
+              ?.whereType<Map<String, dynamic>>()
+              .map(MaterialApiModel.fromJson)
               .toList() ??
           [],
-      questions: (json['questions'] as List<dynamic>?)
-              ?.map((q) => QuizQuestionApiModel.fromJson(q as Map<String, dynamic>))
+      questions: (rawQuestions as List<dynamic>?)
+              ?.whereType<Map<String, dynamic>>()
+              .map(QuizQuestionApiModel.fromJson)
               .toList() ??
           [],
       status: json['status']?.toString() ?? 'locked',

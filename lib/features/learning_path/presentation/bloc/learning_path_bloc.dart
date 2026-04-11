@@ -190,10 +190,25 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         try {
           final userId = await getIt<IAuthRepository>().getUserId();
           final nodes = await getNodesForPath(event.pathId, userId ?? '');
-          LogHandler.debug('[BLoC] Loaded ${nodes.length} nodes');
+
+          // Hydrate each node with full detail so materials/video always exist in UI.
+          final detailedNodes = await Future.wait(
+            nodes.map((node) async {
+              try {
+                return await getNodeDetail(node.nodeId, userId ?? '');
+              } catch (e) {
+                LogHandler.warning(
+                  '[BLoC] Failed to hydrate node detail for ${node.nodeId}, fallback to list payload: $e',
+                );
+                return node;
+              }
+            }),
+          );
+
+          LogHandler.debug('[BLoC] Loaded ${detailedNodes.length} nodes (hydrated)');
           emit(NodesLoaded(
             pathId: event.pathId,
-            nodes: nodes,
+            nodes: detailedNodes,
           ));
         } catch (e) {
           LogHandler.error('[BLoC] Error fetching nodes: $e');

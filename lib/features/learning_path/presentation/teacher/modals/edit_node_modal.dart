@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,11 +22,14 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/cre
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_choice.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EditNodeModal extends StatefulWidget {
   final String nodeId;
   final bool isNewNode;
   final bool isAiPath;
+  final bool isPrimaryNode;
+  final int totalNodes;
   final String? pathId;
   final String? sequence;
   final NodeDetail? initialNode;
@@ -36,6 +40,8 @@ class EditNodeModal extends StatefulWidget {
     required this.nodeId,
     this.isNewNode = false,
     this.isAiPath = false,
+    this.isPrimaryNode = false,
+    this.totalNodes = 0,
     this.pathId,
     this.sequence,
     this.initialNode,
@@ -47,10 +53,13 @@ class EditNodeModal extends StatefulWidget {
 }
 
 class _EditNodeModalState extends State<EditNodeModal> {
+  static const String _materialNameMapKey = 'learning_path_material_name_map';
+
   String _title = '';
   String _description = '';
   String _videoUrl = '';
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
+  Map<String, String> _materialNameByUrl = {};
   List<NodeQuiz> _quizzes = []; //ส่วนเพิ่ม quiz
   bool _isUploading = false;
   bool _isSubmitting = false;
@@ -110,6 +119,81 @@ class _EditNodeModalState extends State<EditNodeModal> {
         _hasRequiredQuiz;
   }
 
+  String _deriveDisplayFileName(String url) {
+    final decoded = Uri.decodeComponent(url);
+    final segments = Uri.tryParse(decoded)?.pathSegments;
+    final rawName = (segments != null && segments.isNotEmpty)
+        ? segments.last
+        : decoded.split('/').last;
+
+    var cleaned = rawName;
+    cleaned = cleaned.replaceFirst(RegExp(r'^[0-9a-fA-F-]{8,}[_-]+'), '');
+    cleaned = cleaned.replaceFirst(RegExp(r'^\d{8,}[_-]+'), '');
+
+    if (cleaned.isEmpty) return rawName;
+    return cleaned;
+  }
+
+  Future<void> _loadMaterialNameMap() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_materialNameMapKey);
+      if (raw == null || raw.isEmpty) {
+        _materialNameByUrl = {};
+        return;
+      }
+
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) {
+        _materialNameByUrl = decoded.map(
+          (key, value) => MapEntry(key, value.toString()),
+        );
+      }
+    } catch (_) {
+      _materialNameByUrl = {};
+    }
+  }
+
+  Future<void> _rememberMaterialName(String url, String name) async {
+    if (url.trim().isEmpty || name.trim().isEmpty) return;
+
+    _materialNameByUrl[url] = name;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_materialNameMapKey, jsonEncode(_materialNameByUrl));
+    } catch (_) {}
+  }
+
+  Future<void> _loadExistingMaterials() async {
+    final node = widget.initialNode;
+    if (node == null) return;
+
+    await _loadMaterialNameMap();
+    if (!mounted) return;
+
+    final existing = <UploadedFileItem>[];
+    for (final material in node.materials) {
+      if (material.url.trim().isEmpty) continue;
+
+      final displayName = _materialNameByUrl[material.url] ??
+          _deriveDisplayFileName(material.url);
+
+      existing.add(
+        UploadedFileItem(
+          name: displayName,
+          size: 0,
+          path: material.url,
+        ),
+      );
+    }
+
+    setState(() {
+      _files
+        ..clear()
+        ..addAll(existing);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -120,19 +204,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
       _description = widget.initialNode!.description;
       _videoUrl = widget.initialNode!.linkVdo ?? '';
 
-      // โหลด materials (files ที่มีอยู่แล้ว)
-      for (final material in widget.initialNode!.materials) {
-        if (material.type == 'file') {
-          // สำหรับไฟล์ที่มีอยู่แล้ว แสดงเป็น URL (ไม่สามารถ edit ได้แต่แสดงให้เห็น)
-          _files.add(
-            UploadedFileItem(
-              name: material.url.split('/').last,
-              size: 0, // ไม่ทราบขนาดไฟล์
-              path: material.url, // เก็บ URL แทน path
-            ),
-          );
-        }
-      }
+      _loadExistingMaterials();
 
       // โหลด questions และแปลงเป็น NodeQuiz
       _quizzes = widget.initialNode!.questions.map((question) {
@@ -162,8 +234,10 @@ class _EditNodeModalState extends State<EditNodeModal> {
         );
       }).toList();
 
-      // ดึงคำถามล่าสุดจาก API เฉพาะหน้าแก้ไขโหนด
-      _loadQuestionsFromApi();
+      // Fetch latest questions only for existing backend nodes.
+      if (!widget.isNewNode) {
+        _loadQuestionsFromApi();
+      }
     }
   }
 
@@ -207,13 +281,8 @@ class _EditNodeModalState extends State<EditNodeModal> {
     }
   }
 
-  bool get _isPlainPathFirstNode {
-    if (widget.isAiPath) return false;
-
-    final sequence = widget.sequence?.trim();
-    if (sequence == '1') return true;
-
-    return widget.initialNode?.sequence == 1;
+  bool get _cannotDeleteLastNode {
+    return widget.totalNodes <= 1;
   }
 
   //  ===== FILE FUNCTIONS  =====
@@ -300,12 +369,17 @@ class _EditNodeModalState extends State<EditNodeModal> {
         materials.add(
           CreateMaterial(type: 'file', url: _normalizeVideoUrl(filePath)),
         );
+        await _rememberMaterialName(
+          _normalizeVideoUrl(filePath),
+          fileItem.name,
+        );
         continue;
       }
 
       final file = File(filePath);
       final publicUrl = await uploadService.uploadImage(file, 'materials-nodes');
       materials.add(CreateMaterial(type: 'file', url: publicUrl));
+      await _rememberMaterialName(publicUrl, fileItem.name);
     }
 
     return materials;
@@ -578,11 +652,11 @@ class _EditNodeModalState extends State<EditNodeModal> {
                                       body:
                                           'Are you sure you want to delete?\nThis Process cannot be undone.',
                                       onDelete: () {
-                                        if (_isPlainPathFirstNode) {
+                                        if (_cannotDeleteLastNode) {
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             const SnackBar(
                                               content: Text(
-                                                'Unable to remove primary node',
+                                                'Unable to delete the last node',
                                                 style: TextStyle(
                                                   color: AppColors.textPrimary,
                                                 ),

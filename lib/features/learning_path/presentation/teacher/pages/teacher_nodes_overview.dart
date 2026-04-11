@@ -179,17 +179,33 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   void _openEditNodeModal(BuildContext context, {int? index}) {
     String nodeId;
     bool isNewNode;
+    bool isPrimaryNode = false;
+    int totalNodes = _displayNodes.length;
     String? sequence;
     NodeDetail? initialNode;
 
     if (index != null && index < _displayNodes.length) {
       final displayNode = _displayNodes[index];
-      final isBackendNode =
-          _cachedNodes?.any((n) => n.nodeId == displayNode.nodeId) ?? false;
+      isPrimaryNode = index == 0;
+      final uiNode = _uiNodes.firstWhere(
+        (n) => n.sequence == displayNode.sequence,
+        orElse: () => NodeUiState(
+          title: displayNode.title,
+          description: displayNode.description,
+          sequence: displayNode.sequence,
+          isCreated: false,
+        ),
+      );
+
+        final resolvedNodeId = uiNode.realNodeId;
+        final hasRealNodeId = resolvedNodeId != null && resolvedNodeId.isNotEmpty;
+        final existingNodeId = hasRealNodeId ? resolvedNodeId : null;
+      final isBackendNode = hasRealNodeId ||
+          (_cachedNodes?.any((n) => n.nodeId == displayNode.nodeId) ?? false);
 
       if (isBackendNode) {
         // แก้ไข node ที่มีอยู่แล้วจาก backend
-        nodeId = displayNode.nodeId;
+        nodeId = existingNodeId ?? displayNode.nodeId;
         isNewNode = false;
         sequence = null;
         initialNode = displayNode;
@@ -221,6 +237,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           nodeId: nodeId,
           isNewNode: isNewNode,
           isAiPath: _isAiPath,
+          isPrimaryNode: isPrimaryNode,
+          totalNodes: totalNodes,
           pathId: widget.pathId,
           sequence: sequence,
           initialNode: initialNode,
@@ -513,6 +531,14 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         .toList();
   }
 
+  bool get _shouldKeepDraftUiNodes {
+    return _isAiPath ||
+        _pendingPublish ||
+        _pendingSaveDraft ||
+        _createQueue.isNotEmpty ||
+        _pendingNodeIndex != null;
+  }
+
   List<NodeDetail> get _displayNodes {
     final backendNodes = _cachedNodes;
     final cachedNodeIds =
@@ -522,13 +548,15 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     // This covers both uncreated draft nodes AND nodes that were just created
     // sequentially but whose realNodeId hasn't appeared in a fresh fetch yet,
     // preventing them from disappearing during the Save Draft sequential flow.
-    final pendingUiNodes = _uiNodes
-        .where(
+    final pendingUiNodes = _shouldKeepDraftUiNodes
+      ? _uiNodes
+          .where(
           (n) =>
-              n.realNodeId == null ||
-              !cachedNodeIds.contains(n.realNodeId),
-        )
-        .toList();
+            n.realNodeId == null ||
+            !cachedNodeIds.contains(n.realNodeId),
+          )
+          .toList()
+      : <NodeUiState>[];
 
     if (backendNodes != null && backendNodes.isNotEmpty) {
       if (pendingUiNodes.isEmpty) return backendNodes;
@@ -640,11 +668,11 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                 }
               }
 
-              // Preserve every unmatched, uncreated draft node.
+              // Preserve unmatched drafts only when explicitly needed.
               for (int i = 0; i < _uiNodes.length; i++) {
                 if (matchedUiIndices.contains(i)) continue;
                 final ui = _uiNodes[i];
-                if (!ui.isCreated) {
+                if (!ui.isCreated && _shouldKeepDraftUiNodes) {
                   newUiNodes.add(ui);
                 }
               }
