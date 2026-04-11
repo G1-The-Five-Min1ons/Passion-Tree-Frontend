@@ -46,71 +46,78 @@ class _HomePageState extends State<HomePage> {
       appBar: const AppBarWidget(title: 'Home', showBackButton: false),
 
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: AppSpacing.xmargin,
-              right: AppSpacing.xmargin,
-              top: AppSpacing.ymargin,
-            ),
+        child: BlocListener<LearningPathBloc, LearningPathState>(
+          listener: (context, state) {
+            if (state is PathEnrolled) {
+              context.read<LearningPathBloc>().add(FetchLearningPathOverview());
+            }
+          },
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                left: AppSpacing.xmargin,
+                right: AppSpacing.xmargin,
+                top: AppSpacing.ymargin,
+              ),
 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                /// STREAK
-                const StreakSection(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /// STREAK
+                  const StreakSection(),
 
-                const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                /// POPULAR LEARNING PATHS
-                BlocBuilder<LearningPathBloc, LearningPathState>(
-                  builder: (context, state) {
-                    if (state is LearningPathOverviewLoaded) {
-                      _cachedOverview = state;
-                    }
+                  /// POPULAR LEARNING PATHS
+                  BlocBuilder<LearningPathBloc, LearningPathState>(
+                    builder: (context, state) {
+                      if (state is LearningPathOverviewLoaded) {
+                        _cachedOverview = state;
+                      }
 
-                    final overview = _cachedOverview;
+                      final overview = _cachedOverview;
 
-                    if (overview != null) {
-                      final hasEnrolledPaths =
-                          overview.enrolledPaths.isNotEmpty;
+                      if (overview != null) {
+                        final hasEnrolledPaths =
+                            overview.enrolledPaths.isNotEmpty;
 
-                      final enrolledPathIds = overview.enrolledPaths
-                          .map((e) => e.pathId.trim())
-                          .toSet();
-                      final unenrolledPaths = overview.allPaths
-                          .where(
-                            (p) =>
-                                p.publishStatus.toLowerCase().trim() ==
-                                    'published' &&
-                                !enrolledPathIds.contains(p.id.trim()),
-                          )
-                          .toList();
+                        final enrolledPathIds = overview.enrolledPaths
+                            .map((e) => e.pathId.trim())
+                            .toSet();
+                        final unenrolledPaths = overview.allPaths
+                            .where(
+                              (p) =>
+                                  p.publishStatus.toLowerCase().trim() ==
+                                      'published' &&
+                                  !enrolledPathIds.contains(p.id.trim()),
+                            )
+                            .toList();
 
-                      return PopularLearningPathsSection(
-                        paths: unenrolledPaths,
-                        hasEnrolledPaths: hasEnrolledPaths,
-                        isLoading: state is LearningPathLoading,
-                      );
-                    }
+                        return PopularLearningPathsSection(
+                          paths: unenrolledPaths,
+                          hasEnrolledPaths: hasEnrolledPaths,
+                          isLoading: state is LearningPathLoading,
+                        );
+                      }
 
-                    if (state is LearningPathLoading) {
-                      return const PopularLearningPathsSection(
-                        paths: [],
-                        hasEnrolledPaths: false,
-                        isLoading: true,
-                      );
-                    }
+                      if (state is LearningPathLoading) {
+                        return const PopularLearningPathsSection(
+                          paths: [],
+                          hasEnrolledPaths: false,
+                          isLoading: true,
+                        );
+                      }
 
-                    return const SizedBox();
-                  },
-                ),
+                      return const SizedBox();
+                    },
+                  ),
 
-                const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                /// WEEKLY MISSION (แทน Reflection)
-                const WeeklyMissionCardWidget(missions: []),
-              ],
+                  /// WEEKLY MISSION (แทน Reflection)
+                  const WeeklyMissionCardWidget(missions: []),
+                ],
+              ),
             ),
           ),
         ),

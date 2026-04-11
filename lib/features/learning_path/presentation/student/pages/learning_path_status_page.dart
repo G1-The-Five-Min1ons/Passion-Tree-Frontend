@@ -77,8 +77,14 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
         onSearch: (q) => setState(() => _searchQuery = q),
       ),
       body: SafeArea(
-        child: BlocBuilder<LearningPathBloc, LearningPathState>(
-          builder: (context, state) {
+        child: BlocListener<LearningPathBloc, LearningPathState>(
+          listener: (context, state) {
+            if (state is PathEnrolled && userId != null && userId!.isNotEmpty) {
+              context.read<LearningPathBloc>().add(FetchLearningPathStatus());
+            }
+          },
+          child: BlocBuilder<LearningPathBloc, LearningPathState>(
+            builder: (context, state) {
             // Cache data when loaded
             if (state is LearningPathOverviewLoaded) {
               _cachedEnrolledPaths = state.enrolledPaths;
@@ -315,6 +321,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
           },
         ),
       ),
+      )
     );
   }
 }

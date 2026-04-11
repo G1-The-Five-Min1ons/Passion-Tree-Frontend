@@ -156,7 +156,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
                         player: player,
                         onTakeQuiz: () async {
                           final bloc = context.read<LearningPathBloc>();
-                          await Navigator.push(
+                          final quizCompleted = await Navigator.push<bool>(
                             context,
                             MaterialPageRoute(
                               builder: (_) => BlocProvider.value(
@@ -174,6 +174,13 @@ class _LearningNodePageState extends State<LearningNodePage> {
                               ),
                             ),
                           );
+                          if (!mounted) return;
+
+                          if (quizCompleted == true) {
+                            Navigator.pop(context, true);
+                            return;
+                          }
+
                           if (mounted) {
                             bloc.add(
                               FetchNodeDetail(
