@@ -144,9 +144,7 @@ class CourseProgressCard extends StatelessWidget {
                     child: Text(
                       isCompleted ? 'Completed' : 'In Progress',
                       style: AppTypography.smallBodyMedium.copyWith(
-                        color: isCompleted
-                            ? colors.primary
-                            : colors.onPrimary,
+                        color: Colors.white,
                         fontSize: 9,
                       ),
                     ),

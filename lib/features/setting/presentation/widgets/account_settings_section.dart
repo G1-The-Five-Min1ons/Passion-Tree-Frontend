@@ -218,7 +218,7 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
           LogHandler.success('SETTINGS · SAVE ACCOUNT completed');
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Settings updated successfully')),
+            const SnackBar(content: Text('Settings updated successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
           );
         },
       );

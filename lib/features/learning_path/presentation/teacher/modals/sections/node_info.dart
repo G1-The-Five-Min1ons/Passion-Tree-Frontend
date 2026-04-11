@@ -7,8 +7,7 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/uploaded_file.dart';
 
 class NodeInfoSection extends StatelessWidget {
-
-   final ValueChanged<String> onTitleChanged;
+  final ValueChanged<String> onTitleChanged;
   final ValueChanged<String> onDescriptionChanged;
   final String? initialTitle;
   final String? initialDescription;
@@ -16,11 +15,13 @@ class NodeInfoSection extends StatelessWidget {
   // Video URL
   final String? videoUrlValue;
   final ValueChanged<String>? onVideoUrlChanged;
+  final String? videoUrlWarningText;
 
   // Files
   final VoidCallback onUploadFile;
   final List<UploadedFileItem> files;
   final Function(int) onRemoveFile;
+  final bool isReadOnly;
 
   const NodeInfoSection({
     super.key,
@@ -30,9 +31,11 @@ class NodeInfoSection extends StatelessWidget {
     this.initialDescription,
     this.videoUrlValue,
     this.onVideoUrlChanged,
+    this.videoUrlWarningText,
     required this.onUploadFile,
     required this.files,
     required this.onRemoveFile,
+    this.isReadOnly = false,
   });
 
   @override
@@ -42,37 +45,50 @@ class NodeInfoSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        
         // ===== NODE TITLE =====
         PixelTextField(
-          label: 'Node Title',
+          label: 'Node Title *',
           hintText: 'Enter node title',
           height: 35,
           value: initialTitle,
-          onChanged: onTitleChanged,
+          onChanged: isReadOnly ? null : onTitleChanged,
+          readOnly: isReadOnly,
         ),
 
         const SizedBox(height: 12),
 
         // ===== NODE DESCRIPTION =====
         PixelTextField(
-          label: 'Node Description',
+          label: 'Node Description *',
           hintText: 'Enter node description',
           height: 35,
           value: initialDescription,
-          onChanged: onDescriptionChanged,
+          onChanged: isReadOnly ? null : onDescriptionChanged,
+          readOnly: isReadOnly,
         ),
 
         const SizedBox(height: 12),
 
         // ===== VIDEO URL =====
         PixelTextField(
-          label: 'Video URL (Optional)',
+          label: 'Video URL *',
           hintText: 'Enter YouTube video URL',
           height: 35,
           value: videoUrlValue,
-          onChanged: onVideoUrlChanged ?? (_) {},
+          onChanged: isReadOnly ? null : (onVideoUrlChanged ?? (_) {}),
+          readOnly: isReadOnly,
         ),
+
+        if (videoUrlWarningText != null && videoUrlWarningText!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 10),
+            child: Text(
+              videoUrlWarningText!,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.cancel,
+              ),
+            ),
+          ),
 
         const SizedBox(height: 12),
 
@@ -88,7 +104,7 @@ class NodeInfoSection extends StatelessWidget {
 
         // ===== UPLOAD FILE =====
         GestureDetector(
-          onTap: onUploadFile,
+          onTap: isReadOnly ? null : onUploadFile,
           child: PixelBorderContainer(
             width: double.infinity,
             height: 150,
@@ -120,8 +136,9 @@ class NodeInfoSection extends StatelessWidget {
             final file = files[index];
 
             return Padding(
-              padding: const EdgeInsets.only(bottom: 8, left: 10),
+              padding: const EdgeInsets.only(bottom: 8),
               child: PixelBorderContainer(
+                width: double.infinity,
                 height: 40,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
@@ -135,10 +152,12 @@ class NodeInfoSection extends StatelessWidget {
                     ),
                     IconTheme(
                       data: const IconThemeData(size: 18),
-                      child: CloseIcon(
-                        color: colors.error,
-                        onPressed: () => onRemoveFile(index),
-                      ),
+                      child: isReadOnly
+                          ? const SizedBox.shrink()
+                          : CloseIcon(
+                              color: colors.error,
+                              onPressed: () => onRemoveFile(index),
+                            ),
                     ),
 
                   ],

@@ -8,11 +8,13 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/nod
 class NodeQuizSection extends StatefulWidget {
   final List<NodeQuiz>? initialQuizzes;
   final ValueChanged<List<NodeQuiz>>? onQuizzesChanged;
+  final bool isReadOnly;
 
   const NodeQuizSection({
     super.key,
     this.initialQuizzes,
     this.onQuizzesChanged,
+    this.isReadOnly = false,
   });
 
   @override
@@ -65,7 +67,10 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
   void _addChoice(int qIndex) {
     final quiz = _quizzes[qIndex];
     setState(() {
-      _quizzes[qIndex] = quiz.copyWith(choices: [...quiz.choices, '']);
+      _quizzes[qIndex] = quiz.copyWith(
+        choices: [...quiz.choices, ''],
+        choiceIds: [...?quiz.choiceIds, ''],
+      );
     });
     _notifyChange();
   }
@@ -74,14 +79,21 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
     final quiz = _quizzes[qIndex];
     final newChoices = [...quiz.choices]..removeAt(cIndex);
     final newReasons = Map<int, String>.from(quiz.reasons)..remove(cIndex);
+    final newChoiceIds = quiz.choiceIds == null
+        ? null
+        : ([...quiz.choiceIds!]..removeAt(cIndex));
+    final newSelectedIndex = quiz.selectedIndex == cIndex
+        ? (newChoices.isEmpty ? 0 : (cIndex >= newChoices.length ? newChoices.length - 1 : cIndex))
+        : (quiz.selectedIndex > cIndex
+            ? quiz.selectedIndex - 1
+            : quiz.selectedIndex);
 
     setState(() {
       _quizzes[qIndex] = quiz.copyWith(
         choices: newChoices,
         reasons: newReasons,
-        selectedIndex: quiz.selectedIndex >= newChoices.length
-            ? 0
-            : quiz.selectedIndex,
+        selectedIndex: newSelectedIndex < 0 ? 0 : newSelectedIndex,
+        choiceIds: newChoiceIds,
       );
     });
     _notifyChange();
@@ -94,7 +106,20 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Question (Optional)', style: AppTypography.titleSemiBold),
+        RichText(
+          text: TextSpan(
+            style: AppTypography.titleSemiBold.copyWith(
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            children: const [
+              TextSpan(text: 'Question'),
+              TextSpan(
+                text: ' *',
+                style: TextStyle(color: AppColors.cancel),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 8),
 
         // ===== QUIZ LIST =====
@@ -126,7 +151,9 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                         child: InlineTextField(
                           hintText: 'Enter question',
                           value: quiz.question,
+                                  readOnly: widget.isReadOnly,
                           onChanged: (v) {
+                                    if (widget.isReadOnly) return;
                             setState(() {
                               _quizzes[qIndex] = quiz.copyWith(question: v);
                             });
@@ -134,10 +161,11 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                           },
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(Icons.close, size: 18, color: colors.error),
-                        onPressed: () => _removeQuestion(qIndex),
-                      ),
+                              if (!widget.isReadOnly)
+                                IconButton(
+                                  icon: Icon(Icons.close, size: 18, color: colors.error),
+                                  onPressed: () => _removeQuestion(qIndex),
+                                ),
                     ],
                   ),
 
@@ -153,14 +181,16 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                           Row(
                             children: [
                               GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _quizzes[qIndex] = quiz.copyWith(
-                                      selectedIndex: cIndex,
-                                    );
-                                  });
-                                  _notifyChange();
-                                },
+                                onTap: widget.isReadOnly
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _quizzes[qIndex] = quiz.copyWith(
+                                            selectedIndex: cIndex,
+                                          );
+                                        });
+                                        _notifyChange();
+                                      },
                                 child: PixelRadioButton(
                                   index: cIndex + 1,
                                   isSelected: quiz.selectedIndex == cIndex,
@@ -171,7 +201,9 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                                 child: InlineTextField(
                                   hintText: 'Choice',
                                   value: quiz.choices[cIndex],
+                                  readOnly: widget.isReadOnly,
                                   onChanged: (v) {
+                                    if (widget.isReadOnly) return;
                                     final updatedChoices = [...quiz.choices];
                                     updatedChoices[cIndex] = v;
 
@@ -184,14 +216,15 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                                   },
                                 ),
                               ),
-                              IconButton(
-                                icon: Icon(
-                                  Icons.close,
-                                  size: 18,
-                                  color: colors.error,
+                              if (!widget.isReadOnly)
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.close,
+                                    size: 18,
+                                    color: colors.error,
+                                  ),
+                                  onPressed: () => _removeChoice(qIndex, cIndex),
                                 ),
-                                onPressed: () => _removeChoice(qIndex, cIndex),
-                              ),
                             ],
                           ),
 
@@ -211,7 +244,9 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                                       hintText: 'Explain why this is correct',
                                       value: quiz.reasons[cIndex] ?? '',
                                       showUnderline: true,
+                                      readOnly: widget.isReadOnly,
                                       onChanged: (v) {
+                                        if (widget.isReadOnly) return;
                                         final newReasons =
                                             Map<int, String>.from(quiz.reasons);
                                         newReasons[cIndex] = v;
@@ -234,15 +269,16 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                   }),
 
                   // ===== ADD CHOICE =====
-                  TextButton(
-                    onPressed: () => _addChoice(qIndex),
-                    child: Text(
-                      'Add More Choices',
-                      style: AppTypography.subtitleSemiBold.copyWith(
-                        color: AppColors.textSecondary,
+                  if (!widget.isReadOnly)
+                    TextButton(
+                      onPressed: () => _addChoice(qIndex),
+                      child: Text(
+                        'Add More Choices',
+                        style: AppTypography.subtitleSemiBold.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -250,15 +286,16 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
         }),
 
         // ===== ADD QUESTION =====
-        TextButton(
-          onPressed: _addQuestion,
-          child: Text(
-            'Add More Questions',
-            style: AppTypography.subtitleSemiBold.copyWith(
-              color: AppColors.textSecondary,
+        if (!widget.isReadOnly)
+          TextButton(
+            onPressed: _addQuestion,
+            child: Text(
+              'Add More Questions',
+              style: AppTypography.subtitleSemiBold.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
-        ),
       ],
     );
   }

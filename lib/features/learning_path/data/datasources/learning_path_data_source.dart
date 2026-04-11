@@ -1,544 +1,167 @@
-
-import 'package:passion_tree_frontend/core/network/log_handler.dart';
-import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:http/http.dart' as http;
 import 'package:passion_tree_frontend/core/config/api_config.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_api_model.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_progress_api_model.dart';
+import 'package:passion_tree_frontend/core/error/exceptions.dart';
+import 'package:passion_tree_frontend/core/network/api_handler.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
+import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/ai_generate_response_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/create_material_request_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/create_node_request_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/create_path_request_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/create_question_with_choices_request_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/enrolled_learning_path_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/learning_node_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_progress_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_rating_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/node_detail_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/quiz_question_api_model.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/models/create_path_request_api_model.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/models/create_node_request_api_model.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/models/create_question_with_choices_request_api_model.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/models/ai_generate_response_api_model.dart';
-import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
-import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
-import 'package:passion_tree_frontend/features/learning_path/data/models/create_material_request_api_model.dart';
 
 class LearningPathDataSource {
-    /// Fetch recommended learning paths for the current user (auth header)
-    Future<List<LearningPathApiModel>> getRecommendedLearningPaths() async {
-    return await _makeGetRequest(
-      endpoint: '/home/recommendation',
-      fromJson: (data) {
-        final raw = data['data'];
+  final ApiHandler _apiHandler;
+  final AuthLocalDataSource _authLocalDataSource;
 
-        if (raw == null) return [];
+  LearningPathDataSource({
+    required ApiHandler apiHandler,
+    required AuthLocalDataSource authLocalDataSource,
+  })  : _apiHandler = apiHandler,
+        _authLocalDataSource = authLocalDataSource;
 
-        /// ถ้า API ส่งเป็น List ตรง ๆ
-        if (raw is List) {
-          return raw
-              .map((path) => LearningPathApiModel.fromJson(path))
-              .toList();
-        }
-
-        /// ถ้า API ส่งเป็น Map เช่น { popular: [] }
-        if (raw is Map<String, dynamic>) {
-          final popular = raw['popular'];
-
-          if (popular is List) {
-            return popular
-                .map((path) => LearningPathApiModel.fromJson(path))
-                .toList();
-          }
-
-          return [];
-        }
-
-        return [];
-      },
-      errorMessage: 'Failed to get recommended learning paths',
-    );
-  }
-
-  final http.Client client;
-
-  LearningPathDataSource({http.Client? client})
-    : client = client ?? http.Client();
-
-  /// Get headers with token, checking for expiry
-  Future<Map<String, String>> _getHeaders() async {
-    try {
-      final token = await getIt<AuthLocalDataSource>().getToken();
-      if (token != null && token.isNotEmpty) {
-        // Check if token is expired
-        if (_isTokenExpired(token)) {
-          LogHandler.warning('[DataSource] Token is expired');
-          // Clear expired token
-          await getIt<AuthLocalDataSource>().clearAuth();
-          return ApiConfig.defaultHeaders;
-        }
-        return ApiConfig.getAuthHeaders(token);
-      }
-    } catch (e) {
-      LogHandler.error('[DataSource] Error getting headers: $e');
+  /// Get auth headers using the stored token
+  Future<Map<String, String>> _getAuthHeaders() async {
+    final token = await _authLocalDataSource.getToken();
+    if (token == null || token.isEmpty) {
+      return ApiConfig.defaultHeaders;
     }
-    return ApiConfig.defaultHeaders;
+    return ApiConfig.getAuthHeaders(token);
   }
 
-  /// Check if JWT token is expired
-  bool _isTokenExpired(String token) {
+  /// Extract user_id from JWT token payload
+  Future<String> _getUserIdFromToken() async {
     try {
+      final token = await _authLocalDataSource.getToken();
+      if (token == null || token.isEmpty) {
+        throw AuthException(message: 'No token found', statusCode: 401);
+      }
       final parts = token.split('.');
-      if (parts.length != 3) return true;
+      if (parts.length != 3) {
+        throw AuthException(message: 'Invalid token format', statusCode: 401);
+      }
 
-      // Decode payload (second part)
-      final payload = parts[1];
-      // Add padding if needed
-      final normalized = base64.normalize(payload);
+      final normalized = base64.normalize(parts[1]);
       final decoded = utf8.decode(base64.decode(normalized));
-      final Map<String, dynamic> payloadMap = jsonDecode(decoded);
+      final Map<String, dynamic> payload = jsonDecode(decoded);
 
-      // Check expiration
-      if (payloadMap.containsKey('exp')) {
-        final exp = payloadMap['exp'] as int;
-        final expiryDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
-        final now = DateTime.now();
-        // Add 1 minute buffer
-        return now.isAfter(expiryDate.subtract(const Duration(minutes: 1)));
+      final userId = payload['user_id'] ?? payload['sub'];
+      if (userId == null) {
+        throw AuthException(
+          message: 'user_id not found in token payload',
+          statusCode: 401,
+        );
       }
-      return false;
+      return userId.toString();
     } catch (e) {
-      LogHandler.error('[DataSource] Error checking token expiry: $e');
-      return true; // Consider invalid tokens as expired
-    }
-  }
-
-  /// Generic GET request handler
-  Future<T> _makeGetRequest<T>({
-    required String endpoint,
-    required T Function(Map<String, dynamic>) fromJson,
-    String? errorMessage,
-  }) async {
-    try {
-      LogHandler.debug('[DataSource] GET $endpoint');
-
-      final response = await client.get(
-        Uri.parse('${ApiConfig.apiBackendUrl}$endpoint'),
-        headers: await _getHeaders(),
-      ).timeout(const Duration(seconds: 30));
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return fromJson(data);
-      } else {
-        final error = _parseError(response);
-        throw Exception(error ?? errorMessage ?? 'Request failed');
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in GET $endpoint: $e');
+      LogHandler.error('[DataSource] Error extracting user_id from token: $e');
       rethrow;
     }
   }
 
-  /// Generic POST request handler
-  Future<T> _makePostRequest<T>({
-    required String endpoint,
-    required Map<String, dynamic> body,
-    required T Function(Map<String, dynamic>) fromJson,
-    String? errorMessage,
-  }) async {
-    try {
-      LogHandler.debug('[DataSource] POST $endpoint');
-
-      final response = await client.post(
-        Uri.parse('${ApiConfig.apiBackendUrl}$endpoint'),
-        headers: await _getHeaders(),
-        body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 30));
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        return fromJson(data);
-      } else {
-        final error = _parseError(response);
-        throw Exception(error ?? errorMessage ?? 'Request failed');
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in POST $endpoint: $e');
-      rethrow;
+  void _throwIfError(ApiResponse response, String context) {
+    if (!response.isSuccess) {
+      final msg = response.error ?? response.message ?? '$context failed';
+      throw createExceptionFromStatusCode(response.statusCode, msg);
     }
   }
 
-  /// Generic PUT request handler
-  Future<void> _makePutRequest({
-    required String endpoint,
-    Map<String, dynamic>? body,
-    String? errorMessage,
-  }) async {
-    try {
-      LogHandler.debug('[DataSource] PUT $endpoint');
-
-      final response = await client.put(
-        Uri.parse('${ApiConfig.apiBackendUrl}$endpoint'),
-        headers: await _getHeaders(),
-        body: body != null ? jsonEncode(body) : null,
-      ).timeout(const Duration(seconds: 30));
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        return;
-      } else {
-        final error = _parseError(response);
-        throw Exception(error ?? errorMessage ?? 'Request failed');
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in PUT $endpoint: $e');
-      rethrow;
-    }
-  }
-
-  /// Generic DELETE request handler
-  Future<void> _makeDeleteRequest({
-    required String endpoint,
-    String? errorMessage,
-  }) async {
-    try {
-      LogHandler.debug('[DataSource] DELETE $endpoint');
-
-      final response = await client.delete(
-        Uri.parse('${ApiConfig.apiBackendUrl}$endpoint'),
-        headers: await _getHeaders(),
-      ).timeout(const Duration(seconds: 30));
-
-      LogHandler.debug('Response Status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        return;
-      } else {
-        final error = _parseError(response);
-        throw Exception(error ?? errorMessage ?? 'Request failed');
-      }
-    } on SocketException catch (e) {
-      LogHandler.error('No internet connection: $e');
-      throw Exception('No internet connection. Please check your network.');
-    } on TimeoutException catch (e) {
-      LogHandler.error('Connection timeout: $e');
-      throw Exception('Connection timeout. Please try again.');
-    } on HttpException catch (e) {
-      LogHandler.error('HTTP error: $e');
-      throw Exception('Network error. Please try again.');
-    } catch (e) {
-      LogHandler.error('Exception in DELETE $endpoint: $e');
-      rethrow;
-    }
-  }
-
-  /// Parse error from response
-  String? _parseError(http.Response response) {
-    try {
-      final error = jsonDecode(response.body);
-      return error['message'] ?? error['error'];
-    } on FormatException {
-      return 'Request failed (Status ${response.statusCode})';
-    }
-  }
+  // ── Learning Paths ────────────────────────────────────────────────────────
 
   Future<List<LearningPathApiModel>> getAllLearningPaths() async {
-    return await _makeGetRequest(
-      endpoint: '/learningpaths',
-      fromJson: (data) {
-        final paths = data['data'] as List?;
-        if (paths == null || paths.isEmpty) return [];
-        return paths.map((path) => LearningPathApiModel.fromJson(path)).toList();
-      },
-      errorMessage: 'Failed to get learning paths',
+    final response = await _apiHandler.get(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths',
+      headers: await _getAuthHeaders(),
     );
+    _throwIfError(response, 'GET /learningpaths');
+    final paths = (response.data as List?) ?? [];
+    return paths.map((e) => LearningPathApiModel.fromJson(e)).toList();
+  }
+
+  Future<LearningPathApiModel> getLearningPathById(String pathId) async {
+    final response = await _apiHandler.get(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'GET /learningpaths/$pathId');
+    return LearningPathApiModel.fromJson(response.data);
+  }
+
+  Future<List<LearningPathApiModel>> getRecommendedLearningPaths() async {
+    final response = await _apiHandler.get(
+      url: '${ApiConfig.apiBackendUrl}/home/recommendation',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'GET /home/recommendation');
+
+    final raw = response.data;
+    if (raw == null) return [];
+    if (raw is List) {
+      return raw.map((e) => LearningPathApiModel.fromJson(e)).toList();
+    }
+    if (raw is Map<String, dynamic>) {
+      final popular = raw['popular'];
+      if (popular is List) {
+        return popular.map((e) => LearningPathApiModel.fromJson(e)).toList();
+      }
+    }
+    return [];
   }
 
   Future<LearningPathProgressApiModel> getLearningPathProgress(
     String pathId,
-    String userId,
   ) async {
-    return await _makeGetRequest(
-      endpoint: '/user/learningpaths/$pathId/progress?user_id=$userId',
-      fromJson: (data) => LearningPathProgressApiModel.fromJson(data['data']),
-      errorMessage: 'Failed to load progress',
+    final userId = await _getUserIdFromToken();
+    final response = await _apiHandler.get(
+      url: '${ApiConfig.apiBackendUrl}/user/learningpaths/$pathId/progress?user_id=$userId',
+      headers: await _getAuthHeaders(),
     );
+    _throwIfError(response, 'GET progress/$pathId');
+    return LearningPathProgressApiModel.fromJson(response.data);
   }
 
   Future<List<EnrolledLearningPathApiModel>> getEnrolledPaths(
     String userId,
   ) async {
-    return await _makeGetRequest(
-      endpoint: '/learningpaths/user/enroll',
-      fromJson: (data) {
-        final list = data['data'] as List?;
-        if (list == null || list.isEmpty) return [];
-        return list.map((e) => EnrolledLearningPathApiModel.fromJson(e)).toList();
-      },
-      errorMessage: 'Failed to load enrolled paths',
+    final response = await _apiHandler.get(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/user/enroll',
+      headers: await _getAuthHeaders(),
     );
+    _throwIfError(response, 'GET enrolled paths');
+    final list = (response.data as List?) ?? [];
+    return list.map((e) => EnrolledLearningPathApiModel.fromJson(e)).toList();
   }
 
-  Future<List<LearningNodeApiModel>> getNodesForPath(
-    String pathId,
-  ) async {
-    return await _makeGetRequest(
-      endpoint: '/learningpaths/$pathId/nodes',
-      fromJson: (data) {
-        final nodes = data['data'] as List?;
-        if (nodes == null || nodes.isEmpty) return [];
-        return nodes.map((node) => LearningNodeApiModel.fromJson(node)).toList();
-      },
-      errorMessage: 'Failed to load nodes',
+  Future<String> createLearningPath(CreatePathRequestApiModel request) async {
+    final response = await _apiHandler.post(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths',
+      headers: await _getAuthHeaders(),
+      body: request.toJson(),
     );
-  }
-
-  Future<NodeDetailApiModel> getNodeDetail(String nodeId) async {
-    return await _makeGetRequest(
-      endpoint: '/learningpaths/nodes/$nodeId',
-      fromJson: (data) => NodeDetailApiModel.fromJson(data['data']),
-      errorMessage: 'Failed to load node detail',
-    );
-  }
-
-  Future<List<QuizQuestionApiModel>> getNodeQuestions(String nodeId) async {
-    return await _makeGetRequest(
-      endpoint: '/learningpaths/nodes/$nodeId/questions',
-      fromJson: (data) {
-        final questions = data['data'] as List?;
-        if (questions == null || questions.isEmpty) return [];
-        return questions.map((q) => QuizQuestionApiModel.fromJson(q)).toList();
-      },
-      errorMessage: 'Failed to load questions',
-    );
-  }
-
-  Future<void> createNodeQuestions(
-    String nodeId,
-    List<CreateQuestionWithChoicesRequestApiModel> questions,
-  ) async {
-    if (questions.isEmpty) return;
-
-    // Try batch endpoint first to solve N+1 problem
-    try {
-      LogHandler.debug(
-        '[DataSource] POST /learningpaths/nodes/$nodeId/questions/batch (N=${questions.length})',
-      );
-
-      await _makePostRequest(
-        endpoint: '/learningpaths/nodes/$nodeId/questions/batch',
-        body: {
-          'questions': questions.map((q) => {
-            'question_text': q.questionText,
-            'type': q.type,
-            'choices': q.choices.map((c) => {
-              'choice_text': c.choiceText,
-              'is_correct': c.isCorrect,
-              'reasoning': c.reasoning,
-            }).toList(),
-          }).toList(),
-        },
-        fromJson: (_) => null,
-        errorMessage: 'Failed to create questions in batch',
-      );
-      
-      LogHandler.info('Successfully created ${questions.length} questions using batch endpoint');
-      return;
-    } catch (e) {
-      LogHandler.warning('Batch endpoint failed: $e, falling back to parallel creation');
+    _throwIfError(response, 'POST /learningpaths');
+    final pathId = (response.data as Map<String, dynamic>?)?['path_id'] as String?;
+    if (pathId == null || pathId.isEmpty) {
+      throw ServerException(message: 'Path ID not returned from server');
     }
-
-    // Fallback: parallel execution to reduce time (N+N*M calls, but in parallel)
-    try {
-      final futures = questions.map((question) async {
-        // Create question
-        final questionId = await _makePostRequest<String>(
-          endpoint: '/learningpaths/nodes/$nodeId/questions',
-          body: {
-            'question_text': question.questionText,
-            'type': question.type,
-          },
-          fromJson: (data) {
-            final id = data['data']?['question_id'] as String?;
-            if (id == null || id.isEmpty) {
-              throw Exception('Question ID not returned from server');
-            }
-            return id;
-          },
-          errorMessage: 'Failed to create question',
-        );
-
-        // Create all choices for this question in parallel
-        final choiceFutures = question.choices.map((choice) async {
-          await _makePostRequest(
-            endpoint: '/learningpaths/questions/$questionId/choices',
-            body: {
-              'choice_text': choice.choiceText,
-              'is_correct': choice.isCorrect,
-              'reasoning': choice.reasoning,
-            },
-            fromJson: (_) => null,
-            errorMessage: 'Failed to create choice',
-          );
-        });
-
-        await Future.wait(choiceFutures);
-      });
-
-      await Future.wait(futures);
-      LogHandler.info('Created ${questions.length} questions using parallel fallback');
-    } catch (e) {
-      LogHandler.error('Exception in createNodeQuestions: $e');
-      throw Exception('Failed to create node questions: $e');
-    }
-  }
-
-  Future<void> startNode(String nodeId) async {
-    await _makePutRequest(
-      endpoint: '/learningpaths/nodes/$nodeId/start',
-      errorMessage: 'Failed to start node',
-    );
-  }
-
-  Future<void> completeNode(String nodeId) async {
-    await _makePutRequest(
-      endpoint: '/learningpaths/nodes/$nodeId/complete',
-      errorMessage: 'Failed to complete node',
-    );
+    return pathId;
   }
 
   Future<void> enrollPath(String pathId, String userId) async {
-    await _makePostRequest(
-      endpoint: '/learningpaths/$pathId/start',
+    final response = await _apiHandler.post(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/start',
+      headers: await _getAuthHeaders(),
       body: {'user_id': userId},
-      fromJson: (_) => null,
-      errorMessage: 'Failed to enroll in learning path',
     );
-  }
-
-  Future<void> deleteLearningPath(String pathId) async {
-    await _makeDeleteRequest(
-      endpoint: '/learningpaths/$pathId',
-      errorMessage: 'Failed to delete learning path',
-    );
-  }
-
-  Future<void> deleteNode(String nodeId) async {
-    await _makeDeleteRequest(
-      endpoint: '/learningpaths/nodes/$nodeId',
-      errorMessage: 'Failed to delete node',
-    );
-  }
-
-  // TEACHER FEATURES
-
-  Future<String> createLearningPath(CreatePathRequestApiModel request) async {
-    return await _makePostRequest(
-      endpoint: '/learningpaths',
-      body: request.toJson(),
-      fromJson: (data) {
-        final pathId = data['data']['path_id'] as String?;
-        if (pathId == null || pathId.isEmpty) {
-          throw Exception('Path ID not returned from server');
-        }
-        return pathId;
-      },
-      errorMessage: 'Failed to create learning path',
-    );
-  }
-
-  Future<String> createNode(CreateNodeRequestApiModel request) async {
-    return await _makePostRequest(
-      endpoint: '/learningpaths/${request.pathId}/nodes',
-      body: request.toJson(),
-      fromJson: (data) {
-        final nodeId = data['data']['node_id'] as String?;
-        if (nodeId == null || nodeId.isEmpty) {
-          throw Exception('Node ID not returned from server');
-        }
-        return nodeId;
-      },
-      errorMessage: 'Failed to create node',
-    );
-  }
-
-  Future<AIGenerateResponseApiModel> generateNodesWithAI(String topic) async {
-    return await _makePostRequest(
-      endpoint: '/learningpaths/generate',
-      body: {'topic': topic},
-      fromJson: (data) => AIGenerateResponseApiModel.fromJson(data['data']),
-      errorMessage: 'Failed to generate nodes with AI',
-    );
-  }
-
-  Future<LearningPathApiModel> getLearningPathById(String pathId) async {
-    return await _makeGetRequest(
-      endpoint: '/learningpaths/$pathId',
-      fromJson: (data) => LearningPathApiModel.fromJson(data['data']),
-      errorMessage: 'Failed to get learning path',
-    );
-  }
-
-  Future<void> updateNode(
-    String nodeId,
-    String title,
-    String description, {
-    String? linkvdo,
-    List<CreateMaterial>? materials,
-  }) async {
-    final Map<String, dynamic> body = {
-      'title': title,
-      'description': description,
-    };
-
-    if (linkvdo != null && linkvdo.isNotEmpty) {
-      body['link_vdo'] = linkvdo;
-    }
-
-    if (materials != null && materials.isNotEmpty) {
-      body['material'] = materials
-          .map((m) => CreateMaterialRequestApiModel(
-                type: m.type,
-                url: m.url,
-              ).toJson())
-          .toList();
-    }
-
-    await _makePutRequest(
-      endpoint: '/learningpaths/nodes/$nodeId',
-      body: body,
-      errorMessage: 'Failed to update node',
-    );
+    _throwIfError(response, 'POST enroll/$pathId');
   }
 
   Future<void> updateLearningPath(
@@ -555,15 +178,313 @@ class LearningPathDataSource {
       'description': description,
       'publish_status': publishStatus,
     };
-
     if (coverImgUrl != null && coverImgUrl.isNotEmpty) {
       body['cover_img_url'] = coverImgUrl;
     }
 
-    await _makePutRequest(
-      endpoint: '/learningpaths/$pathId',
+    final response = await _apiHandler.put(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId',
+      headers: await _getAuthHeaders(),
       body: body,
-      errorMessage: 'Failed to update learning path',
     );
+    _throwIfError(response, 'PUT /learningpaths/$pathId');
+  }
+
+  Future<void> deleteLearningPath(String pathId) async {
+    final response = await _apiHandler.delete(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'DELETE /learningpaths/$pathId');
+  }
+
+  // ── Nodes ─────────────────────────────────────────────────────────────────
+
+  Future<List<LearningNodeApiModel>> getNodesForPath(String pathId) async {
+    final response = await _apiHandler.get(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/nodes',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'GET nodes/$pathId');
+    final nodes = (response.data as List?) ?? [];
+    return nodes.map((e) => LearningNodeApiModel.fromJson(e)).toList();
+  }
+
+  Future<NodeDetailApiModel> getNodeDetail(String nodeId) async {
+    final response = await _apiHandler.get(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'GET node/$nodeId');
+    return NodeDetailApiModel.fromJson(response.data);
+  }
+
+  Future<String> createNode(CreateNodeRequestApiModel request) async {
+    final response = await _apiHandler.post(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/${request.pathId}/nodes',
+      headers: await _getAuthHeaders(),
+      body: request.toJson(),
+    );
+    _throwIfError(response, 'POST nodes/${request.pathId}');
+    final nodeId = (response.data as Map<String, dynamic>?)?['node_id'] as String?;
+    if (nodeId == null || nodeId.isEmpty) {
+      throw ServerException(message: 'Node ID not returned from server');
+    }
+    return nodeId;
+  }
+
+  Future<void> startNode(String nodeId) async {
+    final response = await _apiHandler.put(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/start',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'PUT node/start/$nodeId');
+  }
+
+  Future<void> completeNode(String nodeId) async {
+    final response = await _apiHandler.put(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/complete',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'PUT node/complete/$nodeId');
+  }
+
+  Future<void> updateNode(
+    String nodeId,
+    String title,
+    String description, {
+    String? linkvdo,
+    List<CreateMaterial>? materials,
+  }) async {
+    final Map<String, dynamic> body = {
+      'title': title,
+      'description': description,
+    };
+    if (linkvdo != null && linkvdo.isNotEmpty) {
+      body['link_vdo'] = linkvdo;
+    }
+    if (materials != null) {
+      body['materials'] = materials
+          .map((m) => CreateMaterialRequestApiModel(type: m.type, url: m.url).toJson())
+          .toList();
+    }
+
+    final response = await _apiHandler.put(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId',
+      headers: await _getAuthHeaders(),
+      body: body,
+    );
+    _throwIfError(response, 'PUT node/$nodeId');
+  }
+
+  Future<void> deleteNode(String nodeId) async {
+    final response = await _apiHandler.delete(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'DELETE node/$nodeId');
+  }
+
+  Future<void> reorderNodes(String pathId, List<String> nodeIds) async {
+    final response = await _apiHandler.put(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/nodes/reorder',
+      headers: await _getAuthHeaders(),
+      body: {'node_ids': nodeIds},
+    );
+    _throwIfError(response, 'PUT reorder nodes/$pathId');
+  }
+
+  // ── Questions ─────────────────────────────────────────────────────────────
+
+  Future<List<QuizQuestionApiModel>> getNodeQuestions(String nodeId) async {
+    final response = await _apiHandler.get(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/questions',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'GET questions/$nodeId');
+    final questions = (response.data as List?) ?? [];
+    return questions.map((e) => QuizQuestionApiModel.fromJson(e)).toList();
+  }
+
+  Future<void> submitRating(
+    String pathId,
+    int contentQualityRating,
+    int instructorRating,
+  ) async {
+    final response = await _apiHandler.post(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/ratings',
+      headers: await _getAuthHeaders(),
+      body: {
+        'rating_content': contentQualityRating,
+        'rating_instruct': instructorRating,
+      },
+    );
+    _throwIfError(response, 'POST ratings/$pathId');
+  }
+
+  Future<LearningPathRatingApiModel> getMyRating(String pathId) async {
+    final response = await _apiHandler.get(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/ratings',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'GET ratings/$pathId');
+    return LearningPathRatingApiModel.fromJson(
+      (response.data as Map<String, dynamic>?) ?? <String, dynamic>{},
+    );
+  }
+
+  Future<void> deleteRating(String pathId) async {
+    final response = await _apiHandler.delete(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/ratings',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'DELETE ratings/$pathId');
+  }
+
+  Future<void> createNodeQuestions(
+    String nodeId,
+    List<CreateQuestionWithChoicesRequestApiModel> questions,
+  ) async {
+    if (questions.isEmpty) return;
+
+    // Try batch endpoint first
+    try {
+      final response = await _apiHandler.post(
+        url: '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/questions/batch',
+        headers: await _getAuthHeaders(),
+        body: {
+          'questions': questions.map((q) => {
+            'question_text': q.questionText,
+            'type': q.type,
+            'choices': q.choices.map((c) => {
+              'choice_text': c.choiceText,
+              'is_correct': c.isCorrect,
+              'reasoning': c.reasoning,
+            }).toList(),
+          }).toList(),
+        },
+      );
+      if (response.isSuccess) {
+        LogHandler.info('Created ${questions.length} questions using batch endpoint');
+        return;
+      }
+      LogHandler.warning('Batch endpoint failed (${response.statusCode}), falling back to parallel creation');
+    } catch (e) {
+      LogHandler.warning('Batch endpoint threw: $e, falling back to parallel creation');
+    }
+
+    // Fallback: parallel creation
+    try {
+      final futures = questions.map((question) async {
+        final qResponse = await _apiHandler.post(
+          url: '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/questions',
+          headers: await _getAuthHeaders(),
+          body: {'question_text': question.questionText, 'type': question.type},
+        );
+        _throwIfError(qResponse, 'POST question/$nodeId');
+
+        final questionId = (qResponse.data as Map<String, dynamic>?)?['question_id'] as String?;
+        if (questionId == null || questionId.isEmpty) {
+          throw ServerException(message: 'Question ID not returned from server');
+        }
+
+        final choiceFutures = question.choices.map((choice) async {
+          final cResponse = await _apiHandler.post(
+            url: '${ApiConfig.apiBackendUrl}/learningpaths/questions/$questionId/choices',
+            headers: await _getAuthHeaders(),
+            body: {
+              'choice_text': choice.choiceText,
+              'is_correct': choice.isCorrect,
+              'reasoning': choice.reasoning,
+            },
+          );
+          _throwIfError(cResponse, 'POST choice/$questionId');
+        });
+        await Future.wait(choiceFutures);
+      });
+
+      await Future.wait(futures);
+      LogHandler.info('Created ${questions.length} questions using parallel fallback');
+    } catch (e) {
+      LogHandler.error('Exception in createNodeQuestions: $e');
+      throw ServerException(message: 'Failed to create node questions: $e');
+    }
+  }
+
+  Future<void> updateQuestion(
+    String questionId,
+    String questionText,
+    String type,
+  ) async {
+    final response = await _apiHandler.put(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/questions/$questionId',
+      headers: await _getAuthHeaders(),
+      body: {
+        'question_text': questionText,
+        'type': type,
+      },
+    );
+    _throwIfError(response, 'PUT question/$questionId');
+  }
+
+  Future<void> updateChoice(
+    String choiceId,
+    String choiceText,
+    bool isCorrect,
+    String reasoning,
+  ) async {
+    final response = await _apiHandler.put(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/questions/choices/$choiceId',
+      headers: await _getAuthHeaders(),
+      body: {
+        'choice_text': choiceText,
+        'is_correct': isCorrect,
+        'reasoning': reasoning,
+      },
+    );
+    _throwIfError(response, 'PUT choice/$choiceId');
+  }
+
+  Future<String> createChoice(
+    String questionId,
+    String choiceText,
+    bool isCorrect,
+    String reasoning,
+  ) async {
+    final response = await _apiHandler.post(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/questions/$questionId/choices',
+      headers: await _getAuthHeaders(),
+      body: {
+        'choice_text': choiceText,
+        'is_correct': isCorrect,
+        'reasoning': reasoning,
+      },
+    );
+    _throwIfError(response, 'POST choice/$questionId');
+    final choiceId = (response.data as Map<String, dynamic>?)?['choice_id'] as String?;
+    if (choiceId == null || choiceId.isEmpty) {
+      throw ServerException(message: 'Choice ID not returned from server');
+    }
+    return choiceId;
+  }
+
+  Future<void> deleteChoice(String choiceId) async {
+    final response = await _apiHandler.delete(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/questions/choices/$choiceId',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'DELETE choice/$choiceId');
+  }
+
+  // ── AI ────────────────────────────────────────────────────────────────────
+
+  Future<AIGenerateResponseApiModel> generateNodesWithAI(String topic) async {
+    final response = await _apiHandler.post(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/generate',
+      headers: await _getAuthHeaders(),
+      body: {'topic': topic},
+    );
+    _throwIfError(response, 'POST /learningpaths/generate');
+    return AIGenerateResponseApiModel.fromJson(response.data);
   }
 }

@@ -51,9 +51,7 @@ class _TeacherLearningPathOverviewPageState
     setState(() => _userId = storedUserId);
     
     // Fetch overview data from backend
-    context.read<LearningPathBloc>().add(
-      FetchLearningPathOverview(userId: storedUserId),
-    );
+    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
   }
 
   @override
@@ -81,18 +79,27 @@ class _TeacherLearningPathOverviewPageState
       body: SafeArea(
         child: BlocListener<LearningPathBloc, LearningPathState>(
           listener: (context, state) {
+            if (state is LearningPathDeleted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.message,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+
             // Refetch overview when learning path or node is created/updated
-            if (state is LearningPathCreated || 
-                state is NodeCreated || 
+            if (state is LearningPathCreated ||
+                state is NodeCreated ||
                 state is NodeUpdated ||
                 state is LearningPathUpdated) {
               if (_userId != null && _userId!.isNotEmpty) {
-                // Add a small delay to ensure backend is updated
                 Future.delayed(const Duration(milliseconds: 500), () {
                   if (context.mounted) {
-                    context.read<LearningPathBloc>().add(
-                      FetchLearningPathOverview(userId: _userId),
-                    );
+                    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
                   }
                 });
               }

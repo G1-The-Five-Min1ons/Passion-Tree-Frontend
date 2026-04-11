@@ -193,16 +193,18 @@ class _AccountPreferencesSectionState extends State<AccountPreferencesSection> {
 
   void _showErrorMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message, style: const TextStyle(color: AppColors.textPrimary)),
+      backgroundColor: AppColors.cancel,
+    ));
   }
 
   void _showSuccessMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message, style: const TextStyle(color: AppColors.textPrimary)),
+      backgroundColor: AppColors.status,
+    ));
   }
 
   @override

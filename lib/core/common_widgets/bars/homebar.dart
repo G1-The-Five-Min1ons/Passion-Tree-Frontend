@@ -11,6 +11,7 @@ import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart'
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree_wrapper.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/pages/profile_page.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/homebar_visibility.dart';
 
 class HomeBarWidget extends StatefulWidget {
   const HomeBarWidget({super.key});
@@ -30,6 +31,14 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
+  ];
+
+  // ใส่หน้าของตัวเองตรงนี้
+  late final List<Widget> _pages = [
+    const HomeWrapper(),
+    _buildTabNavigator(1, const LearningPathRoleEntryPage()),
+    _buildTabNavigator(2, const AlbumsReflectionTreeWrapper()),
+    _buildTabNavigator(3, const ProfilePage()),
   ];
 
   @override
@@ -92,32 +101,48 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
     );
   }
 
+  void _setSelectedIndex(int index) {
+    if (index < 0 || index >= _pages.length || _selectedIndex == index) {
+      return;
+    }
+
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _pages),
+      bottomNavigationBar: ValueListenableBuilder<bool>(
+        valueListenable: homeBarVisibilityNotifier,
+        builder: (context, isVisible, _) {
+          if (!isVisible) {
+            return const SizedBox.shrink();
+          }
 
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
+          return BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              _setSelectedIndex(index);
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: AppColors.homeBarColor,
+            selectedItemColor: Theme.of(context).colorScheme.onPrimary,
+            unselectedItemColor: AppColors.iconbar,
+
+            selectedLabelStyle: AppPixelTypography.littleSmall,
+            unselectedLabelStyle: AppPixelTypography.littleSmall,
+
+            items: [
+              _buildNavItem('Home', 'assets/icons/Home.png', 0),
+              _buildNavItem('Learn', 'assets/icons/Learn.png', 1),
+              _buildNavItem('Reflect', 'assets/icons/Reflect.png', 2),
+              _buildNavItem('Profile', 'assets/icons/Profile.png', 3),
+            ],
+          );
         },
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: AppColors.homeBarColor,
-        selectedItemColor: Theme.of(context).colorScheme.onPrimary,
-        unselectedItemColor: AppColors.iconbar,
-
-        selectedLabelStyle: AppPixelTypography.littleSmall,
-        unselectedLabelStyle: AppPixelTypography.littleSmall,
-
-        items: [
-          _buildNavItem('Home', 'assets/icons/Home.png', 0),
-          _buildNavItem('Learn', 'assets/icons/Learn.png', 1),
-          _buildNavItem('Reflect', 'assets/icons/Reflect.png', 2),
-          _buildNavItem('Profile', 'assets/icons/Profile.png', 3),
-        ],
       ),
     );
   }

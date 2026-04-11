@@ -4,8 +4,13 @@ import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart'
 
 class NodeModalHeader extends StatelessWidget {
   final bool isNewNode;
+  final bool isReadOnly;
   
-  const NodeModalHeader({super.key, this.isNewNode = false});
+  const NodeModalHeader({
+    super.key,
+    this.isNewNode = false,
+    this.isReadOnly = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +38,9 @@ class NodeModalHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                isNewNode ? 'Create Node' : 'Edit Node',
+                isReadOnly
+                    ? 'View Node'
+                    : (isNewNode ? 'Create Node' : 'Edit Node'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppPixelTypography.title,

@@ -1,8 +1,8 @@
 class ApiConfig {
-  static const String apiBaseUrl = 'http://10.0.2.2:5000';
-  // static const String apiBaseUrl = 'http://localhost:5000';
-  // static const String _devAIUrl = 'http://localhost:8000';
-  static const String _devAIUrl = 'http://10.0.2.2:8000';
+  //static const String apiBaseUrl = 'http://10.0.2.2:5000';
+  static const String apiBaseUrl = 'http://localhost:5000';
+  static const String _devAIUrl = 'http://localhost:8000';
+  //static const String _devAIUrl = 'http://10.0.2.2:8000';
 
   // Auto-detect environment (or use --dart-define for build)
   static const String backendBaseUrl = String.fromEnvironment(
@@ -54,6 +54,9 @@ class ApiConfig {
   static String get authTeacherVerificationStatus =>
       '$apiBackendUrl/auth/teacher/verification-status';
   static String get authApplyTeacher => '$apiBackendUrl/auth/teacher/apply';
+
+  // Onboarding endpoint
+  static String get onboarding => '$apiBackendUrl/onboarding';
 
   // Dashboard endpoint
   static String get dashboard => '$apiBackendUrl/dashboard';

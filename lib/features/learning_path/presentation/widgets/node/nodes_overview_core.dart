@@ -7,27 +7,36 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/node_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 
-class NodesOverviewCore extends StatelessWidget {
+class NodesOverviewCore extends StatefulWidget {
   final bool isEditable;
+  final bool isDraggable;
   final Function(int index)? onNodeTap;
+  final Function(int fromIndex, int toIndex)? onReorder;
   final List<NodeDetail>? nodes;
 
   const NodesOverviewCore({
     super.key,
     required this.isEditable,
+    this.isDraggable = false,
     this.onNodeTap,
+    this.onReorder,
     this.nodes,
   });
 
   @override
-  Widget build(BuildContext context) {
-    // Use provided nodes from backend
-    final displayNodes = nodes ?? [];
+  State<NodesOverviewCore> createState() => _NodesOverviewCoreState();
+}
 
+class _NodesOverviewCoreState extends State<NodesOverviewCore> {
+  int? _draggingIndex;
+  int? _hoverIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    final displayNodes = widget.nodes ?? [];
     final nodeCount = displayNodes.length;
     final canvasHeight = (nodeCount * 200.0) + 200.0;
 
-    // Find the latest active node (highest sequence number with active status)
     NodeDetail? latestActiveNode;
     for (final node in displayNodes) {
       if (node.status.toLowerCase() == 'active') {
@@ -56,29 +65,99 @@ class NodesOverviewCore extends StatelessWidget {
                       canvasWidth: canvasWidth,
                       nodeBuilder: (index, pos) {
                         final node = displayNodes[index];
-                        // In teacher mode, treat nodes with real content as active.
                         final hasTeacherContent =
-                            isEditable && _hasNodeContent(node);
+                            widget.isEditable && _hasNodeContent(node);
                         final nodeState = hasTeacherContent
                             ? LearningNodeState.active
                             : NodeAsset.statusToState(node.status);
 
-                        // Check if this is the latest active node
                         final isLatestActiveNode =
                             latestActiveNode != null &&
                             node.nodeId == latestActiveNode.nodeId;
 
+                        final nodeWidget = NodeItem(
+                          imagePath: NodeAsset.image(nodeState),
+                          size: 80,
+                          showCurrentIndicator: isLatestActiveNode,
+                          onTap: _draggingIndex != null
+                              ? null
+                              : () => widget.onNodeTap?.call(index),
+                        );
+
+                        if (!widget.isDraggable) {
+                          return Positioned(
+                            left: pos.dx - 40,
+                            top: pos.dy - 40,
+                            child: nodeWidget,
+                          );
+                        }
+
+                        // ===== DRAG TARGET =====
                         return Positioned(
                           left: pos.dx - 40,
                           top: pos.dy - 40,
-                          child: NodeItem(
-                            imagePath: NodeAsset.image(nodeState),
-                            size: 80,
-                            showCurrentIndicator: isLatestActiveNode,
-                            onTap: () {
-                              if (onNodeTap != null) {
-                                onNodeTap!(index);
-                              }
+                          child: DragTarget<int>(
+                            onWillAcceptWithDetails: (details) {
+                              if (details.data == index) return false;
+                              setState(() => _hoverIndex = index);
+                              return true;
+                            },
+                            onLeave: (_) {
+                              setState(() => _hoverIndex = null);
+                            },
+                            onAcceptWithDetails: (details) {
+                              setState(() {
+                                _hoverIndex = null;
+                                _draggingIndex = null;
+                              });
+                              widget.onReorder?.call(details.data, index);
+                            },
+                            builder: (context, candidateData, rejectedData) {
+                              final isHovered = _hoverIndex == index;
+                              final isDragging = _draggingIndex == index;
+
+                              return AnimatedOpacity(
+                                duration: const Duration(milliseconds: 150),
+                                opacity: isDragging ? 0.3 : 1.0,
+                                child: AnimatedScale(
+                                  duration: const Duration(milliseconds: 150),
+                                  scale: isHovered ? 1.2 : 1.0,
+                                  child: LongPressDraggable<int>(
+                                    data: index,
+                                    delay: const Duration(milliseconds: 300),
+                                    onDragStarted: () {
+                                      setState(() => _draggingIndex = index);
+                                    },
+                                    onDragEnd: (_) {
+                                      setState(() => _draggingIndex = null);
+                                    },
+                                    onDraggableCanceled: (_, __) {
+                                      setState(() => _draggingIndex = null);
+                                    },
+                                    feedback: Material(
+                                      color: Colors.transparent,
+                                      child: Transform.scale(
+                                        scale: 1.15,
+                                        child: Opacity(
+                                          opacity: 0.85,
+                                          child: Image.asset(
+                                            NodeAsset.image(nodeState),
+                                            width: 80,
+                                            height: 80,
+                                            fit: BoxFit.contain,
+                                            filterQuality: FilterQuality.none,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    childWhenDragging: Opacity(
+                                      opacity: 0.2,
+                                      child: nodeWidget,
+                                    ),
+                                    child: nodeWidget,
+                                  ),
+                                ),
+                              );
                             },
                           ),
                         );

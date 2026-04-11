@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/learning_node_content.dart';
@@ -8,11 +9,14 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
+import 'package:passion_tree_frontend/core/common_widgets/bars/homebar_visibility.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class LearningNodePage extends StatefulWidget {
   final String nodeId;
+  final String pathId;
   final String? pathName;
   final int? totalNodes;
   final int? currentNodeSequence;
@@ -21,6 +25,7 @@ class LearningNodePage extends StatefulWidget {
   const LearningNodePage({
     super.key,
     required this.nodeId,
+    required this.pathId,
     this.pathName,
     this.totalNodes,
     this.currentNodeSequence,
@@ -33,37 +38,91 @@ class LearningNodePage extends StatefulWidget {
 
 class _LearningNodePageState extends State<LearningNodePage> {
   NodeDetail? _cachedNodeDetail;
+  YoutubePlayerController? _videoController;
+  bool _isFullscreen = false;
 
   @override
   void initState() {
     super.initState();
-
-    // Start node when page loads
     LogHandler.info('Action: User joined learning node ${widget.nodeId}');
     context.read<LearningPathBloc>().add(
-      StartNodeEvent(nodeId: widget.nodeId, userId: widget.userId),
+      StartNodeEvent(nodeId: widget.nodeId),
     );
-
-    // Fetch node detail when page loads
     context.read<LearningPathBloc>().add(
-      FetchNodeDetail(nodeId: widget.nodeId, userId: widget.userId),
+      FetchNodeDetail(nodeId: widget.nodeId),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
+  void dispose() {
+    _videoController?.removeListener(_onVideoControllerUpdate);
+    homeBarVisibilityNotifier.value = true;
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    );
+    _videoController?.dispose();
+    super.dispose();
+  }
+
+  void _onVideoControllerUpdate() {
+    final controller = _videoController;
+    if (controller == null) return;
+
+    final isFullscreen = controller.value.isFullScreen;
+    if (isFullscreen == _isFullscreen) return;
+
+    // Keep transition handling minimal to avoid audio glitches caused by
+    // forcing play/seek during fullscreen mode changes.
+    _isFullscreen = isFullscreen;
+    homeBarVisibilityNotifier.value = !isFullscreen;
+
+    // Hide system overlays in fullscreen and restore on exit.
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: isFullscreen ? const [] : SystemUiOverlay.values,
+    );
+  }
+
+  void _initVideoController(String? videoUrl) {
+    if (_videoController != null) return;
+    final url = _normalizeVideoUrl(
+      videoUrl ?? 'https://youtu.be/Yf4M3WZilRI?si=HU_zfUG1GzGMizNb',
+    );
+    final videoId = YoutubePlayer.convertUrlToId(url) ?? '';
+    if (videoId.isNotEmpty) {
+      final controller = YoutubePlayerController(
+        initialVideoId: videoId,
+        flags: const YoutubePlayerFlags(autoPlay: false, mute: false),
+      );
+      controller.addListener(_onVideoControllerUpdate);
+
+      setState(() {
+        _videoController = controller;
+      });
+    }
+  }
+
+  String _normalizeVideoUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return trimmed;
+
+    final hasScheme = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://').hasMatch(trimmed);
+    return hasScheme ? trimmed : 'https://$trimmed';
+  }
+
+  Widget _buildScaffold(BuildContext context, {Widget? player}) {
     return Scaffold(
       appBar: const AppBarWidget(title: 'Learning Paths', showBackButton: true),
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
           builder: (context, state) {
-            // Cache node detail when loaded
             if (state is NodeDetailLoaded) {
               _cachedNodeDetail = state.nodeDetail;
             }
 
-            // Show loading only if no cached data
-            if ((state is LearningPathLoading || state is LearningPathInitial) &&
+            if ((state is LearningPathLoading ||
+                    state is LearningPathInitial) &&
                 _cachedNodeDetail == null) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -72,7 +131,6 @@ class _LearningNodePageState extends State<LearningNodePage> {
               return Center(child: Text('Error: ${state.message}'));
             }
 
-            // Use cached node detail
             final nodeDetail = _cachedNodeDetail;
 
             if (nodeDetail != null) {
@@ -94,15 +152,18 @@ class _LearningNodePageState extends State<LearningNodePage> {
                         materials: nodeDetail.materials,
                         status: nodeDetail.status,
                         videoUrl: nodeDetail.linkVdo,
+                        controller: _videoController,
+                        player: player,
                         onTakeQuiz: () async {
                           final bloc = context.read<LearningPathBloc>();
-                          await Navigator.push(
+                          final quizCompleted = await Navigator.push<bool>(
                             context,
                             MaterialPageRoute(
                               builder: (_) => BlocProvider.value(
                                 value: bloc,
                                 child: LearningPathQuizPage(
                                   nodeId: widget.nodeId,
+                                  pathId: widget.pathId,
                                   title: nodeDetail.title,
                                   pathName: widget.pathName,
                                   totalNodes: widget.totalNodes,
@@ -113,12 +174,19 @@ class _LearningNodePageState extends State<LearningNodePage> {
                               ),
                             ),
                           );
-                          // Refetch node detail after returning from quiz
+                          if (!mounted) return;
+
+                          if (quizCompleted == true) {
+                            Navigator.pop(context, true);
+                            return;
+                          }
+
                           if (mounted) {
-                            bloc.add(FetchNodeDetail(
-                              nodeId: widget.nodeId,
-                              userId: widget.userId,
-                            ));
+                            bloc.add(
+                              FetchNodeDetail(
+                                nodeId: widget.nodeId,
+                              ),
+                            );
                           }
                         },
                       ),
@@ -136,11 +204,32 @@ class _LearningNodePageState extends State<LearningNodePage> {
               );
             }
 
-            // No node detail available
             return const Center(child: CircularProgressIndicator());
           },
         ),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<LearningPathBloc, LearningPathState>(
+      listener: (context, state) {
+        if (state is NodeDetailLoaded) {
+          _initVideoController(state.nodeDetail.linkVdo);
+        }
+      },
+      child: _videoController != null
+          ? YoutubePlayerBuilder(
+              player: YoutubePlayer(
+                controller: _videoController!,
+                showVideoProgressIndicator: true,
+                progressIndicatorColor: Theme.of(context).colorScheme.primary,
+              ),
+              builder: (context, player) =>
+                  _buildScaffold(context, player: player),
+            )
+          : _buildScaffold(context),
     );
   }
 }
