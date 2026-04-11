@@ -34,12 +34,6 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
   ];
 
   // ใส่หน้าของตัวเองตรงนี้
-  late final List<Widget> _pages = [
-    const HomeWrapper(),
-    _buildTabNavigator(1, const LearningPathRoleEntryPage()),
-    _buildTabNavigator(2, const AlbumsReflectionTreeWrapper()),
-    _buildTabNavigator(3, const ProfilePage()),
-  ];
 
   @override
   void initState() {

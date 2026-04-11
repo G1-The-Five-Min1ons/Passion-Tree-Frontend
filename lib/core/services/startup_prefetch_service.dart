@@ -58,7 +58,7 @@ class StartupPrefetchService {
         return;
       }
 
-      learningPathBloc.add(FetchLearningPathOverview(userId: userId));
+      learningPathBloc.add(FetchLearningPathOverview());
 
       await learningPathBloc.stream.firstWhere(
         (s) => s is LearningPathOverviewLoaded || s is LearningPathError,
