@@ -293,10 +293,15 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           return false;
         }
 
-        final hasTitle =
-            node.title.trim().isNotEmpty && node.title.trim() != 'New Node';
+        final hasTitle = node.title.trim().isNotEmpty;
         final hasDescription = node.description.trim().isNotEmpty;
-        final hasVideoLink = (node.linkVdo ?? '').trim().isNotEmpty;
+
+        final video = (node.linkVdo ?? '').trim();
+        final videoUri = Uri.tryParse(video);
+        final hasVideoLink =
+            video.isNotEmpty &&
+            videoUri != null &&
+            (videoUri.hasScheme ? videoUri.hasAuthority : video.contains('.'));
 
         return !(hasTitle && hasDescription && hasVideoLink);
       },
@@ -449,21 +454,44 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
   Future<void> _validateQuestionsAndPublish() async {
     final getNodeQuestions = getIt<GetNodeQuestions>();
+    final syncedNodeIds = _cachedNodes?.map((n) => n.nodeId).toSet() ?? <String>{};
 
-    for (final node in _displayNodes) {
+    final nodesForValidation = _displayNodes.where((node) {
+      final nodeId = node.nodeId.trim();
+      if (nodeId.isEmpty) return false;
+      if (nodeId.startsWith('new_node_') || nodeId.startsWith('draft_node_')) {
+        return false;
+      }
+      if (syncedNodeIds.isNotEmpty && !syncedNodeIds.contains(nodeId)) {
+        return false;
+      }
+      return true;
+    }).toList();
+
+    for (final node in nodesForValidation) {
       try {
         final questions = await getNodeQuestions(node.nodeId);
         final hasValidQuestion = questions.any(
-          (q) =>
-              q.questionText.trim().isNotEmpty &&
-              q.choices.where((c) => c.choiceText.trim().isNotEmpty).length >= 2,
+          (q) {
+            if (q.questionText.trim().isEmpty) return false;
+
+            final validChoices = q.choices
+                .where((c) => c.choiceText.trim().isNotEmpty)
+                .toList();
+            if (validChoices.length < 2) return false;
+
+            final hasCorrectWithReason = validChoices.any(
+              (c) => c.isCorrect && c.reasoning.trim().isNotEmpty,
+            );
+            return hasCorrectWithReason;
+          },
         );
         if (!hasValidQuestion) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Node "${node.title}" ต้องมีอย่างน้อย 1 คำถามและ 2 ตัวเลือก',
+                'Node "${node.title}" ต้องมีคำถาม, อย่างน้อย 2 ตัวเลือก และเหตุผลของคำตอบที่ถูกต้อง',
                 style: const TextStyle(color: AppColors.textPrimary),
               ),
               backgroundColor: AppColors.cancel,
