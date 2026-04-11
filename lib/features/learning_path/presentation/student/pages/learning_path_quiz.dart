@@ -278,6 +278,19 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
       final scaffoldContext = context;
       final bloc = context.read<LearningPathBloc>();
 
+      Future<void> goToStatusPage() async {
+        if (!scaffoldContext.mounted) return;
+
+        Navigator.of(scaffoldContext).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: bloc,
+              child: const LearningPathStatusPage(),
+            ),
+          ),
+        );
+      }
+
       // Show congratulation popup
       showDialog(
         context: context,
@@ -313,6 +326,16 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                 initialContentQualityRating: initialContentQualityRating,
                 initialInstructorRating: initialInstructorRating,
                 initialOverallRating: initialOverallRating,
+                onCancel: () async {
+                  Navigator.of(ratingDialogContext).pop();
+
+                  LogHandler.info(
+                    'Action: User skipped rating for node ${widget.nodeId}',
+                  );
+
+                  bloc.add(CompleteNodeEvent(nodeId: widget.nodeId));
+                  await goToStatusPage();
+                },
                 onSubmit: (contentQuality, instructor, overall) async {
                   Navigator.of(ratingDialogContext).pop();
 
@@ -335,17 +358,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                     CompleteNodeEvent(nodeId: widget.nodeId),
                   );
 
-                  if (!scaffoldContext.mounted) return;
-
-                  // Navigate to status page after completion (same flow as selecting No rating).
-                  Navigator.of(scaffoldContext).push(
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: bloc,
-                        child: const LearningPathStatusPage(),
-                      ),
-                    ),
-                  );
+                  await goToStatusPage();
                 },
               ),
             );
@@ -361,8 +374,8 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
 
             if (!scaffoldContext.mounted) return;
 
-            // Navigate to status page after completion
-            Navigator.of(scaffoldContext).push(
+            // Navigate to status page after completion without leaving quiz in back stack.
+            Navigator.of(scaffoldContext).pushReplacement(
               MaterialPageRoute(
                 builder: (_) => BlocProvider.value(
                   value: bloc,

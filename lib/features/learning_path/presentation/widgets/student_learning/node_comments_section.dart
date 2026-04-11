@@ -292,14 +292,14 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.12),
+                          color: AppColors.secondaryBrand.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '$count',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                color: colors.primary,
+                                color: AppColors.secondaryBrand,
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
@@ -643,76 +643,65 @@ class _CommentInputAreaState extends State<_CommentInputArea> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: CircleAvatar(
-                      radius: 18,
-                      backgroundColor: AppColors.primaryBrand.withValues(alpha: 0.35),
-                      backgroundImage: (widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty)
-                          ? NetworkImage(widget.avatarUrl!)
-                          : null,
-                      child: (widget.avatarUrl == null || widget.avatarUrl!.isEmpty)
-                          ? Text(
-                              widget.userInitial,
-                              style: const TextStyle(
-                                color: AppColors.secondaryBrand,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            )
-                          : null,
-                    ),
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: AppColors.primaryBrand.withValues(alpha: 0.35),
+                    backgroundImage: (widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty)
+                        ? NetworkImage(widget.avatarUrl!)
+                        : null,
+                    child: (widget.avatarUrl == null || widget.avatarUrl!.isEmpty)
+                        ? Text(
+                            widget.userInitial,
+                            style: const TextStyle(
+                              color: AppColors.secondaryBrand,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Stack(
-                      alignment: Alignment.bottomRight,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: colors.surfaceContainer,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: AppColors.cardBorder),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: colors.surfaceContainer,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppColors.cardBorder),
+                      ),
+                      child: TextField(
+                        controller: widget.controller,
+                        focusNode: widget.focusNode,
+                        minLines: 1,
+                        maxLines: 4,
+                        textInputAction: TextInputAction.newline,
+                        decoration: InputDecoration(
+                          hintText: 'Add a comment...',
+                          hintStyle: TextStyle(
+                            color: colors.onSurface.withValues(alpha: 0.45),
                           ),
-                          child: TextField(
-                            controller: widget.controller,
-                            focusNode: widget.focusNode,
-                            minLines: 1,
-                            maxLines: 4,
-                            textInputAction: TextInputAction.newline,
-                            decoration: InputDecoration(
-                              hintText: 'Add a comment...',
-                              hintStyle: TextStyle(
-                                color: colors.onSurface.withValues(alpha: 0.45),
-                              ),
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: const EdgeInsets.fromLTRB(12, 10, 44, 10),
-                            ),
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: colors.onSurface,
-                            ),
-                          ),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                         ),
-                        Positioned(
-                          right: 6,
-                          bottom: 6,
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.send_rounded,
-                              color: _hasText
-                                  ? colors.primary
-                                  : colors.onSurface.withValues(alpha: 0.35),
-                            ),
-                            onPressed: _hasText ? widget.onSubmit : null,
-                            padding: const EdgeInsets.all(6),
-                            constraints: const BoxConstraints(),
-                          ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurface,
                         ),
-                      ],
+                      ),
                     ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: Icon(
+                      Icons.send_rounded,
+                      color: _hasText
+                          ? colors.primary
+                          : colors.onSurface.withValues(alpha: 0.35),
+                    ),
+                    onPressed: _hasText ? widget.onSubmit : null,
+                    padding: const EdgeInsets.all(6),
+                    constraints: const BoxConstraints(),
                   ),
                 ],
               ),
@@ -780,7 +769,7 @@ class _CommentItemState extends State<_CommentItem> {
       spans.add(
         TextSpan(
           text: match.group(0),
-          style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: AppColors.secondaryBrand, fontWeight: FontWeight.bold),
         ),
       );
       start = match.end;
@@ -954,7 +943,7 @@ class _CommentItemState extends State<_CommentItem> {
                                 context,
                               ).textTheme.bodySmall?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: colors.onSurface.withValues(alpha: 0.6),
+                                color: AppColors.iconbar,
                               ),
                             ),
                           ),
@@ -974,7 +963,7 @@ class _CommentItemState extends State<_CommentItem> {
                                   context,
                                 ).textTheme.bodySmall?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: colors.primary,
+                                  color: AppColors.iconbar,
                                 ),
                               ),
                             ),

@@ -9,6 +9,7 @@ class RatingPopup extends StatefulWidget {
   final int? initialContentQualityRating;
   final int? initialInstructorRating;
   final int? initialOverallRating;
+  final VoidCallback? onCancel;
   final Function(int contentQuality, int instructorRating, int overallRating) onSubmit;
 
   const RatingPopup({
@@ -17,6 +18,7 @@ class RatingPopup extends StatefulWidget {
     this.initialContentQualityRating,
     this.initialInstructorRating,
     this.initialOverallRating,
+    this.onCancel,
     required this.onSubmit,
   });
 
@@ -157,7 +159,7 @@ class _RatingPopupState extends State<RatingPopup> {
                 saveText: 'Submit',
                 cancelText: 'Cancel',
                 cancelTextColor: Colors.white,
-                onCancel: () => Navigator.pop(context),
+                onCancel: widget.onCancel ?? () => Navigator.pop(context),
                 onSave: _handleSubmit,
               ),
             ],
