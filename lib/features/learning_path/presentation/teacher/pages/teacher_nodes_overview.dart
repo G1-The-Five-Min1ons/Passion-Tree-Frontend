@@ -265,8 +265,16 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   }
 
   bool _hasIncompleteNodesForPublish() {
+    final syncedNodeIds = _cachedNodes?.map((n) => n.nodeId).toSet() ?? <String>{};
+
     return _displayNodes.any(
       (node) {
+        // Skip transient nodes that are not reflected from backend yet.
+        // They may temporarily miss fields like linkVdo in UI-only fallback mapping.
+        if (syncedNodeIds.isNotEmpty && !syncedNodeIds.contains(node.nodeId)) {
+          return false;
+        }
+
         final hasTitle =
             node.title.trim().isNotEmpty && node.title.trim() != 'New Node';
         final hasDescription = node.description.trim().isNotEmpty;
