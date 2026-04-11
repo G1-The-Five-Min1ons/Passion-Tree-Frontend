@@ -357,10 +357,8 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
         CompleteNodeEvent(nodeId: widget.nodeId),
       );
 
-      Navigator.pop(context); // Pop quiz page
-      Navigator.pop(
-        context,
-      ); // Pop learning node page -> back to nodes overview
+      // Pop only quiz page so LearningNodePage state is preserved.
+      Navigator.pop(context, true);
     }
   }
 }
