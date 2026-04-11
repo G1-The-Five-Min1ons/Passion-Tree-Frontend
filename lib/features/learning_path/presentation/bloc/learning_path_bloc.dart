@@ -57,6 +57,16 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final UpdateChoiceUseCase updateChoiceUseCase;
   final CreateChoiceUseCase createChoiceUseCase;
   final DeleteChoiceUseCase deleteChoiceUseCase;
+  String? _cachedUserId;
+
+  Future<String> _resolveUserId() async {
+    if (_cachedUserId != null && _cachedUserId!.isNotEmpty) {
+      return _cachedUserId!;
+    }
+
+    _cachedUserId = await getIt<IAuthRepository>().getUserId();
+    return _cachedUserId ?? '';
+  }
 
   LearningPathBloc(
     this.getAllLearningPaths,
@@ -136,8 +146,8 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(LearningPathLoading());
 
         try {
-          final userId = await getIt<IAuthRepository>().getUserId();
-          final result = await getLearningPathStatus(userId ?? '');
+          final userId = await _resolveUserId();
+          final result = await getLearningPathStatus(userId);
           LogHandler.debug('[BLoC] Loaded ${result.length} enrolled paths');
           emit(LearningPathStatusLoaded(result));
         } catch (e) {
@@ -156,11 +166,11 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(LearningPathLoading());
 
         try {
-          final userId = await getIt<IAuthRepository>().getUserId();
+          final userId = await _resolveUserId();
           // Always fetch recommendedPaths (API will use auth header)
           final List<dynamic> results = await Future.wait([
             getAllLearningPaths(),
-            getLearningPathStatus(userId ?? ''),
+            getLearningPathStatus(userId),
             getRecommendedLearningPaths(),
           ]);
           final List<LearningPath> allPaths = List<LearningPath>.from(results[0] as List);
@@ -188,27 +198,14 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(LearningPathLoading());
 
         try {
-          final userId = await getIt<IAuthRepository>().getUserId();
-          final nodes = await getNodesForPath(event.pathId, userId ?? '');
+          final userId = await _resolveUserId();
+          final nodes = await getNodesForPath(event.pathId, userId);
 
-          // Hydrate each node with full detail so materials/video always exist in UI.
-          final detailedNodes = await Future.wait(
-            nodes.map((node) async {
-              try {
-                return await getNodeDetail(node.nodeId, userId ?? '');
-              } catch (e) {
-                LogHandler.warning(
-                  '[BLoC] Failed to hydrate node detail for ${node.nodeId}, fallback to list payload: $e',
-                );
-                return node;
-              }
-            }),
-          );
-
-          LogHandler.debug('[BLoC] Loaded ${detailedNodes.length} nodes (hydrated)');
+          // Use list payload directly to avoid N+1 detail requests on initial screen load.
+          LogHandler.debug('[BLoC] Loaded ${nodes.length} nodes');
           emit(NodesLoaded(
             pathId: event.pathId,
-            nodes: detailedNodes,
+            nodes: nodes,
           ));
         } catch (e) {
           LogHandler.error('[BLoC] Error fetching nodes: $e');
@@ -226,8 +223,8 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(LearningPathLoading());
 
         try {
-          final userId = await getIt<IAuthRepository>().getUserId();
-          final nodeDetail = await getNodeDetail(event.nodeId, userId ?? '');
+          final userId = await _resolveUserId();
+          final nodeDetail = await getNodeDetail(event.nodeId, userId);
           LogHandler.debug('[BLoC] Loaded node detail: ${nodeDetail.title}');
           emit(NodeDetailLoaded(nodeDetail));
         } catch (e) {
@@ -246,10 +243,10 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(StartingNode(event.nodeId));
         
         await safeExecute(emit, 'start node', () async {
-          final userId = await getIt<IAuthRepository>().getUserId();
-          await startNode(event.nodeId, userId ?? '');
+          final userId = await _resolveUserId();
+          await startNode(event.nodeId, userId);
           // Refetch node detail to get updated status
-          final nodeDetail = await getNodeDetail(event.nodeId, userId ?? '');
+          final nodeDetail = await getNodeDetail(event.nodeId, userId);
           LogHandler.debug('[BLoC] Node started successfully');
           emit(NodeDetailLoaded(nodeDetail));
         });
@@ -265,13 +262,13 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(EnrollingPath(event.pathId));
         
         await safeExecute(emit, 'enroll path', () async {
-          final userId = await getIt<IAuthRepository>().getUserId();
+          final userId = await _resolveUserId();
           // Step 1: Enroll in the path
-          await enrollPath(event.pathId, userId ?? '');
+          await enrollPath(event.pathId, userId);
           LogHandler.info('[BLoC] Enrolled in path: ${event.pathId}');
           
           // Step 2: Fetch updated enrolled paths to get the enrolled data
-          final enrolledPaths = await getLearningPathStatus(userId ?? '');
+          final enrolledPaths = await getLearningPathStatus(userId);
           
           // Step 3: Find the newly enrolled path
           final enrolledPath = enrolledPaths.firstWhere(
@@ -282,7 +279,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           LogHandler.debug('[BLoC] Fetched enrolled path data: ${enrolledPath.title}');
           emit(PathEnrolled(
             pathId: event.pathId,
-            userId: userId ?? '',
+            userId: userId,
             enrolledPath: enrolledPath,
           ));
         });
@@ -298,10 +295,10 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
         emit(CompletingNode(event.nodeId));
         
         await safeExecute(emit, 'complete node', () async {
-          final userId = await getIt<IAuthRepository>().getUserId();
-          await completeNode(event.nodeId, userId ?? '');
+          final userId = await _resolveUserId();
+          await completeNode(event.nodeId, userId);
           // Refetch node detail to get updated status
-          final nodeDetail = await getNodeDetail(event.nodeId, userId ?? '');
+          final nodeDetail = await getNodeDetail(event.nodeId, userId);
           LogHandler.debug('[BLoC] Node completed successfully');
           emit(NodeDetailLoaded(nodeDetail));
         });
@@ -327,8 +324,8 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           emit(LearningPathDeleted(deleteMessage));
 
           // Refresh overview
-          final userId = await getIt<IAuthRepository>().getUserId();
-          if (userId != null && userId.isNotEmpty) {
+          final userId = await _resolveUserId();
+          if (userId.isNotEmpty) {
             final results = await Future.wait([
               getAllLearningPaths(),
               getLearningPathStatus(userId),
