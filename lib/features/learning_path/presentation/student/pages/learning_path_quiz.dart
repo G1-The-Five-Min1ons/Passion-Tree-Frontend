@@ -13,6 +13,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/rating_popup.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
@@ -282,8 +283,26 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
         context: context,
         barrierDismissible: false,
         builder: (congratsDialogContext) => CompletionPopup(
-          onYes: () {
+          onYes: () async {
             // Note: CompletionPopup already handles Navigator.pop internally
+
+            int? initialContentQualityRating;
+            int? initialInstructorRating;
+            int? initialOverallRating;
+
+            try {
+              final getMyRatingUseCase = getIt<GetMyRating>();
+              final existingRating = await getMyRatingUseCase(widget.pathId);
+              initialContentQualityRating = existingRating.ratingContent;
+              initialInstructorRating = existingRating.ratingInstruct;
+              initialOverallRating = existingRating.ratingOverall
+                  .round()
+                  .clamp(1, 5);
+            } catch (_) {
+              // If rating does not exist yet, open popup with empty selection.
+            }
+
+            if (!scaffoldContext.mounted) return;
 
             // Show rating popup
             showDialog(
@@ -291,6 +310,9 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
               barrierDismissible: false,
               builder: (ratingDialogContext) => RatingPopup(
                 pathName: widget.pathName!,
+                initialContentQualityRating: initialContentQualityRating,
+                initialInstructorRating: initialInstructorRating,
+                initialOverallRating: initialOverallRating,
                 onSubmit: (contentQuality, instructor, overall) async {
                   Navigator.of(ratingDialogContext).pop();
 
@@ -315,9 +337,15 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
 
                   if (!scaffoldContext.mounted) return;
 
-                  // Return to nodes overview: pop quiz page and learning node page.
-                  Navigator.of(scaffoldContext).pop();
-                  Navigator.of(scaffoldContext).pop();
+                  // Navigate to status page after completion (same flow as selecting No rating).
+                  Navigator.of(scaffoldContext).push(
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: bloc,
+                        child: const LearningPathStatusPage(),
+                      ),
+                    ),
+                  );
                 },
               ),
             );
@@ -334,14 +362,13 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
             if (!scaffoldContext.mounted) return;
 
             // Navigate to status page after completion
-            Navigator.of(scaffoldContext).pushAndRemoveUntil(
+            Navigator.of(scaffoldContext).push(
               MaterialPageRoute(
                 builder: (_) => BlocProvider.value(
                   value: bloc,
                   child: const LearningPathStatusPage(),
                 ),
               ),
-              (route) => route.isFirst,
             );
           },
         ),

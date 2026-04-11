@@ -86,7 +86,9 @@ class _LearningNodePageState extends State<LearningNodePage> {
 
   void _initVideoController(String? videoUrl) {
     if (_videoController != null) return;
-    final url = _normalizeVideoUrl(videoUrl ?? '');
+    final url = _normalizeVideoUrl(
+      videoUrl ?? 'https://youtu.be/Yf4M3WZilRI?si=HU_zfUG1GzGMizNb',
+    );
     final videoId = YoutubePlayer.convertUrlToId(url) ?? '';
     if (videoId.isNotEmpty) {
       final controller = YoutubePlayerController(
@@ -106,15 +108,7 @@ class _LearningNodePageState extends State<LearningNodePage> {
     if (trimmed.isEmpty) return trimmed;
 
     final hasScheme = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://').hasMatch(trimmed);
-    final candidate = hasScheme ? trimmed : 'https://$trimmed';
-    final parsed = Uri.tryParse(candidate);
-
-    final isValidHttpUrl =
-        parsed != null &&
-        (parsed.scheme == 'http' || parsed.scheme == 'https') &&
-        parsed.host.isNotEmpty;
-
-    return isValidHttpUrl ? candidate : '';
+    return hasScheme ? trimmed : 'https://$trimmed';
   }
 
   Widget _buildScaffold(BuildContext context, {Widget? player}) {

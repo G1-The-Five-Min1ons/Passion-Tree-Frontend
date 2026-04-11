@@ -57,6 +57,9 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final UpdateChoiceUseCase updateChoiceUseCase;
   final CreateChoiceUseCase createChoiceUseCase;
   final DeleteChoiceUseCase deleteChoiceUseCase;
+  final SubmitReview submitReview;
+  final GetMyRating getMyRating;
+  final DeleteRating deleteRating;
   String? _cachedUserId;
 
   Future<String> _resolveUserId() async {
@@ -91,6 +94,9 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.updateChoiceUseCase,
     this.createChoiceUseCase,
     this.deleteChoiceUseCase,
+    this.submitReview,
+    this.getMyRating,
+    this.deleteRating,
   ) : super(LearningPathInitial()) {
     
     /// Helper method to handle errors consistently
@@ -301,6 +307,46 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           final nodeDetail = await getNodeDetail(event.nodeId, userId);
           LogHandler.debug('[BLoC] Node completed successfully');
           emit(NodeDetailLoaded(nodeDetail));
+        });
+      },
+      transformer: droppable(),
+    );
+
+    on<SubmitReviewEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] SubmitReviewEvent: ${event.pathId}');
+
+        await safeExecute(emit, 'submit review', () async {
+          await submitReview(
+            event.pathId,
+            event.contentQualityRating,
+            event.instructorRating,
+          );
+          LogHandler.info('[BLoC] Rating submitted successfully for path ${event.pathId}');
+        });
+      },
+      transformer: droppable(),
+    );
+
+    on<FetchMyRatingEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] FetchMyRatingEvent: ${event.pathId}');
+
+        await safeExecute(emit, 'fetch my rating', () async {
+          final rating = await getMyRating(event.pathId);
+          emit(LearningPathRatingLoaded(rating));
+        });
+      },
+      transformer: restartable(),
+    );
+
+    on<DeleteRatingEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] DeleteRatingEvent: ${event.pathId}');
+
+        await safeExecute(emit, 'delete rating', () async {
+          await deleteRating(event.pathId);
+          emit(LearningPathRatingDeleted(event.pathId));
         });
       },
       transformer: droppable(),

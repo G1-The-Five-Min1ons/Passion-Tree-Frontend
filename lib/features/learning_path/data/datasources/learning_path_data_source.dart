@@ -14,6 +14,7 @@ import 'package:passion_tree_frontend/features/learning_path/data/models/enrolle
 import 'package:passion_tree_frontend/features/learning_path/data/models/learning_node_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_progress_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/models/learning_path_rating_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/node_detail_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/quiz_question_api_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
@@ -303,6 +304,41 @@ class LearningPathDataSource {
     _throwIfError(response, 'GET questions/$nodeId');
     final questions = (response.data as List?) ?? [];
     return questions.map((e) => QuizQuestionApiModel.fromJson(e)).toList();
+  }
+
+  Future<void> submitRating(
+    String pathId,
+    int contentQualityRating,
+    int instructorRating,
+  ) async {
+    final response = await _apiHandler.post(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/ratings',
+      headers: await _getAuthHeaders(),
+      body: {
+        'rating_content': contentQualityRating,
+        'rating_instruct': instructorRating,
+      },
+    );
+    _throwIfError(response, 'POST ratings/$pathId');
+  }
+
+  Future<LearningPathRatingApiModel> getMyRating(String pathId) async {
+    final response = await _apiHandler.get(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/ratings',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'GET ratings/$pathId');
+    return LearningPathRatingApiModel.fromJson(
+      (response.data as Map<String, dynamic>?) ?? <String, dynamic>{},
+    );
+  }
+
+  Future<void> deleteRating(String pathId) async {
+    final response = await _apiHandler.delete(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/$pathId/ratings',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'DELETE ratings/$pathId');
   }
 
   Future<void> createNodeQuestions(

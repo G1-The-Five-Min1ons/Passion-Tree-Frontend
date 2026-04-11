@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/lea
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path_rating.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_node.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/ai_generate_response.dart';
@@ -19,6 +20,13 @@ abstract class LearningPathRepository {
   Future<List<NodeDetail>> getNodesForPath(String pathId, String userId);
   Future<NodeDetail> getNodeDetail(String nodeId, String userId);
   Future<List<QuizQuestion>> getNodeQuestions(String nodeId);
+  Future<void> submitRating(
+    String pathId,
+    int contentQualityRating,
+    int instructorRating,
+  );
+  Future<LearningPathRating> getMyRating(String pathId);
+  Future<void> deleteRating(String pathId);
   Future<void> enrollPath(String pathId, String userId);
   Future<void> startNode(String nodeId, String userId);
   Future<void> completeNode(String nodeId, String userId);

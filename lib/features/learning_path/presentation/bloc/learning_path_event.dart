@@ -49,6 +49,18 @@ class SubmitReviewEvent extends LearningPathEvent {
   });
 }
 
+class FetchMyRatingEvent extends LearningPathEvent {
+  final String pathId;
+
+  FetchMyRatingEvent({required this.pathId});
+}
+
+class DeleteRatingEvent extends LearningPathEvent {
+  final String pathId;
+
+  DeleteRatingEvent({required this.pathId});
+}
+
 class DeleteLearningPathEvent extends LearningPathEvent {
   final String pathId;
   final String? publishStatus; // 'draft' or 'published' for snackbar message

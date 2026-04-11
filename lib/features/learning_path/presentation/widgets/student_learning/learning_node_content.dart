@@ -40,7 +40,7 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
   @override
   void initState() {
     super.initState();
-    final videoUrl = widget.videoUrl ?? '';
+    final videoUrl = widget.videoUrl ?? 'https://youtu.be/Yf4M3WZilRI?si=HU_zfUG1GzGMizNb';
     _videoId = YoutubePlayer.convertUrlToId(videoUrl) ?? '';
   }
 
@@ -54,7 +54,6 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final hasValidVideo = _videoId != null && _videoId!.isNotEmpty;
     final hasPlaybackStarted =
       (widget.controller?.value.position.inMilliseconds ?? 0) > 0 ||
       (widget.controller?.value.isPlaying ?? false);
@@ -86,42 +85,46 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
           fillColor: colors.surface,
           child: shouldShowPlayer
               ? widget.player!
-              : hasValidVideo
-                  ? GestureDetector(
-                      onTap: _initializePlayer,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Image.network(
-                            'https://img.youtube.com/vi/$_videoId/maxresdefault.jpg',
-                            width: double.infinity,
-                            height: 240,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Image.network(
-                                'https://img.youtube.com/vi/$_videoId/hqdefault.jpg',
-                                width: double.infinity,
-                                height: 240,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return _buildUnavailableVideoPlaceholder(context);
-                                },
-                              );
-                            },
-                          ),
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.6),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.play_arrow, size: 48, color: Colors.white),
-                          ),
-                        ],
+              : GestureDetector(
+                  onTap: _initializePlayer,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (_videoId != null && _videoId!.isNotEmpty)
+                        Image.network(
+                          'https://img.youtube.com/vi/$_videoId/maxresdefault.jpg',
+                          width: double.infinity,
+                          height: 240,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.network(
+                              'https://img.youtube.com/vi/$_videoId/hqdefault.jpg',
+                              width: double.infinity,
+                              height: 240,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: colors.surface,
+                                  child: const Center(
+                                    child: Icon(Icons.videocam_off, size: 56),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.play_arrow, size: 48, color: Colors.white),
                       ),
-                    )
-                  : _buildUnavailableVideoPlaceholder(context),
+                    ],
+                  ),
+                ),
         ),
 
         const SizedBox(height: 24),
@@ -202,31 +205,6 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildUnavailableVideoPlaceholder(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: colors.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.videocam_off, size: 48, color: colors.onSurface.withValues(alpha: 0.7)),
-          const SizedBox(height: 10),
-          Text(
-            'This video is unavailable',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: colors.onSurface,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

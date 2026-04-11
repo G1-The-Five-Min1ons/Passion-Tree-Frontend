@@ -6,11 +6,17 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 
 class RatingPopup extends StatefulWidget {
   final String pathName;
+  final int? initialContentQualityRating;
+  final int? initialInstructorRating;
+  final int? initialOverallRating;
   final Function(int contentQuality, int instructorRating, int overallRating) onSubmit;
 
   const RatingPopup({
     super.key,
     required this.pathName,
+    this.initialContentQualityRating,
+    this.initialInstructorRating,
+    this.initialOverallRating,
     required this.onSubmit,
   });
 
@@ -23,6 +29,14 @@ class _RatingPopupState extends State<RatingPopup> {
   int? _instructorRating;
   int? _overallRating;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _contentQualityRating = widget.initialContentQualityRating;
+    _instructorRating = widget.initialInstructorRating;
+    _overallRating = widget.initialOverallRating;
+  }
 
   void _handleSubmit() {
     // Check if all ratings are selected

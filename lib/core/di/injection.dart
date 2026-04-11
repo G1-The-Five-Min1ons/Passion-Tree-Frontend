@@ -322,6 +322,15 @@ Future<void> initializeDependencies() async {
   getIt.registerFactory<GetRecommendedLearningPaths>(
     () => GetRecommendedLearningPaths(getIt<LearningPathRepositoryImpl>()),
   );
+  getIt.registerFactory<SubmitReview>(
+    () => SubmitReview(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<GetMyRating>(
+    () => GetMyRating(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<DeleteRating>(
+    () => DeleteRating(getIt<LearningPathRepositoryImpl>()),
+  );
   getIt.registerFactory<UpdateQuestionUseCase>(
     () => UpdateQuestionUseCase(getIt<LearningPathRepositoryImpl>()),
   );
@@ -360,6 +369,9 @@ Future<void> initializeDependencies() async {
       getIt<UpdateChoiceUseCase>(),
       getIt<CreateChoiceUseCase>(),
       getIt<DeleteChoiceUseCase>(),
+      getIt<SubmitReview>(),
+      getIt<GetMyRating>(),
+      getIt<DeleteRating>(),
     ),
   );
 
