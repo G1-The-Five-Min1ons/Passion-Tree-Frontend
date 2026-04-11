@@ -54,6 +54,11 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final hasPlaybackStarted =
+      (widget.controller?.value.position.inMilliseconds ?? 0) > 0 ||
+      (widget.controller?.value.isPlaying ?? false);
+    final shouldShowPlayer =
+      widget.player != null && (_showPlayer || hasPlaybackStarted);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,7 +83,7 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
           height: 180,
           borderColor: AppColors.cardBorder,
           fillColor: colors.surface,
-          child: _showPlayer && widget.player != null
+          child: shouldShowPlayer
               ? widget.player!
               : GestureDetector(
                   onTap: _initializePlayer,
