@@ -16,9 +16,6 @@ import 'package:passion_tree_frontend/features/dashboard/presentation/pages/miss
 import 'package:passion_tree_frontend/features/dashboard/presentation/mock/mock_missions.dart';
 import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
 
-import 'package:passion_tree_frontend/core/di/injection.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -60,29 +57,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadData() async {
-    if (_hasRequestedInitialLoad) return;
-
-    final currentState = context.read<LearningPathBloc>().state;
-    if (currentState is LearningPathOverviewLoaded ||
-        currentState is LearningPathLoading) {
-      return;
-    }
-
-    final userId = await getIt<IAuthRepository>().getUserId();
-
     if (!mounted) return;
 
-    if (userId == null || userId.isEmpty) {
-      _clearCachedOverview();
-      _hasRequestedInitialLoad = false;
-      return;
-    }
-
-    _hasRequestedInitialLoad = true;
-
-    context.read<LearningPathBloc>().add(
-      FetchLearningPathOverview(userId: userId),
-    );
+    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
   }
 
   void _clearCachedOverview() {
@@ -112,63 +89,78 @@ class _HomePageState extends State<HomePage> {
       appBar: const AppBarWidget(title: 'Home', showBackButton: false),
 
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: AppSpacing.xmargin,
-              right: AppSpacing.xmargin,
-              top: AppSpacing.ymargin,
-            ),
+        child: BlocListener<LearningPathBloc, LearningPathState>(
+          listener: (context, state) {
+            if (state is PathEnrolled) {
+              context.read<LearningPathBloc>().add(FetchLearningPathOverview());
+            }
+          },
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                left: AppSpacing.xmargin,
+                right: AppSpacing.xmargin,
+                top: AppSpacing.ymargin,
+              ),
 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                /// STREAK
-                const StreakSection(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /// STREAK
+                  const StreakSection(),
 
-                const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                /// POPULAR LEARNING PATHS
-                BlocListener<LearningPathBloc, LearningPathState>(
-                  listener: (context, state) => _handleOverviewState(state),
-                  child: BlocBuilder<LearningPathBloc, LearningPathState>(
+                  /// POPULAR LEARNING PATHS
+                  BlocBuilder<LearningPathBloc, LearningPathState>(
                     builder: (context, state) {
+                      if (state is LearningPathOverviewLoaded) {
+                        _cachedOverview = state;
+                      }
+
                       final overview = _cachedOverview;
 
                       if (overview != null) {
                         final hasEnrolledPaths =
                             overview.enrolledPaths.isNotEmpty;
-                        final hasRecommendedPaths =
-                            overview.recommendedPaths.isNotEmpty;
-                        final displayRecommended =
-                            hasEnrolledPaths && hasRecommendedPaths;
-                        final displayPaths = displayRecommended
-                            ? overview.recommendedPaths
-                            : overview.allPaths;
+
+                        final enrolledPathIds = overview.enrolledPaths
+                            .map((e) => e.pathId.trim())
+                            .toSet();
+                        final unenrolledPaths = overview.allPaths
+                            .where(
+                              (p) =>
+                                  p.publishStatus.toLowerCase().trim() ==
+                                      'published' &&
+                                  !enrolledPathIds.contains(p.id.trim()),
+                            )
+                            .toList();
 
                         return PopularLearningPathsSection(
-                          paths: displayPaths,
-                          hasEnrolledPaths: displayRecommended,
+                          paths: unenrolledPaths,
+                          hasEnrolledPaths: hasEnrolledPaths,
+                          isLoading: state is LearningPathLoading,
                         );
                       }
 
                       if (state is LearningPathLoading) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const PopularLearningPathsSection(
+                          paths: [],
+                          hasEnrolledPaths: false,
+                          isLoading: true,
+                        );
                       }
 
                       return const SizedBox();
                     },
                   ),
-                ),
 
-                const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                /// WEEKLY MISSION (แทน Reflection)
-                WeeklyMissionCardWidget(
-                  missions: _homeMissions,
-                  onMissionTap: _onMissionTap,
-                ),
-              ],
+                  /// WEEKLY MISSION (แทน Reflection)
+                  const WeeklyMissionCardWidget(missions: []),
+                ],
+              ),
             ),
           ),
         ),

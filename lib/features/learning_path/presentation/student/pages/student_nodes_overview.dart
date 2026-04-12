@@ -59,7 +59,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
     if (userId.isEmpty) return;
     // Always fetch fresh nodes to ensure up-to-date status
     context.read<LearningPathBloc>().add(
-      FetchNodesForPath(pathId: widget.course.id, userId: userId),
+      FetchNodesForPath(pathId: widget.course.id),
     );
   }
 
@@ -118,34 +118,6 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                         final currentNode = nodes[index];
                         final currentSequence = currentNode.sequence;
 
-                        // Check if user can access this node
-                        bool canAccess = true;
-                        String? errorMessage;
-
-                        // Node แรก (index = 0) เปิดได้เสมอ
-                        if (index > 0) {
-                          // หา node ก่อนหน้าจาก index ในลิสต์
-                          final previousNode = nodes[index - 1];
-
-                          // ตรวจสอบว่า node ก่อนหน้าเรียนจบแล้วหรือยัง
-                          if (previousNode.complete.toLowerCase() != 'true') {
-                            canAccess = false;
-                            errorMessage = 'Please complete "${previousNode.title}" first';
-                          }
-                        }
-
-                        if (!canAccess && errorMessage != null) {
-                          // แสดง snackbar เตือน
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(errorMessage),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                              duration: const Duration(seconds: 3),
-                            ),
-                          );
-                          return;
-                        }
-
                         // เปิด node ได้
                         Navigator.push(
                           context,
@@ -153,8 +125,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                             builder: (_) => BlocProvider.value(
                               value: context.read<LearningPathBloc>(),
                               child: LearningNodePage(
-                                nodeId: currentNode.nodeId,
-                                pathName: widget.course.title,
+                                nodeId: currentNode.nodeId,                              pathId: widget.course.id,                                pathName: widget.course.title,
                                 totalNodes: nodes.length,
                                 currentNodeSequence: currentSequence,
                                 userId: _userId ?? '',
@@ -167,9 +138,7 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                           if (_userId != null && _userId!.isNotEmpty) {
                             _fetchNodes(_userId!);
                             // Also refetch overview to update enrolled path progress
-                            context.read<LearningPathBloc>().add(
-                              FetchLearningPathOverview(userId: _userId),
-                            );
+                            context.read<LearningPathBloc>().add(FetchLearningPathOverview());
                           }
                         });
                       }

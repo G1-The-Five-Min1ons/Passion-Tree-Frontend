@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/learning_course_content.dart';
@@ -54,13 +55,16 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
       widget.course.description;
 
   Future<void> _loadUserAndFetchNodes() async {
+    // Load nodes for preview map on this page.
+    context.read<LearningPathBloc>().add(
+      FetchNodesForPath(pathId: widget.course.id),
+    );
+
     final storedUserId = await getIt<IAuthRepository>().getUserId();
     if (!mounted) return;
     setState(() => _userId = storedUserId ?? '');
     if (storedUserId != null && storedUserId.isNotEmpty) {
-      context.read<LearningPathBloc>().add(
-        FetchNodesForPath(pathId: widget.course.id, userId: storedUserId),
-      );
+      context.read<LearningPathBloc>().add(FetchLearningPathOverview());
     }
 
     // Fetch full path details if description is missing (e.g. from Dashboard)
@@ -92,10 +96,13 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
       if (!mounted) return;
       final userId = _userId ?? '';
       if (userId.isNotEmpty) {
-        context.read<LearningPathBloc>().add(
-          FetchLearningPathOverview(userId: userId),
-        );
+        context.read<LearningPathBloc>().add(FetchLearningPathOverview());
       }
+
+      // Refetch nodes so preview reflects latest progress/state after returning.
+      context.read<LearningPathBloc>().add(
+        FetchNodesForPath(pathId: widget.course.id),
+      );
     });
   }
 
@@ -107,7 +114,7 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
     if (_enrolledPath == null) {
       setState(() => _isEnrolling = true);
       context.read<LearningPathBloc>().add(
-        EnrollPathEvent(pathId: widget.course.id, userId: userId),
+        EnrollPathEvent(pathId: widget.course.id),
       );
     } else {
       // Already enrolled, navigate directly
@@ -146,7 +153,10 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
               setState(() => _isEnrolling = false);
 
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Failed to enroll: ${state.message}')),
+                SnackBar(
+                  content: Text('Failed to enroll: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
               );
             }
           },

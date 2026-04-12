@@ -5,6 +5,7 @@ import 'package:passion_tree_frontend/features/authentication/presentation/pages
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 
 
+
 class IntroStep extends StatelessWidget {
   final VoidCallback? onGetStarted;
   const IntroStep({super.key, this.onGetStarted});
@@ -21,7 +22,7 @@ class IntroStep extends StatelessWidget {
               children: [
                 Image.asset('assets/icons/tree_icon.png', height: 100),
                 const SizedBox(height: 30),
-                Text("Passion Tree", style: Theme.of(context).textTheme.displayLarge),
+                const Text("Passion Tree", style: AppPixelTypography.h3),
               ],
             ),
           ),

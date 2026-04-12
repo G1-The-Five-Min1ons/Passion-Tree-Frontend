@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class NodeFooter extends StatelessWidget {
-  final VoidCallback onDelete;
-  final VoidCallback onSave;
+  final VoidCallback? onDelete;
+  final VoidCallback? onSave;
 
   const NodeFooter({super.key, required this.onDelete, required this.onSave});
 
@@ -22,8 +23,8 @@ class NodeFooter extends StatelessWidget {
           AppButton(
             variant: AppButtonVariant.text,
             text: 'Delete',
-            backgroundColor: colors.error, 
-            textColor: colors.onError,
+            backgroundColor: onDelete == null ? AppColors.scale : colors.error,
+            textColor: onDelete == null ? AppColors.textDisabled : colors.onError,
             onPressed: onDelete,
           ),
 
@@ -33,8 +34,8 @@ class NodeFooter extends StatelessWidget {
           AppButton(
             variant: AppButtonVariant.text,
             text: 'Save',
-            backgroundColor: colors.primary,
-            textColor: colors.onPrimary,
+            backgroundColor: onSave == null ? AppColors.scale : colors.primary,
+            textColor: onSave == null ? AppColors.textDisabled : colors.onPrimary,
             onPressed: onSave,
           ),
         ],

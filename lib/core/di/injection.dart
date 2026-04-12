@@ -48,14 +48,19 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/sta
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/reorder_nodes_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/generate_nodes_with_ai_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_learning_path_by_id_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_learning_path_usecase.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_question_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_choice_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_choice_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_choice_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enrolled_learning_paths.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_progress_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
@@ -259,7 +264,10 @@ Future<void> initializeDependencies() async {
 
   // Learning Path Feature
   getIt.registerLazySingleton<LearningPathDataSource>(
-    () => LearningPathDataSource(),
+    () => LearningPathDataSource(
+      apiHandler: getIt<ApiHandler>(),
+      authLocalDataSource: getIt<AuthLocalDataSource>(),
+    ),
   );
 
   getIt.registerLazySingleton<LearningPathRepositoryImpl>(
@@ -315,6 +323,9 @@ Future<void> initializeDependencies() async {
   getIt.registerFactory<UpdateLearningPathUseCase>(
     () => UpdateLearningPathUseCase(getIt<LearningPathRepositoryImpl>()),
   );
+  getIt.registerFactory<ReorderNodesUseCase>(
+    () => ReorderNodesUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
   getIt.registerFactory<GetNodeQuestions>(
     () => GetNodeQuestions(getIt<LearningPathRepositoryImpl>()),
   );
@@ -327,6 +338,27 @@ Future<void> initializeDependencies() async {
 
   getIt.registerFactory<GetRecommendedLearningPaths>(
     () => GetRecommendedLearningPaths(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<SubmitReview>(
+    () => SubmitReview(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<GetMyRating>(
+    () => GetMyRating(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<DeleteRating>(
+    () => DeleteRating(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<UpdateQuestionUseCase>(
+    () => UpdateQuestionUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<UpdateChoiceUseCase>(
+    () => UpdateChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<CreateChoiceUseCase>(
+    () => CreateChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<DeleteChoiceUseCase>(
+    () => DeleteChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
   );
 
   // Learning Path Bloc
@@ -349,6 +381,14 @@ Future<void> initializeDependencies() async {
       getIt<GetLearningPathByIdUseCase>(),
       getIt<UpdateLearningPathUseCase>(),
       getIt<UpdateNodeUseCase>(),
+      getIt<ReorderNodesUseCase>(),
+      getIt<UpdateQuestionUseCase>(),
+      getIt<UpdateChoiceUseCase>(),
+      getIt<CreateChoiceUseCase>(),
+      getIt<DeleteChoiceUseCase>(),
+      getIt<SubmitReview>(),
+      getIt<GetMyRating>(),
+      getIt<DeleteRating>(),
     ),
   );
 

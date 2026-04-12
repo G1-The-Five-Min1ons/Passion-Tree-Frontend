@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
+
 class StreakSection extends StatelessWidget {
   const StreakSection({super.key});
 
@@ -35,22 +34,6 @@ class StreakSection extends StatelessWidget {
                 _DayBox("15D"),
               ],
             ),
-
-            const SizedBox(height: 20),
-                            Center(
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: Align(
-                                  alignment: Alignment.center,
-                                  child: AppButton(
-                                    variant: AppButtonVariant.text,
-                                    text: "Get a reward",
-                                    onPressed: () {},
-                                    fullWidth: true,
-                                  ),
-                                ),
-                              ),
-                            ),
           ],
         ),
       ),

@@ -59,11 +59,14 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
             _nodes = state.nodes;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Generated ${state.nodes.length} nodes')),
+            SnackBar(content: Text('Generated ${state.nodes.length} nodes', style: const TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
           );
         } else if (state is LearningPathError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${state.message}')),
+            SnackBar(
+              content: Text('Error: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: AppColors.cancel,
+            ),
           );
         }
       },
@@ -89,7 +92,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                       child: Text(
                         'Node review',
                         style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: colors.onPrimary,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -174,13 +177,13 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                                     child: RichText(
                                       text: TextSpan(
                                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurface,
+                                          color: Colors.white,
                                         ),
                                         children: [
                                           TextSpan(
                                             text: 'Node${index + 1} : ',
                                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                              color: Theme.of(context).colorScheme.primary,
+                                              color: Colors.white,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -217,23 +220,30 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
 
                       const SizedBox(width: 12),
 
-                      AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'Save',
-                        onPressed: () {
-                          final bloc = context.read<LearningPathBloc>();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider.value(
-                                value: bloc,
-                                child: TeacherNodesOverviewPage(
-                                  title: widget.objective,
-                                  aiNodes: _nodes,
-                                  pathId: widget.pathId,
-                                ),
-                              ),
-                            ),
+                      BlocBuilder<LearningPathBloc, LearningPathState>(
+                        builder: (context, state) {
+                          final isLoading = state is LearningPathLoading;
+                          return AppButton(
+                            variant: AppButtonVariant.text,
+                            text: 'Save',
+                            onPressed: isLoading || _nodes.isEmpty
+                                ? null
+                                : () {
+                                    final bloc = context.read<LearningPathBloc>();
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => BlocProvider.value(
+                                          value: bloc,
+                                          child: TeacherNodesOverviewPage(
+                                            title: widget.objective,
+                                            aiNodes: _nodes,
+                                            pathId: widget.pathId,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
                           );
                         },
                       ),

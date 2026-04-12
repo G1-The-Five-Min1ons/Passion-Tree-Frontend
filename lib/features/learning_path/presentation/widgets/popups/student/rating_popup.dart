@@ -6,11 +6,19 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 
 class RatingPopup extends StatefulWidget {
   final String pathName;
-  final VoidCallback onSubmit;
+  final int? initialContentQualityRating;
+  final int? initialInstructorRating;
+  final int? initialOverallRating;
+  final VoidCallback? onCancel;
+  final Function(int contentQuality, int instructorRating, int overallRating) onSubmit;
 
   const RatingPopup({
     super.key,
     required this.pathName,
+    this.initialContentQualityRating,
+    this.initialInstructorRating,
+    this.initialOverallRating,
+    this.onCancel,
     required this.onSubmit,
   });
 
@@ -23,6 +31,14 @@ class _RatingPopupState extends State<RatingPopup> {
   int? _instructorRating;
   int? _overallRating;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _contentQualityRating = widget.initialContentQualityRating;
+    _instructorRating = widget.initialInstructorRating;
+    _overallRating = widget.initialOverallRating;
+  }
 
   void _handleSubmit() {
     // Check if all ratings are selected
@@ -52,7 +68,11 @@ class _RatingPopupState extends State<RatingPopup> {
     setState(() {
       _errorMessage = null;
     });
-    widget.onSubmit();
+    widget.onSubmit(
+      _contentQualityRating!,
+      _instructorRating!,
+      _overallRating!,
+    );
   }
 
   @override
@@ -138,7 +158,8 @@ class _RatingPopupState extends State<RatingPopup> {
               SaveCancel(
                 saveText: 'Submit',
                 cancelText: 'Cancel',
-                onCancel: () => Navigator.pop(context),
+                cancelTextColor: Colors.white,
+                onCancel: widget.onCancel ?? () => Navigator.pop(context),
                 onSave: _handleSubmit,
               ),
             ],

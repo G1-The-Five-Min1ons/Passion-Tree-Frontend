@@ -12,7 +12,7 @@ class AppButton extends StatefulWidget {
   final String? subText;
   final String? text;
   final Widget? icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color? backgroundColor;
   final Color? borderColor;
   final Color? textColor;
@@ -47,9 +47,14 @@ class _AppButtonState extends State<AppButton> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final bgColor = widget.backgroundColor ?? scheme.primary;
+    final isDisabled = widget.onPressed == null;
+    final bgColor = isDisabled
+        ? (widget.backgroundColor ?? scheme.primary).withValues(alpha: 0.4)
+        : widget.backgroundColor ?? scheme.primary;
     final bdColor = widget.borderColor ?? AppColors.background;
-    final fgColor = widget.textColor ?? scheme.onPrimary;
+    final fgColor = isDisabled
+        ? (widget.textColor ?? scheme.onPrimary).withValues(alpha: 0.4)
+        : widget.textColor ?? scheme.onPrimary;
 
     final TextStyle buttonTextStyle = AppPixelTypography.smallTitle.copyWith(
       color: fgColor,
