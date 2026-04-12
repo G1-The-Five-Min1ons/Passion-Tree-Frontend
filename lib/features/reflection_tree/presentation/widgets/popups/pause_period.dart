@@ -10,12 +10,12 @@ class PausePeriod extends StatelessWidget{
 
   const PausePeriod({super.key, this.pauseFrom, this.pauseTo});
 
-  static void show(
+  static Future<T?> show<T>(
     BuildContext context, {
     String? pauseFrom,
     String? pauseTo,
   }) {
-    showDialog(
+    return showDialog<T>(
       context: context,
       builder: (context) =>
           PausePeriod(pauseFrom: pauseFrom, pauseTo: pauseTo),
@@ -43,7 +43,6 @@ class PausePeriod extends StatelessWidget{
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
-                      //idth: double.infinity,
                       child: Text(
                         'Tree will pause',
                         textAlign: TextAlign.center,
@@ -51,34 +50,14 @@ class PausePeriod extends StatelessWidget{
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'From :',
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        Text(
-                          pauseFrom ?? '-',
-                          textAlign: TextAlign.right,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ],
+                    _PausePeriodRow(
+                      label: 'From :',
+                      value: pauseFrom ?? '-',
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'To :',
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        Text(
-                          pauseTo ?? '-',
-                          textAlign: TextAlign.right,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ],
+                    _PausePeriodRow(
+                      label: 'To :',
+                      value: pauseTo ?? '-',
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -99,6 +78,31 @@ class PausePeriod extends StatelessWidget{
           )
         ),
       ),
+    );
+  }
+}
+
+class _PausePeriodRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _PausePeriodRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        Text(
+          value,
+          textAlign: TextAlign.right,
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      ],
     );
   }
 }
