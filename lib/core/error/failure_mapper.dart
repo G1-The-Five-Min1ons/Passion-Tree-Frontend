@@ -105,10 +105,12 @@ class FailureMapper {
     switch (exception.statusCode) {
       case 400:
         return BadRequestFailure(
+          message: exception.message,
           technicalMessage: exception.toString(),
         );
       case 404:
         return NotFoundFailure(
+          message: exception.message,
           technicalMessage: exception.toString(),
         );
       case 409:

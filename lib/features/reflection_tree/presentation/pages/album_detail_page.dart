@@ -39,6 +39,13 @@ class AlbumDetailPage extends StatefulWidget {
 class _AlbumDetailPageState extends State<AlbumDetailPage> {
   List<String> _availableAlbumNames = [];
   List<Album> _availableAlbums = [];
+  Album? _currentAlbum;
+
+  bool _isHeartShortageMessage(String message) {
+    final normalized = message.toLowerCase();
+    return normalized.contains('insufficient hearts') ||
+        normalized.contains('not enough hearts');
+  }
 
   @override
   void initState() {
@@ -81,20 +88,30 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
                 _availableAlbums = state.albums;
               });
               context.read<AlbumBloc>().add(LoadAlbumByIdEvent(widget.albumId));
-            }
-
-            if (state is AlbumDetailLoaded && state.message != null) {
+            } else if (state is AlbumDetailLoaded) {
+              _currentAlbum = state.album;
               if (state.remainingHeartCount != null) {
                 context.read<UserBloc>().add(
                   UpdateHeartCount(state.remainingHeartCount!),
                 );
               }
 
+              if (state.message != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message!),
+                    backgroundColor: AppColors.status,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            } else if (state is AlbumError &&
+                _isHeartShortageMessage(state.message)) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.message!),
-                  backgroundColor: AppColors.status,
-                  duration: const Duration(seconds: 2),
+                  content: Text(state.message),
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  duration: const Duration(seconds: 3),
                 ),
               );
             }
@@ -110,29 +127,19 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
               }
 
               if (state is AlbumError) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Error: ${state.message}',
-                        style: AppTypography.bodyRegular.copyWith(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'Retry',
-                        onPressed: () {
-                          context.read<AlbumBloc>().add(
-                            LoadAlbumByIdEvent(widget.albumId),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                );
+                if (_isHeartShortageMessage(state.message)) {
+                  if (_currentAlbum != null) {
+                    return _buildAlbumContent(context, _currentAlbum!);
+                  }
+
+                  return const SizedBox.shrink();
+                }
+
+                if (_currentAlbum != null) {
+                  return _buildAlbumContent(context, _currentAlbum!);
+                }
+
+                return const SizedBox.shrink();
               }
 
               if (state is AlbumDetailLoaded) {
@@ -177,7 +184,10 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
                       builder: (context) => LearningPathBlocProvider(
                         child: BlocProvider.value(
                           value: albumBloc,
-                          child: const AddReflectPage(),
+                          child: AddReflectPage(
+                            initialAlbumId: album.albumId,
+                            initialAlbumName: album.title,
+                          ),
                         ),
                       ),
                     ),
@@ -241,6 +251,8 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
           treeId: item.treeId ?? '',
           albumId: album.albumId,
           isPaused: item.isPaused,
+          pauseFrom: item.pauseFrom,
+          pauseTo: item.pauseTo,
           resumeOn: item.resumeOn,
           dataDisplay: const SizedBox.shrink(),
 

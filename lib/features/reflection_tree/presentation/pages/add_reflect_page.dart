@@ -20,9 +20,13 @@ import 'package:passion_tree_frontend/features/authentication/domain/repositorie
 import 'package:passion_tree_frontend/core/di/injection.dart';
 
 class AddReflectPage extends StatefulWidget{
+  final String? initialAlbumId;
+  final String? initialAlbumName;
   
   const AddReflectPage({
     super.key,
+    this.initialAlbumId,
+    this.initialAlbumName,
   });
 
   @override
@@ -39,9 +43,32 @@ class _AddReflectPageState extends State<AddReflectPage>{
   List<String> _availableAlbumNames = [];
   List<dynamic> _availableAlbums = [];
 
+  Set<String> _extractUsedPathIdsFromAlbums(List<dynamic> albums) {
+    final usedPathIds = <String>{};
+
+    for (final album in albums) {
+      final items = album.items;
+      if (items == null) continue;
+
+      for (final item in items) {
+        final pathId = item.pathId;
+        if (pathId != null && pathId.isNotEmpty) {
+          usedPathIds.add(pathId);
+        }
+      }
+    }
+
+    return usedPathIds;
+  }
+
   @override
   void initState() {
     super.initState();
+    _selectedAlbumId = widget.initialAlbumId;
+    if ((widget.initialAlbumName ?? '').isNotEmpty) {
+      _albumController.text = widget.initialAlbumName!;
+    }
+
     //Load user's albums
     context.read<AlbumBloc>().add(const LoadAlbumsEvent());
     //Load enrolled learning paths
@@ -77,6 +104,16 @@ class _AddReflectPageState extends State<AddReflectPage>{
             setState(() {
               _availableAlbumNames = state.albums.map((album) => album.title).toList();
               _availableAlbums = state.albums;
+
+              if ((_selectedAlbumId ?? '').isNotEmpty) {
+                try {
+                  final selectedAlbum = state.albums.firstWhere(
+                    (album) => album.albumId == _selectedAlbumId,
+                  );
+                  _albumController.text = selectedAlbum.title;
+                } catch (_) {
+                }
+              }
             });
           }
           
@@ -120,25 +157,27 @@ class _AddReflectPageState extends State<AddReflectPage>{
 
           return BlocBuilder<LearningPathBloc, LearningPathState>(
             builder: (context, learningPathState) {
-              final List<String> learningPathTitles;
-              final bool isLoadingPaths;
-              
-              if (learningPathState is LearningPathStatusLoaded) {
-                learningPathTitles = learningPathState.paths
-                    .map((path) => path.title)
-                    .toList();
-                isLoadingPaths = false;
-              } else if (learningPathState is LearningPathLoading) {
-                learningPathTitles = [];
-                isLoadingPaths = true;
-              } else {
-                learningPathTitles = [];
-                isLoadingPaths = false;
-              }
+              final bool isLoadingPaths = learningPathState is LearningPathLoading;
+              final usedPathIds = _extractUsedPathIdsFromAlbums(_availableAlbums);
               
               final learningPaths = learningPathState is LearningPathStatusLoaded 
                   ? learningPathState.paths 
                   : [];
+              final availableLearningPaths = learningPaths.where((path) {
+                final isNotUsedInAnyTree = !usedPathIds.contains(path.pathId);
+                return isNotUsedInAnyTree;
+              }).toList();
+
+              if (_selectedPathId != null &&
+                  !availableLearningPaths.any((path) => path.pathId == _selectedPathId)) {
+                _selectedPathId = null;
+                _categoryController.clear();
+              }
+
+              final List<String> availableLearningPathTitles =
+                  availableLearningPaths
+                    .map<String>((path) => path.title as String)
+                      .toList(growable: false);
 
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xmargin),
@@ -161,18 +200,18 @@ class _AddReflectPageState extends State<AddReflectPage>{
                             ),
                           )
                         : SearchDropdown(
-                            options: learningPathTitles.isEmpty 
-                                ? ['No Enrolled Learning Paths found'] 
-                                : learningPathTitles,
+                          options: availableLearningPathTitles.isEmpty
+                                ? ['No Learning Paths Available']
+                            : availableLearningPathTitles,
                             header: "Learning Path",
                             label: "Select Learning Path",
                             controller: _categoryController,
                             onSelected: (selectedItem) {
                               // Find the selected path ID
-                              if (learningPaths.isEmpty) return;
+                              if (availableLearningPaths.isEmpty) return;
                               
                               try {
-                                final selectedPath = learningPaths.firstWhere(
+                                final selectedPath = availableLearningPaths.firstWhere(
                                   (path) => path.title == selectedItem,
                                 );
                                 setState(() {
@@ -222,6 +261,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
                                       );
                                       setState(() {
                                         _selectedAlbumId = selectedAlbum.albumId;
+                                        _albumController.text = selectedAlbum.title;
                                       });
                                     } catch (e) {
                                       // If not found, just ignore

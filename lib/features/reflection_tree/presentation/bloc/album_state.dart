@@ -39,12 +39,15 @@ class AlbumDetailLoaded extends AlbumState {
 
 /// Error state
 class AlbumError extends AlbumState {
-  final String message;
+  static int _nextErrorId = 0;
 
-  const AlbumError(this.message);
+  final String message;
+  final int errorId;
+
+  AlbumError(this.message) : errorId = ++_nextErrorId;
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, errorId];
 }
 
 /// Loading state for operations (create, update, delete)

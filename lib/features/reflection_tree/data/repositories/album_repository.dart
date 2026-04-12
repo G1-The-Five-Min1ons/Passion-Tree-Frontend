@@ -81,18 +81,28 @@ class AlbumRepository implements IAlbumRepository {
   Future<Either<Failure, T>> _withValidToken<T>(
     Future<Either<Failure, T>> Function(String token) operation,
   ) async {
-    final tokenResult = await _getValidToken();
-    if (tokenResult.isLeft()) {
-      return Left(
-        _extractFailureOrUnknown(
-          tokenResult,
-          fallbackMessage: 'Authentication failed',
-        ),
-      );
-    }
+    try {
+      final tokenResult = await _getValidToken();
+      if (tokenResult.isLeft()) {
+        return Left(
+          _extractFailureOrUnknown(
+            tokenResult,
+            fallbackMessage: 'Authentication failed',
+          ),
+        );
+      }
 
-    final token = tokenResult.getOrElse(() => '');
-    return operation(token);
+      final token = tokenResult.getOrElse(() => '');
+      return await operation(token);
+    } on AppException catch (e) {
+      return Left(FailureMapper.fromException(e));
+    } catch (e) {
+      LogHandler.error('Repository operation failed', error: e);
+      return Left(UnknownFailure(
+        message: 'Operation failed',
+        technicalMessage: e.toString(),
+      ));
+    }
   }
 
   @override

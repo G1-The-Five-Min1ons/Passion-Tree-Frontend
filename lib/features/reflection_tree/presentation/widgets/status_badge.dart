@@ -4,10 +4,20 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 class StatusBadge extends StatelessWidget{
   final String status;
+  final String? label;
+  final Color? badgeColor;
+  final Color? labelColor;
+  final double width;
+  final double horizontalPadding;
 
   const StatusBadge({
     super.key,
     required this.status,
+    this.label,
+    this.badgeColor,
+    this.labelColor,
+    this.width = 105,
+    this.horizontalPadding = 0,
   });
 
   @override
@@ -29,21 +39,26 @@ class StatusBadge extends StatelessWidget{
       'died' : AppColors.died,
     };
 
-    final Color effectiveColor = statusColors[currentStatus] ?? AppColors.status;
+    final String effectiveLabel = (label ?? currentStatus).trim();
+    final Color effectiveColor = badgeColor ?? (statusColors[currentStatus] ?? AppColors.status);
 
     return Align(
       alignment: Alignment.center,
       child: PixelBorderContainer(
-      width: 105,
+      width: width,
       pixelSize: 3,
       borderColor: effectiveColor,
       fillColor: effectiveColor,
-      padding: const EdgeInsets.symmetric(vertical:6),
+      padding: EdgeInsets.symmetric(
+        vertical: 6,
+        horizontal: horizontalPadding,
+      ),
       child: Center(
         child: Text(
-            currentStatus,
+            effectiveLabel,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: labelColor ?? Theme.of(context).colorScheme.onPrimary ),
               color: AppColors.textPrimary ),
           ),
         ),

@@ -14,6 +14,16 @@ class TreeMapper {
     return '$day/$month/$year';
   }
 
+  static String? _formatServerDate(DateTime? dateTime) {
+    if (dateTime == null) {
+      return null;
+    }
+    final day = dateTime.day.toString().padLeft(2, '0');
+    final month = dateTime.month.toString().padLeft(2, '0');
+    final year = dateTime.year.toString();
+    return '$day/$month/$year';
+  }
+
   static AlbumItem toAlbumItem(TreeApiModel tree) {
     final chapters =
         tree.nodes
@@ -44,6 +54,8 @@ class TreeMapper {
       overallStatus: tree.status,
       treeScore: tree.treeScore,
       isPaused: tree.isPause,
+      pauseFrom: _formatServerDate(tree.pauseFrom),
+      pauseTo: _formatServerDate(tree.pauseTo),
       resumeOn: _formatResumeDate(tree.pausedAt),
       pathId: tree.pathId,
     );
