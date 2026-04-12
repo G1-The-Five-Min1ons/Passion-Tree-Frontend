@@ -146,7 +146,7 @@ class LearningPathCardWidget extends StatelessWidget {
       width: double.infinity,
       height: 100,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _buildCoverPlaceholder(),
+      errorBuilder: (_, _, _) => _buildCoverPlaceholder(),
     );
   }
 

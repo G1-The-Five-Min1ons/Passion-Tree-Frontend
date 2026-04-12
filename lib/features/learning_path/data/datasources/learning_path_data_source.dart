@@ -68,60 +68,6 @@ class LearningPathDataSource {
     }
   }
 
-  /// Fetch recommended learning paths for a specific reflection tree
-  Future<List<LearningPathApiModel>> getRecommendedLearningPathsForTree(
-    String treeId,
-  ) async {
-    return await _makeGetRequest(
-      endpoint: '/reflect/recommendation?tree_id=$treeId',
-      fromJson: (data) {
-        final raw = data['data'];
-
-        if (raw == null) return [];
-
-        /// Handle backend response format
-        if (raw is Map<String, dynamic>) {
-          final recommendedPaths = raw['recommended_paths'];
-
-          if (recommendedPaths is List) {
-            return recommendedPaths
-                .map((pathData) {
-                  /// The backend returns RecommendedPath with embedded LearningPath
-                  /// We need to extract the learning_path field
-                  if (pathData is Map<String, dynamic> &&
-                      pathData.containsKey('learning_path')) {
-                    return LearningPathApiModel.fromJson(
-                      pathData['learning_path'],
-                    );
-                  }
-                  /// Fallback if structure is different
-                  return LearningPathApiModel.fromJson(pathData);
-                })
-                .toList();
-          }
-        }
-
-        /// Fallback: if API sends List directly
-        if (raw is List) {
-          return raw
-              .map((path) => LearningPathApiModel.fromJson(path))
-              .toList();
-        }
-
-        return [];
-      },
-      errorMessage: 'Failed to get recommended learning paths for tree',
-    );
-  }
-
-  /// Generic GET request handler
-  Future<T> _makeGetRequest<T>({
-    required String endpoint,
-    required T Function(Map<String, dynamic>) fromJson,
-    String? errorMessage,
-  }) async {
-    try {
-      LogHandler.debug('[DataSource] GET $endpoint');
   void _throwIfError(ApiResponse response, String context) {
     if (!response.isSuccess) {
       final msg = response.error ?? response.message ?? '$context failed';
@@ -168,6 +114,38 @@ class LearningPathDataSource {
         return popular.map((e) => LearningPathApiModel.fromJson(e)).toList();
       }
     }
+    return [];
+  }
+
+  Future<List<LearningPathApiModel>> getRecommendedLearningPathsForTree(
+    String treeId,
+  ) async {
+    final response = await _apiHandler.get(
+      url: '${ApiConfig.apiBackendUrl}/reflect/recommendation?tree_id=$treeId',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'GET /reflect/recommendation');
+
+    final raw = response.data;
+    if (raw == null) return [];
+
+    if (raw is Map<String, dynamic>) {
+      final recommendedPaths = raw['recommended_paths'];
+      if (recommendedPaths is List) {
+        return recommendedPaths.map((pathData) {
+          if (pathData is Map<String, dynamic> &&
+              pathData.containsKey('learning_path')) {
+            return LearningPathApiModel.fromJson(pathData['learning_path']);
+          }
+          return LearningPathApiModel.fromJson(pathData);
+        }).toList();
+      }
+    }
+
+    if (raw is List) {
+      return raw.map((e) => LearningPathApiModel.fromJson(e)).toList();
+    }
+
     return [];
   }
 

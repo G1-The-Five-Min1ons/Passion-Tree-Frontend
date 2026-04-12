@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart'
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier.dart';
 
 class HowToUsePopup extends StatelessWidget {
   const HowToUsePopup({super.key});
@@ -157,11 +158,16 @@ class HowToUsePopup extends StatelessWidget {
                         "Want to add hearts? ",
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
-                      Text(
-                        //TODO: เพิ่ม logic กดแล้วไป mission
-                        "Go to missions",
-                        style: AppTypography.bodySemiBold.copyWith(color: AppColors.title),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          HomeTabNavigationNotifier.jumpToTab(1);
+                        },
+                        child: Text(
+                          "Go to missions",
+                          style: AppTypography.bodySemiBold.copyWith(color: AppColors.title),
                         ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),

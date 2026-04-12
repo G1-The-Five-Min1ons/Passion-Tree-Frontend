@@ -147,6 +147,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         headers: ApiConfig.defaultHeaders,
         body: jsonEncode({
           ...request.toJson(),
+          // ignore: use_null_aware_elements
           if (confirmReactivate != null)
             'confirm_reactivate': confirmReactivate,
         }),

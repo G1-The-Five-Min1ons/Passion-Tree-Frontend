@@ -13,7 +13,6 @@ import 'package:passion_tree_frontend/features/authentication/domain/repositorie
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:passion_tree_frontend/features/onboarding/presentation/pages/onboarding_page.dart';
-import 'package:passion_tree_frontend/features/dashboard/presentation/pages/forest_preview_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

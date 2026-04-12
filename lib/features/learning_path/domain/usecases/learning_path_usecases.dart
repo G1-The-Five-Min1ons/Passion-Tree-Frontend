@@ -2,7 +2,6 @@
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path_rating.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/repositories/learning_path_repository.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_recommended_learning_paths.dart';
 
 class GetAllLearningPaths {
   final LearningPathRepository repository;

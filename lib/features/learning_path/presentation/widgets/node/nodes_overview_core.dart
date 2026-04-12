@@ -131,7 +131,7 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
                                     onDragEnd: (_) {
                                       setState(() => _draggingIndex = null);
                                     },
-                                    onDraggableCanceled: (_, __) {
+                                    onDraggableCanceled: (_, _) {
                                       setState(() => _draggingIndex = null);
                                     },
                                     feedback: Material(

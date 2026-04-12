@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
@@ -21,6 +22,7 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_event.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
@@ -82,17 +84,17 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
   }
 
   /// Navigate to home after successful OAuth login/register
-  Future<void> _navigateToHome(BuildContext context) async {
-    if (!context.mounted) return;
+  Future<void> _navigateToHome() async {
+    if (!mounted) return;
     try {
       final userId = await getIt<IAuthRepository>().getUserId();
-      if (userId != null && context.mounted) {
+      if (userId != null && mounted) {
         context.read<UserBloc>().add(LoadUser(userId));
       }
     } catch (e) {
       debugPrint('Failed to load user data: $e');
     }
-    if (context.mounted) {
+    if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const HomeBarWidget()),
         (route) => false,
@@ -196,7 +198,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
             state.nextStep == RegisterNextStep.oauthComplete) {
           // OAuth login/register completed - navigate to home
           LogHandler.success('OAuth registration/login complete, redirecting to home');
-          _navigateToHome(context);
+          _navigateToHome();
         } else if (state.status == RegisterStatus.success &&
             state.nextStep == RegisterNextStep.complete) {
           LogHandler.success('Registration complete, redirecting to login');
@@ -503,9 +505,15 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                                           style: AppTypography.subtitleMedium
                                               .copyWith(
                                                 color: AppColors.textPrimary,
-                                                decoration: TextDecoration.underline
+                                                decoration: TextDecoration.underline,
                                               ),
-                                          // TODO: Add gesture recognizer for Terms
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () {
+                                              launchUrl(
+                                                Uri.parse('https://passion-tree.com/terms'),
+                                                mode: LaunchMode.externalApplication,
+                                              );
+                                            },
                                         ),
                                         const TextSpan(text: ' and '),
                                         TextSpan(
@@ -513,9 +521,15 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                                           style: AppTypography.subtitleMedium
                                               .copyWith(
                                                 color: AppColors.textPrimary,
-                                                decoration: TextDecoration.underline
+                                                decoration: TextDecoration.underline,
                                               ),
-                                          // TODO: Add gesture recognizer for Privacy Policy
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () {
+                                              launchUrl(
+                                                Uri.parse('https://passion-tree.com/privacy'),
+                                                mode: LaunchMode.externalApplication,
+                                              );
+                                            },
                                         ),
                                         TextSpan(
                                           text: ' *',

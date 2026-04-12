@@ -174,14 +174,14 @@ class _LearningNodePageState extends State<LearningNodePage> {
                               ),
                             ),
                           );
-                          if (!mounted) return;
+                          if (!context.mounted) return;
 
                           if (quizCompleted == true) {
                             Navigator.pop(context, true);
                             return;
                           }
 
-                          if (mounted) {
+                          if (context.mounted) {
                             bloc.add(
                               FetchNodeDetail(
                                 nodeId: widget.nodeId,
