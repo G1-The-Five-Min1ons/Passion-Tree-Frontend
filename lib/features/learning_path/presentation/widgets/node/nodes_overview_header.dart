@@ -4,11 +4,10 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 
-
 class HeaderBar extends StatelessWidget {
   final String title;
   final bool showAddButton;
-  final VoidCallback? onPressed; 
+  final VoidCallback? onPressed;
   const HeaderBar({
     super.key,
     required this.title,
@@ -56,4 +55,3 @@ class HeaderBar extends StatelessWidget {
     );
   }
 }
-

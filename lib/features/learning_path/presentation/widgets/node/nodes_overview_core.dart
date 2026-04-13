@@ -10,16 +10,24 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/nod
 class NodesOverviewCore extends StatefulWidget {
   final bool isEditable;
   final bool isDraggable;
+  final bool showAddBetween;
+  final bool forceLockedStyle;
+  final bool showNodeTitle;
   final Function(int index)? onNodeTap;
   final Function(int fromIndex, int toIndex)? onReorder;
+  final Function(int afterIndex)? onAddNodeAfter;
   final List<NodeDetail>? nodes;
 
   const NodesOverviewCore({
     super.key,
     required this.isEditable,
     this.isDraggable = false,
+    this.showAddBetween = false,
+    this.forceLockedStyle = false,
+    this.showNodeTitle = false,
     this.onNodeTap,
     this.onReorder,
+    this.onAddNodeAfter,
     this.nodes,
   });
 
@@ -63,11 +71,16 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
                     child: TreeCanvas(
                       itemCount: nodeCount,
                       canvasWidth: canvasWidth,
+                      showAddBetween:
+                          widget.showAddBetween && _draggingIndex == null,
+                      onAddNodeAfter: widget.onAddNodeAfter,
                       nodeBuilder: (index, pos) {
                         final node = displayNodes[index];
                         final hasTeacherContent =
                             widget.isEditable && _hasNodeContent(node);
-                        final nodeState = hasTeacherContent
+                        final nodeState = widget.forceLockedStyle
+                            ? LearningNodeState.locked
+                            : hasTeacherContent
                             ? LearningNodeState.active
                             : NodeAsset.statusToState(node.status);
 
@@ -78,6 +91,9 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
                         final nodeWidget = NodeItem(
                           imagePath: NodeAsset.image(nodeState),
                           size: 80,
+                          title: widget.showNodeTitle
+                              ? _shortNodeTitle(node.title)
+                              : null,
                           showCurrentIndicator: isLatestActiveNode,
                           onTap: _draggingIndex != null
                               ? null
@@ -185,5 +201,12 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
     );
 
     return hasDescription || hasVideoLink || hasMaterials || hasQuestions;
+  }
+
+  String _shortNodeTitle(String title) {
+    final normalized = title.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (normalized.isEmpty) return 'Untitled';
+    if (normalized.length <= 18) return normalized;
+    return '${normalized.substring(0, 18)}...';
   }
 }
