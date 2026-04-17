@@ -85,6 +85,8 @@ class ApiConfig {
   // Tree endpoints
   static String get trees => '$apiBackendUrl/trees';
   static String treeById(String treeId) => '$apiBackendUrl/trees/$treeId';
+    static String endReflectingTree(String treeId) =>
+      '$apiBackendUrl/trees/$treeId/end-reflecting';
   static String retrieveTree(String treeId) =>
       '$apiBackendUrl/trees/$treeId/retrieve';
   static String treesByAlbumId(String albumId) =>

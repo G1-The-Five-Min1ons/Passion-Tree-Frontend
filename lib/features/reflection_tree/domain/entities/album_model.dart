@@ -22,6 +22,7 @@ class AlbumItem {
   final String subjectName;
   final String lastEdited;
   final String status;
+  final bool isReflectionClosed;
   final List<Chapter> chapters;
   final String overallStatus;
   final double? treeScore;
@@ -36,6 +37,7 @@ class AlbumItem {
     required this.subjectName,
     required this.lastEdited,
     required this.status,
+    this.isReflectionClosed = false,
     this.chapters = const [],
     required this.overallStatus,
     this.treeScore,

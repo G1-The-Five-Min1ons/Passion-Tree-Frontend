@@ -10,6 +10,7 @@ import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/album_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/reflection_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/models/reflection_api_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
@@ -47,6 +48,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
 
   AlbumItem? _currentItem;
   final Map<String, _ReflectionViewData> _latestReflectionByNodeId = {};
+  final AlbumDataSource _albumDataSource = AlbumDataSource();
   final ReflectionDataSource _reflectionDataSource = ReflectionDataSource();
   final AuthLocalDataSource _authLocalDataSource = getIt<AuthLocalDataSource>();
 
@@ -58,10 +60,23 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
     return _isDiedStatus(item.status) || _isDiedStatus(item.overallStatus);
   }
 
+  bool _isTreeReflectionClosed(AlbumItem item) {
+    return item.isReflectionClosed;
+  }
+
   void _showTreeDiedSnackbar() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Retrieve the tree to continue'),
+        backgroundColor: AppColors.cancel,
+      ),
+    );
+  }
+
+  void _showTreeEndedSnackbar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('This tree has ended. You cannot create new nodes.'),
         backgroundColor: AppColors.cancel,
       ),
     );
@@ -219,6 +234,29 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
     }
   }
 
+  Future<void> _endReflectingTree() async {
+    final token = await _authLocalDataSource.getToken();
+    final treeId = widget.treeId ?? _currentItem?.treeId;
+    if (token == null || token.isEmpty || treeId == null || treeId.isEmpty || !mounted) {
+      return;
+    }
+
+    try {
+      await _albumDataSource.endReflectingTree(treeId, token);
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to end reflecting: $e'),
+          backgroundColor: AppColors.cancel,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -352,6 +390,20 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                                       return;
                                     }
 
+                                    if (_isTreeReflectionClosed(item) &&
+                                        !chapter.hasReflection) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'This tree has ended. You cannot add new reflections.',
+                                          ),
+                                          backgroundColor: AppColors.cancel,
+                                          duration: Duration(seconds: 3),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
                                     if (!chapter.canReflect) {
                                       // Learning Path not completed
                                       ScaffoldMessenger.of(context).showSnackBar(
@@ -439,7 +491,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                         onPressed: () {
                           EndReflecting.show(
                             context,
-                            onConfirm: () => Navigator.pop(context),
+                            onConfirm: _endReflectingTree,
                           );
                         },
                       ),
@@ -464,6 +516,11 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                   title: item.subjectName,
                   actionIcon: Symbols.add_rounded,
                   onActionPressed: () {
+                    if (_isTreeReflectionClosed(item)) {
+                      _showTreeEndedSnackbar();
+                      return;
+                    }
+
                     if (_isTreeDied(item)) {
                       _showTreeDiedSnackbar();
                       return;
