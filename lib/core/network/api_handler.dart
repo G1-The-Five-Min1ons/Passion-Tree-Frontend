@@ -79,6 +79,7 @@ class ApiHandler {
 
   // State for handling concurrent refreshes
   bool _isRefreshing = false;
+  bool _sessionExpiredNotified = false;
   final List<Completer<bool>> _refreshQueue = [];
 
   ApiHandler({
@@ -88,6 +89,25 @@ class ApiHandler {
     this.onSessionExpired,
   }) : _client = client ?? http.Client();
 
+  static const Duration _refreshWaitTimeout = Duration(seconds: 3);
+
+  Future<void> _notifySessionExpiredOnce() async {
+    if (_sessionExpiredNotified) return;
+    _sessionExpiredNotified = true;
+    await onSessionExpired?.call();
+  }
+
+  void _abortRefreshQueue({required String reason}) {
+    LogHandler.error('ApiHandler: $reason');
+    _isRefreshing = false;
+    for (final completer in _refreshQueue) {
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
+    }
+    _refreshQueue.clear();
+  }
+
   /// Wait if a token refresh is currently in progress
   Future<void> _waitForRefresh() async {
     if (!_isRefreshing) return;
@@ -95,9 +115,16 @@ class ApiHandler {
     LogHandler.info('ApiHandler: Request waiting for token refresh...');
     final completer = Completer<bool>();
     _refreshQueue.add(completer);
-    final success = await completer.future;
+    final success = await completer.future.timeout(
+      _refreshWaitTimeout,
+      onTimeout: () {
+        _abortRefreshQueue(reason: 'Token refresh wait timed out. Forcing re-login...');
+        return false;
+      },
+    );
 
     if (!success) {
+      await _notifySessionExpiredOnce();
       throw AuthException(
         message: 'Token refresh failed while waiting',
         statusCode: 401,
@@ -163,9 +190,11 @@ class ApiHandler {
 
         if (!refreshSuccess) {
           LogHandler.error('ApiHandler: Token refresh failed. Logging out...');
-          await onSessionExpired?.call();
+          await _notifySessionExpiredOnce();
           return response; // Return the original 401 response
         }
+
+        _sessionExpiredNotified = false;
       }
 
       // 4. If refresh succeeded, we need to update the Authorization header and retry
