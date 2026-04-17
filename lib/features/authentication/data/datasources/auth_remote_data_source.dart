@@ -39,7 +39,7 @@ abstract class AuthRemoteDataSource {
   Future<void> deleteUser(String token, String password);
   Future<void> deactivateAccount(String token);
   Future<void> reactivateAccount(String token);
-  Future<void> logout(String token);
+  Future<void> logout(String token, {String? refreshToken});
   Future<NativeGoogleSignInResponse> nativeGoogleSignIn(String idToken);
   Future<NativeDiscordSignInResponse> nativeDiscordSignIn(String code);
   Future<VerifyEmailResponse> refreshToken(String refreshTokenValue);
@@ -347,13 +347,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> logout(String token) async {
+  Future<void> logout(String token, {String? refreshToken}) async {
     return _executeRequest<void>(
       logTitle: 'AUTH REMOTE · LOGOUT',
       context: 'logout',
       apiCall: () => _apiHandler.post(
         url: ApiConfig.authLogout,
         headers: ApiConfig.getAuthHeaders(token),
+        body: refreshToken == null || refreshToken.isEmpty
+            ? null
+            : jsonEncode({'refresh_token': refreshToken}),
         timeout: ApiConfig.connectionTimeout,
       ),
       onSuccess: (_) {},

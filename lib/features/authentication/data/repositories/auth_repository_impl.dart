@@ -67,6 +67,31 @@ class AuthRepositoryImpl implements IAuthRepository {
     }
   }
 
+  bool _isJwtExpired(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return true;
+
+      final normalizedPayload = base64Url.normalize(parts[1]);
+      final payloadBytes = base64Url.decode(normalizedPayload);
+      final payload = jsonDecode(utf8.decode(payloadBytes));
+
+      if (payload is! Map<String, dynamic>) return true;
+
+      final exp = payload['exp'];
+      if (exp is! num) return true;
+
+      final expiry = DateTime.fromMillisecondsSinceEpoch(
+        exp.toInt() * 1000,
+        isUtc: true,
+      );
+
+      return DateTime.now().toUtc().isAfter(expiry);
+    } catch (_) {
+      return true;
+    }
+  }
+
   /// Generic helper method for OAuth login operations
   Future<UserProfile> _handleOAuthLogin({
     required String token,
@@ -303,9 +328,10 @@ class AuthRepositoryImpl implements IAuthRepository {
   @override
   Future<void> logout() async {
     final token = await _localDataSource.getToken();
+    final refreshToken = await _localDataSource.getRefreshToken();
     if (token != null && token.isNotEmpty) {
       try {
-        await _remoteDataSource.logout(token);
+        await _remoteDataSource.logout(token, refreshToken: refreshToken);
       } catch (e) {
         LogHandler.warning(
           'AuthRepository: remote logout failed, clearing local auth anyway: $e',
@@ -386,7 +412,25 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<bool> isLoggedIn() async {
-    return await _localDataSource.isLoggedIn();
+    final accessToken = await _localDataSource.getToken();
+    if (accessToken == null || accessToken.isEmpty) {
+      return false;
+    }
+
+    if (!_isJwtExpired(accessToken)) {
+      return true;
+    }
+
+    LogHandler.info(
+      'AuthRepository: access token expired, attempting silent refresh...',
+    );
+    final refreshed = await _handleTokenRefresh();
+    if (refreshed) {
+      return true;
+    }
+
+    await _localDataSource.clearAuth();
+    return false;
   }
 
   @override

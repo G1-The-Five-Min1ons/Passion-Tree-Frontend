@@ -30,19 +30,36 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     SessionExpiryNotifier.changes.addListener(_handleSessionExpired);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     SessionExpiryNotifier.changes.removeListener(_handleSessionExpired);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _validateSessionOnResume();
+    }
+  }
+
+  Future<void> _validateSessionOnResume() async {
+    final isLoggedIn = await getIt<IAuthRepository>().isLoggedIn();
+    if (!mounted || isLoggedIn) return;
+
+    _handleSessionExpired();
   }
 
   void _handleSessionExpired() {
