@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/node_item.dart';
 import 'package:passion_tree_frontend/core/common_widgets/node/tree_canvas.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
@@ -16,6 +18,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_node_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/add_reflect_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/detail_reflect_after/reflect_detail_popup.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/end_reflecting.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/recommend_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/status_badge.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
@@ -266,7 +269,10 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
   }
 
   Widget _buildTreeDetail(AlbumItem item) {
-    final double canvasHeight = (item.chapters.length * 200.0) + 200.0;
+    final int chapterCount = item.chapters.length;
+    final double canvasHeight = chapterCount > 0
+        ? (60.0 + ((chapterCount - 1) * 120.0) + 72.0)
+        : 0;
 
     return Scaffold(
       appBar: AppBarWidget(
@@ -422,6 +428,21 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                           ),
                         );
                       },
+                    ),
+
+                  if (item.chapters.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: AppButton(
+                        variant: AppButtonVariant.text,
+                        text: 'End Reflecting',
+                        onPressed: () {
+                          EndReflecting.show(
+                            context,
+                            onConfirm: () => Navigator.pop(context),
+                          );
+                        },
+                      ),
                     ),
 
                   const SizedBox(height: 100),
