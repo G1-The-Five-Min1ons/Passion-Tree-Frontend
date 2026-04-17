@@ -351,14 +351,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     return _executeRequest<void>(
       logTitle: 'AUTH REMOTE · LOGOUT',
       context: 'logout',
-      apiCall: () => _apiHandler.post(
-        url: ApiConfig.authLogout,
-        headers: ApiConfig.getAuthHeaders(token),
-        body: refreshToken == null || refreshToken.isEmpty
-            ? null
-            : jsonEncode({'refresh_token': refreshToken}),
-        timeout: ApiConfig.connectionTimeout,
-      ),
+      apiCall: () {
+        if (refreshToken == null || refreshToken.isEmpty) {
+          return _apiHandler.post(
+            url: ApiConfig.authLogout,
+            headers: ApiConfig.getAuthHeaders(token),
+            timeout: ApiConfig.connectionTimeout,
+          );
+        }
+
+        return _apiHandler.post(
+          url: ApiConfig.authLogout,
+          headers: ApiConfig.getAuthHeaders(token),
+          body: jsonEncode({'refresh_token': refreshToken}),
+          timeout: ApiConfig.connectionTimeout,
+        );
+      },
       onSuccess: (_) {},
     );
   }
