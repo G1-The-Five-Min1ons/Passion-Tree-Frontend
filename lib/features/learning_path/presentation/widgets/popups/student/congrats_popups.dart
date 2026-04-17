@@ -3,7 +3,6 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/common_widgets/buttons/save_cancel.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 
-
 class CompletionPopup extends StatelessWidget {
   final VoidCallback onYes;
   final VoidCallback onNo;
@@ -54,7 +53,7 @@ class CompletionPopup extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              const Divider(),
+              Divider(color: colors.onPrimary, thickness: 0.5, height: 1),
 
               const SizedBox(height: 16),
 
@@ -62,7 +61,7 @@ class CompletionPopup extends StatelessWidget {
               Text(
                 'Would You like to Rate This Learning Path',
                 style: AppTypography.subtitleRegular.copyWith(
-                  color: colors.primary,
+                  color: colors.onPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),

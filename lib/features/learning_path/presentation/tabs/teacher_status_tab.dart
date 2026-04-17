@@ -95,11 +95,14 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
         const SizedBox(height: 40),
 
         if (inProgressCourses.isEmpty)
-          Center(
-            child: Text(
-              'No in-progress paths found',
-              style: AppTypography.subtitleSemiBold.copyWith(
-                color: colors.onPrimary,
+          SizedBox(
+            height: 260,
+            child: Center(
+              child: Text(
+                'No in-progress paths found',
+                style: AppTypography.subtitleSemiBold.copyWith(
+                  color: colors.onPrimary,
+                ),
               ),
             ),
           )
@@ -181,11 +184,14 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
         const SizedBox(height: 40),
 
         if (completedCourses.isEmpty)
-          Center(
-            child: Text(
-              'No completed paths found',
-              style: AppTypography.subtitleSemiBold.copyWith(
-                color: colors.onPrimary,
+          SizedBox(
+            height: 260,
+            child: Center(
+              child: Text(
+                'No completed paths found',
+                style: AppTypography.subtitleSemiBold.copyWith(
+                  color: colors.onPrimary,
+                ),
               ),
             ),
           )

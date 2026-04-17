@@ -59,6 +59,7 @@ class StatusBadge extends StatelessWidget{
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: labelColor ?? Theme.of(context).colorScheme.onPrimary ),
+              color: AppColors.textPrimary ),
           ),
         ),
       ),

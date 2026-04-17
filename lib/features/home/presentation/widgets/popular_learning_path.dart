@@ -10,37 +10,43 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 class PopularLearningPathsSection extends StatelessWidget {
   final List<LearningPath> paths;
   final bool hasEnrolledPaths;
+  final bool isLoading;
 
   const PopularLearningPathsSection({
     super.key,
     required this.paths,
     required this.hasEnrolledPaths,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    if (paths.isEmpty) return const SizedBox();
+    if (paths.isEmpty && !isLoading) return const SizedBox();
+
+    final title = hasEnrolledPaths ? 'Recommended for you' : 'Popular Learning Paths';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          hasEnrolledPaths ? 'Recommended for you' : 'Popular Learning Paths',
+          title,
           style: AppPixelTypography.title.copyWith(color: colors.onPrimary),
         ),
         const SizedBox(height: 30),
         SizedBox(
           height: BaseCourseCard.defaultHeight,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: paths.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              return PixelCourseCard(course: paths[index]);
-            },
-          ),
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: paths.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    return PixelCourseCard(course: paths[index]);
+                  },
+                ),
         ),
       ],
     );

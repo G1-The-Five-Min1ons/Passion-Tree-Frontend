@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/selections/radio.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 
 class RatingSection extends StatelessWidget {
@@ -24,7 +25,7 @@ class RatingSection extends StatelessWidget {
         Text(
           title,
           style: AppTypography.titleSemiBold.copyWith(
-            color: Theme.of(context).colorScheme.primary,
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 4),

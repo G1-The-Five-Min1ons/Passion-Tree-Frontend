@@ -11,6 +11,8 @@ import 'package:passion_tree_frontend/features/learning_path/data/mappers/learni
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/node_detail_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/mappers/quiz_question_mapper.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path_rating.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/learning_path_rating_mapper.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_node.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/ai_generate_response.dart';
@@ -37,7 +39,7 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
     String pathId,
     String userId,
   ) async {
-    final model = await dataSource.getLearningPathProgress(pathId, userId);
+    final model = await dataSource.getLearningPathProgress(pathId);
 
     return model.toEntity();
   }
@@ -67,6 +69,30 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   }
 
   @override
+  Future<void> submitRating(
+    String pathId,
+    int contentQualityRating,
+    int instructorRating,
+  ) async {
+    return await dataSource.submitRating(
+      pathId,
+      contentQualityRating,
+      instructorRating,
+    );
+  }
+
+  @override
+  Future<LearningPathRating> getMyRating(String pathId) async {
+    final model = await dataSource.getMyRating(pathId);
+    return model.toEntity();
+  }
+
+  @override
+  Future<void> deleteRating(String pathId) async {
+    return await dataSource.deleteRating(pathId);
+  }
+
+  @override
   Future<void> enrollPath(String pathId, String userId) async {
     return await dataSource.enrollPath(pathId, userId);
   }
@@ -84,6 +110,11 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   @override
   Future<void> deleteNode(String nodeId) async {
     return await dataSource.deleteNode(nodeId);
+  }
+
+  @override
+  Future<void> reorderNodes(String pathId, List<String> nodeIds) async {
+    return await dataSource.reorderNodes(pathId, nodeIds);
   }
 
   @override
@@ -166,6 +197,50 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   Future<List<LearningPath>> getRecommendedLearningPaths() async {
     final models = await dataSource.getRecommendedLearningPaths();
     return models.map((e) => e.toEntity()).toList();
+  }
+
+  @override
+  Future<void> updateQuestion(
+    String questionId,
+    String questionText,
+    String type,
+  ) async {
+    return await dataSource.updateQuestion(questionId, questionText, type);
+  }
+
+  @override
+  Future<void> updateChoice(
+    String choiceId,
+    String choiceText,
+    bool isCorrect,
+    String reasoning,
+  ) async {
+    return await dataSource.updateChoice(
+      choiceId,
+      choiceText,
+      isCorrect,
+      reasoning,
+    );
+  }
+
+  @override
+  Future<String> createChoice(
+    String questionId,
+    String choiceText,
+    bool isCorrect,
+    String reasoning,
+  ) async {
+    return await dataSource.createChoice(
+      questionId,
+      choiceText,
+      isCorrect,
+      reasoning,
+    );
+  }
+
+  @override
+  Future<void> deleteChoice(String choiceId) async {
+    return await dataSource.deleteChoice(choiceId);
   }
 }
 

@@ -45,7 +45,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
     if (storedUserId != null && storedUserId.isNotEmpty) {
       setState(() => userId = storedUserId);
       context.read<LearningPathBloc>().add(
-        FetchLearningPathStatus(userId: storedUserId),
+        FetchLearningPathStatus(),
       );
     }
   }
@@ -77,8 +77,14 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
         onSearch: (q) => setState(() => _searchQuery = q),
       ),
       body: SafeArea(
-        child: BlocBuilder<LearningPathBloc, LearningPathState>(
-          builder: (context, state) {
+        child: BlocListener<LearningPathBloc, LearningPathState>(
+          listener: (context, state) {
+            if (state is PathEnrolled && userId != null && userId!.isNotEmpty) {
+              context.read<LearningPathBloc>().add(FetchLearningPathStatus());
+            }
+          },
+          child: BlocBuilder<LearningPathBloc, LearningPathState>(
+            builder: (context, state) {
             // Cache data when loaded
             if (state is LearningPathOverviewLoaded) {
               _cachedEnrolledPaths = state.enrolledPaths;
@@ -153,11 +159,14 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                       const SizedBox(height: 40),
 
                       if (inProgress.isEmpty)
-                        Center(
-                          child: Text(
-                            'No in-progress paths found',
-                            style: AppTypography.subtitleSemiBold.copyWith(
-                              color: colors.onPrimary,
+                        SizedBox(
+                          height: 260,
+                          child: Center(
+                            child: Text(
+                              'No in-progress paths found',
+                              style: AppTypography.subtitleSemiBold.copyWith(
+                                color: colors.onPrimary,
+                              ),
                             ),
                           ),
                         )
@@ -238,11 +247,14 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                       const SizedBox(height: 40),
 
                       if (completed.isEmpty)
-                        Center(
-                          child: Text(
-                            'No completed paths found',
-                            style: AppTypography.subtitleSemiBold.copyWith(
-                              color: colors.onPrimary,
+                        SizedBox(
+                          height: 260,
+                          child: Center(
+                            child: Text(
+                              'No completed paths found',
+                              style: AppTypography.subtitleSemiBold.copyWith(
+                                color: colors.onPrimary,
+                              ),
                             ),
                           ),
                         )
@@ -309,6 +321,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
           },
         ),
       ),
+      )
     );
   }
 }

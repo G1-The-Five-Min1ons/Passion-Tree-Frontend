@@ -12,6 +12,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/teache
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/features/setting/presentation/pages/teacher_verification_page.dart';
@@ -104,41 +105,9 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to check verification status: $e')),
+        SnackBar(content: Text('Unable to check verification status: $e', style: const TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
     }
-  }
-
-  Future<void> _confirmDeletePath(LearningPath path) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete Learning Path'),
-          content: Text('Are you sure you want to delete "${path.title}"?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
-              ),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldDelete != true) return;
-
-    if (!mounted) return;
-    context.read<LearningPathBloc>().add(
-      DeleteLearningPathEvent(pathId: path.id, userId: widget.userId),
-    );
   }
 
   /// Build section header with title and status
@@ -182,11 +151,14 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     final colors = Theme.of(context).colorScheme;
 
     if (paths.isEmpty) {
-      return Center(
-        child: Text(
-          emptyMessage,
-          style: AppTypography.subtitleSemiBold.copyWith(
-            color: colors.onPrimary,
+      return SizedBox(
+        height: 260,
+        child: Center(
+          child: Text(
+            emptyMessage,
+            style: AppTypography.subtitleSemiBold.copyWith(
+              color: colors.onPrimary,
+            ),
           ),
         ),
       );
@@ -238,7 +210,12 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                 );
               },
               onDelete: () {
-                _confirmDeletePath(paths[index]);
+                context.read<LearningPathBloc>().add(
+                  DeleteLearningPathEvent(
+                    pathId: paths[index].id,
+                    publishStatus: paths[index].publishStatus,
+                  ),
+                );
               },
             );
           },
@@ -277,9 +254,20 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     final inProgressCourses = _draftPaths;
     final completedCourses = _publishedPaths;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return BlocListener<LearningPathBloc, LearningPathState>(
+      listener: (context, state) {
+        if (state is LearningPathError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message, style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         // ===== Add button (top right) =====
         Align(
           alignment: Alignment.centerRight,
@@ -320,6 +308,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
           emptyMessage: 'No published paths found',
         ),
       ],
+      ),
     );
   }
 }

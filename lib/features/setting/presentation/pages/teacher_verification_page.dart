@@ -64,7 +64,7 @@ class _TeacherVerificationPageState extends State<TeacherVerificationPage> {
 
     if (phone.isEmpty || reason.isEmpty || history.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all required fields.')),
+        const SnackBar(content: Text('Please fill all required fields.', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
@@ -82,12 +82,12 @@ class _TeacherVerificationPageState extends State<TeacherVerificationPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Application submitted successfully.')),
+        const SnackBar(content: Text('Application submitted successfully.', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to submit application: $e')),
+        SnackBar(content: Text('Failed to submit application: $e', style: const TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
     } finally {
       if (mounted) {

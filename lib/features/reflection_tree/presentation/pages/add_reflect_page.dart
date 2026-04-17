@@ -76,14 +76,11 @@ class _AddReflectPageState extends State<AddReflectPage>{
   }
 
   Future<void> _loadLearningPaths() async {
-    final storedUserId = await getIt<IAuthRepository>().getUserId();
     if (!mounted) return;
 
-    if (storedUserId != null && storedUserId.isNotEmpty) {
-      context.read<LearningPathBloc>().add(
-        FetchLearningPathStatus(userId: storedUserId),
-      );
-    }
+    context.read<LearningPathBloc>().add(
+      FetchLearningPathStatus(),
+    );
   }
 
   @override

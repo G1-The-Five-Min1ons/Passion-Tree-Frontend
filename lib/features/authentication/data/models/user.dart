@@ -58,12 +58,12 @@ class User {
       }
 
       return User(
-        userId: json['user_id'] as String,
-        username: json['username'] as String,
-        email: json['email'] as String,
-        firstName: json['first_name'] as String,
-        lastName: json['last_name'] as String,
-        role: json['role'] as String,
+        userId: (json['user_id'] as String?) ?? '',
+        username: (json['username'] as String?) ?? '',
+        email: (json['email'] as String?) ?? '',
+        firstName: (json['first_name'] as String?) ?? '',
+        lastName: (json['last_name'] as String?) ?? '',
+        role: (json['role'] as String?) ?? '',
         heartCount: (json['heart_count'] as int?) ?? 0,
         isEmailVerified: json['is_email_verified'] as bool? ?? false,
         createdAt: createdAt ?? DateTime.now(),

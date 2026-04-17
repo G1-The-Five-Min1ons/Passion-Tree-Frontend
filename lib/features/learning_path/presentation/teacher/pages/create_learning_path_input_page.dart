@@ -47,6 +47,8 @@ class _CreateLearningPathInputPageState
   bool _isUploadingImage = false;
   String _uploadedImageUrl = '';
 
+  bool _isPendingUpdate = false;
+
   bool get _isEditMode => widget.existingPath != null;
 
   @override
@@ -105,7 +107,7 @@ class _CreateLearningPathInputPageState
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Image uploaded successfully')),
+            const SnackBar(content: Text('Image uploaded successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
           );
         }
       } catch (e) {
@@ -116,7 +118,10 @@ class _CreateLearningPathInputPageState
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to upload image: $e')),
+            SnackBar(
+              content: Text('Failed to upload image: $e', style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: AppColors.cancel,
+            ),
           );
         }
       }
@@ -126,14 +131,21 @@ class _CreateLearningPathInputPageState
   void _handleCreateWithAI(BuildContext context) {
     if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(content: Text('Please fill in all fields', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
+      );
+      return;
+    }
+
+    if (_uploadedImageUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload a cover image', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
 
     if (_userId == null || _userId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not authenticated')),
+        const SnackBar(content: Text('User not authenticated', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
@@ -157,14 +169,21 @@ class _CreateLearningPathInputPageState
   void _handleCreatePlainPath(BuildContext context) {
     if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(content: Text('Please fill in all fields', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
+      );
+      return;
+    }
+
+    if (_uploadedImageUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please attach a cover image before creating a Learning Path', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
 
     if (_userId == null || _userId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not authenticated')),
+        const SnackBar(content: Text('User not authenticated', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
@@ -184,18 +203,19 @@ class _CreateLearningPathInputPageState
   void _handleSave(BuildContext context) {
     if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(content: Text('Please fill in all fields', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
 
     if (!_isEditMode) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: Not in edit mode')),
+        const SnackBar(content: Text('Error: Not in edit mode', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
       );
       return;
     }
 
+    setState(() => _isPendingUpdate = true);
     context.read<LearningPathBloc>().add(
       UpdateLearningPathEvent(
         pathId: widget.existingPath!.id,
@@ -256,23 +276,29 @@ class _CreateLearningPathInputPageState
             );
           }
         } else if (state is LearningPathUpdated) {
+          if (!_isPendingUpdate) return;
+          setState(() => _isPendingUpdate = false);
+
           // Refresh the learning paths list
           if (_userId != null) {
-            context.read<LearningPathBloc>().add(
-              FetchLearningPathOverview(userId: _userId),
-            );
+            context.read<LearningPathBloc>().add(FetchLearningPathOverview());
           }
-          
+
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Learning path updated successfully')),
+            const SnackBar(content: Text('Learning path updated successfully', style: TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
           );
           Navigator.pop(context);
         } else if (state is LearningPathError) {
           setState(() {
             _isCreatingPath = false;
+            _isPendingUpdate = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${state.message}')),
+            SnackBar(
+              content: Text('Error: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: AppColors.cancel,
+            ),
           );
         }
       },
@@ -350,6 +376,7 @@ class _CreateLearningPathInputPageState
                   hintText: 'Enter learning path title',
                   value: _title,
                   height: 35,
+                  maxLength: 40,
                   onChanged: (value) {
                     setState(() {
                       _title = value;

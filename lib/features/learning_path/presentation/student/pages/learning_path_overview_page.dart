@@ -48,9 +48,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
     }
     if (!mounted) return;
     setState(() => userId = storedUserId);
-    context.read<LearningPathBloc>().add(
-      FetchLearningPathOverview(userId: userId),
-    );
+    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
   }
 
   List<LearningPath> _filterCourses(List<LearningPath> courses) {
@@ -97,14 +95,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
             // Refetch overview when node is completed or path is enrolled
             if (state is NodeDetailLoaded || state is PathEnrolled) {
               if (userId != null && userId!.isNotEmpty) {
-                // Add a small delay to ensure backend is updated
-                Future.delayed(const Duration(milliseconds: 500), () {
-                  if (context.mounted) {
-                    context.read<LearningPathBloc>().add(
-                      FetchLearningPathOverview(userId: userId),
-                    );
-                  }
-                });
+                context.read<LearningPathBloc>().add(FetchLearningPathOverview());
               }
             }
           },
@@ -155,10 +146,10 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
 
               // Filter out ALL enrolled paths (use original data to ensure complete filtering)
               final enrolledPathIds = overviewData.enrolledPaths
-                  .map((e) => e.pathId)
+                  .map((e) => e.pathId.trim())
                   .toSet();
               final filteredRecommended = filteredAll
-                  .where((path) => !enrolledPathIds.contains(path.id))
+                  .where((path) => !enrolledPathIds.contains(path.id.trim()))
                   .toList();
 
               // Use filtered courses (without enrolled) for "All Learning Paths" section
@@ -209,7 +200,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                                   );
                                   // Refetch overview data when returning
                                   if (mounted && userId != null) {
-                                    bloc.add(FetchLearningPathOverview(userId: userId));
+                                    bloc.add(FetchLearningPathOverview());
                                   }
                                 },
                               ),
@@ -218,11 +209,14 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                         ),
                         const SizedBox(height: 40),
                         if (filteredEnrolled.isEmpty)
-                          Center(
-                            child: Text(
-                              'No enrolled paths found',
-                              style: AppTypography.subtitleSemiBold.copyWith(
-                                color: colors.onPrimary,
+                          SizedBox(
+                            height: 260,
+                            child: Center(
+                              child: Text(
+                                'No enrolled paths found',
+                                style: AppTypography.subtitleSemiBold.copyWith(
+                                  color: colors.onPrimary,
+                                ),
                               ),
                             ),
                           )
@@ -257,30 +251,29 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           ),
                         ),
                         const SizedBox(height: 40),
-                        SizedBox(
-                          height: BaseCourseCard.defaultHeight,
-                          child: filteredRecommended.isEmpty
-                              ? Center(
-                                  child: Text(
-                                    'No recommended paths found',
-                                    style: AppTypography.subtitleSemiBold
-                                        .copyWith(color: colors.onPrimary),
-                                  ),
-                                )
-                              : ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 0,
-                                  ),
-                                  itemCount: filteredRecommended.length,
-                                  separatorBuilder: (context, index) => const SizedBox(width: 12),
-                                  itemBuilder: (context, index) {
-                                    return PixelCourseCard(
-                                      course: filteredRecommended[index],
-                                    );
-                                  },
-                                ),
-                        ),
+                        if (filteredRecommended.isEmpty)
+                          Center(
+                            child: Text(
+                              'No recommended paths found',
+                              style: AppTypography.subtitleSemiBold
+                                  .copyWith(color: colors.onPrimary),
+                            ),
+                          )
+                        else
+                          SizedBox(
+                            height: BaseCourseCard.defaultHeight,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 0),
+                              itemCount: filteredRecommended.length,
+                              separatorBuilder: (context, index) => const SizedBox(width: 12),
+                              itemBuilder: (context, index) {
+                                return PixelCourseCard(
+                                  course: filteredRecommended[index],
+                                );
+                              },
+                            ),
+                          ),
                       ] else ...[
                         // Not logged in: Show Popular Learning Paths
                         Text(
@@ -290,29 +283,28 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           ),
                         ),
                         const SizedBox(height: 40),
-                        SizedBox(
-                          height: BaseCourseCard.defaultHeight,
-                          child: filteredRecommended.isEmpty
-                              ? Center(
-                                  child: Text(
-                                    'No popular paths found',
-                                    style: AppTypography.subtitleSemiBold
-                                        .copyWith(color: colors.onPrimary),
-                                  ),
-                                )
-                              : ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 0,
-                                  ),
-                                  itemCount: filteredRecommended.length,
-                                  separatorBuilder: (context, index) => const SizedBox(width: 12),
-                                  itemBuilder: (context, index) {
-                                    return PixelCourseCard(
-                                      course: filteredRecommended[index],
-                                    );
-                                  },
-                                ),
+                        if (filteredRecommended.isEmpty)
+                          Center(
+                            child: Text(
+                              'No popular paths found',
+                              style: AppTypography.subtitleSemiBold
+                                  .copyWith(color: colors.onPrimary),
+                            ),
+                          )
+                        else
+                          SizedBox(
+                            height: BaseCourseCard.defaultHeight,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 0),
+                              itemCount: filteredRecommended.length,
+                              separatorBuilder: (context, index) => const SizedBox(width: 12),
+                              itemBuilder: (context, index) {
+                                return PixelCourseCard(
+                                  course: filteredRecommended[index],
+                                );
+                              },
+                            ),
                         ),
                       ],
 
@@ -327,11 +319,14 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                       ),
                       const SizedBox(height: 40),
                       if (shownAllCourses.isEmpty)
-                        Center(
-                          child: Text(
-                            'No learning paths found',
-                            style: AppTypography.subtitleSemiBold.copyWith(
-                              color: colors.onPrimary,
+                        SizedBox(
+                          height: 260,
+                          child: Center(
+                            child: Text(
+                              'No learning paths found',
+                              style: AppTypography.subtitleSemiBold.copyWith(
+                                color: colors.onPrimary,
+                              ),
                             ),
                           ),
                         )

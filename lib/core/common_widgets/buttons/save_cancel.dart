@@ -7,6 +7,7 @@ class SaveCancel extends StatelessWidget{
   final VoidCallback? onSave;
   final Color? saveButtonColor;
   final Color? cancelButtonColor;
+  final Color? cancelTextColor;
   final VoidCallback onCancel;
   final String saveText;
   final String cancelText;
@@ -17,6 +18,7 @@ class SaveCancel extends StatelessWidget{
     this.onSave,
     this.saveButtonColor,
     this.cancelButtonColor,
+    this.cancelTextColor,
     required this.onCancel,
     this.saveText = 'Save',
     this.cancelText = 'Cancel', 
@@ -41,9 +43,9 @@ class SaveCancel extends StatelessWidget{
               text: cancelText,
               onPressed: onCancel,
               backgroundColor: cancelButtonColor ?? AppColors.scale,
-              textColor: cancelButtonColor != null
+                textColor: cancelTextColor ?? (cancelButtonColor != null
                   ? colors.onError
-                  : AppColors.background,
+                  : AppColors.background),
             ),
             const SizedBox(width: 8),
             AppButton(
