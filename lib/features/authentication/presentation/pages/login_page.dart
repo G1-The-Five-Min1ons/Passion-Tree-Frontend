@@ -428,7 +428,9 @@ class _LoginPageState extends State<LoginPage> {
         return SelectRolePopup(
           onRoleSelected: (role) {
             Navigator.of(dialogContext).pop();
-            context.read<LoginBloc>().add(SelectRoleSubmitted(role));
+            if (context.mounted) {
+              context.read<LoginBloc>().add(SelectRoleSubmitted(role));
+            }
           },
         );
       },
@@ -475,7 +477,9 @@ class _LoginPageState extends State<LoginPage> {
                         backgroundColor: AppColors.cancel,
                         onPressed: () {
                           Navigator.of(dialogContext).pop();
-                          context.read<LoginBloc>().add(const LoginReset());
+                          if (context.mounted) {
+                            context.read<LoginBloc>().add(const LoginReset());
+                          }
                         },
                       ),
                     ),
@@ -486,7 +490,9 @@ class _LoginPageState extends State<LoginPage> {
                         text: 'Reactivate',
                         onPressed: () {
                           Navigator.of(dialogContext).pop();
-                          context.read<LoginBloc>().add(const ConfirmReactivation());
+                          if (context.mounted) {
+                            context.read<LoginBloc>().add(const ConfirmReactivation());
+                          }
                         },
                       ),
                     ),

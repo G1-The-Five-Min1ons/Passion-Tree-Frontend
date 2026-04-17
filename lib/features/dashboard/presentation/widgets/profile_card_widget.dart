@@ -282,7 +282,7 @@ class ProfileCardWidget extends StatelessWidget {
             ? Image.network(
                 avatarUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildAvatarFallback(),
+                errorBuilder: (_, _, _) => _buildAvatarFallback(),
               )
             : _buildAvatarFallback(),
       ),

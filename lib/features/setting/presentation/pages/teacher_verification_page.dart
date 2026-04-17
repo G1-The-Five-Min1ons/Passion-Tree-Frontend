@@ -212,7 +212,7 @@ class _TeacherVerificationPageState extends State<TeacherVerificationPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border.all(color: color.withOpacity(0.6)),
+        border: Border.all(color: color.withValues(alpha:0.6)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -239,8 +239,8 @@ class _TeacherVerificationPageState extends State<TeacherVerificationPage> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.amber.withOpacity(0.08),
-            border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            color: Colors.amber.withValues(alpha:0.08),
+            border: Border.all(color: Colors.amber.withValues(alpha:0.3)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -275,8 +275,8 @@ class _TeacherVerificationPageState extends State<TeacherVerificationPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.08),
-        border: Border.all(color: Colors.green.withOpacity(0.3)),
+        color: Colors.green.withValues(alpha:0.08),
+        border: Border.all(color: Colors.green.withValues(alpha:0.3)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -316,7 +316,7 @@ class _TeacherVerificationPageState extends State<TeacherVerificationPage> {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.surface.withOpacity(0.5),
+            color: AppColors.surface.withValues(alpha:0.5),
             border: Border.all(color: AppColors.cardBorder),
             borderRadius: BorderRadius.circular(8),
           ),

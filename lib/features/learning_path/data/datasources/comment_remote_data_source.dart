@@ -100,6 +100,7 @@ class CommentRemoteDataSource {
         body: jsonEncode({
           'node_id': nodeId,
           'message': message,
+          // ignore: use_null_aware_elements
           if (parentId != null) 'parent_id': parentId,
         }),
       );
@@ -135,6 +136,7 @@ class CommentRemoteDataSource {
         body: jsonEncode({
           'path_id': pathId,
           'message': message,
+          // ignore: use_null_aware_elements
           if (parentId != null) 'parent_id': parentId,
         }),
       );

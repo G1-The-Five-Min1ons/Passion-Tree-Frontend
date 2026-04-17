@@ -42,7 +42,7 @@ class PopularLearningPathsSection extends StatelessWidget {
               : ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: paths.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     return PixelCourseCard(course: paths[index]);
                   },

@@ -29,7 +29,7 @@ class RecommendPopup extends StatefulWidget {
 
 class _RecommendPopupState extends State<RecommendPopup> {
   late Future<List<LearningPathApiModel>> _recommendedPathsFuture;
-  final LearningPathDataSource _dataSource = LearningPathDataSource();
+  final LearningPathDataSource _dataSource = getIt<LearningPathDataSource>();
 
   void _navigateToLearningPath(LearningPathApiModel path) {
     final rootNavigator = Navigator.of(context, rootNavigator: true);

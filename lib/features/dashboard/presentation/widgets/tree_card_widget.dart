@@ -74,7 +74,7 @@ class _TreeCardWidgetState extends State<TreeCardWidget>
                   Positioned.fill(
                     child: AnimatedBuilder(
                       animation: _twinkle,
-                      builder: (_, __) => CustomPaint(
+                      builder: (_, _) => CustomPaint(
                         painter: _ForestPainter(
                           treeCount: treesPlanted,
                           twinkle: _twinkle.value,

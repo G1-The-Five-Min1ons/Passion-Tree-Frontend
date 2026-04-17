@@ -34,6 +34,7 @@ class EditNodeModal extends StatefulWidget {
   final String? sequence;
   final NodeDetail? initialNode;
   final bool isReadOnly;
+  final VoidCallback? onDeleteUnsavedNode;
 
   const EditNodeModal({
     super.key,
@@ -46,6 +47,7 @@ class EditNodeModal extends StatefulWidget {
     this.sequence,
     this.initialNode,
     this.isReadOnly = false,
+    this.onDeleteUnsavedNode,
   });
 
   @override
@@ -115,7 +117,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
   bool get _isSaveEnabled {
     return _title.trim().isNotEmpty &&
         _description.trim().isNotEmpty &&
-      _isValidVideoUrl &&
+        _isValidVideoUrl &&
         _hasRequiredQuiz;
   }
 
@@ -160,7 +162,10 @@ class _EditNodeModalState extends State<EditNodeModal> {
     _materialNameByUrl[url] = name;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_materialNameMapKey, jsonEncode(_materialNameByUrl));
+      await prefs.setString(
+        _materialNameMapKey,
+        jsonEncode(_materialNameByUrl),
+      );
     } catch (_) {}
   }
 
@@ -175,15 +180,12 @@ class _EditNodeModalState extends State<EditNodeModal> {
     for (final material in node.materials) {
       if (material.url.trim().isEmpty) continue;
 
-      final displayName = _materialNameByUrl[material.url] ??
+      final displayName =
+          _materialNameByUrl[material.url] ??
           _deriveDisplayFileName(material.url);
 
       existing.add(
-        UploadedFileItem(
-          name: displayName,
-          size: 0,
-          path: material.url,
-        ),
+        UploadedFileItem(name: displayName, size: 0, path: material.url),
       );
     }
 
@@ -377,7 +379,10 @@ class _EditNodeModalState extends State<EditNodeModal> {
       }
 
       final file = File(filePath);
-      final publicUrl = await uploadService.uploadImage(file, 'materials-nodes');
+      final publicUrl = await uploadService.uploadImage(
+        file,
+        'materials-nodes',
+      );
       materials.add(CreateMaterial(type: 'file', url: publicUrl));
       await _rememberMaterialName(publicUrl, fileItem.name);
     }
@@ -525,12 +530,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
               backgroundColor: AppColors.status,
             ),
           );
-          // Delay closing modal to allow parent listeners to process and refetch
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (context.mounted) {
-              Navigator.pop(context);
-            }
-          });
+          if (context.mounted) {
+            Navigator.pop(context);
+          }
         } else if (state is NodeCreated) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -541,12 +543,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
               backgroundColor: AppColors.status,
             ),
           );
-          // Delay closing modal to allow parent listeners to process and refetch
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (context.mounted) {
-              Navigator.pop(context);
-            }
-          });
+          if (context.mounted) {
+            Navigator.pop(context);
+          }
         } else if (state is NodeDeleted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -653,7 +652,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
                                           'Are you sure you want to delete?\nThis Process cannot be undone.',
                                       onDelete: () {
                                         if (_cannotDeleteLastNode) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             const SnackBar(
                                               content: Text(
                                                 'Unable to delete the last node',
@@ -668,12 +669,15 @@ class _EditNodeModalState extends State<EditNodeModal> {
                                         }
 
                                         if (widget.isNewNode) {
+                                          widget.onDeleteUnsavedNode?.call();
                                           Navigator.pop(context);
                                           return;
                                         }
 
                                         context.read<LearningPathBloc>().add(
-                                          DeleteNodeEvent(nodeId: widget.nodeId),
+                                          DeleteNodeEvent(
+                                            nodeId: widget.nodeId,
+                                          ),
                                         );
                                       },
                                     );

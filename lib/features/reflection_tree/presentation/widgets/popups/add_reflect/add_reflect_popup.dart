@@ -5,7 +5,6 @@ import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart'
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/reflection_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/models/reflection_api_model.dart';

@@ -5,13 +5,13 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 
 class BottomBar extends StatelessWidget {
   final VoidCallback onSaveDraft;
-  final VoidCallback onPublish;
+  final VoidCallback onCancel;
   final bool isPublished;
 
   const BottomBar({
     super.key,
     required this.onSaveDraft,
-    required this.onPublish,
+    required this.onCancel,
     this.isPublished = false,
   });
 
@@ -23,37 +23,33 @@ class BottomBar extends StatelessWidget {
     }
 
     // ถ้ายัง draft แสดงทั้งสองปุ่ม
-    return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 25, // ระยะลอยจากขอบล่าง
-      ),
-      child: Center(
-        child: SizedBox(
-          width: 320, // ความกว้างกลุ่มปุ่ม
-          child: Row(
-            children: [
-              Expanded(
-                child: AppButton(
-                  variant: AppButtonVariant.text,
-                  text: 'Save Draft',
-                  backgroundColor: AppColors.scale,
-                  textColor: AppColors.textPrimary,
-                  onPressed: onSaveDraft,
-                ),
+    return Center(
+      child: SizedBox(
+        width: 320, // ความกว้างกลุ่มปุ่ม
+        child: Row(
+          children: [
+            Expanded(
+              child: AppButton(
+                variant: AppButtonVariant.text,
+                text: 'Cancel',
+                backgroundColor: AppColors.scale,
+                textColor: AppColors.background,
+                onPressed: onCancel,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: AppButton(
-                  variant: AppButtonVariant.text,
-                  text: 'Publish',
-                  onPressed: onPublish,
-                ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: AppButton(
+                variant: AppButtonVariant.text,
+                text: 'Save Draft',
+                backgroundColor: AppColors.submit,
+                textColor: AppColors.textPrimary,
+                onPressed: onSaveDraft,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
-

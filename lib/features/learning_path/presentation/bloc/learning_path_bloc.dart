@@ -438,6 +438,22 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
     // ===== TEACHER EVENT HANDLERS =====
 
+    on<GetLearningPathByIdEvent>(
+      (event, emit) async {
+        LogHandler.debug('[BLoC] GetLearningPathByIdEvent: ${event.pathId}');
+
+        await safeExecute(emit, 'get learning path by id', () async {
+          final learningPath =
+              await getLearningPathByIdUseCase(event.pathId);
+          LogHandler.debug(
+            '[BLoC] Loaded learning path detail: ${learningPath.title}',
+          );
+          emit(LearningPathDetailLoaded(learningPath));
+        });
+      },
+      transformer: restartable(),
+    );
+
     on<CreateLearningPathEvent>((event, emit) async {
       LogHandler.debug('[BLoC] CreateLearningPathEvent received');
       emit(CreatingLearningPath());
@@ -496,6 +512,9 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           LogHandler.debug('Creating quiz questions for node...');
           await createNodeQuestionsUseCase(nodeId, event.questions!);
         }
+
+        LogHandler.debug('[BLoC] Node created: $nodeId');
+        emit(NodeCreated(nodeId));
       });
     }, transformer: restartable());
 
