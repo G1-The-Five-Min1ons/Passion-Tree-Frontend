@@ -11,6 +11,7 @@ class LearningNodeContent extends StatefulWidget {
   final String title;
   final String description;
   final List<lp.Material> materials;
+  final VoidCallback onStartLearning;
   final VoidCallback onTakeQuiz;
   final String status;
   final String? videoUrl;
@@ -22,6 +23,7 @@ class LearningNodeContent extends StatefulWidget {
     required this.title,
     required this.description,
     required this.materials,
+    required this.onStartLearning,
     required this.onTakeQuiz,
     required this.status,
     this.videoUrl,
@@ -36,6 +38,7 @@ class LearningNodeContent extends StatefulWidget {
 class _LearningNodeContentState extends State<LearningNodeContent> {
   String? _videoId;
   bool _showPlayer = false;
+  bool _hasStartedLearning = false;
 
   @override
   void initState() {
@@ -48,6 +51,11 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
     if (widget.controller != null) {
       widget.controller!.play();
       setState(() => _showPlayer = true);
+
+      if (!_hasStartedLearning) {
+        _hasStartedLearning = true;
+        widget.onStartLearning();
+      }
     }
   }
 
@@ -193,13 +201,7 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
               if (widget.status.toLowerCase() == 'active') {
                 widget.onTakeQuiz();
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Please complete previous nodes first'),
-                    duration: const Duration(seconds: 3),
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                  ),
-                );
+                widget.onStartLearning();
               }
             },
           ),

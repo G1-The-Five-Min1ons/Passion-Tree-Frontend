@@ -35,6 +35,27 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
   String? _userId;
   EnrolledLearningPath? _currentEnrolledPath;
 
+  int _getNextRequiredSequence(List<NodeDetail> nodes) {
+    for (final node in nodes) {
+      if (node.complete.toLowerCase() != 'true') {
+        return node.sequence;
+      }
+    }
+    return nodes.length + 1;
+  }
+
+  void _showOutOfOrderNodeSnackBar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Please finish the previous node.',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        backgroundColor: AppColors.cancel,
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -116,9 +137,16 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                     onNodeTap: (index) {
                       if (index < nodes.length) {
                         final currentNode = nodes[index];
+                        final nextRequiredSequence =
+                            _getNextRequiredSequence(nodes);
+
+                        if (currentNode.sequence > nextRequiredSequence) {
+                          _showOutOfOrderNodeSnackBar();
+                          return;
+                        }
+
                         final currentSequence = currentNode.sequence;
 
-                        // เปิด node ได้
                         Navigator.push(
                           context,
                           MaterialPageRoute(
