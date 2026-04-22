@@ -870,7 +870,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                 isEditable: true,
                 isDraggable: !_isPublished,
                 showAddBetween: !_isPublished,
-                forceLockedStyle: !_isPublished,
+                forceLockedStyle: false,
                 showNodeTitle: true,
                 nodes: _displayNodes,
                 onNodeTap: (index) {

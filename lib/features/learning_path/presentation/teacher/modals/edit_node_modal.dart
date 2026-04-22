@@ -287,6 +287,14 @@ class _EditNodeModalState extends State<EditNodeModal> {
     return widget.totalNodes <= 1;
   }
 
+  bool get _isFirstNode {
+    final effectiveSequence =
+        widget.sequence != null
+            ? int.tryParse(widget.sequence!)
+            : widget.initialNode?.sequence;
+    return effectiveSequence == 1;
+  }
+
   //  ===== FILE FUNCTIONS  =====
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(allowMultiple: true);
@@ -645,6 +653,23 @@ class _EditNodeModalState extends State<EditNodeModal> {
                             onDelete: isLoading
                                 ? null
                                 : () {
+                                    if (_isFirstNode) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'You cannot delete the first node.',
+                                            style: TextStyle(
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          backgroundColor: AppColors.cancel,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
                                     DeletePopUp.show(
                                       context,
                                       title: 'Delete?',
