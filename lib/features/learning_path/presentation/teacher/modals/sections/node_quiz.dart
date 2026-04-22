@@ -70,10 +70,13 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
 
   void _addChoice(int qIndex) {
     final quiz = _quizzes[qIndex];
+    final updatedChoiceIds = quiz.choiceIds == null
+        ? null
+        : [...quiz.choiceIds!, ''];
     setState(() {
       _quizzes[qIndex] = quiz.copyWith(
         choices: [...quiz.choices, ''],
-        choiceIds: [...?quiz.choiceIds, ''],
+        choiceIds: updatedChoiceIds,
       );
     });
     _notifyChange();
@@ -82,10 +85,22 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
   void _removeChoice(int qIndex, int cIndex) {
     final quiz = _quizzes[qIndex];
     final newChoices = [...quiz.choices]..removeAt(cIndex);
-    final newReasons = Map<int, String>.from(quiz.reasons)..remove(cIndex);
-    final newChoiceIds = quiz.choiceIds == null
-        ? null
-        : ([...quiz.choiceIds!]..removeAt(cIndex));
+    final newReasons = <int, String>{};
+    for (final entry in quiz.reasons.entries) {
+      if (entry.key == cIndex) continue;
+      final shiftedIndex = entry.key > cIndex ? entry.key - 1 : entry.key;
+      newReasons[shiftedIndex] = entry.value;
+    }
+
+    List<String>? newChoiceIds;
+    if (quiz.choiceIds != null) {
+      final ids = [...quiz.choiceIds!];
+      if (cIndex >= 0 && cIndex < ids.length) {
+        ids.removeAt(cIndex);
+      }
+      newChoiceIds = ids;
+    }
+
     final newSelectedIndex = quiz.selectedIndex == cIndex
         ? (newChoices.isEmpty
               ? 0
