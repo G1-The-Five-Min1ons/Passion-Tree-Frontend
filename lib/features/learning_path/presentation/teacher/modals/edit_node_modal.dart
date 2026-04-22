@@ -101,7 +101,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
   String? get _videoUrlWarningText {
     final value = _videoUrl.trim();
-    if (value.isEmpty) return null;
+    if (value.isEmpty) return 'Video URL is required';
     if (_isValidVideoUrl) return null;
     return 'Video URL ต้องเป็นลิงก์ที่ถูกต้อง เช่น youtube.com/...';
   }
@@ -119,6 +119,25 @@ class _EditNodeModalState extends State<EditNodeModal> {
         _description.trim().isNotEmpty &&
         _isValidVideoUrl &&
         _hasRequiredQuiz;
+  }
+
+  bool get _isTitleValid => _title.trim().isNotEmpty;
+
+  bool get _isDescriptionValid => _description.trim().isNotEmpty;
+
+  String? get _titleWarningText {
+    if (_isTitleValid) return null;
+    return 'Title is required';
+  }
+
+  String? get _descriptionWarningText {
+    if (_isDescriptionValid) return null;
+    return 'Description is required';
+  }
+
+  String? get _quizWarningText {
+    if (_hasRequiredQuiz) return null;
+    return 'Please add at least 1 question with 2 or more choices.';
   }
 
   String _deriveDisplayFileName(String url) {
@@ -288,10 +307,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
   }
 
   bool get _isFirstNode {
-    final effectiveSequence =
-        widget.sequence != null
-            ? int.tryParse(widget.sequence!)
-            : widget.initialNode?.sequence;
+    final effectiveSequence = widget.sequence != null
+        ? int.tryParse(widget.sequence!)
+        : widget.initialNode?.sequence;
     return effectiveSequence == 1;
   }
 
@@ -615,11 +633,24 @@ class _EditNodeModalState extends State<EditNodeModal> {
                       onTitleChanged: (v) => setState(() => _title = v),
                       onDescriptionChanged: (v) =>
                           setState(() => _description = v),
+                      isTitleInvalid: !widget.isReadOnly && !_isTitleValid,
+                      isDescriptionInvalid:
+                          !widget.isReadOnly && !_isDescriptionValid,
+                      titleWarningText: widget.isReadOnly
+                          ? null
+                          : _titleWarningText,
+                      descriptionWarningText: widget.isReadOnly
+                          ? null
+                          : _descriptionWarningText,
 
                       // ===== VIDEO URL =====
                       videoUrlValue: _videoUrl,
                       onVideoUrlChanged: (v) => setState(() => _videoUrl = v),
-                      videoUrlWarningText: _videoUrlWarningText,
+                      videoUrlWarningText: widget.isReadOnly
+                          ? null
+                          : _videoUrlWarningText,
+                      isVideoUrlInvalid:
+                          !widget.isReadOnly && !_isValidVideoUrl,
                       isReadOnly: widget.isReadOnly,
 
                       // ===== FILE UPLOAD =====
@@ -632,6 +663,8 @@ class _EditNodeModalState extends State<EditNodeModal> {
                     NodeQuizSection(
                       initialQuizzes: _quizzes.isNotEmpty ? _quizzes : null,
                       isReadOnly: widget.isReadOnly,
+                      isQuizInvalid:
+                          !widget.isReadOnly && _quizWarningText != null,
                       onQuizzesChanged: (quizzes) {
                         setState(() {
                           _quizzes = quizzes;

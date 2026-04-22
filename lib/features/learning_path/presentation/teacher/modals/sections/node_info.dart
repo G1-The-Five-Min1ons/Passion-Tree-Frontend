@@ -11,11 +11,16 @@ class NodeInfoSection extends StatelessWidget {
   final ValueChanged<String> onDescriptionChanged;
   final String? initialTitle;
   final String? initialDescription;
+  final bool isTitleInvalid;
+  final bool isDescriptionInvalid;
+  final String? titleWarningText;
+  final String? descriptionWarningText;
 
   // Video URL
   final String? videoUrlValue;
   final ValueChanged<String>? onVideoUrlChanged;
   final String? videoUrlWarningText;
+  final bool isVideoUrlInvalid;
 
   // Files
   final VoidCallback onUploadFile;
@@ -29,9 +34,14 @@ class NodeInfoSection extends StatelessWidget {
     required this.onDescriptionChanged,
     this.initialTitle,
     this.initialDescription,
+    this.isTitleInvalid = false,
+    this.isDescriptionInvalid = false,
+    this.titleWarningText,
+    this.descriptionWarningText,
     this.videoUrlValue,
     this.onVideoUrlChanged,
     this.videoUrlWarningText,
+    this.isVideoUrlInvalid = false,
     required this.onUploadFile,
     required this.files,
     required this.onRemoveFile,
@@ -51,9 +61,19 @@ class NodeInfoSection extends StatelessWidget {
           hintText: 'Enter node title',
           height: 35,
           value: initialTitle,
+          borderColor: isTitleInvalid ? AppColors.cancel : null,
           onChanged: isReadOnly ? null : onTitleChanged,
           readOnly: isReadOnly,
         ),
+
+        if (titleWarningText != null && titleWarningText!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 10),
+            child: Text(
+              titleWarningText!,
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.cancel),
+            ),
+          ),
 
         const SizedBox(height: 12),
 
@@ -63,9 +83,20 @@ class NodeInfoSection extends StatelessWidget {
           hintText: 'Enter node description',
           height: 35,
           value: initialDescription,
+          borderColor: isDescriptionInvalid ? AppColors.cancel : null,
           onChanged: isReadOnly ? null : onDescriptionChanged,
           readOnly: isReadOnly,
         ),
+
+        if (descriptionWarningText != null &&
+            descriptionWarningText!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 10),
+            child: Text(
+              descriptionWarningText!,
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.cancel),
+            ),
+          ),
 
         const SizedBox(height: 12),
 
@@ -75,6 +106,7 @@ class NodeInfoSection extends StatelessWidget {
           hintText: 'Enter YouTube video URL',
           height: 35,
           value: videoUrlValue,
+          borderColor: isVideoUrlInvalid ? AppColors.cancel : null,
           onChanged: isReadOnly ? null : (onVideoUrlChanged ?? (_) {}),
           readOnly: isReadOnly,
         ),
@@ -84,9 +116,7 @@ class NodeInfoSection extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6, left: 10),
             child: Text(
               videoUrlWarningText!,
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.cancel,
-              ),
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.cancel),
             ),
           ),
 
@@ -159,7 +189,6 @@ class NodeInfoSection extends StatelessWidget {
                               onPressed: () => onRemoveFile(index),
                             ),
                     ),
-
                   ],
                 ),
               ),

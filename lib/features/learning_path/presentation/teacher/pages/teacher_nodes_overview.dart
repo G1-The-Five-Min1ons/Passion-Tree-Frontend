@@ -66,6 +66,9 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   bool _queuedSaveDraftAfterPathLoad = false;
   Timer? _queuedSaveDraftRetryTimer;
   int _queuedSaveDraftRetryCount = 0;
+  bool _queuedPublishAfterPathLoad = false;
+  Timer? _queuedPublishRetryTimer;
+  int _queuedPublishRetryCount = 0;
   bool _isAutoSavingDraft = false;
   bool _shouldExitAfterPathUpdate = false;
   late String
@@ -80,6 +83,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   void dispose() {
     _draftAutoSaveTimer?.cancel();
     _queuedSaveDraftRetryTimer?.cancel();
+    _queuedPublishRetryTimer?.cancel();
     super.dispose();
   }
 
@@ -181,6 +185,49 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
       LogHandler.warning(
         'TeacherNodesOverview: Retrying detail fetch for queued Save Draft (${_queuedSaveDraftRetryCount}/8)',
+      );
+      _fetchLearningPathDetail();
+    });
+  }
+
+  void _startQueuedPublishRetryWatchdog() {
+    _queuedPublishRetryTimer?.cancel();
+    _queuedPublishRetryCount = 0;
+
+    _queuedPublishRetryTimer = Timer.periodic(const Duration(seconds: 1), (
+      timer,
+    ) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (!_queuedPublishAfterPathLoad || _cachedLearningPath != null) {
+        timer.cancel();
+        return;
+      }
+
+      _queuedPublishRetryCount++;
+      if (_queuedPublishRetryCount > 8) {
+        timer.cancel();
+        _queuedPublishAfterPathLoad = false;
+        LogHandler.error(
+          'TeacherNodesOverview: Publish queue timeout - learning path detail did not load',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to load learning path data for Publish. Please try again.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
+          ),
+        );
+        return;
+      }
+
+      LogHandler.warning(
+        'TeacherNodesOverview: Retrying detail fetch for queued Publish (${_queuedPublishRetryCount}/8)',
       );
       _fetchLearningPathDetail();
     });
@@ -483,15 +530,78 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     );
   }
 
-  void _confirmCancel(BuildContext context) {
-    ConfirmPopup.show(
-      context,
-      title: 'Cancel\n Confirmation',
-      body: 'Discard current edits and go back?',
-      confirmText: 'Discard',
-      onConfirm: () {
-        Navigator.pop(context);
-      },
+  void _confirmPublish(BuildContext context) {
+    _draftAutoSaveTimer?.cancel();
+    LogHandler.info(
+      'TeacherNodesOverview: Publish tapped (pathId=${widget.pathId})',
+    );
+
+    if (_cachedLearningPath == null) {
+      _queuedPublishAfterPathLoad = true;
+      LogHandler.warning(
+        'TeacherNodesOverview: Publish queued, learning path detail not loaded yet',
+      );
+      _fetchLearningPathDetail();
+      _startQueuedPublishRetryWatchdog();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Preparing publish... Please wait a moment.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
+
+    if (_cachedLearningPath!.publishStatus.toLowerCase() == 'published') {
+      LogHandler.warning(
+        'TeacherNodesOverview: Publish blocked, path already published',
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'This learning path is already published.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+      return;
+    }
+
+    LogHandler.info(
+      'TeacherNodesOverview: Publish executing without confirmation',
+    );
+
+    final uncreatedSequences = [
+      for (int i = 0; i < _uiNodes.length; i++)
+        if (!_uiNodes[i].isCreated) _uiNodes[i].sequence,
+    ];
+    if (uncreatedSequences.isNotEmpty) {
+      LogHandler.info(
+        'TeacherNodesOverview: Publish requires creating ${uncreatedSequences.length} unsaved nodes first',
+      );
+      _shouldExitAfterPathUpdate = true;
+      setState(() => _pendingPublish = true);
+      _startSequentialCreate(uncreatedSequences);
+      return;
+    }
+
+    _shouldExitAfterPathUpdate = true;
+    LogHandler.info(
+      'TeacherNodesOverview: Dispatching UpdateLearningPathEvent as published',
+    );
+    context.read<LearningPathBloc>().add(
+      UpdateLearningPathEvent(
+        pathId: widget.pathId,
+        title: _cachedLearningPath!.title,
+        objective: _cachedLearningPath!.objective,
+        description: _cachedLearningPath!.description,
+        coverImgUrl: _cachedLearningPath!.coverImageUrl,
+        publishStatus: 'published',
+      ),
     );
   }
 
@@ -578,6 +688,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         // Update cached learning path when loaded
         if (state is LearningPathDetailLoaded) {
           _queuedSaveDraftRetryTimer?.cancel();
+          _queuedPublishRetryTimer?.cancel();
           setState(() {
             _cachedLearningPath = state.learningPath;
             if (state.learningPath.title.isNotEmpty) {
@@ -596,6 +707,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
               _confirmSaveDraft(context);
+            });
+          }
+
+          if (_queuedPublishAfterPathLoad && !_isPublished) {
+            _queuedPublishAfterPathLoad = false;
+            LogHandler.info(
+              'TeacherNodesOverview: Executing queued Publish after detail loaded',
+            );
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              _confirmPublish(context);
             });
           }
         }
@@ -833,7 +955,15 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           LogHandler.success(
             'TeacherNodesOverview: Save Draft success, leaving current page',
           );
-          Navigator.pop(context);
+
+          if (_isAiPath) {
+            final navigator = Navigator.of(context);
+            if (navigator.canPop()) navigator.pop();
+            if (navigator.canPop()) navigator.pop();
+            if (navigator.canPop()) navigator.pop();
+          } else {
+            Navigator.pop(context);
+          }
         } else if (state is LearningPathError) {
           _queuedSaveDraftRetryTimer?.cancel();
           LogHandler.error(
@@ -896,7 +1026,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                 child: Builder(
                   builder: (bottomContext) => BottomBar(
                     onSaveDraft: () => _confirmSaveDraft(bottomContext),
-                    onCancel: () => _confirmCancel(bottomContext),
+                    onPublish: () => _confirmPublish(bottomContext),
                     isPublished: _isPublished,
                   ),
                 ),
