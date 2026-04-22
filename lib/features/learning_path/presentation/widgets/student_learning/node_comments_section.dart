@@ -271,10 +271,8 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
             child: BlocBuilder<CommentBloc, CommentState>(
               builder: (context, state) {
                 final count = state is CommentLoaded
-                    ? state.comments
-                        .where((c) => c.parentId == null || c.parentId!.isEmpty)
-                        .length
-                    : 0;
+                    ? state.comments.length
+                    : _cachedComments.length;
                 return Row(
                   children: [
                     

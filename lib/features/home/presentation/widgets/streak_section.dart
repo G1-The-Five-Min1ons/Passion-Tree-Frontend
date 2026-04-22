@@ -19,7 +19,7 @@ class StreakSection extends StatelessWidget {
           children: [
             Text(
               "14 days on streak!",
-              style: AppPixelTypography.title.copyWith(color: colors.onPrimary),
+              style: AppPixelTypography.smallTitle.copyWith(color: colors.onPrimary),
             ),
 
             const SizedBox(height: 20),

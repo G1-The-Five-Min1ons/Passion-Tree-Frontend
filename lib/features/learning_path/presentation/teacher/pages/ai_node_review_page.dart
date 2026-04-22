@@ -91,6 +91,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
         appBar: const AppBarWidget(
           title: 'Learning Paths',
           showBackButton: true,
+          titleColor: Colors.white,
         ),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -136,7 +137,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                               child: Text(
                                 'Nodes Contain in Path',
                                 style: AppTypography.h3SemiBold.copyWith(
-                                  color: colors.primary,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),

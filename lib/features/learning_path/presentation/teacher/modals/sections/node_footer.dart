@@ -36,6 +36,7 @@ class NodeFooter extends StatelessWidget {
             text: 'Save',
             backgroundColor: onSave == null ? AppColors.scale : colors.primary,
             textColor: onSave == null ? AppColors.textDisabled : colors.onPrimary,
+            disabledOpacity: 0.75,
             onPressed: onSave,
           ),
         ],
