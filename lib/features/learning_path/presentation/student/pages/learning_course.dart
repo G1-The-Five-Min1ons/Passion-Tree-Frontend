@@ -79,8 +79,8 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
   /// Navigate to nodes overview page and refetch data when returning
   void _navigateToNodesOverview() {
     if (!mounted) return;
-    
-    Navigator.push(
+
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
@@ -91,19 +91,7 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
           ),
         ),
       ),
-    ).then((_) {
-      // Refetch overview data when returning (in case user completes a course)
-      if (!mounted) return;
-      final userId = _userId ?? '';
-      if (userId.isNotEmpty) {
-        context.read<LearningPathBloc>().add(FetchLearningPathOverview());
-      }
-
-      // Refetch nodes so preview reflects latest progress/state after returning.
-      context.read<LearningPathBloc>().add(
-        FetchNodesForPath(pathId: widget.course.id),
-      );
-    });
+    );
   }
 
   void _handleStartJourney(BuildContext context) {
@@ -142,7 +130,8 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                 _isEnrolling) {
               setState(() {
                 _isEnrolling = false;
-                _enrolledPath = state.enrolledPath; // Use enrolled path data from backend
+                _enrolledPath =
+                    state.enrolledPath; // Use enrolled path data from backend
               });
               _navigateToNodesOverview();
             }
@@ -154,7 +143,10 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Failed to enroll: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
+                  content: Text(
+                    'Failed to enroll: ${state.message}',
+                    style: const TextStyle(color: AppColors.textPrimary),
+                  ),
                   backgroundColor: Theme.of(context).colorScheme.error,
                 ),
               );
