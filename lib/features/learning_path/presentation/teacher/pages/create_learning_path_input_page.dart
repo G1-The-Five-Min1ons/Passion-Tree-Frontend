@@ -241,6 +241,17 @@ class _CreateLearningPathInputPageState
         if (state is LearningPathCreated) {
           final bloc = context.read<LearningPathBloc>();
           
+          // Show success snackbar
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Learning path created successfully',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
+          );
+          
           if (_isCreatingPath) {
             // ถ้ากด AI Create Node ให้ไปหน้า AI Review
             Navigator.push(
