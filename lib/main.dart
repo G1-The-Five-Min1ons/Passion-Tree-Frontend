@@ -66,10 +66,34 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     final navigator = _navigatorKey.currentState;
     if (navigator == null) return;
 
-    navigator.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-      (route) => false,
-    );
+    // ป้องกันการเด้งไปหน้า Login ซ้ำถ้าเราอยู่ที่นั่นอยู่แล้ว
+    // (ใช้ชื่อ Route ตามที่เพื่อนตั้งไว้ใน AppRouter)
+    bool isAlreadyOnLogin = false;
+    navigator.popUntil((route) {
+      if (route.settings.name == '/login') {
+        isAlreadyOnLogin = true;
+      }
+      return true;
+    });
+
+    if (isAlreadyOnLogin) return;
+
+    navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+
+    // แจ้งผู้ใช้หลังเปลี่ยนหน้าเสร็จ เพื่อไม่ให้ SnackBar หายระหว่างการนำทาง
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _navigatorKey.currentContext;
+      if (context == null) return;
+
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger?.hideCurrentSnackBar();
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('เซสชันหมดอายุแล้ว กรุณาเข้าสู่ระบบอีกครั้ง'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    });
   }
 
   @override

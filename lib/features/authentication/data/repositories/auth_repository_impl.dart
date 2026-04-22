@@ -68,16 +68,14 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   bool _isJwtExpired(String token) {
+    if (token.isEmpty) return true; // เช็คเบื้องต้น
     try {
       final parts = token.split('.');
       if (parts.length != 3) return true;
-
+      
       final normalizedPayload = base64Url.normalize(parts[1]);
-      final payloadBytes = base64Url.decode(normalizedPayload);
-      final payload = jsonDecode(utf8.decode(payloadBytes));
-
-      if (payload is! Map<String, dynamic>) return true;
-
+      final payload = jsonDecode(utf8.decode(base64Url.decode(normalizedPayload)));
+      
       final exp = payload['exp'];
       if (exp is! num) return true;
 
@@ -86,8 +84,12 @@ class AuthRepositoryImpl implements IAuthRepository {
         isUtc: true,
       );
 
-      return DateTime.now().toUtc().isAfter(expiry);
-    } catch (_) {
+      // ✅ เพิ่ม Buffer 30 วินาที เพื่อสั่ง Refresh ก่อนหมดจริง
+      // ช่วยลดโอกาสที่ Request จะพังกลางทางจังหวะหมดอายุพอดี
+      final nowWithBuffer = DateTime.now().toUtc().add(const Duration(seconds: 30));
+      return nowWithBuffer.isAfter(expiry);
+    } catch (e) {
+      LogHandler.error('JWT Decode failed: $e');
       return true;
     }
   }

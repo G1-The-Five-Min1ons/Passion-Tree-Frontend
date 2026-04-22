@@ -89,7 +89,7 @@ class ApiHandler {
     this.onSessionExpired,
   }) : _client = client ?? http.Client();
 
-  static const Duration _refreshWaitTimeout = Duration(seconds: 3);
+  static const Duration _refreshWaitTimeout = Duration(seconds: 8);
 
   Future<void> _notifySessionExpiredOnce() async {
     if (_sessionExpiredNotified) return;
@@ -99,13 +99,16 @@ class ApiHandler {
 
   void _abortRefreshQueue({required String reason}) {
     LogHandler.error('ApiHandler: $reason');
+
+    final currentQueue = List<Completer<bool>>.from(_refreshQueue);
+    _refreshQueue.clear();
     _isRefreshing = false;
-    for (final completer in _refreshQueue) {
+
+    for (final completer in currentQueue) {
       if (!completer.isCompleted) {
         completer.complete(false);
       }
     }
-    _refreshQueue.clear();
   }
 
   /// Wait if a token refresh is currently in progress
@@ -113,22 +116,22 @@ class ApiHandler {
     if (!_isRefreshing) return;
 
     LogHandler.info('ApiHandler: Request waiting for token refresh...');
+
     final completer = Completer<bool>();
     _refreshQueue.add(completer);
-    final success = await completer.future.timeout(
-      _refreshWaitTimeout,
-      onTimeout: () {
-        _abortRefreshQueue(reason: 'Token refresh wait timed out. Forcing re-login...');
-        return false;
-      },
-    );
 
-    if (!success) {
+    try {
+      final success = await completer.future.timeout(_refreshWaitTimeout);
+      if (!success) {
+        throw AuthException(message: 'Refresh failed', statusCode: 401);
+      }
+    } on TimeoutException {
+      _abortRefreshQueue(reason: 'Wait timeout. Forcing re-login...');
       await _notifySessionExpiredOnce();
-      throw AuthException(
-        message: 'Token refresh failed while waiting',
-        statusCode: 401,
-      );
+      throw AuthException(message: 'Wait timeout', statusCode: 401);
+    } catch (e) {
+      await _notifySessionExpiredOnce();
+      rethrow;
     }
   }
 

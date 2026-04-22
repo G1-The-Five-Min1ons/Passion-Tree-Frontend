@@ -352,18 +352,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       logTitle: 'AUTH REMOTE · LOGOUT',
       context: 'logout',
       apiCall: () {
-        if (refreshToken == null || refreshToken.isEmpty) {
-          return _apiHandler.post(
-            url: ApiConfig.authLogout,
-            headers: ApiConfig.getAuthHeaders(token),
-            timeout: ApiConfig.connectionTimeout,
-          );
-        }
+        final Map<String, dynamic>? body = (refreshToken != null && refreshToken.isNotEmpty)
+            ? {'refresh_token': refreshToken}
+            : null;
 
         return _apiHandler.post(
           url: ApiConfig.authLogout,
           headers: ApiConfig.getAuthHeaders(token),
-          body: jsonEncode({'refresh_token': refreshToken}),
+          body: body != null ? jsonEncode(body) : null,
           timeout: ApiConfig.connectionTimeout,
         );
       },
