@@ -147,7 +147,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                             // Refresh icon
                             BlocBuilder<LearningPathBloc, LearningPathState>(
                               builder: (context, state) {
-                                final isLoading = state is LearningPathLoading;
+                                final isLoading = state is GeneratingNodesWithAI;
                                 return IconButton(
                                   icon: isLoading
                                       ? const SizedBox(
@@ -170,7 +170,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                         // ===== NODE LIST =====
                         BlocBuilder<LearningPathBloc, LearningPathState>(
                           builder: (context, state) {
-                            if (state is LearningPathLoading) {
+                            if (state is GeneratingNodesWithAI) {
                               return const Expanded(
                                 child: Center(
                                   child: CircularProgressIndicator(),
@@ -251,7 +251,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
 
                       BlocBuilder<LearningPathBloc, LearningPathState>(
                         builder: (context, state) {
-                          final isLoading = state is LearningPathLoading;
+                          final isLoading = state is GeneratingNodesWithAI;
                           return AppButton(
                             variant: AppButtonVariant.text,
                             text: 'Save',
