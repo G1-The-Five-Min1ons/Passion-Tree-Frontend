@@ -30,29 +30,70 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     SessionExpiryNotifier.changes.addListener(_handleSessionExpired);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     SessionExpiryNotifier.changes.removeListener(_handleSessionExpired);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _validateSessionOnResume();
+    }
+  }
+
+  Future<void> _validateSessionOnResume() async {
+    final isLoggedIn = await getIt<IAuthRepository>().isLoggedIn();
+    if (!mounted || isLoggedIn) return;
+
+    _handleSessionExpired();
   }
 
   void _handleSessionExpired() {
     final navigator = _navigatorKey.currentState;
     if (navigator == null) return;
 
-    navigator.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-      (route) => false,
-    );
+    // ป้องกันการเด้งไปหน้า Login ซ้ำถ้าเราอยู่ที่นั่นอยู่แล้ว
+    // (ใช้ชื่อ Route ตามที่เพื่อนตั้งไว้ใน AppRouter)
+    bool isAlreadyOnLogin = false;
+    navigator.popUntil((route) {
+      if (route.settings.name == '/login') {
+        isAlreadyOnLogin = true;
+      }
+      return true;
+    });
+
+    if (isAlreadyOnLogin) return;
+
+    navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+
+    // แจ้งผู้ใช้หลังเปลี่ยนหน้าเสร็จ เพื่อไม่ให้ SnackBar หายระหว่างการนำทาง
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _navigatorKey.currentContext;
+      if (context == null) return;
+
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger?.hideCurrentSnackBar();
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('เซสชันหมดอายุแล้ว กรุณาเข้าสู่ระบบอีกครั้ง'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    });
   }
 
   @override
