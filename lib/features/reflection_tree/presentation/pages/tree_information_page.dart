@@ -31,13 +31,11 @@ class TreeDetailPage extends StatefulWidget {
   final String? treeId;
   final String? albumId;
 
-  const TreeDetailPage({
-    super.key, 
-    this.item, 
-    this.treeId,
-    this.albumId,
-  }) : assert(item != null || treeId != null, 'Either item or treeId must be provided');
-
+  const TreeDetailPage({super.key, this.item, this.treeId, this.albumId})
+    : assert(
+        item != null || treeId != null,
+        'Either item or treeId must be provided',
+      );
 
   @override
   State<TreeDetailPage> createState() => _TreeDetailPageState();
@@ -82,6 +80,17 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
     );
   }
 
+  void _showTreeIdUnavailableSnackbar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Tree information is unavailable right now. Please try again.',
+        ),
+        backgroundColor: AppColors.cancel,
+      ),
+    );
+  }
+
   void _updateCurrentItem(AlbumItem item) {
     if (!mounted) return;
     setState(() {
@@ -106,7 +115,8 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
   bool _shouldShowRecommendationBadge(AlbumItem item) {
     final treeId = item.treeId ?? widget.treeId;
     if (treeId == null || treeId.isEmpty) return false;
-    return _nonStandaloneReflectionProgress(item.chapters) >= _recommendPopupThreshold;
+    return _nonStandaloneReflectionProgress(item.chapters) >=
+        _recommendPopupThreshold;
   }
 
   void _syncCurrentItemFromState(AlbumState state) {
@@ -114,7 +124,8 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
       final album = state.album;
       if (album.items != null) {
         for (final item in album.items!) {
-          if (item.treeId == _currentItem?.treeId || item.treeId == widget.treeId) {
+          if (item.treeId == _currentItem?.treeId ||
+              item.treeId == widget.treeId) {
             _updateCurrentItem(item);
             return;
           }
@@ -124,7 +135,8 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
       for (final album in state.albums) {
         if (album.items != null) {
           for (final item in album.items!) {
-            if (item.treeId == _currentItem?.treeId || item.treeId == widget.treeId) {
+            if (item.treeId == _currentItem?.treeId ||
+                item.treeId == widget.treeId) {
               _updateCurrentItem(item);
               return;
             }
@@ -154,6 +166,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
 
     final currentItem = _currentItem;
     if (currentItem == null) return;
+    final effectiveTreeId = currentItem.treeId ?? widget.treeId;
 
     final previousProgress = _nonStandaloneReflectionProgress(
       currentItem.chapters,
@@ -197,10 +210,13 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
         previousProgress < _recommendPopupThreshold &&
         updatedProgress >= _recommendPopupThreshold;
 
-    if (crossedThreshold && mounted) {
+    if (crossedThreshold &&
+        mounted &&
+        effectiveTreeId != null &&
+        effectiveTreeId.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        RecommendPopup.show(context, treeId: widget.treeId!);
+        RecommendPopup.show(context, treeId: effectiveTreeId);
       });
     }
   }
@@ -237,7 +253,11 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
   Future<void> _endReflectingTree() async {
     final token = await _authLocalDataSource.getToken();
     final treeId = widget.treeId ?? _currentItem?.treeId;
-    if (token == null || token.isEmpty || treeId == null || treeId.isEmpty || !mounted) {
+    if (token == null ||
+        token.isEmpty ||
+        treeId == null ||
+        treeId.isEmpty ||
+        !mounted) {
       return;
     }
 
@@ -269,7 +289,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
         subjectName: 'Loading...',
         overallStatus: 'growing',
         status: 'growing',
-        lastEdited:'Edited just now',
+        lastEdited: 'Edited just now',
         chapters: [],
       );
 
@@ -281,6 +301,12 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
         }
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _albumDataSource.dispose();
+    super.dispose();
   }
 
   @override
@@ -353,7 +379,8 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                             child: const StatusBadge(
                               status: 'growing',
                               label: 'recommendations',
-                              badgeColor: AppColors.title,                              labelColor: AppColors.textPrimary,
+                              badgeColor: AppColors.title,
+                              labelColor: AppColors.textPrimary,
                               width: 170,
                               horizontalPadding: 8,
                             ),
@@ -392,7 +419,9 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
 
                                     if (_isTreeReflectionClosed(item) &&
                                         !chapter.hasReflection) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         const SnackBar(
                                           content: Text(
                                             'This tree has ended. You cannot add new reflections.',
@@ -406,9 +435,13 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
 
                                     if (!chapter.canReflect) {
                                       // Learning Path not completed
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
-                                          content: Text('Please finish this chapter before reflecting'),
+                                          content: Text(
+                                            'Please finish this chapter before reflecting',
+                                          ),
                                           backgroundColor: AppColors.cancel,
                                           duration: const Duration(seconds: 3),
                                         ),
@@ -457,8 +490,8 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                                                 request,
                                               );
 
-                                              final albumBloc =
-                                                  context.read<AlbumBloc>();
+                                              final albumBloc = context
+                                                  .read<AlbumBloc>();
                                               if (widget.albumId != null) {
                                                 albumBloc.add(
                                                   LoadAlbumByIdEvent(
@@ -526,16 +559,25 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                       return;
                     }
 
+                    final treeId = item.treeId ?? widget.treeId;
+                    if (treeId == null || treeId.isEmpty) {
+                      _showTreeIdUnavailableSnackbar();
+                      return;
+                    }
+
                     final albumBloc = context.read<AlbumBloc>();
 
                     AddNodePopup.show(
                       context,
-                      treeId: item.treeId!,
+                      treeId: treeId,
                       onNodeAdded: (createdChapter) {
                         final currentItem = _currentItem;
                         if (currentItem != null) {
-                          final updatedChapters = [...currentItem.chapters, createdChapter]
-                            ..sort((left, right) => left.sequence.compareTo(right.sequence));
+                          final updatedChapters =
+                              [...currentItem.chapters, createdChapter]..sort(
+                                (left, right) =>
+                                    left.sequence.compareTo(right.sequence),
+                              );
 
                           _updateCurrentItem(
                             AlbumItem(

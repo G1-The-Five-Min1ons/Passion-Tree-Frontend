@@ -77,12 +77,26 @@ class TreeAlbumCard extends StatelessWidget {
     return value.trim().toLowerCase();
   }
 
-  DateTime? _parseDisplayDate(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return null;
-    }
+  String _normalizedName(String value) {
+    return value.trim().toLowerCase();
+  }
 
-    final parts = value.trim().split('/');
+  String? _findAlbumIdByTitle(String selectedAlbumName) {
+    final normalizedSelected = _normalizedName(selectedAlbumName);
+    for (final album in availableAlbums) {
+      if (_normalizedName(album.title) == normalizedSelected) {
+        return album.albumId;
+      }
+    }
+    return null;
+  }
+
+  DateTime? _toDateOnly(DateTime dateTime) {
+    return DateTime(dateTime.year, dateTime.month, dateTime.day);
+  }
+
+  DateTime? _parseDdMmYyyy(String raw) {
+    final parts = raw.split('/');
     if (parts.length != 3) {
       return null;
     }
@@ -95,7 +109,32 @@ class TreeAlbumCard extends StatelessWidget {
       return null;
     }
 
-    return DateTime(year, month, day);
+    final parsed = DateTime(year, month, day);
+    if (parsed.year != year || parsed.month != month || parsed.day != day) {
+      return null;
+    }
+
+    return _toDateOnly(parsed);
+  }
+
+  DateTime? _parseDisplayDate(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+
+    final raw = value.trim();
+
+    final displayDate = _parseDdMmYyyy(raw);
+    if (displayDate != null) {
+      return displayDate;
+    }
+
+    final isoDate = DateTime.tryParse(raw);
+    if (isoDate != null) {
+      return _toDateOnly(isoDate.toLocal());
+    }
+
+    return null;
   }
 
   bool _isFutureDisplayDate(String? value) {
@@ -141,16 +180,10 @@ class TreeAlbumCard extends StatelessWidget {
                           : albumOptions,
                       onSave: (newTitle, selectedAlbumName) {
                         String? newAlbumId;
-                        if (selectedAlbumName != currentAlbumname &&
+                        if (_normalizedName(selectedAlbumName) !=
+                                _normalizedName(currentAlbumname) &&
                             availableAlbums.isNotEmpty) {
-                          try {
-                            final selectedAlbum = availableAlbums.firstWhere(
-                              (album) => album.title == selectedAlbumName,
-                            );
-                            newAlbumId = selectedAlbum.albumId;
-                          } catch (e) {
-                            newAlbumId = null;
-                          }
+                          newAlbumId = _findAlbumIdByTitle(selectedAlbumName);
                         }
 
                         context.read<AlbumBloc>().add(
