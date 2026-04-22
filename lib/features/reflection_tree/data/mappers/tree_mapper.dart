@@ -50,6 +50,7 @@ class TreeMapper {
       subjectName: tree.title,
       lastEdited: 'Edited ${DateTimeFormatter.getRelativeTime(tree.lastUpdate)}',
       status: tree.status,
+      isReflectionClosed: tree.isReflectionClosed,
       chapters: chapters,
       overallStatus: tree.status,
       treeScore: tree.treeScore,

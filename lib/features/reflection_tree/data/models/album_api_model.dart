@@ -187,6 +187,7 @@ class TreeApiModel {
   final String status;
   final double? treeScore;
   final bool isPause;
+  final bool isReflectionClosed;
   final int nodeCount;
   final DateTime createdAt;
   final DateTime lastUpdate;
@@ -204,6 +205,7 @@ class TreeApiModel {
     required this.status,
     this.treeScore,
     required this.isPause,
+    this.isReflectionClosed = false,
     required this.nodeCount,
     required this.createdAt,
     required this.lastUpdate,
@@ -232,6 +234,7 @@ class TreeApiModel {
           ? (json['tree_score'] as num).toDouble()
           : null,
         isPause: json['is_pause'] ?? false,
+        isReflectionClosed: json['is_reflection_closed'] ?? false,
         nodeCount: json['node_count'] ?? 0,
         createdAt: json['created_at'] != null
             ? DateTime.parse(json['created_at'])

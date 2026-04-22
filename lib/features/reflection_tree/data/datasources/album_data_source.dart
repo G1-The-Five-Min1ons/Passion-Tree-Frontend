@@ -290,6 +290,36 @@ class AlbumDataSource {
     throw createExceptionFromStatusCode(statusCode, msg);
   }
 
+  /// Freeze the tree status at its current value and end reflecting.
+  Future<void> endReflectingTree(String treeId, String token) async {
+    LogHandler.separator(title: 'TREE · END REFLECTING');
+    
+    try {
+      final response = await _apiHandler.patch(
+        url: ApiConfig.endReflectingTree(treeId),
+        headers: ApiConfig.getAuthHeaders(token),
+        timeout: ApiConfig.connectionTimeout,
+      );
+
+      if (response.isSuccess) {
+        LogHandler.success('Tree reflection ended successfully: $treeId');
+        return; 
+      }
+
+      final msg = response.error ?? response.message ?? 'Failed to end reflecting';
+      LogHandler.error('End reflecting failed [$treeId]: $msg');
+      
+      throw createExceptionFromStatusCode(response.statusCode, msg);
+    } catch (e) {
+      if (e is AuthException || e is ServerException) rethrow; 
+      
+      LogHandler.error('Unexpected error in endReflectingTree: $e');
+      throw ServerException.internalError(
+        message: 'Something went wrong. Please try again later.',
+      );
+    }
+  }
+
   Future<int> pauseTree(
     String treeId,
     DateTime pauseFrom,
