@@ -47,9 +47,9 @@ class _TeacherLearningPathOverviewPageState
   Future<void> _loadOverviewData() async {
     final storedUserId = await getIt<IAuthRepository>().getUserId();
     if (!mounted) return;
-    
+
     setState(() => _userId = storedUserId);
-    
+
     // Fetch overview data from backend
     context.read<LearningPathBloc>().add(FetchLearningPathOverview());
   }
@@ -80,15 +80,17 @@ class _TeacherLearningPathOverviewPageState
         child: BlocListener<LearningPathBloc, LearningPathState>(
           listener: (context, state) {
             if (state is LearningPathDeleted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    state.message,
-                    style: const TextStyle(color: Colors.white),
+              ScaffoldMessenger.of(context)
+                ..removeCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      state.message,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: Colors.green,
                   ),
-                  backgroundColor: Colors.green,
-                ),
-              );
+                );
             }
 
             // Refetch overview when learning path or node is created/updated
@@ -99,7 +101,9 @@ class _TeacherLearningPathOverviewPageState
               if (_userId != null && _userId!.isNotEmpty) {
                 Future.delayed(const Duration(milliseconds: 500), () {
                   if (context.mounted) {
-                    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
+                    context.read<LearningPathBloc>().add(
+                      FetchLearningPathOverview(),
+                    );
                   }
                 });
               }
@@ -107,92 +111,96 @@ class _TeacherLearningPathOverviewPageState
           },
           child: BlocBuilder<LearningPathBloc, LearningPathState>(
             builder: (context, state) {
-            // Cache overview data when loaded
-            if (state is LearningPathOverviewLoaded) {
-              _cachedOverview = state;
-            }
+              // Cache overview data when loaded
+              if (state is LearningPathOverviewLoaded) {
+                _cachedOverview = state;
+              }
 
-            // Show loading only if no cached data
-            if ((state is LearningPathLoading ||
-                    state is LearningPathInitial) &&
-                _cachedOverview == null) {
-              return const Center(child: CircularProgressIndicator());
-            }
+              // Show loading only if no cached data
+              if ((state is LearningPathLoading ||
+                      state is LearningPathInitial) &&
+                  _cachedOverview == null) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-            if (state is LearningPathError && _cachedOverview == null) {
-              return Center(child: Text(state.message));
-            }
+              if (state is LearningPathError && _cachedOverview == null) {
+                return Center(child: Text(state.message));
+              }
 
-            // Use cached overview data
-            final overviewData = _cachedOverview;
-            if (overviewData != null) {
-              return SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    left: AppSpacing.xmargin,
-                    right: AppSpacing.xmargin,
-                    top: AppSpacing.ymargin,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ===== SEARCH & FILTERS REMOVED =====
+              // Use cached overview data
+              final overviewData = _cachedOverview;
+              if (overviewData != null) {
+                return SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      left: AppSpacing.xmargin,
+                      right: AppSpacing.xmargin,
+                      top: AppSpacing.ymargin,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ===== SEARCH & FILTERS REMOVED =====
 
-                      // ===== TAB BAR =====
-                      TeacherTabBar(
-                        activeIndex: _activeTab,
-                        onChanged: (index) {
-                          setState(() {
-                            _activeTab = index;
-                            if (_activeTab == 0) {
-                              _learningView = TeacherLearningView.main;
-                            }
-                          });
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ===== CONTENT =====
-                      if (_activeTab == 0) ...[
-                        if (_learningView == TeacherLearningView.main)
-                          TeacherLearningTab(
-                            allPaths: overviewData.allPaths.where((path) {
-                              final status = path.publishStatus.toLowerCase().trim();
-                              return status == 'published' && status.isNotEmpty && status != 'null';
-                            }).toList(),
-                            enrolledPaths: overviewData.enrolledPaths,
-                            searchQuery: _searchQuery,
-                            selectedCategory: null,
-                            ratingRange: null,
-                            maxModules: null,
-                            onOpenStatus: () {
-                              setState(() {
-                                _learningView = TeacherLearningView.status;
-                              });
-                            },
-                          )
-                        else
-                          TeacherLearningPathStatus(
-                            enrolledPaths: overviewData.enrolledPaths,
-                          ),
-                      ] else ...[
-                        TeacherCreateTab(
-                          allPaths: overviewData.allPaths,
-                          userId: _userId,
+                        // ===== TAB BAR =====
+                        TeacherTabBar(
+                          activeIndex: _activeTab,
+                          onChanged: (index) {
+                            setState(() {
+                              _activeTab = index;
+                              if (_activeTab == 0) {
+                                _learningView = TeacherLearningView.main;
+                              }
+                            });
+                          },
                         ),
+
+                        const SizedBox(height: 20),
+
+                        // ===== CONTENT =====
+                        if (_activeTab == 0) ...[
+                          if (_learningView == TeacherLearningView.main)
+                            TeacherLearningTab(
+                              allPaths: overviewData.allPaths.where((path) {
+                                final status = path.publishStatus
+                                    .toLowerCase()
+                                    .trim();
+                                return status == 'published' &&
+                                    status.isNotEmpty &&
+                                    status != 'null';
+                              }).toList(),
+                              enrolledPaths: overviewData.enrolledPaths,
+                              searchQuery: _searchQuery,
+                              selectedCategory: null,
+                              ratingRange: null,
+                              maxModules: null,
+                              onOpenStatus: () {
+                                setState(() {
+                                  _learningView = TeacherLearningView.status;
+                                });
+                              },
+                            )
+                          else
+                            TeacherLearningPathStatus(
+                              enrolledPaths: overviewData.enrolledPaths,
+                            ),
+                        ] else ...[
+                          TeacherCreateTab(
+                            allPaths: overviewData.allPaths,
+                            userId: _userId,
+                          ),
+                        ],
+
+                        const SizedBox(height: 40),
                       ],
-
-                      const SizedBox(height: 40),
-                    ],
+                    ),
                   ),
-                ),
-              );
-            }
+                );
+              }
 
-            return const SizedBox();
-          },
-        ),
+              return const SizedBox();
+            },
+          ),
         ),
       ),
     );

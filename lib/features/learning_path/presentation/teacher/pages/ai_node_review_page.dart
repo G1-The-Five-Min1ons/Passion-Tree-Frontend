@@ -66,25 +66,29 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
           setState(() {
             _nodes = state.nodes;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Generated ${state.nodes.length} nodes',
-                style: const TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Generated ${state.nodes.length} nodes',
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.status,
               ),
-              backgroundColor: AppColors.status,
-            ),
-          );
+            );
         } else if (state is LearningPathError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error: ${state.message}',
-                style: const TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Error: ${state.message}',
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.cancel,
               ),
-              backgroundColor: AppColors.cancel,
-            ),
-          );
+            );
         }
       },
       child: Scaffold(
@@ -147,7 +151,8 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                             // Refresh icon
                             BlocBuilder<LearningPathBloc, LearningPathState>(
                               builder: (context, state) {
-                                final isLoading = state is GeneratingNodesWithAI;
+                                final isLoading =
+                                    state is GeneratingNodesWithAI;
                                 return IconButton(
                                   icon: isLoading
                                       ? const SizedBox(

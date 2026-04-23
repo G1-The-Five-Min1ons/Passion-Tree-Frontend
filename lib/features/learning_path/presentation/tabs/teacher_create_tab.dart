@@ -104,9 +104,17 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to check verification status: $e', style: const TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
-      );
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              'Unable to check verification status: $e',
+              style: const TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
+          ),
+        );
     }
   }
 
@@ -257,57 +265,62 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     return BlocListener<LearningPathBloc, LearningPathState>(
       listener: (context, state) {
         if (state is LearningPathError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message, style: const TextStyle(color: AppColors.textPrimary)),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  state.message,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
         }
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        // ===== Add button (top right) =====
-        Align(
-          alignment: Alignment.centerRight,
-          child: AppButton(
-            variant: AppButtonVariant.iconOnly,
-            icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
-            onPressed: _onCreatePressed,
+          // ===== Add button (top right) =====
+          Align(
+            alignment: Alignment.centerRight,
+            child: AppButton(
+              variant: AppButtonVariant.iconOnly,
+              icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
+              onPressed: _onCreatePressed,
+            ),
           ),
-        ),
 
-        const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
-        // My Learning Paths - Drafts
-        _buildSectionHeader('Drafts', colors.secondary),
-        _buildPathGrid(
-          paths: inProgressCourses,
-          shownCount: inProgressShown,
-          onShowMore: () {
-            setState(() {
-              inProgressShown += 2;
-            });
-          },
-          emptyMessage: 'No in-progress paths found',
-        ),
+          // My Learning Paths - Drafts
+          _buildSectionHeader('Drafts', colors.secondary),
+          _buildPathGrid(
+            paths: inProgressCourses,
+            shownCount: inProgressShown,
+            onShowMore: () {
+              setState(() {
+                inProgressShown += 2;
+              });
+            },
+            emptyMessage: 'No in-progress paths found',
+          ),
 
-        const SizedBox(height: 60),
+          const SizedBox(height: 60),
 
-        // My Learning Paths - Published
-        _buildSectionHeader('Published', AppColors.status),
-        _buildPathGrid(
-          paths: completedCourses,
-          shownCount: completedShown,
-          onShowMore: () {
-            setState(() {
-              completedShown += 2;
-            });
-          },
-          emptyMessage: 'No published paths found',
-        ),
-      ],
+          // My Learning Paths - Published
+          _buildSectionHeader('Published', AppColors.status),
+          _buildPathGrid(
+            paths: completedCourses,
+            shownCount: completedShown,
+            onShowMore: () {
+              setState(() {
+                completedShown += 2;
+              });
+            },
+            emptyMessage: 'No published paths found',
+          ),
+        ],
       ),
     );
   }

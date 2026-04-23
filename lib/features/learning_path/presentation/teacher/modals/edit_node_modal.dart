@@ -423,15 +423,17 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
     if (!_isValidVideoUrl) {
       setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Video URL ต้องเป็นลิงก์ที่ถูกต้อง เช่น youtube.com/...',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Video URL ต้องเป็นลิงก์ที่ถูกต้อง เช่น youtube.com/...',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
@@ -439,15 +441,17 @@ class _EditNodeModalState extends State<EditNodeModal> {
       // สร้าง node ใหม่
       if (widget.pathId == null || widget.sequence == null) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Missing path ID or sequence',
-              style: TextStyle(color: AppColors.textPrimary),
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Missing path ID or sequence',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.cancel,
             ),
-            backgroundColor: AppColors.cancel,
-          ),
-        );
+          );
         return;
       }
 
@@ -477,15 +481,17 @@ class _EditNodeModalState extends State<EditNodeModal> {
       } catch (e) {
         if (!context.mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to upload files: $e',
-              style: const TextStyle(color: AppColors.textPrimary),
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                'Failed to upload files: $e',
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.cancel,
             ),
-            backgroundColor: AppColors.cancel,
-          ),
-        );
+          );
         if (context.mounted) {
           setState(() => _isSubmitting = false);
         }
@@ -520,15 +526,17 @@ class _EditNodeModalState extends State<EditNodeModal> {
       } catch (e) {
         if (!context.mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to upload files: $e',
-              style: const TextStyle(color: AppColors.textPrimary),
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                'Failed to upload files: $e',
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.cancel,
             ),
-            backgroundColor: AppColors.cancel,
-          ),
-        );
+          );
         if (context.mounted) {
           setState(() => _isSubmitting = false);
         }
@@ -547,41 +555,47 @@ class _EditNodeModalState extends State<EditNodeModal> {
     return BlocListener<LearningPathBloc, LearningPathState>(
       listener: (context, state) {
         if (state is NodeUpdated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Node updated successfully',
-                style: TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Node updated successfully',
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.status,
               ),
-              backgroundColor: AppColors.status,
-            ),
-          );
+            );
           if (context.mounted) {
             Navigator.pop(context);
           }
         } else if (state is NodeCreated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Node created successfully',
-                style: TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Node created successfully',
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.status,
               ),
-              backgroundColor: AppColors.status,
-            ),
-          );
+            );
           if (context.mounted) {
             Navigator.pop(context);
           }
         } else if (state is NodeDeleted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Node deleted successfully',
-                style: TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Node deleted successfully',
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.status,
               ),
-              backgroundColor: AppColors.status,
-            ),
-          );
+            );
           if (context.mounted) {
             Navigator.pop(context);
           }
@@ -589,15 +603,17 @@ class _EditNodeModalState extends State<EditNodeModal> {
           if (context.mounted) {
             setState(() => _isSubmitting = false);
           }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error: ${state.message}',
-                style: const TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Error: ${state.message}',
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.cancel,
               ),
-              backgroundColor: AppColors.cancel,
-            ),
-          );
+            );
         }
       },
       child: Padding(

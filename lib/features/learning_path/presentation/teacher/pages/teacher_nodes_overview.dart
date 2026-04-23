@@ -177,15 +177,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         LogHandler.error(
           'TeacherNodesOverview: Save Draft queue timeout - learning path detail did not load',
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Unable to load learning path data for Save Draft. Please try again.',
-              style: TextStyle(color: AppColors.textPrimary),
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Unable to load learning path data for Save Draft. Please try again.',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.cancel,
             ),
-            backgroundColor: AppColors.cancel,
-          ),
-        );
+          );
         return;
       }
 
@@ -220,15 +222,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         LogHandler.error(
           'TeacherNodesOverview: Publish queue timeout - learning path detail did not load',
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Unable to load learning path data for Publish. Please try again.',
-              style: TextStyle(color: AppColors.textPrimary),
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Unable to load learning path data for Publish. Please try again.',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.cancel,
             ),
-            backgroundColor: AppColors.cancel,
-          ),
-        );
+          );
         return;
       }
 
@@ -440,15 +444,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       );
       _fetchLearningPathDetail();
       _startQueuedSaveDraftRetryWatchdog();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Preparing save draft... Please wait a moment.',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Preparing save draft... Please wait a moment.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.warning,
           ),
-          backgroundColor: AppColors.warning,
-        ),
-      );
+        );
       return;
     }
 
@@ -457,15 +463,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       LogHandler.warning(
         'TeacherNodesOverview: Save Draft blocked, path already published',
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Cannot save as draft. This learning path is already published.',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Cannot save as draft. This learning path is already published.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
@@ -517,15 +525,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       );
       _fetchLearningPathDetail();
       _startQueuedPublishRetryWatchdog();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Preparing publish... Please wait a moment.',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Preparing publish... Please wait a moment.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.warning,
           ),
-          backgroundColor: AppColors.warning,
-        ),
-      );
+        );
       return;
     }
 
@@ -533,15 +543,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       LogHandler.warning(
         'TeacherNodesOverview: Publish blocked, path already published',
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'This learning path is already published.',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'This learning path is already published.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
@@ -554,15 +566,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       LogHandler.warning(
         'TeacherNodesOverview: Publish blocked, incomplete nodes found (${incompleteNodes.length})',
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please complete all node information before publishing.',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please complete all node information before publishing.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
@@ -620,9 +634,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return trimmed;
 
-    final hasScheme = RegExp(
-      r'^[a-zA-Z][a-zA-Z0-9+.-]*://',
-    ).hasMatch(trimmed);
+    final hasScheme = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://').hasMatch(trimmed);
     return hasScheme ? trimmed : 'https://$trimmed';
   }
 
@@ -916,15 +928,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             }
           });
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Node created successfully',
-                style: TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Node created successfully',
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.status,
               ),
-              backgroundColor: AppColors.status,
-            ),
-          );
+            );
         } else if (state is NodeUpdated) {
           // Node ถูกอัพเดทสำเร็จ
           if (_pendingNodeIndex != null) {
@@ -940,15 +954,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             }
           });
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Node updated successfully',
-                style: TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Node updated successfully',
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.status,
               ),
-              backgroundColor: AppColors.status,
-            ),
-          );
+            );
         } else if (state is LearningPathUpdated) {
           LogHandler.success(
             'TeacherNodesOverview: LearningPathUpdated received',
@@ -964,17 +980,19 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           _requestedPathUpdateStatus = null;
 
           // Learning path updated successfully
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                isPublishSuccess
-                    ? 'Learning path published successfully'
-                    : 'Learning path updated successfully',
-                style: const TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  isPublishSuccess
+                      ? 'Learning path published successfully'
+                      : 'Learning path updated successfully',
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.status,
               ),
-              backgroundColor: AppColors.status,
-            ),
-          );
+            );
 
           LogHandler.success(
             'TeacherNodesOverview: Save Draft success, leaving current page',
@@ -1010,15 +1028,17 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             _requestedPathUpdateStatus = null;
           });
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error: ${state.message}',
-                style: const TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Error: ${state.message}',
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.cancel,
               ),
-              backgroundColor: AppColors.cancel,
-            ),
-          );
+            );
         }
       },
       child: Scaffold(

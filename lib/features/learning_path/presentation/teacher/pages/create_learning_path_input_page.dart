@@ -105,15 +105,17 @@ class _CreateLearningPathInputPageState
         });
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Image uploaded successfully',
-                style: TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Image uploaded successfully',
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.status,
               ),
-              backgroundColor: AppColors.status,
-            ),
-          );
+            );
         }
       } catch (e) {
         setState(() {
@@ -122,15 +124,17 @@ class _CreateLearningPathInputPageState
         });
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Failed to upload image: $e',
-                style: const TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Failed to upload image: $e',
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.cancel,
               ),
-              backgroundColor: AppColors.cancel,
-            ),
-          );
+            );
         }
       }
     }
@@ -138,41 +142,47 @@ class _CreateLearningPathInputPageState
 
   void _handleCreateWithAI(BuildContext context) {
     if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please fill in all fields',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please fill in all fields',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
     if (_uploadedImageUrl.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please upload a cover image',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please upload a cover image',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
     if (_userId == null || _userId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'User not authenticated',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'User not authenticated',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
@@ -236,41 +246,47 @@ class _CreateLearningPathInputPageState
     }
 
     if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please fill in all fields',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please fill in all fields',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
     if (_uploadedImageUrl.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please attach a cover image before creating a Learning Path',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please attach a cover image before creating a Learning Path',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
     if (_userId == null || _userId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'User not authenticated',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'User not authenticated',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
@@ -306,28 +322,32 @@ class _CreateLearningPathInputPageState
 
   void _handleSave(BuildContext context) {
     if (_title.isEmpty || _objectives.isEmpty || _description.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please fill in all fields',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please fill in all fields',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
     if (!_isEditMode) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Error: Not in edit mode',
-            style: TextStyle(color: AppColors.textPrimary),
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Error: Not in edit mode',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
@@ -360,15 +380,17 @@ class _CreateLearningPathInputPageState
           final bloc = context.read<LearningPathBloc>();
 
           // Show success snackbar
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Learning path created successfully',
-                style: TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Learning path created successfully',
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.status,
               ),
-              backgroundColor: AppColors.status,
-            ),
-          );
+            );
 
           if (_isCreatingPath) {
             // ถ้ากด AI Create Node ให้ไปหน้า AI Review
@@ -389,30 +411,34 @@ class _CreateLearningPathInputPageState
           }
 
           if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Learning path updated successfully',
-                style: TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Learning path updated successfully',
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.status,
               ),
-              backgroundColor: AppColors.status,
-            ),
-          );
+            );
           Navigator.pop(context);
         } else if (state is LearningPathError) {
           setState(() {
             _isCreatingPath = false;
             _isPendingUpdate = false;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error: ${state.message}',
-                style: const TextStyle(color: AppColors.textPrimary),
+          ScaffoldMessenger.of(context)
+            ..removeCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Error: ${state.message}',
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
+                backgroundColor: AppColors.cancel,
               ),
-              backgroundColor: AppColors.cancel,
-            ),
-          );
+            );
         }
       },
       child: Scaffold(

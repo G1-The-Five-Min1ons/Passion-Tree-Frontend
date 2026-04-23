@@ -98,6 +98,15 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
     final text = _commentController.text;
     final selection = _commentController.selection;
 
+    if (text.isEmpty) {
+      if (_isMentioning) {
+        setState(() {
+          _isMentioning = false;
+        });
+      }
+      return;
+    }
+
     if (selection.baseOffset == -1) return;
 
     int lastAtSignIndex = text.lastIndexOf('@', selection.baseOffset - 1);

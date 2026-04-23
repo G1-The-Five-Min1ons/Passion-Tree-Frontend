@@ -242,17 +242,19 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
 
     // ถ้ายังไม่ได้เลือกครบ แสดง SnackBar เตือน
     if (unansweredQuestions.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            unansweredQuestions.length == 1
-                ? 'Please answer question'
-                : 'Please answer all questions',
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              unansweredQuestions.length == 1
+                  ? 'Please answer question'
+                  : 'Please answer all questions',
+            ),
+            duration: const Duration(seconds: 3),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
-          duration: const Duration(seconds: 3),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+        );
       return;
     }
 
@@ -263,8 +265,6 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
   }
 
   void _finishQuiz() {
-    
-
     // Check if this is the last node (sequence starts from 1)
 
     final isLastNode =
@@ -308,9 +308,10 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
               final existingRating = await getMyRatingUseCase(widget.pathId);
               initialContentQualityRating = existingRating.ratingContent;
               initialInstructorRating = existingRating.ratingInstruct;
-              initialOverallRating = existingRating.ratingOverall
-                  .round()
-                  .clamp(1, 5);
+              initialOverallRating = existingRating.ratingOverall.round().clamp(
+                1,
+                5,
+              );
             } catch (_) {
               // If rating does not exist yet, open popup with empty selection.
             }
@@ -342,7 +343,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                   LogHandler.info(
                     'Action: User completed and tracked progress for node ${widget.nodeId}',
                   );
-                  
+
                   // Submit review with ratings
                   bloc.add(
                     SubmitReviewEvent(
@@ -352,11 +353,9 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                       overallRating: overall,
                     ),
                   );
-                  
+
                   // Mark node as completed
-                  bloc.add(
-                    CompleteNodeEvent(nodeId: widget.nodeId),
-                  );
+                  bloc.add(CompleteNodeEvent(nodeId: widget.nodeId));
 
                   await goToStatusPage();
                 },

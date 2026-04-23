@@ -141,15 +141,17 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
               LogHandler.error('[UI] Enrollment failed: ${state.message}');
               setState(() => _isEnrolling = false);
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Failed to enroll: ${state.message}',
-                    style: const TextStyle(color: AppColors.textPrimary),
+              ScaffoldMessenger.of(context)
+                ..removeCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Failed to enroll: ${state.message}',
+                      style: const TextStyle(color: AppColors.textPrimary),
+                    ),
+                    backgroundColor: Theme.of(context).colorScheme.error,
                   ),
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                ),
-              );
+                );
             }
           },
           child: BlocBuilder<LearningPathBloc, LearningPathState>(
