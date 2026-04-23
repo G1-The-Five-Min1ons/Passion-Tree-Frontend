@@ -633,24 +633,16 @@ class _EditNodeModalState extends State<EditNodeModal> {
                       onTitleChanged: (v) => setState(() => _title = v),
                       onDescriptionChanged: (v) =>
                           setState(() => _description = v),
-                      isTitleInvalid: !widget.isReadOnly && !_isTitleValid,
-                      isDescriptionInvalid:
-                          !widget.isReadOnly && !_isDescriptionValid,
-                      titleWarningText: widget.isReadOnly
-                          ? null
-                          : _titleWarningText,
-                      descriptionWarningText: widget.isReadOnly
-                          ? null
-                          : _descriptionWarningText,
+                      isTitleInvalid: false,
+                      isDescriptionInvalid: false,
+                      titleWarningText: null,
+                      descriptionWarningText: null,
 
                       // ===== VIDEO URL =====
                       videoUrlValue: _videoUrl,
                       onVideoUrlChanged: (v) => setState(() => _videoUrl = v),
-                      videoUrlWarningText: widget.isReadOnly
-                          ? null
-                          : _videoUrlWarningText,
-                      isVideoUrlInvalid:
-                          !widget.isReadOnly && !_isValidVideoUrl,
+                      videoUrlWarningText: null,
+                      isVideoUrlInvalid: false,
                       isReadOnly: widget.isReadOnly,
 
                       // ===== FILE UPLOAD =====
@@ -663,8 +655,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                     NodeQuizSection(
                       initialQuizzes: _quizzes.isNotEmpty ? _quizzes : null,
                       isReadOnly: widget.isReadOnly,
-                      isQuizInvalid:
-                          !widget.isReadOnly && _quizWarningText != null,
+                      isQuizInvalid: false,
                       onQuizzesChanged: (quizzes) {
                         setState(() {
                           _quizzes = quizzes;

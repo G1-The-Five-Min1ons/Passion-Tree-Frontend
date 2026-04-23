@@ -45,7 +45,9 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
   }
 
   void _showOutOfOrderNodeSnackBar() {
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
       const SnackBar(
         content: Text(
           'Please finish the previous node.',
