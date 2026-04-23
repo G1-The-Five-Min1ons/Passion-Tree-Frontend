@@ -39,12 +39,14 @@ class TeacherNodesOverviewPage extends StatefulWidget {
   final String title;
   final List<GeneratedNode>? aiNodes;
   final String pathId;
+  final bool returnToCreateTabOnPublish;
 
   const TeacherNodesOverviewPage({
     super.key,
     required this.title,
     this.aiNodes,
     required this.pathId,
+    this.returnToCreateTabOnPublish = false,
   });
 
   @override
@@ -75,6 +77,12 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
   bool get _isPublished =>
       _cachedLearningPath?.publishStatus.toLowerCase() == 'published';
+
+  bool get _shouldShowBottomBar {
+    // Wait until publish status is loaded to avoid bottom bar flicker.
+    if (_cachedLearningPath == null) return false;
+    return !_isPublished;
+  }
 
   bool get _isAiPath => widget.aiNodes != null && widget.aiNodes!.isNotEmpty;
 
@@ -972,6 +980,16 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             'TeacherNodesOverview: Save Draft success, leaving current page',
           );
 
+          if (isPublishSuccess && widget.returnToCreateTabOnPublish) {
+            final navigator = Navigator.of(context);
+            final targetPopCount = _isAiPath ? 3 : 2;
+            for (int i = 0; i < targetPopCount; i++) {
+              if (!navigator.canPop()) break;
+              navigator.pop();
+            }
+            return;
+          }
+
           if (_isAiPath) {
             final navigator = Navigator.of(context);
             if (navigator.canPop()) navigator.pop();
@@ -1035,18 +1053,19 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
               ),
 
               /// ===== FLOATING BOTTOM =====
-              Positioned(
-                bottom: bottomInset + 20,
-                left: 0,
-                right: 0,
-                child: Builder(
-                  builder: (bottomContext) => BottomBar(
-                    onSaveDraft: () => _confirmSaveDraft(bottomContext),
-                    onPublish: () => _confirmPublish(bottomContext),
-                    isPublished: _isPublished,
+              if (_shouldShowBottomBar)
+                Positioned(
+                  bottom: bottomInset + 20,
+                  left: 0,
+                  right: 0,
+                  child: Builder(
+                    builder: (bottomContext) => BottomBar(
+                      onSaveDraft: () => _confirmSaveDraft(bottomContext),
+                      onPublish: () => _confirmPublish(bottomContext),
+                      isPublished: _isPublished,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

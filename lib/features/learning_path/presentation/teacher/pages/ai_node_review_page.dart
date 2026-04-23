@@ -269,6 +269,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                                             title: widget.objective,
                                             aiNodes: _nodes,
                                             pathId: widget.pathId,
+                                            returnToCreateTabOnPublish: true,
                                           ),
                                         ),
                                       ),

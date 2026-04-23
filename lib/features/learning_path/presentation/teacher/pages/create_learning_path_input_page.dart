@@ -297,6 +297,7 @@ class _CreateLearningPathInputPageState
             title: _title,
             pathId: pathId,
             aiNodes: null,
+            returnToCreateTabOnPublish: true,
           ),
         ),
       ),
