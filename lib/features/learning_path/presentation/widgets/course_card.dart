@@ -169,7 +169,7 @@ class PixelCourseCard extends StatelessWidget {
 
                     Text(
                       'สอนโดย ${course.instructor}',
-                      style: AppTypography.smallBodyMedium,
+                      style: descriptionStyle,
                     ),
 
                     const SizedBox(height: 10),
@@ -192,13 +192,10 @@ class PixelCourseCard extends StatelessWidget {
 
                     Text(
                       '${course.students} learners',
-                      style: AppTypography.smallBodyMedium,
+                      style: descriptionStyle,
                     ),
 
-                    Text(
-                      '${course.modules} modules',
-                      style: AppTypography.smallBodyMedium,
-                    ),
+                    Text('${course.modules} modules', style: descriptionStyle),
                   ],
                 ),
               ),
