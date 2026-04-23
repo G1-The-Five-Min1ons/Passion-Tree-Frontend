@@ -18,6 +18,23 @@ import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 
+/// Holds path metadata when creating a new path (pathId not yet assigned).
+class PendingPathMetadata {
+  final String title;
+  final String objective;
+  final String description;
+  final String creatorId;
+  final String? coverImgUrl;
+
+  const PendingPathMetadata({
+    required this.title,
+    required this.objective,
+    required this.description,
+    required this.creatorId,
+    this.coverImgUrl,
+  });
+}
+
 // UI State class สำหรับจัดการ node ใน UI
 class NodeUiState {
   String title;
@@ -38,15 +55,17 @@ class NodeUiState {
 class TeacherNodesOverviewPage extends StatefulWidget {
   final String title;
   final List<GeneratedNode>? aiNodes;
-  final String pathId;
+  final String? pathId;
   final bool returnToCreateTabOnPublish;
+  final PendingPathMetadata? pendingPathMetadata;
 
   const TeacherNodesOverviewPage({
     super.key,
     required this.title,
     this.aiNodes,
-    required this.pathId,
+    this.pathId,
     this.returnToCreateTabOnPublish = false,
+    this.pendingPathMetadata,
   });
 
   @override
@@ -60,6 +79,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   final List<int> _createQueue =
       []; // คิว sequence ของ nodes ที่รอสร้างตามลำดับ
   String? _userId;
+  String? _pathId; // Mutable pathId — null for brand-new paths
   List<NodeDetail>? _cachedNodes; // Cache nodes from backend
   LearningPath? _cachedLearningPath; // Cache learning path details for updating
   bool _pendingPublish = false; // รอ node สร้างเสร็จแล้วค่อย publish
@@ -75,10 +95,14 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   late String
   _displayTitle; // Title ที่แสดงใน header (อัพเดทจาก backend เมื่อโหลดเสร็จ)
 
+  bool get _isNewPath => widget.pathId == null;
+
   bool get _isPublished =>
       _cachedLearningPath?.publishStatus.toLowerCase() == 'published';
 
   bool get _shouldShowBottomBar {
+    // For new paths, always show bottom bar (Save Draft / Publish).
+    if (_isNewPath) return true;
     // Wait until publish status is loaded to avoid bottom bar flicker.
     if (_cachedLearningPath == null) return false;
     return !_isPublished;
@@ -96,13 +120,12 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   @override
   void initState() {
     super.initState();
+    _pathId = widget.pathId;
     _displayTitle = widget.title;
     _loadUserAndFetchNodes();
 
     // ถ้ามี AI nodes ให้ใช้ ถ้าไม่มีให้สร้าง default node เปล่าๆ
     if (widget.aiNodes != null && widget.aiNodes!.isNotEmpty) {
-      // Keep sequence unique and stable in UI order to avoid draft-node loss
-      // when AI-generated sequence values are duplicated.
       _uiNodes = widget.aiNodes!.asMap().entries.map((entry) {
         final index = entry.key;
         final aiNode = entry.value;
@@ -113,8 +136,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           isCreated: false,
         );
       }).toList();
-    } else {
-      // Create Plain Path: สร้าง node เปล่าๆ 1 node (ถ้ายังไม่มี nodes จาก backend)
+    } else if (_isNewPath) {
+      // New plain path — start with one placeholder node
       _uiNodes = [
         NodeUiState(
           title: 'New Node',
@@ -123,6 +146,9 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           isCreated: false,
         ),
       ];
+    } else {
+      // Existing path — start empty, will be populated by backend NodesLoaded
+      _uiNodes = [];
     }
   }
 
@@ -131,25 +157,28 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     if (!mounted) return;
 
     setState(() => _userId = storedUserId ?? '');
-    _fetchNodes(storedUserId ?? '');
-    _fetchLearningPathDetail();
+
+    // Only fetch from backend if path already exists
+    if (_pathId != null) {
+      _fetchNodes(storedUserId ?? '');
+      _fetchLearningPathDetail();
+    }
   }
 
   void _fetchNodes(String userId) {
-    if (userId.isEmpty) return;
-    // Fetch existing nodes from backend
+    if (userId.isEmpty || _pathId == null) return;
     context.read<LearningPathBloc>().add(
-      FetchNodesForPath(pathId: widget.pathId),
+      FetchNodesForPath(pathId: _pathId!),
     );
   }
 
   void _fetchLearningPathDetail() {
-    // Fetch learning path details for updating publish status
+    if (_pathId == null) return;
     LogHandler.info(
-      'TeacherNodesOverview: Fetch learning path detail requested (pathId=${widget.pathId})',
+      'TeacherNodesOverview: Fetch learning path detail requested (pathId=$_pathId)',
     );
     context.read<LearningPathBloc>().add(
-      GetLearningPathByIdEvent(pathId: widget.pathId),
+      GetLearningPathByIdEvent(pathId: _pathId!),
     );
   }
 
@@ -265,7 +294,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       CreateNodeEvent(
         title: node.title,
         description: node.description,
-        pathId: widget.pathId,
+        pathId: _pathId!,
         sequence: node.sequence.toString(),
         linkvdo: '',
         materials: null, // Materials จะถูกเพิ่มผ่าน EditNodeModal
@@ -354,7 +383,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           isAiPath: _isAiPath,
           isPrimaryNode: isPrimaryNode,
           totalNodes: totalNodes,
-          pathId: widget.pathId,
+          pathId: _pathId ?? '',
           sequence: sequence,
           initialNode: initialNode,
           isReadOnly: _isPublished,
@@ -427,15 +456,47 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
     if (orderedNodeIds.isNotEmpty) {
       context.read<LearningPathBloc>().add(
-        ReorderNodesEvent(pathId: widget.pathId, nodeIds: orderedNodeIds),
+        ReorderNodesEvent(pathId: _pathId!, nodeIds: orderedNodeIds),
       );
     }
   }
 
   void _confirmSaveDraft(BuildContext context) {
     LogHandler.info(
-      'TeacherNodesOverview: Save Draft tapped (pathId=${widget.pathId})',
+      'TeacherNodesOverview: Save Draft tapped (pathId=$_pathId)',
     );
+
+    // --- NEW PATH: create the path at backend first, then create nodes ---
+    if (_isNewPath && _pathId == null) {
+      final meta = widget.pendingPathMetadata;
+      if (meta == null) {
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Missing path metadata. Please go back and try again.',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.cancel,
+            ),
+          );
+        return;
+      }
+      _shouldExitAfterPathUpdate = true;
+      setState(() => _pendingSaveDraft = true);
+      context.read<LearningPathBloc>().add(
+        CreateLearningPathEvent(
+          title: meta.title,
+          objective: meta.objective,
+          description: meta.description,
+          creatorId: meta.creatorId,
+          coverImgUrl: meta.coverImgUrl,
+          publishStatus: 'draft',
+        ),
+      );
+      return;
+    }
 
     if (_cachedLearningPath == null) {
       _queuedSaveDraftAfterPathLoad = true;
@@ -503,7 +564,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     );
     context.read<LearningPathBloc>().add(
       UpdateLearningPathEvent(
-        pathId: widget.pathId,
+        pathId: _pathId!,
         title: _cachedLearningPath!.title,
         objective: _cachedLearningPath!.objective,
         description: _cachedLearningPath!.description,
@@ -515,8 +576,69 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
   void _confirmPublish(BuildContext context) {
     LogHandler.info(
-      'TeacherNodesOverview: Publish tapped (pathId=${widget.pathId})',
+      'TeacherNodesOverview: Publish tapped (pathId=$_pathId)',
     );
+
+    // Validate nodes before anything else
+    final allNodes = _displayNodes;
+    LogHandler.info(
+      'TeacherNodesOverview: Publish validation — _displayNodes.length=${allNodes.length}, _uiNodes.length=${_uiNodes.length}, _cachedNodes?.length=${_cachedNodes?.length}',
+    );
+    for (final n in allNodes) {
+      LogHandler.info(
+        'TeacherNodesOverview: Node [${n.nodeId}] title="${n.title}" desc="${n.description}" linkVdo="${n.linkVdo}" questions=${n.questions.length} complete=${_isNodeComplete(n)}',
+      );
+    }
+    final incompleteNodes = allNodes.where((n) => !_isNodeComplete(n));
+    if (incompleteNodes.isNotEmpty) {
+      LogHandler.warning(
+        'TeacherNodesOverview: Publish blocked, incomplete nodes found (${incompleteNodes.length})',
+      );
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please complete all node information before publishing.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
+          ),
+        );
+      return;
+    }
+
+    // --- NEW PATH: create the path at backend first, then create nodes ---
+    if (_isNewPath && _pathId == null) {
+      final meta = widget.pendingPathMetadata;
+      if (meta == null) {
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Missing path metadata. Please go back and try again.',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.cancel,
+            ),
+          );
+        return;
+      }
+      _shouldExitAfterPathUpdate = true;
+      setState(() => _pendingPublish = true);
+      context.read<LearningPathBloc>().add(
+        CreateLearningPathEvent(
+          title: meta.title,
+          objective: meta.objective,
+          description: meta.description,
+          creatorId: meta.creatorId,
+          coverImgUrl: meta.coverImgUrl,
+          publishStatus: 'published',
+        ),
+      );
+      return;
+    }
 
     if (_cachedLearningPath == null) {
       _queuedPublishAfterPathLoad = true;
@@ -561,25 +683,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       'TeacherNodesOverview: Publish executing without confirmation',
     );
 
-    final incompleteNodes = _displayNodes.where((n) => !_isNodeComplete(n));
-    if (incompleteNodes.isNotEmpty) {
-      LogHandler.warning(
-        'TeacherNodesOverview: Publish blocked, incomplete nodes found (${incompleteNodes.length})',
-      );
-      ScaffoldMessenger.of(context)
-        ..removeCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Please complete all node information before publishing.',
-              style: TextStyle(color: AppColors.textPrimary),
-            ),
-            backgroundColor: AppColors.cancel,
-          ),
-        );
-      return;
-    }
-
     final uncreatedSequences = [
       for (int i = 0; i < _uiNodes.length; i++)
         if (!_uiNodes[i].isCreated) _uiNodes[i].sequence,
@@ -601,7 +704,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     );
     context.read<LearningPathBloc>().add(
       UpdateLearningPathEvent(
-        pathId: widget.pathId,
+        pathId: _pathId!,
         title: _cachedLearningPath!.title,
         objective: _cachedLearningPath!.objective,
         description: _cachedLearningPath!.description,
@@ -619,7 +722,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             title: uiNode.title,
             description: uiNode.description,
             sequence: uiNode.sequence,
-            pathId: widget.pathId,
+            pathId: _pathId ?? '',
             materials: const [],
             questions: const [],
             status: 'locked',
@@ -705,7 +808,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             title: uiNode.title,
             description: uiNode.description,
             sequence: uiNode.sequence,
-            pathId: widget.pathId,
+            pathId: _pathId ?? '',
             materials: const [],
             questions: const [],
             status: 'locked',
@@ -763,8 +866,63 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           }
         }
 
+        // --- NEW PATH CREATED: store pathId, then create nodes ---
+        if (state is LearningPathCreated && _isNewPath && _pathId == null) {
+          LogHandler.info(
+            'TeacherNodesOverview: LearningPathCreated for new path (${state.pathId})',
+          );
+          setState(() {
+            _pathId = state.pathId;
+          });
+
+          // Now create all uncreated nodes sequentially
+          final uncreatedSequences = [
+            for (int i = 0; i < _uiNodes.length; i++)
+              if (!_uiNodes[i].isCreated) _uiNodes[i].sequence,
+          ];
+          if (uncreatedSequences.isNotEmpty) {
+            LogHandler.info(
+              'TeacherNodesOverview: Creating ${uncreatedSequences.length} nodes after path creation',
+            );
+            _startSequentialCreate(uncreatedSequences);
+          } else {
+            // No nodes to create — path is ready, exit
+            final isPublish = _pendingPublish;
+            setState(() {
+              _pendingPublish = false;
+              _pendingSaveDraft = false;
+            });
+
+            ScaffoldMessenger.of(context)
+              ..removeCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isPublish
+                        ? 'Learning path published successfully'
+                        : 'Learning path saved as draft',
+                    style: const TextStyle(color: AppColors.textPrimary),
+                  ),
+                  backgroundColor: AppColors.status,
+                ),
+              );
+
+            // Pop back
+            if (widget.returnToCreateTabOnPublish) {
+              final navigator = Navigator.of(context);
+              final targetPopCount = _isAiPath ? 3 : 2;
+              for (int i = 0; i < targetPopCount; i++) {
+                if (!navigator.canPop()) break;
+                navigator.pop();
+              }
+            } else {
+              Navigator.pop(context);
+            }
+          }
+        }
+
         // Update cached nodes when loaded from backend
-        if (state is NodesLoaded && state.pathId == widget.pathId) {
+        if (state is NodesLoaded && state.pathId == _pathId) {
           setState(() {
             _cachedNodes = state.nodes;
             // Rebuild _uiNodes to include ALL backend nodes so that
@@ -907,10 +1065,42 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
               _pendingPublish = false;
               _pendingSaveDraft = false;
             });
+
+            // For new paths, the path was already created with the correct
+            // publishStatus — just show success and navigate back.
+            if (_isNewPath) {
+              ScaffoldMessenger.of(context)
+                ..removeCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      status == 'published'
+                          ? 'Learning path published successfully'
+                          : 'Learning path saved as draft',
+                      style: const TextStyle(color: AppColors.textPrimary),
+                    ),
+                    backgroundColor: AppColors.status,
+                  ),
+                );
+
+              if (widget.returnToCreateTabOnPublish) {
+                final navigator = Navigator.of(context);
+                final targetPopCount = _isAiPath ? 3 : 2;
+                for (int i = 0; i < targetPopCount; i++) {
+                  if (!navigator.canPop()) break;
+                  navigator.pop();
+                }
+              } else {
+                Navigator.pop(context);
+              }
+              return;
+            }
+
+            // Existing path — update status via API
             _requestedPathUpdateStatus = status;
             context.read<LearningPathBloc>().add(
               UpdateLearningPathEvent(
-                pathId: widget.pathId,
+                pathId: _pathId ?? '',
                 title: _cachedLearningPath!.title,
                 objective: _cachedLearningPath!.objective,
                 description: _cachedLearningPath!.description,

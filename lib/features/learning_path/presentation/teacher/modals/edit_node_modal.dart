@@ -443,19 +443,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
     if (widget.isNewNode) {
       // สร้าง node ใหม่
-      if (widget.pathId == null || widget.sequence == null) {
+      if (widget.pathId == null || widget.pathId!.isEmpty || widget.sequence == null) {
+        // Path not yet created at backend — close modal.
+        // Node data will be created when user taps Save Draft / Publish.
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context)
-          ..removeCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Missing path ID or sequence',
-                style: TextStyle(color: AppColors.textPrimary),
-              ),
-              backgroundColor: AppColors.cancel,
-            ),
-          );
+        if (context.mounted) {
+          Navigator.pop(context);
+        }
         return;
       }
 

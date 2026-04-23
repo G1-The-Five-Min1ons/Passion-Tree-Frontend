@@ -14,15 +14,17 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 
 class AINodeReviewPage extends StatefulWidget {
-  final String pathId;
+  final String? pathId;
   final String objective;
   final List<GeneratedNode>? initialNodes;
+  final PendingPathMetadata? pendingPathMetadata;
 
   const AINodeReviewPage({
     super.key,
-    required this.pathId,
+    this.pathId,
     required this.objective,
     this.initialNodes,
+    this.pendingPathMetadata,
   });
 
   @override
@@ -275,6 +277,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                                             aiNodes: _nodes,
                                             pathId: widget.pathId,
                                             returnToCreateTabOnPublish: true,
+                                            pendingPathMetadata: widget.pendingPathMetadata,
                                           ),
                                         ),
                                       ),

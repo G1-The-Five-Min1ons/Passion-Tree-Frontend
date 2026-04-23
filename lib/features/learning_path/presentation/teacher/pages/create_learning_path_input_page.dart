@@ -37,7 +37,7 @@ class _CreateLearningPathInputPageState
   String _title = '';
   String _objectives = '';
   String _description = '';
-  bool _isCreatingPath = false;
+
   String? _plainPathId;
   String? _aiPathId;
   List<GeneratedNode> _cachedAiNodes = [];
@@ -196,25 +196,13 @@ class _CreateLearningPathInputPageState
       return;
     }
 
-    setState(() {
-      _isCreatingPath = true;
-    });
-
-    context.read<LearningPathBloc>().add(
-      CreateLearningPathEvent(
-        title: _title,
-        objective: _objectives,
-        description: _description,
-        creatorId: _userId!,
-        coverImgUrl: _uploadedImageUrl.isNotEmpty ? _uploadedImageUrl : null,
-        publishStatus: 'draft',
-      ),
-    );
+    // Navigate directly to AI review — NO backend creation here.
+    _openAiNodeReview(context);
   }
 
   void _openAiNodeReview(
     BuildContext context, {
-    required String pathId,
+    String? pathId,
     List<GeneratedNode>? initialNodes,
   }) {
     final bloc = context.read<LearningPathBloc>();
@@ -227,15 +215,21 @@ class _CreateLearningPathInputPageState
             objective: _objectives,
             pathId: pathId,
             initialNodes: initialNodes,
+            pendingPathMetadata: pathId == null
+                ? PendingPathMetadata(
+                    title: _title,
+                    objective: _objectives,
+                    description: _description,
+                    creatorId: _userId!,
+                    coverImgUrl: _uploadedImageUrl.isNotEmpty
+                        ? _uploadedImageUrl
+                        : null,
+                  )
+                : null,
           ),
         ),
       ),
-    ).then((_) {
-      if (!mounted) return;
-      setState(() {
-        _isCreatingPath = false;
-      });
-    });
+    );
   }
 
   void _handleCreatePlainPath(BuildContext context) {
@@ -290,19 +284,11 @@ class _CreateLearningPathInputPageState
       return;
     }
 
-    context.read<LearningPathBloc>().add(
-      CreateLearningPathEvent(
-        title: _title,
-        objective: _objectives,
-        description: _description,
-        creatorId: _userId!,
-        coverImgUrl: _uploadedImageUrl.isNotEmpty ? _uploadedImageUrl : null,
-        publishStatus: 'draft',
-      ),
-    );
+    // Navigate directly — NO backend creation here.
+    _navigateToTeacherNodesOverview(context, null);
   }
 
-  void _navigateToTeacherNodesOverview(BuildContext context, String pathId) {
+  void _navigateToTeacherNodesOverview(BuildContext context, String? pathId) {
     final bloc = context.read<LearningPathBloc>();
     Navigator.push(
       context,
@@ -314,6 +300,17 @@ class _CreateLearningPathInputPageState
             pathId: pathId,
             aiNodes: null,
             returnToCreateTabOnPublish: true,
+            pendingPathMetadata: pathId == null
+                ? PendingPathMetadata(
+                    title: _title,
+                    objective: _objectives,
+                    description: _description,
+                    creatorId: _userId!,
+                    coverImgUrl: _uploadedImageUrl.isNotEmpty
+                        ? _uploadedImageUrl
+                        : null,
+                  )
+                : null,
           ),
         ),
       ),
@@ -376,31 +373,6 @@ class _CreateLearningPathInputPageState
       listener: (context, state) {
         if (state is NodesGeneratedWithAI && _aiPathId != null) {
           _cachedAiNodes = state.nodes;
-        } else if (state is LearningPathCreated) {
-          final bloc = context.read<LearningPathBloc>();
-
-          // Show success snackbar
-          ScaffoldMessenger.of(context)
-            ..removeCurrentSnackBar()
-            ..showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Learning path created successfully',
-                  style: TextStyle(color: AppColors.textPrimary),
-                ),
-                backgroundColor: AppColors.status,
-              ),
-            );
-
-          if (_isCreatingPath) {
-            // ถ้ากด AI Create Node ให้ไปหน้า AI Review
-            _aiPathId = state.pathId;
-            _openAiNodeReview(context, pathId: state.pathId);
-          } else {
-            // ถ้ากด Create Plain Path ให้ไปหน้า TeacherNodesOverviewPage
-            _plainPathId = state.pathId;
-            _navigateToTeacherNodesOverview(context, state.pathId);
-          }
         } else if (state is LearningPathUpdated) {
           if (!_isPendingUpdate) return;
           setState(() => _isPendingUpdate = false);
@@ -425,7 +397,6 @@ class _CreateLearningPathInputPageState
           Navigator.pop(context);
         } else if (state is LearningPathError) {
           setState(() {
-            _isCreatingPath = false;
             _isPendingUpdate = false;
           });
           ScaffoldMessenger.of(context)
@@ -689,9 +660,7 @@ class _CreateLearningPathInputPageState
                             children: [
                               AppButton(
                                 variant: AppButtonVariant.text,
-                                text: isLoading && _isCreatingPath
-                                    ? 'Creating...'
-                                    : 'AI Create Node',
+                                text: 'AI Create Node',
                                 subText:
                                     'Use AI powered to auto generate nodes for you',
                                 onPressed: isLoading
@@ -715,9 +684,7 @@ class _CreateLearningPathInputPageState
                               const SizedBox(height: 10),
                               AppButton(
                                 variant: AppButtonVariant.text,
-                                text: isLoading && !_isCreatingPath
-                                    ? 'Creating...'
-                                    : 'Create Plain Path',
+                                text: 'Create Plain Path',
                                 subText: 'Create nodes by yourself',
                                 onPressed: isLoading
                                     ? () {}

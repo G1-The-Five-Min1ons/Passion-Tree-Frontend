@@ -191,9 +191,13 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
     }
   }
 
-  void _startReply(String commentId, String username) {
+  void _startReply(String commentId, String username, String? parentId) {
+    // Instagram-style: always reply to the root comment.
+    // If replying to a reply (parentId != null), use its parentId (the root) instead.
+    final rootCommentId = (parentId != null && parentId.isNotEmpty) ? parentId : commentId;
+
     setState(() {
-      _replyingToCommentId = commentId;
+      _replyingToCommentId = rootCommentId;
       _replyingToUsername = username;
       _editingCommentId = null;
       _editingCommentUsername = null;
@@ -352,11 +356,28 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
                   ? state.comments
                   : _cachedComments;
 
+              // Build a lookup map for all comments
+              final commentMap = <String, Comment>{};
+              for (final comment in comments) {
+                commentMap[comment.commentId] = comment;
+              }
+
+              // Instagram-style flatten: all replies point to the root comment
               final commentsByParent = <String, List<Comment>>{};
               for (final comment in comments) {
                 final parentId = comment.parentId;
                 if (parentId != null && parentId.isNotEmpty) {
-                  commentsByParent.putIfAbsent(parentId, () => []).add(comment);
+                  // Walk up to find the root comment
+                  String rootId = parentId;
+                  final visited = <String>{};
+                  while (commentMap.containsKey(rootId) &&
+                      commentMap[rootId]!.parentId != null &&
+                      commentMap[rootId]!.parentId!.isNotEmpty &&
+                      !visited.contains(rootId)) {
+                    visited.add(rootId);
+                    rootId = commentMap[rootId]!.parentId!;
+                  }
+                  commentsByParent.putIfAbsent(rootId, () => []).add(comment);
                 }
               }
 
@@ -757,7 +778,7 @@ class _CommentItem extends StatefulWidget {
   final String? pathId;
   final VoidCallback onDelete;
   final void Function(String commentId, String message, String username) onEdit;
-  final void Function(String commentId, String username) onReply;
+  final void Function(String commentId, String username, String? parentId) onReply;
   final String currentUserId;
   final bool isNested;
   final int nestingLevel;
@@ -973,6 +994,7 @@ class _CommentItemState extends State<_CommentItem> {
                             onTap: () => widget.onReply(
                               widget.comment.commentId,
                               widget.comment.userName,
+                              widget.comment.parentId,
                             ),
                             child: Text(
                               'Reply',
@@ -1036,13 +1058,11 @@ class _CommentItemState extends State<_CommentItem> {
             ],
           ),
 
-          // Replies
+          // Replies — Instagram-style: flat list, no deeper nesting
           if (_showReplies && widget.replies.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(
-                left: widget.nestingLevel < _CommentItem.maxIndentNestingLevel
-                    ? _CommentItem.nestedIndent
-                    : 0,
+                left: _CommentItem.nestedIndent,
                 top: 4.0,
               ),
               child: ListView.builder(
@@ -1053,14 +1073,13 @@ class _CommentItemState extends State<_CommentItem> {
                   final reply = widget.replies[index];
                   return _CommentItem(
                     comment: reply,
-                    replies:
-                        widget.repliesByParent[reply.commentId] ?? const [],
-                    repliesByParent: widget.repliesByParent,
+                    replies: const [],          // No deeper nesting
+                    repliesByParent: const {},  // No deeper nesting
                     nodeId: widget.nodeId,
                     pathId: widget.pathId,
                     currentUserId: widget.currentUserId,
                     isNested: true,
-                    nestingLevel: widget.nestingLevel + 1,
+                    nestingLevel: 1,
                     onDelete: () {
                       context.read<CommentBloc>().add(
                         RemoveComment(
