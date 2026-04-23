@@ -44,7 +44,7 @@ class BottomBar extends StatelessWidget {
                 child: AppButton(
                   variant: AppButtonVariant.text,
                   text: 'Publish',
-                  backgroundColor: AppColors.status,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   textColor: AppColors.textPrimary,
                   onPressed: onPublish,
                 ),

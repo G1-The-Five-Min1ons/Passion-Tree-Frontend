@@ -57,7 +57,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   int? _pendingNodeIndex; // เก็บ index ของ node ที่กำลังสร้างอยู่
   final List<int> _createQueue =
       []; // คิว sequence ของ nodes ที่รอสร้างตามลำดับ
-  Timer? _draftAutoSaveTimer;
   String? _userId;
   List<NodeDetail>? _cachedNodes; // Cache nodes from backend
   LearningPath? _cachedLearningPath; // Cache learning path details for updating
@@ -69,30 +68,10 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   bool _queuedPublishAfterPathLoad = false;
   Timer? _queuedPublishRetryTimer;
   int _queuedPublishRetryCount = 0;
-  bool _isAutoSavingDraft = false;
   bool _shouldExitAfterPathUpdate = false;
   String? _requestedPathUpdateStatus;
-  bool _isAutoSavingBeforeExit = false;
-  bool _allowPopAfterSave = false;
-  Timer? _autoSaveStatusTimer;
-  String? _autoSaveStatusText;
-  bool _isAutoSaveStatusError = false;
   late String
   _displayTitle; // Title ที่แสดงใน header (อัพเดทจาก backend เมื่อโหลดเสร็จ)
-
-  bool get _isAutoSaveInProgress => _autoSaveStatusText == 'Saving draft...';
-
-  IconData get _autoSaveStatusIcon {
-    if (_isAutoSaveStatusError) return Icons.cloud_off;
-    if (_isAutoSaveInProgress) return Icons.cloud_upload;
-    return Icons.cloud_done;
-  }
-
-  Color get _autoSaveStatusBackground {
-    if (_isAutoSaveStatusError) return AppColors.cancel;
-    if (_isAutoSaveInProgress) return AppColors.surface;
-    return AppColors.status;
-  }
 
   bool get _isPublished =>
       _cachedLearningPath?.publishStatus.toLowerCase() == 'published';
@@ -101,58 +80,9 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
   @override
   void dispose() {
-    _draftAutoSaveTimer?.cancel();
     _queuedSaveDraftRetryTimer?.cancel();
     _queuedPublishRetryTimer?.cancel();
-    _autoSaveStatusTimer?.cancel();
     super.dispose();
-  }
-
-  void _setAutoSaveStatus(
-    String? text, {
-    bool isError = false,
-    Duration? clearAfter,
-  }) {
-    _autoSaveStatusTimer?.cancel();
-    if (!mounted) return;
-
-    setState(() {
-      _autoSaveStatusText = text;
-      _isAutoSaveStatusError = isError;
-    });
-
-    if (text != null && clearAfter != null) {
-      _autoSaveStatusTimer = Timer(clearAfter, () {
-        if (!mounted) return;
-        setState(() {
-          _autoSaveStatusText = null;
-          _isAutoSaveStatusError = false;
-        });
-      });
-    }
-  }
-
-  Future<bool> _onWillPopAutoSaveDraft() async {
-    if (_allowPopAfterSave || _isPublished) {
-      return true;
-    }
-
-    final hasUnsavedCreatedNodes = _uiNodes.any((n) => !n.isCreated);
-    if (!hasUnsavedCreatedNodes) {
-      return true;
-    }
-
-    // Prevent duplicate save flows while one is already in progress.
-    if (_isAutoSavingBeforeExit ||
-        _pendingSaveDraft ||
-        _pendingNodeIndex != null) {
-      return false;
-    }
-
-    _isAutoSavingBeforeExit = true;
-    _setAutoSaveStatus('Saving draft...');
-    _confirmSaveDraft(context);
-    return false;
   }
 
   @override
@@ -488,42 +418,9 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         ReorderNodesEvent(pathId: widget.pathId, nodeIds: orderedNodeIds),
       );
     }
-
-    _scheduleDraftAutoSave();
-  }
-
-  void _scheduleDraftAutoSave() {
-    if (_cachedLearningPath == null || _isPublished) {
-      return;
-    }
-
-    if (_pendingPublish || _pendingSaveDraft) {
-      return;
-    }
-
-    _draftAutoSaveTimer?.cancel();
-    _setAutoSaveStatus('Saving draft...');
-    _draftAutoSaveTimer = Timer(const Duration(milliseconds: 900), () {
-      if (!mounted || _cachedLearningPath == null || _isPublished) {
-        return;
-      }
-
-      _isAutoSavingDraft = true;
-      context.read<LearningPathBloc>().add(
-        UpdateLearningPathEvent(
-          pathId: widget.pathId,
-          title: _cachedLearningPath!.title,
-          objective: _cachedLearningPath!.objective,
-          description: _cachedLearningPath!.description,
-          coverImgUrl: _cachedLearningPath!.coverImageUrl,
-          publishStatus: 'draft',
-        ),
-      );
-    });
   }
 
   void _confirmSaveDraft(BuildContext context) {
-    _draftAutoSaveTimer?.cancel();
     LogHandler.info(
       'TeacherNodesOverview: Save Draft tapped (pathId=${widget.pathId})',
     );
@@ -601,7 +498,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   }
 
   void _confirmPublish(BuildContext context) {
-    _draftAutoSaveTimer?.cancel();
     LogHandler.info(
       'TeacherNodesOverview: Publish tapped (pathId=${widget.pathId})',
     );
@@ -644,6 +540,23 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     LogHandler.info(
       'TeacherNodesOverview: Publish executing without confirmation',
     );
+
+    final incompleteNodes = _displayNodes.where((n) => !_isNodeComplete(n));
+    if (incompleteNodes.isNotEmpty) {
+      LogHandler.warning(
+        'TeacherNodesOverview: Publish blocked, incomplete nodes found (${incompleteNodes.length})',
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please complete all node information before publishing.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+      return;
+    }
 
     final uncreatedSequences = [
       for (int i = 0; i < _uiNodes.length; i++)
@@ -693,6 +606,43 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           ),
         )
         .toList();
+  }
+
+  String _normalizeVideoUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return trimmed;
+
+    final hasScheme = RegExp(
+      r'^[a-zA-Z][a-zA-Z0-9+.-]*://',
+    ).hasMatch(trimmed);
+    return hasScheme ? trimmed : 'https://$trimmed';
+  }
+
+  bool _isValidVideoUrl(String? value) {
+    final raw = value?.trim() ?? '';
+    if (raw.isEmpty) return false;
+
+    final normalized = _normalizeVideoUrl(raw);
+    final uri = Uri.tryParse(normalized);
+    return uri != null && uri.hasAuthority && uri.host.contains('.');
+  }
+
+  bool _hasRequiredQuiz(NodeDetail node) {
+    return node.questions.any(
+      (question) =>
+          question.questionText.trim().isNotEmpty &&
+          question.choices
+                  .where((choice) => choice.choiceText.trim().isNotEmpty)
+                  .length >=
+              2,
+    );
+  }
+
+  bool _isNodeComplete(NodeDetail node) {
+    return node.title.trim().isNotEmpty &&
+        node.description.trim().isNotEmpty &&
+        _isValidVideoUrl(node.linkVdo) &&
+        _hasRequiredQuiz(node);
   }
 
   bool get _shouldKeepDraftUiNodes {
@@ -951,8 +901,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             return;
           }
 
-          _scheduleDraftAutoSave();
-
           // Refetch nodes with a small delay to ensure backend transaction is committed
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted && _userId != null && _userId!.isNotEmpty) {
@@ -977,8 +925,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             });
           }
 
-          _scheduleDraftAutoSave();
-
           // Refetch nodes with a small delay to ensure backend transaction is committed
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted && _userId != null && _userId!.isNotEmpty) {
@@ -999,17 +945,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           LogHandler.success(
             'TeacherNodesOverview: LearningPathUpdated received',
           );
-          if (_isAutoSavingDraft) {
-            setState(() {
-              _isAutoSavingDraft = false;
-            });
-            LogHandler.info('TeacherNodesOverview: Auto-save draft completed');
-            _setAutoSaveStatus(
-              'Draft auto-saved',
-              clearAfter: const Duration(seconds: 2),
-            );
-            return;
-          }
 
           if (!_shouldExitAfterPathUpdate) {
             return;
@@ -1037,8 +972,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             'TeacherNodesOverview: Save Draft success, leaving current page',
           );
 
-          _allowPopAfterSave = true;
-
           if (_isAiPath) {
             final navigator = Navigator.of(context);
             if (navigator.canPop()) navigator.pop();
@@ -1054,20 +987,10 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           );
           setState(() {
             _pendingNodeIndex = null;
-            _isAutoSavingDraft = false;
             _shouldExitAfterPathUpdate = false;
             _queuedSaveDraftAfterPathLoad = false;
             _requestedPathUpdateStatus = null;
           });
-
-          _isAutoSavingBeforeExit = false;
-          _allowPopAfterSave = false;
-
-          _setAutoSaveStatus(
-            'Auto-save failed. Please try again.',
-            isError: true,
-            clearAfter: const Duration(seconds: 4),
-          );
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1080,94 +1003,51 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           );
         }
       },
-      child: WillPopScope(
-        onWillPop: _onWillPopAutoSaveDraft,
-        child: Scaffold(
-          appBar: const AppBarWidget(
-            title: 'Nodes Overview',
-            showBackButton: true,
-          ),
-          body: SafeArea(
-            child: Stack(
-              children: [
-                /// ===== CORE =====
-                NodesOverviewCore(
-                  isEditable: true,
-                  isDraggable: !_isPublished,
-                  showAddBetween: !_isPublished,
-                  forceLockedStyle: false,
-                  showNodeTitle: true,
-                  nodes: _displayNodes,
-                  onNodeTap: (index) {
-                    _openEditNodeModal(context, index: index);
-                  },
-                  onReorder: _handleReorder,
-                  onAddNodeAfter: _handleAddNodeAfter,
-                ),
+      child: Scaffold(
+        appBar: const AppBarWidget(
+          title: 'Nodes Overview',
+          showBackButton: true,
+        ),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              /// ===== CORE =====
+              NodesOverviewCore(
+                isEditable: true,
+                isDraggable: !_isPublished,
+                showAddBetween: !_isPublished,
+                forceLockedStyle: false,
+                showNodeTitle: true,
+                nodes: _displayNodes,
+                onNodeTap: (index) {
+                  _openEditNodeModal(context, index: index);
+                },
+                onReorder: _handleReorder,
+                onAddNodeAfter: _handleAddNodeAfter,
+              ),
 
-                /// ===== HEADER =====
-                Positioned(
-                  top: 16,
-                  left: 0,
-                  right: 0,
-                  child: HeaderBar(title: _displayTitle, showAddButton: false),
-                ),
+              /// ===== HEADER =====
+              Positioned(
+                top: 16,
+                left: 0,
+                right: 0,
+                child: HeaderBar(title: _displayTitle, showAddButton: false),
+              ),
 
-                /// ===== FLOATING BOTTOM =====
-                Positioned(
-                  bottom: bottomInset + 20,
-                  left: 0,
-                  right: 0,
-                  child: Builder(
-                    builder: (bottomContext) => BottomBar(
-                      onSaveDraft: () => _confirmSaveDraft(bottomContext),
-                      onPublish: () => _confirmPublish(bottomContext),
-                      isPublished: _isPublished,
-                    ),
+              /// ===== FLOATING BOTTOM =====
+              Positioned(
+                bottom: bottomInset + 20,
+                left: 0,
+                right: 0,
+                child: Builder(
+                  builder: (bottomContext) => BottomBar(
+                    onSaveDraft: () => _confirmSaveDraft(bottomContext),
+                    onPublish: () => _confirmPublish(bottomContext),
+                    isPublished: _isPublished,
                   ),
                 ),
-
-                if (_autoSaveStatusText != null)
-                  Positioned(
-                    bottom: bottomInset + 76,
-                    left: 0,
-                    right: 0,
-                    child: IgnorePointer(
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _autoSaveStatusBackground,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _autoSaveStatusIcon,
-                                size: 14,
-                                color: AppColors.textPrimary,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _autoSaveStatusText!,
-                                style: const TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
