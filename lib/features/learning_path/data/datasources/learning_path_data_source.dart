@@ -262,6 +262,22 @@ class LearningPathDataSource {
     if (nodeId == null || nodeId.isEmpty) {
       throw ServerException(message: 'Node ID not returned from server');
     }
+
+    final materials = request.materials;
+    if (materials != null && materials.isNotEmpty) {
+      for (final material in materials) {
+        final materialResponse = await _apiHandler.post(
+          url: '${ApiConfig.apiBackendUrl}/learningpaths/nodes/$nodeId/materials',
+          headers: await _getAuthHeaders(),
+          body: {
+            'type': material.type,
+            'url': material.url,
+          },
+        );
+        _throwIfError(materialResponse, 'POST node materials/$nodeId');
+      }
+    }
+
     return nodeId;
   }
 

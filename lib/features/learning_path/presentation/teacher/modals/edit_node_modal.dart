@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_header.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_info.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/uploaded_file.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_quiz.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/sections/node_footer.dart';
@@ -315,7 +315,11 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
   //  ===== FILE FUNCTIONS  =====
   Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(allowMultiple: true);
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+    );
 
     if (result == null) return;
 
@@ -405,7 +409,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
       }
 
       final file = File(filePath);
-      final publicUrl = await uploadService.uploadImage(
+      final publicUrl = await uploadService.uploadFile(
         file,
         'materials-nodes',
       );

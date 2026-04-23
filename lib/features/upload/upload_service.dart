@@ -98,10 +98,12 @@ class UploadApiService {
 
       final bytes = await file.readAsBytes();
 
-      String contentType = 'image/jpeg';
+      String contentType = 'application/octet-stream';
       final extension = path.extension(file.path).toLowerCase();
       if (extension == '.png') {
         contentType = 'image/png';
+      } else if (extension == '.jpg' || extension == '.jpeg') {
+        contentType = 'image/jpeg';
       } else if (extension == '.pdf') {
         contentType = 'application/pdf';
       } else if (extension == '.doc' || extension == '.docx') {
@@ -140,19 +142,21 @@ class UploadApiService {
   }
 
   Future<String> uploadImage(File file, String folder) async {
+    return uploadFile(file, folder);
+  }
+
+  Future<String> uploadFile(File file, String folder) async {
     try {
-      LogHandler.debug('[DataSource] Starting uploadImage process');
+      LogHandler.debug('[DataSource] Starting uploadFile process');
       final filename = path.basename(file.path);
       final urls = await getPresignedUrl(filename, folder);
 
       await uploadFileToBlob(urls['upload_url']!, file);
 
-      LogHandler.debug(
-        '[DataSource] uploadImage process completed successfully',
-      );
+      LogHandler.debug('[DataSource] uploadFile process completed successfully');
       return urls['public_url']!;
     } catch (e) {
-      LogHandler.error('Exception in uploadImage helper: $e');
+      LogHandler.error('Exception in uploadFile helper: $e');
       rethrow;
     }
   }

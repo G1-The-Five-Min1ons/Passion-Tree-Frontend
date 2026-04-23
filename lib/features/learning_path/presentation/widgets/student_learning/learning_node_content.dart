@@ -6,6 +6,7 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/material.dart' as lp;
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LearningNodeContent extends StatefulWidget {
   final String title;
@@ -56,6 +57,38 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
         _hasStartedLearning = true;
         widget.onStartLearning();
       }
+    }
+  }
+
+  String _getMaterialDisplayName(lp.Material material) {
+    final decodedUrl = Uri.decodeComponent(material.url);
+    final rawName = decodedUrl.split('/').last;
+    if (rawName.isEmpty) return material.type.toUpperCase();
+
+    final cleaned = rawName.replaceFirst(
+      RegExp(r'^[0-9a-fA-F-]{8,}[_-]+'),
+      '',
+    );
+    return cleaned.isEmpty ? rawName : cleaned;
+  }
+
+  Future<void> _openMaterial(String url) async {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return;
+
+    final normalizedUrl = trimmed.contains('://') ? trimmed : 'https://$trimmed';
+    final uri = Uri.tryParse(normalizedUrl);
+    if (uri == null) return;
+
+    final opened = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open material file')),
+      );
     }
   }
 
@@ -172,17 +205,30 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
               ...widget.materials.map(
                 (material) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.attach_file, size: 16, color: colors.onSurface),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${material.type}: ${material.url}',
-                          style: AppTypography.subtitleSemiBold.copyWith(color: colors.onSurface),
-                        ),
+                  child: InkWell(
+                    onTap: () => _openMaterial(material.url),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 10,
                       ),
-                    ],
+                      child: Row(
+                        children: [
+                          Icon(Icons.description_outlined, size: 18, color: colors.onSurface),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _getMaterialDisplayName(material),
+                              style: AppTypography.subtitleSemiBold.copyWith(color: colors.onSurface),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(Icons.open_in_new, size: 16, color: colors.onSurfaceVariant),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),

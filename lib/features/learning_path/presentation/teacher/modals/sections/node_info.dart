@@ -146,7 +146,7 @@ class NodeInfoSection extends StatelessWidget {
                   Icon(Icons.upload, size: 48, color: AppColors.textSecondary),
                   const SizedBox(height: 8),
                   Text(
-                    'Click to upload or drag and drop file\nMax 200MB',
+                    'Click to upload or drag and drop file\nPDF, JPG, PNG supported\nMax 200MB',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.textSecondary.withValues(alpha: 0.5),
