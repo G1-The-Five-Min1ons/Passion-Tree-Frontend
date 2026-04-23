@@ -28,6 +28,7 @@ class TreeAlbumCard extends StatelessWidget {
   final List<Album> availableAlbums;
   final String treeId;
   final String albumId;
+  final bool isReflectionClosed;
   final VoidCallback? onStatusTap;
   final VoidCallback? onCardTap;
   final VoidCallback? onDelete;
@@ -50,6 +51,7 @@ class TreeAlbumCard extends StatelessWidget {
     required this.availableAlbums,
     required this.treeId,
     required this.albumId,
+    this.isReflectionClosed = false,
     this.onStatusTap,
     this.onCardTap,
     this.onDelete,
@@ -75,12 +77,26 @@ class TreeAlbumCard extends StatelessWidget {
     return value.trim().toLowerCase();
   }
 
-  DateTime? _parseDisplayDate(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return null;
-    }
+  String _normalizedName(String value) {
+    return value.trim().toLowerCase();
+  }
 
-    final parts = value.trim().split('/');
+  String? _findAlbumIdByTitle(String selectedAlbumName) {
+    final normalizedSelected = _normalizedName(selectedAlbumName);
+    for (final album in availableAlbums) {
+      if (_normalizedName(album.title) == normalizedSelected) {
+        return album.albumId;
+      }
+    }
+    return null;
+  }
+
+  DateTime? _toDateOnly(DateTime dateTime) {
+    return DateTime(dateTime.year, dateTime.month, dateTime.day);
+  }
+
+  DateTime? _parseDdMmYyyy(String raw) {
+    final parts = raw.split('/');
     if (parts.length != 3) {
       return null;
     }
@@ -93,7 +109,32 @@ class TreeAlbumCard extends StatelessWidget {
       return null;
     }
 
-    return DateTime(year, month, day);
+    final parsed = DateTime(year, month, day);
+    if (parsed.year != year || parsed.month != month || parsed.day != day) {
+      return null;
+    }
+
+    return _toDateOnly(parsed);
+  }
+
+  DateTime? _parseDisplayDate(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+
+    final raw = value.trim();
+
+    final displayDate = _parseDdMmYyyy(raw);
+    if (displayDate != null) {
+      return displayDate;
+    }
+
+    final isoDate = DateTime.tryParse(raw);
+    if (isoDate != null) {
+      return _toDateOnly(isoDate.toLocal());
+    }
+
+    return null;
   }
 
   bool _isFutureDisplayDate(String? value) {
@@ -139,17 +180,10 @@ class TreeAlbumCard extends StatelessWidget {
                           : albumOptions,
                       onSave: (newTitle, selectedAlbumName) {
                         String? newAlbumId;
-                        if (selectedAlbumName != currentAlbumname &&
+                        if (_normalizedName(selectedAlbumName) !=
+                                _normalizedName(currentAlbumname) &&
                             availableAlbums.isNotEmpty) {
-                          try {
-                            final selectedAlbum = availableAlbums.firstWhere(
-                              (album) => album.title == selectedAlbumName,
-                            );
-                            newAlbumId = selectedAlbum.albumId;
-                          } catch (e) {
-                            // If not found, don't change album
-                            newAlbumId = null;
-                          }
+                          newAlbumId = _findAlbumIdByTitle(selectedAlbumName);
                         }
 
                         context.read<AlbumBloc>().add(
@@ -186,79 +220,76 @@ class TreeAlbumCard extends StatelessWidget {
             ),
           ),
         ),
+        if (!isReflectionClosed)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                if (shouldBlockPauseAction) {
+                  PausePeriod.show(
+                    context,
+                    pauseFrom: pauseFrom,
+                    pauseTo: pauseTo,
+                  );
+                  return;
+                }
 
-        Positioned(
-          top: 0,
-          right: 0,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              if (shouldBlockPauseAction) {
-                PausePeriod.show(
-                  context,
-                  pauseFrom: pauseFrom,
-                  pauseTo: pauseTo,
-                );
-                return;
-              }
+                final normalizedStatus = _normalizedStatus(statusText);
 
-              final normalizedStatus = _normalizedStatus(statusText);
+                if (_isDiedStatus(statusText)) {
+                  RetrievePopup.show(
+                    context,
+                    onConfirm: () {
+                      context.read<AlbumBloc>().add(
+                        RetrieveTreeEvent(treeId: treeId, albumId: albumId),
+                      );
+                    },
+                  );
+                  return;
+                }
 
-              if (_isDiedStatus(statusText)) {
-                RetrievePopup.show(
-                  context,
-                  onConfirm: () {
+                if (['growing', 'fading', 'dying'].contains(normalizedStatus)) {
+                  TreeStatusPopup.show(
+                    context,
+                    normalizedStatus,
+                    onPauseSelected: (pauseFrom, resumeOn) {
+                      context.read<AlbumBloc>().add(
+                        PauseTreeEvent(
+                          treeId: treeId,
+                          albumId: albumId,
+                          pauseFrom: pauseFrom,
+                          resumeOn: resumeOn,
+                        ),
+                      );
+                    },
+                  );
+                  return;
+                }
 
-                    context.read<AlbumBloc>().add(
-                      RetrieveTreeEvent(treeId: treeId, albumId: albumId),
-                    );
-                  },
-                );
-                return;
-              }
-
-              if (['growing', 'fading', 'dying'].contains(normalizedStatus)) {
-                TreeStatusPopup.show(
-                  context,
-                  normalizedStatus,
-                  onPauseSelected: (pauseFrom, resumeOn) {
-
-                    context.read<AlbumBloc>().add(
-                      PauseTreeEvent(
-                        treeId: treeId,
-                        albumId: albumId,
-                        pauseFrom: pauseFrom,
-                        resumeOn: resumeOn,
-                      ),
-                    );
-                  },
-                );
-                return;
-              }
-
-              onStatusTap?.call();
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Container(
-                width: 70,
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  _capitalizeStatus(statusText),
-                  textAlign: TextAlign.center,
-                  style: AppPixelTypography.littleSmall.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
+                onStatusTap?.call();
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Container(
+                  width: 70,
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    _capitalizeStatus(statusText),
+                    textAlign: TextAlign.center,
+                    style: AppPixelTypography.littleSmall.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-
         if (isTreePaused)
           Positioned.fill(
             child: GestureDetector(

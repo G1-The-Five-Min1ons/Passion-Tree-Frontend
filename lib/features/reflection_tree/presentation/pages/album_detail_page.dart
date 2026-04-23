@@ -243,6 +243,7 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
           subtitle: item.lastEdited,
           statusText: item.status,
           statusColor: item.statusColor,
+          isReflectionClosed: item.isReflectionClosed,
           treeStatus: item.overallStatus,
           treeScore: item.treeScore,
           currentAlbumname: album.title,
@@ -256,9 +257,9 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
           resumeOn: item.resumeOn,
           dataDisplay: const SizedBox.shrink(),
 
-          onCardTap: () {
+          onCardTap: () async {
             final albumBloc = BlocProvider.of<AlbumBloc>(context);
-            Navigator.push(
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => BlocProvider.value(
@@ -267,6 +268,11 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
                 ),
               ),
             );
+
+            if (!mounted) return;
+            if (result == true) {
+              albumBloc.add(LoadAlbumByIdEvent(widget.albumId));
+            }
           },
 
           onDelete: () {

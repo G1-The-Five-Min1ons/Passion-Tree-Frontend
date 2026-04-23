@@ -79,6 +79,7 @@ class ApiHandler {
 
   // State for handling concurrent refreshes
   bool _isRefreshing = false;
+  bool _sessionExpiredNotified = false;
   final List<Completer<bool>> _refreshQueue = [];
 
   ApiHandler({
@@ -88,20 +89,49 @@ class ApiHandler {
     this.onSessionExpired,
   }) : _client = client ?? http.Client();
 
+  static const Duration _refreshWaitTimeout = Duration(seconds: 8);
+
+  Future<void> _notifySessionExpiredOnce() async {
+    if (_sessionExpiredNotified) return;
+    _sessionExpiredNotified = true;
+    await onSessionExpired?.call();
+  }
+
+  void _abortRefreshQueue({required String reason}) {
+    LogHandler.error('ApiHandler: $reason');
+
+    final currentQueue = List<Completer<bool>>.from(_refreshQueue);
+    _refreshQueue.clear();
+    _isRefreshing = false;
+
+    for (final completer in currentQueue) {
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
+    }
+  }
+
   /// Wait if a token refresh is currently in progress
   Future<void> _waitForRefresh() async {
     if (!_isRefreshing) return;
 
     LogHandler.info('ApiHandler: Request waiting for token refresh...');
+
     final completer = Completer<bool>();
     _refreshQueue.add(completer);
-    final success = await completer.future;
 
-    if (!success) {
-      throw AuthException(
-        message: 'Token refresh failed while waiting',
-        statusCode: 401,
-      );
+    try {
+      final success = await completer.future.timeout(_refreshWaitTimeout);
+      if (!success) {
+        throw AuthException(message: 'Refresh failed', statusCode: 401);
+      }
+    } on TimeoutException {
+      _abortRefreshQueue(reason: 'Wait timeout. Forcing re-login...');
+      await _notifySessionExpiredOnce();
+      throw AuthException(message: 'Wait timeout', statusCode: 401);
+    } catch (e) {
+      await _notifySessionExpiredOnce();
+      rethrow;
     }
   }
 
@@ -163,9 +193,11 @@ class ApiHandler {
 
         if (!refreshSuccess) {
           LogHandler.error('ApiHandler: Token refresh failed. Logging out...');
-          await onSessionExpired?.call();
+          await _notifySessionExpiredOnce();
           return response; // Return the original 401 response
         }
+
+        _sessionExpiredNotified = false;
       }
 
       // 4. If refresh succeeded, we need to update the Authorization header and retry
