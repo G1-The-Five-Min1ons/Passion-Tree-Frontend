@@ -109,137 +109,144 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
           },
           child: BlocBuilder<LearningPathBloc, LearningPathState>(
             builder: (context, state) {
-            // Update cached nodes when new nodes loaded
-            if (state is NodesLoaded && state.pathId == widget.course.id) {
-              _cachedNodes = state.nodes;
-            }
+              // Update cached nodes when new nodes loaded
+              if (state is NodesLoaded && state.pathId == widget.course.id) {
+                _cachedNodes = state.nodes;
+              }
 
-            // Show loading only if no cached nodes
-            if (state is LearningPathLoading && _cachedNodes == null) {
-              return const Center(child: CircularProgressIndicator());
-            }
+              // Show loading only if no cached nodes
+              if (state is LearningPathLoading && _cachedNodes == null) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-            if (state is LearningPathError && _cachedNodes == null) {
-              return Center(child: Text('Error: ${state.message}'));
-            }
+              if (state is LearningPathError && _cachedNodes == null) {
+                return Center(child: Text('Error: ${state.message}'));
+              }
 
-            // Use cached nodes or nodes from state
-            final nodes =
-                _cachedNodes ?? (state is NodesLoaded ? state.nodes : null);
+              // Use cached nodes or nodes from state
+              final nodes =
+                  _cachedNodes ?? (state is NodesLoaded ? state.nodes : null);
 
-            if (nodes != null && nodes.isNotEmpty) {
-              return Stack(
-                children: [
-                  /// ===== CORE =====
-                  NodesOverviewCore(
-                    isEditable: false,
-                    nodes: nodes,
-                    onNodeTap: (index) {
-                      if (index < nodes.length) {
-                        final currentNode = nodes[index];
-                        final nextRequiredSequence =
-                            _getNextRequiredSequence(nodes);
+              if (nodes != null && nodes.isNotEmpty) {
+                return Stack(
+                  children: [
+                    /// ===== CORE =====
+                    NodesOverviewCore(
+                      isEditable: false,
+                      showNodeTitle: true,
+                      nodes: nodes,
+                      onNodeTap: (index) {
+                        if (index < nodes.length) {
+                          final currentNode = nodes[index];
+                          final nextRequiredSequence = _getNextRequiredSequence(
+                            nodes,
+                          );
 
-                        if (currentNode.sequence > nextRequiredSequence) {
-                          _showOutOfOrderNodeSnackBar();
-                          return;
-                        }
+                          if (currentNode.sequence > nextRequiredSequence) {
+                            _showOutOfOrderNodeSnackBar();
+                            return;
+                          }
 
-                        final currentSequence = currentNode.sequence;
+                          final currentSequence = currentNode.sequence;
 
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => BlocProvider.value(
-                              value: context.read<LearningPathBloc>(),
-                              child: LearningNodePage(
-                                nodeId: currentNode.nodeId,                              pathId: widget.course.id,                                pathName: widget.course.title,
-                                totalNodes: nodes.length,
-                                currentNodeSequence: currentSequence,
-                                userId: _userId ?? '',
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BlocProvider.value(
+                                value: context.read<LearningPathBloc>(),
+                                child: LearningNodePage(
+                                  nodeId: currentNode.nodeId,
+                                  pathId: widget.course.id,
+                                  pathName: widget.course.title,
+                                  totalNodes: nodes.length,
+                                  currentNodeSequence: currentSequence,
+                                  userId: _userId ?? '',
+                                ),
                               ),
                             ),
-                          ),
-                        ).then((_) {
-                          if (!context.mounted) return;
-                          // Refetch nodes when returning from learning node page
-                          if (_userId != null && _userId!.isNotEmpty) {
-                            _fetchNodes(_userId!);
-                            // Also refetch overview to update enrolled path progress
-                            context.read<LearningPathBloc>().add(FetchLearningPathOverview());
-                          }
-                        });
-                      }
-                    },
-                  ),
+                          ).then((_) {
+                            if (!context.mounted) return;
+                            // Refetch nodes when returning from learning node page
+                            if (_userId != null && _userId!.isNotEmpty) {
+                              _fetchNodes(_userId!);
+                              // Also refetch overview to update enrolled path progress
+                              context.read<LearningPathBloc>().add(
+                                FetchLearningPathOverview(),
+                              );
+                            }
+                          });
+                        }
+                      },
+                    ),
 
-                  /// ===== HEADER (Dynamic Title + Progress) =====
-                  Positioned(
-                    top: 16,
-                    left: 0,
-                    right: 0,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        HeaderBar(
-                          title: widget.course.title,
-                          showAddButton: false,
-                        ),
-                        if (_currentEnrolledPath != null)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-                            child: Row(
-                              children: [
-                                // Status badge
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  color: _currentEnrolledPath!.progressStatus ==
-                                          'Completed'
-                                      ? AppColors.status
-                                      : AppColors.warning,
-                                  child: Text(
-                                    _currentEnrolledPath!.progressStatus,
-                                    style: AppTypography.smallBodyMedium
-                                        .copyWith(
-                                      color: AppColors.background,
-                                      fontWeight: FontWeight.bold,
+                    /// ===== HEADER (Dynamic Title + Progress) =====
+                    Positioned(
+                      top: 16,
+                      left: 0,
+                      right: 0,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          HeaderBar(
+                            title: widget.course.title,
+                            showAddButton: false,
+                          ),
+                          if (_currentEnrolledPath != null)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                              child: Row(
+                                children: [
+                                  // Status badge
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    color:
+                                        _currentEnrolledPath!.progressStatus ==
+                                            'Completed'
+                                        ? AppColors.status
+                                        : AppColors.warning,
+                                    child: Text(
+                                      _currentEnrolledPath!.progressStatus,
+                                      style: AppTypography.smallBodyMedium
+                                          .copyWith(
+                                            color: AppColors.background,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                // Nodes count
-                                Text(
-                                  '${_currentEnrolledPath!.completedNodes} / ${_currentEnrolledPath!.modules} nodes',
-                                  style: AppTypography.smallBodyMedium
-                                      .copyWith(
-                                    color: AppColors.textSecondary,
+                                  const SizedBox(width: 12),
+                                  // Nodes count
+                                  Text(
+                                    '${_currentEnrolledPath!.completedNodes} / ${_currentEnrolledPath!.modules} nodes',
+                                    style: AppTypography.smallBodyMedium
+                                        .copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '(${_currentEnrolledPath!.progressPercent.round()}%)',
-                                  style: AppTypography.smallBodyMedium
-                                      .copyWith(
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.bold,
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '(${_currentEnrolledPath!.progressPercent.round()}%)',
+                                    style: AppTypography.smallBodyMedium
+                                        .copyWith(
+                                          color: AppColors.textSecondary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              );
-            }
+                  ],
+                );
+              }
 
-            return const Center(child: CircularProgressIndicator());
-          },
-        ),
+              return const Center(child: CircularProgressIndicator());
+            },
+          ),
         ),
       ),
     );
