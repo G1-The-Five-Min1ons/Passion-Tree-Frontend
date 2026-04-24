@@ -36,6 +36,7 @@ class EditNodeModal extends StatefulWidget {
   final String? sequence;
   final NodeDetail? initialNode;
   final bool isReadOnly;
+  final bool canDeleteNode;
   final VoidCallback? onDeleteUnsavedNode;
 
   const EditNodeModal({
@@ -49,6 +50,7 @@ class EditNodeModal extends StatefulWidget {
     this.sequence,
     this.initialNode,
     this.isReadOnly = false,
+    this.canDeleteNode = true,
     this.onDeleteUnsavedNode,
   });
 
@@ -744,7 +746,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
                     const SizedBox(height: 14),
 
-                    if (!widget.isReadOnly)
+                    if (!widget.isReadOnly || widget.canDeleteNode)
                       BlocBuilder<LearningPathBloc, LearningPathState>(
                         builder: (context, state) {
                           final isLoading =
@@ -753,7 +755,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                               _isSubmitting;
 
                           return NodeFooter(
-                            onDelete: isLoading
+                            onDelete: !widget.canDeleteNode || isLoading
                                 ? null
                                 : () {
                                     if (_isFirstNode) {

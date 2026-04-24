@@ -359,7 +359,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           pathId: widget.pathId,
           sequence: sequence,
           initialNode: initialNode,
-          isReadOnly: _isPublished,
+          isReadOnly: false,
+          canDeleteNode: !_isPublished,
           onDeleteUnsavedNode: unsavedSequenceToDelete == null
               ? null
               : () => _removeUnsavedNodeBySequence(unsavedSequenceToDelete!),
