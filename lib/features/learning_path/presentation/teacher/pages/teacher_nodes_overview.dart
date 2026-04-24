@@ -553,7 +553,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           node.description.trim().isEmpty ||
           // node.linkVdo == null || node.linkVdo!.trim().isEmpty ||
           node.questions.isEmpty) {
-        
         hasIncompleteNode = true;
         break; // เจอตัวที่ไม่ครบปุ๊บ หยุดลูปทันที เพราะเราแค่ต้องการบอกภาพรวม
       }
@@ -562,12 +561,12 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     // แจ้งเตือนแบบภาพรวม
     if (hasIncompleteNode) {
       _showValidationError(
-        'Please ensure all nodes have complete information.'
+        'Please ensure all nodes have complete information.',
       );
       return false;
     }
 
-    return true; 
+    return true;
   }
 
   void _confirmPublish(BuildContext context) {
@@ -612,7 +611,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     }
 
     if (!_validateNodesForPublish()) {
-      return; 
+      return;
     }
 
     LogHandler.info(
@@ -1089,5 +1088,3 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     );
   }
 }
-
-

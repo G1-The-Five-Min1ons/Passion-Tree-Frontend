@@ -5,6 +5,7 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/uploaded_file.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class NodeInfoSection extends StatelessWidget {
   final ValueChanged<String> onTitleChanged;
@@ -51,6 +52,13 @@ class NodeInfoSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+
+    Future<void> openRemoteFile(String? filePath) async {
+      if (filePath == null || filePath.isEmpty) return;
+      final uri = Uri.tryParse(filePath.trim());
+      if (uri == null || !uri.hasScheme) return;
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,10 +181,21 @@ class NodeInfoSection extends StatelessWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        file.name,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.subtitleSemiBold,
+                      child: GestureDetector(
+                        onTap: isReadOnly
+                            ? null
+                            : () => openRemoteFile(file.path),
+                        child: Text(
+                          file.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.subtitleSemiBold.copyWith(
+                            decoration:
+                                file.path != null &&
+                                    Uri.tryParse(file.path!)?.hasScheme == true
+                                ? TextDecoration.underline
+                                : TextDecoration.none,
+                          ),
+                        ),
                       ),
                     ),
                     IconTheme(

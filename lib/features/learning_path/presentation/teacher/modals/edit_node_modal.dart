@@ -22,6 +22,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/nod
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_choice.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_detail_usecase.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -237,6 +238,45 @@ class _EditNodeModalState extends State<EditNodeModal> {
     });
   }
 
+  Future<void> _loadExistingNodeDetail() async {
+    if (widget.isNewNode) return;
+    if (widget.nodeId.startsWith('new_node_') ||
+        widget.nodeId.startsWith('draft_node_')) {
+      return;
+    }
+
+    try {
+      final getNodeDetail = getIt<GetNodeDetail>();
+      final node = await getNodeDetail(widget.nodeId, '');
+      if (!mounted) return;
+
+      setState(() {
+        _title = node.title;
+        _description = node.description;
+        _videoUrl = node.linkVdo ?? '';
+        _files
+          ..clear()
+          ..addAll(
+            node.materials
+                .where((material) => material.url.trim().isNotEmpty)
+                .map(
+                  (material) => UploadedFileItem(
+                    name: _deriveDisplayFileName(material.url),
+                    size: 0,
+                    path: material.url,
+                  ),
+                ),
+          );
+      });
+
+      if (_videoUrl.trim().isNotEmpty) {
+        _scheduleVideoUrlValidation();
+      }
+    } catch (_) {
+      // Fallback to the initial node data if reloading the full detail fails.
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -285,6 +325,10 @@ class _EditNodeModalState extends State<EditNodeModal> {
       if (_videoUrl.trim().isNotEmpty) {
         _scheduleVideoUrlValidation();
       }
+    }
+
+    if (!widget.isNewNode) {
+      _loadExistingNodeDetail();
     }
   }
 
