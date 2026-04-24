@@ -67,8 +67,22 @@ class _EditNodeModalState extends State<EditNodeModal> {
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
   Map<String, String> _materialNameByUrl = {};
   List<NodeQuiz> _quizzes = []; //ส่วนเพิ่ม quiz
+  final Map<String, NodeQuiz> _persistedQuizzesByQuestionId = {};
   bool _isUploading = false;
   bool _isSubmitting = false;
+
+  void _syncPersistedQuizSnapshot(List<NodeQuiz> sourceQuizzes) {
+    _persistedQuizzesByQuestionId
+      ..clear()
+      ..addEntries(
+        sourceQuizzes
+            .where(
+              (quiz) =>
+                  quiz.questionId != null && quiz.questionId!.trim().isNotEmpty,
+            )
+            .map((quiz) => MapEntry(quiz.questionId!.trim(), quiz)),
+      );
+  }
 
   String _normalizeVideoUrl(String value) {
     final trimmed = value.trim();
@@ -256,6 +270,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
           choiceIds: choiceIds,
         );
       }).toList();
+      _syncPersistedQuizSnapshot(_quizzes);
 
       // Fetch latest questions only for existing backend nodes.
       if (!widget.isNewNode) {
@@ -305,6 +320,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
       setState(() {
         _quizzes = quizzesFromApi;
       });
+      _syncPersistedQuizSnapshot(quizzesFromApi);
     } catch (_) {
       // ถ้าโหลดคำถามไม่สำเร็จ จะใช้ค่าเดิมจาก initialNode แทน
     }
@@ -518,6 +534,14 @@ class _EditNodeModalState extends State<EditNodeModal> {
         if (!context.mounted) return;
 
         final normalizedVideoUrl = _normalizeVideoUrl(_videoUrl);
+        final currentQuestionIds = _quizzes
+            .map((quiz) => quiz.questionId?.trim() ?? '')
+            .where((id) => id.isNotEmpty)
+            .toSet();
+        final deletedQuizzes = _persistedQuizzesByQuestionId.entries
+            .where((entry) => !currentQuestionIds.contains(entry.key))
+            .map((entry) => entry.value)
+            .toList();
 
         context.read<LearningPathBloc>().add(
           UpdateNodeEvent(
@@ -527,6 +551,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             linkvdo: _videoUrl.isNotEmpty ? normalizedVideoUrl : null,
             materials: materials,
             quizzes: _quizzes,
+            deletedQuizzes: deletedQuizzes,
           ),
         );
       } catch (e) {

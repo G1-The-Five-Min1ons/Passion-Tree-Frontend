@@ -59,6 +59,7 @@ abstract class LearningPathRepository {
     String reasoning,
   );
   Future<void> deleteChoice(String choiceId);
+  Future<void> deleteQuestion(String questionId);
   Future<AIGenerateResponse> generateNodesWithAI(String topic);
   Future<LearningPath> getLearningPathById(String pathId);
   Future<void> updateNode(

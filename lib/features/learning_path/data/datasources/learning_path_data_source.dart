@@ -524,6 +524,14 @@ class LearningPathDataSource {
     _throwIfError(response, 'DELETE choice/$choiceId');
   }
 
+  Future<void> deleteQuestion(String questionId) async {
+    final response = await _apiHandler.delete(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/questions/$questionId',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'DELETE question/$questionId');
+  }
+
   // ── AI ────────────────────────────────────────────────────────────────────
 
   Future<AIGenerateResponseApiModel> generateNodesWithAI(String topic) async {

@@ -61,6 +61,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/upd
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_choice_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_choice_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_choice_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_question_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enrolled_learning_paths.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_progress_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
@@ -360,6 +361,9 @@ Future<void> initializeDependencies() async {
   getIt.registerFactory<DeleteChoiceUseCase>(
     () => DeleteChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
   );
+  getIt.registerFactory<DeleteQuestionUseCase>(
+    () => DeleteQuestionUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
 
   // Learning Path Bloc
   getIt.registerFactory<LearningPathBloc>(
@@ -386,6 +390,7 @@ Future<void> initializeDependencies() async {
       getIt<UpdateChoiceUseCase>(),
       getIt<CreateChoiceUseCase>(),
       getIt<DeleteChoiceUseCase>(),
+      getIt<DeleteQuestionUseCase>(),
       getIt<SubmitReview>(),
       getIt<GetMyRating>(),
       getIt<DeleteRating>(),
