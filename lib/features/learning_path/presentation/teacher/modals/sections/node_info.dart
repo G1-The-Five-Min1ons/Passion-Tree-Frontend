@@ -130,42 +130,62 @@ class NodeInfoSection extends StatelessWidget {
         const SizedBox(height: 12),
 
         // ===== MATERIALS =====
-        Text(
-          'Upload Learning Materials',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-        ),
+        if (!isReadOnly) ...
+          [
+            Text(
+              'Upload Learning Materials',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
 
-        const SizedBox(height: 8),
+            const SizedBox(height: 8),
 
-        // ===== UPLOAD FILE =====
-        GestureDetector(
-          onTap: isReadOnly ? null : onUploadFile,
-          child: PixelBorderContainer(
-            width: double.infinity,
-            height: 150,
-            padding: EdgeInsets.zero,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.upload, size: 48, color: AppColors.textSecondary),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Click to upload or drag and drop file\nMax 200MB',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary.withValues(alpha: 0.5),
-                    ),
+            // ===== UPLOAD FILE =====
+            GestureDetector(
+              onTap: onUploadFile,
+              child: PixelBorderContainer(
+                width: double.infinity,
+                height: 150,
+                padding: EdgeInsets.zero,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.upload,
+                        size: 48,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Click to upload or drag and drop file\nMax 200MB',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
 
-        const SizedBox(height: 12),
+            const SizedBox(height: 12),
+          ]
+        else if (files.isNotEmpty) ...
+          [
+            Text(
+              'Learning Materials',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+
+            const SizedBox(height: 8),
+          ],
 
         // ===== FILE LIST =====
         Column(

@@ -6,7 +6,6 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_bottom.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/edit_node_modal.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_core.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/teacher/confirm_popup.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/generated_node.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
@@ -78,7 +77,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   int _queuedPublishRetryCount = 0;
   bool _shouldExitAfterPathUpdate = false;
   String? _requestedPathUpdateStatus;
-  bool _allowPopAfterSave = false;
   late String
   _displayTitle; // Title ที่แสดงใน header (อัพเดทจาก backend เมื่อโหลดเสร็จ)
 
@@ -548,11 +546,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     for (int i = 0; i < nodes.length; i++) {
       final node = nodes[i];
 
-      // ตรวจสอบฟิลด์ที่บังคับ (ถ้าจะใช้เช็ค Video URL ด้วย ก็เอาคอมเมนต์ออกได้เลยครับ)
-      if (node.title.trim().isEmpty ||
-          node.description.trim().isEmpty ||
-          // node.linkVdo == null || node.linkVdo!.trim().isEmpty ||
-          node.questions.isEmpty) {
+      // ตรวจสอบเฉพาะข้อมูลที่ overview มีจริง
+      if (node.title.trim().isEmpty || node.description.trim().isEmpty) {
         hasIncompleteNode = true;
         break; // เจอตัวที่ไม่ครบปุ๊บ หยุดลูปทันที เพราะเราแค่ต้องการบอกภาพรวม
       }
@@ -999,8 +994,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             'TeacherNodesOverview: Save Draft success, leaving current page',
           );
 
-          _allowPopAfterSave = true;
-
           if (_isAiPath) {
             final navigator = Navigator.of(context);
             if (navigator.canPop()) navigator.pop();
@@ -1020,8 +1013,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             _queuedSaveDraftAfterPathLoad = false;
             _requestedPathUpdateStatus = null;
           });
-
-          _allowPopAfterSave = false;
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
