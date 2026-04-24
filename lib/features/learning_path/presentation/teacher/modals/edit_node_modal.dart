@@ -70,6 +70,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
   List<NodeQuiz> _quizzes = []; //ส่วนเพิ่ม quiz
   bool _isUploading = false;
   bool _isSubmitting = false;
+  int _saveAttemptCount = 0;
   Timer? _videoUrlValidationTimer;
   bool _shouldShowVideoUrlValidation = false;
 
@@ -100,18 +101,24 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
   bool get _isValidVideoUrl {
     final value = _videoUrl.trim();
-    if (value.isEmpty) return false;
+    if (value.isEmpty) return true; // Video URL is optional
     final normalized = _normalizeVideoUrl(value);
     final uri = Uri.tryParse(normalized);
     return uri != null && uri.hasAuthority && uri.host.contains('.');
   }
 
   String? get _videoUrlWarningText {
+    if (_saveAttemptCount < 1) return null;
     final value = _videoUrl.trim();
-    if (!_shouldShowVideoUrlValidation) return null;
-    if (value.isEmpty) return 'Video URL is required';
+    if (value.isEmpty) return null; // Not required, no warning when empty
     if (_isValidVideoUrl) return null;
     return 'Video URL must be a valid URL.';
+  }
+
+  bool get _hasMaterialContent {
+    final hasVideoUrl = _videoUrl.trim().isNotEmpty && _isValidVideoUrl;
+    final hasFiles = _files.isNotEmpty;
+    return hasVideoUrl || hasFiles;
   }
 
   bool get _hasRequiredQuiz {
@@ -123,12 +130,10 @@ class _EditNodeModalState extends State<EditNodeModal> {
   }
 
   bool get _isSaveEnabled {
-    final isVideoUrlReady =
-        _videoUrl.trim().isEmpty || _shouldShowVideoUrlValidation;
     return _title.trim().isNotEmpty &&
         _description.trim().isNotEmpty &&
-        isVideoUrlReady &&
-        _isValidVideoUrl &&
+        _isValidVideoUrl && // only validates format when non-empty
+        _hasMaterialContent && // require video URL or files
         _hasRequiredQuiz;
   }
 
@@ -156,11 +161,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
   }
 
   String? get _titleWarningText {
+    if (_saveAttemptCount < 1) return null;
     if (_isTitleValid) return null;
     return 'Title is required';
   }
 
   String? get _descriptionWarningText {
+    if (_saveAttemptCount < 1) return null;
     if (_isDescriptionValid) return null;
     return 'Description is required';
   }
@@ -497,11 +504,39 @@ class _EditNodeModalState extends State<EditNodeModal> {
   Future<void> _handleUpdate(BuildContext context) async {
     // Guard against double-tap / duplicate submit while the first request is in-flight.
     if (_isSubmitting) return;
-    setState(() => _isSubmitting = true);
 
-    if (!_isValidVideoUrl) {
+    // Increment save attempt counter so validation warnings become visible
+    setState(() {
+      _saveAttemptCount++;
+      _isSubmitting = true;
+    });
+
+    // Check overall validity and abort with visible warnings if incomplete
+    if (!_isSaveEnabled) {
       setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
+
+      // Show specific message for missing material content on 2nd+ failed attempt
+      if (!_hasMaterialContent && _saveAttemptCount >= 2) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please provide at least a Video URL or upload a file.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
+          ),
+        );
+      }
+      return;
+    }
+
+    if (_videoUrl.trim().isNotEmpty && !_isValidVideoUrl) {
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
         const SnackBar(
           content: Text(
             'Video URL must be a valid URL.',
@@ -721,7 +756,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                       onVideoUrlChanged: _handleVideoUrlChanged,
                       videoUrlWarningText: _videoUrlWarningText,
                       isVideoUrlInvalid:
-                          _shouldShowVideoUrlValidation &&
+                          _saveAttemptCount >= 1 &&
                           _videoUrl.trim().isNotEmpty &&
                           !_isValidVideoUrl,
                       isReadOnly: widget.isReadOnly,
@@ -812,7 +847,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                                       },
                                     );
                                   },
-                            onSave: isLoading || !_isSaveEnabled
+                            onSave: isLoading
                                 ? null
                                 : () => _handleUpdate(context),
                           );

@@ -110,7 +110,7 @@ class NodeInfoSection extends StatelessWidget {
 
         // ===== VIDEO URL =====
         PixelTextField(
-          label: 'Video URL *',
+          label: 'Video URL',
           hintText: 'Enter YouTube video URL',
           height: 35,
           value: videoUrlValue,
