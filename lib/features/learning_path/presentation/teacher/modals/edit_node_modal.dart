@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -56,6 +57,7 @@ class EditNodeModal extends StatefulWidget {
 
 class _EditNodeModalState extends State<EditNodeModal> {
   static const String _materialNameMapKey = 'learning_path_material_name_map';
+  static const Duration _videoUrlValidationDelay = Duration(seconds: 2);
 
   String _title = '';
   String _description = '';
@@ -65,6 +67,8 @@ class _EditNodeModalState extends State<EditNodeModal> {
   List<NodeQuiz> _quizzes = []; //ส่วนเพิ่ม quiz
   bool _isUploading = false;
   bool _isSubmitting = false;
+  Timer? _videoUrlValidationTimer;
+  bool _shouldShowVideoUrlValidation = false;
 
   String _normalizeVideoUrl(String value) {
     final trimmed = value.trim();
@@ -101,9 +105,10 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
   String? get _videoUrlWarningText {
     final value = _videoUrl.trim();
+    if (!_shouldShowVideoUrlValidation) return null;
     if (value.isEmpty) return 'Video URL is required';
     if (_isValidVideoUrl) return null;
-    return 'Video URL ต้องเป็นลิงก์ที่ถูกต้อง เช่น youtube.com/...';
+    return 'Video URL must be a valid URL.';
   }
 
   bool get _hasRequiredQuiz {
@@ -115,8 +120,11 @@ class _EditNodeModalState extends State<EditNodeModal> {
   }
 
   bool get _isSaveEnabled {
+    final isVideoUrlReady =
+        _videoUrl.trim().isEmpty || _shouldShowVideoUrlValidation;
     return _title.trim().isNotEmpty &&
         _description.trim().isNotEmpty &&
+        isVideoUrlReady &&
         _isValidVideoUrl &&
         _hasRequiredQuiz;
   }
@@ -124,6 +132,25 @@ class _EditNodeModalState extends State<EditNodeModal> {
   bool get _isTitleValid => _title.trim().isNotEmpty;
 
   bool get _isDescriptionValid => _description.trim().isNotEmpty;
+
+  void _scheduleVideoUrlValidation() {
+    _videoUrlValidationTimer?.cancel();
+    _shouldShowVideoUrlValidation = false;
+    _videoUrlValidationTimer = Timer(_videoUrlValidationDelay, () {
+      if (!mounted) return;
+      setState(() {
+        _shouldShowVideoUrlValidation = true;
+      });
+    });
+  }
+
+  void _handleVideoUrlChanged(String value) {
+    setState(() {
+      _videoUrl = value;
+      _shouldShowVideoUrlValidation = false;
+    });
+    _scheduleVideoUrlValidation();
+  }
 
   String? get _titleWarningText {
     if (_isTitleValid) return null;
@@ -133,11 +160,6 @@ class _EditNodeModalState extends State<EditNodeModal> {
   String? get _descriptionWarningText {
     if (_isDescriptionValid) return null;
     return 'Description is required';
-  }
-
-  String? get _quizWarningText {
-    if (_hasRequiredQuiz) return null;
-    return 'Please add at least 1 question with 2 or more choices.';
   }
 
   String _deriveDisplayFileName(String url) {
@@ -259,7 +281,17 @@ class _EditNodeModalState extends State<EditNodeModal> {
       if (!widget.isNewNode) {
         _loadQuestionsFromApi();
       }
+
+      if (_videoUrl.trim().isNotEmpty) {
+        _scheduleVideoUrlValidation();
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _videoUrlValidationTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadQuestionsFromApi() async {
@@ -426,7 +458,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Video URL ต้องเป็นลิงก์ที่ถูกต้อง เช่น youtube.com/...',
+            'Video URL must be a valid URL.',
             style: TextStyle(color: AppColors.textPrimary),
           ),
           backgroundColor: AppColors.cancel,
@@ -635,14 +667,17 @@ class _EditNodeModalState extends State<EditNodeModal> {
                           setState(() => _description = v),
                       isTitleInvalid: false,
                       isDescriptionInvalid: false,
-                      titleWarningText: null,
-                      descriptionWarningText: null,
+                      titleWarningText: _titleWarningText,
+                      descriptionWarningText: _descriptionWarningText,
 
                       // ===== VIDEO URL =====
                       videoUrlValue: _videoUrl,
-                      onVideoUrlChanged: (v) => setState(() => _videoUrl = v),
-                      videoUrlWarningText: null,
-                      isVideoUrlInvalid: false,
+                      onVideoUrlChanged: _handleVideoUrlChanged,
+                      videoUrlWarningText: _videoUrlWarningText,
+                      isVideoUrlInvalid:
+                          _shouldShowVideoUrlValidation &&
+                          _videoUrl.trim().isNotEmpty &&
+                          !_isValidVideoUrl,
                       isReadOnly: widget.isReadOnly,
 
                       // ===== FILE UPLOAD =====

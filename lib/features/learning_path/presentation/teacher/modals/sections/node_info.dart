@@ -106,7 +106,6 @@ class NodeInfoSection extends StatelessWidget {
           hintText: 'Enter YouTube video URL',
           height: 35,
           value: videoUrlValue,
-          borderColor: isVideoUrlInvalid ? AppColors.cancel : null,
           onChanged: isReadOnly ? null : (onVideoUrlChanged ?? (_) {}),
           readOnly: isReadOnly,
         ),

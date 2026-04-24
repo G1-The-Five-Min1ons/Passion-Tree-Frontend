@@ -79,19 +79,16 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
   Future<void> _loadCurrentUserProfile() async {
     try {
       final result = await getIt<GetProfileUseCase>().execute();
-      result.fold(
-        (_) {},
-        (userProfile) {
-          if (!mounted) return;
-          final firstName = userProfile.user.firstName;
-          final username = userProfile.user.username;
-          final name = firstName.isNotEmpty ? firstName : username;
-          setState(() {
-            _currentUserAvatarUrl = userProfile.profile?.avatarUrl;
-            _currentUserInitial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-          });
-        },
-      );
+      result.fold((_) {}, (userProfile) {
+        if (!mounted) return;
+        final firstName = userProfile.user.firstName;
+        final username = userProfile.user.username;
+        final name = firstName.isNotEmpty ? firstName : username;
+        setState(() {
+          _currentUserAvatarUrl = userProfile.profile?.avatarUrl;
+          _currentUserInitial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+        });
+      });
     } catch (_) {
       // ไม่แสดง error หาก load profile ไม่สำเร็จ — fallback คือตัวอักษร '?'
     }
@@ -246,6 +243,24 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
     );
   }
 
+  String _resolveRootCommentId(
+    Comment comment,
+    Map<String, Comment> commentsById,
+  ) {
+    var current = comment;
+    final visited = <String>{current.commentId};
+
+    while (current.parentId != null && current.parentId!.isNotEmpty) {
+      final parent = commentsById[current.parentId!];
+      if (parent == null || !visited.add(parent.commentId)) {
+        break;
+      }
+      current = parent;
+    }
+
+    return current.commentId;
+  }
+
   @override
   void dispose() {
     _commentController.dispose();
@@ -275,7 +290,6 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
                     : _cachedComments.length;
                 return Row(
                   children: [
-                    
                     Text(
                       'Comments',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -290,7 +304,9 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.secondaryBrand.withValues(alpha: 0.15),
+                          color: AppColors.secondaryBrand.withValues(
+                            alpha: 0.15,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -309,7 +325,11 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
             ),
           ),
 
-          Divider(height: 1, thickness: 0.5, color: Colors.white.withValues(alpha: 0.15)),
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: Colors.white.withValues(alpha: 0.15),
+          ),
 
           // ===== COMMENTS LIST =====
           BlocBuilder<CommentBloc, CommentState>(
@@ -341,11 +361,16 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
                   ? state.comments
                   : _cachedComments;
 
-              final commentsByParent = <String, List<Comment>>{};
+              final commentsById = {
+                for (final comment in comments) comment.commentId: comment,
+              };
+
+              final repliesByRoot = <String, List<Comment>>{};
               for (final comment in comments) {
                 final parentId = comment.parentId;
                 if (parentId != null && parentId.isNotEmpty) {
-                  commentsByParent.putIfAbsent(parentId, () => []).add(comment);
+                  final rootId = _resolveRootCommentId(comment, commentsById);
+                  repliesByRoot.putIfAbsent(rootId, () => []).add(comment);
                 }
               }
 
@@ -366,12 +391,11 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
                         const SizedBox(height: 12),
                         Text(
                           'No comments yet',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colors.onSurface.withValues(alpha: 0.5),
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colors.onSurface.withValues(alpha: 0.5),
+                              ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -395,16 +419,19 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: rootComments.length,
-                separatorBuilder: (_, _) => Divider(height: 1, thickness: 0.5, color: Colors.white.withValues(alpha: 0.15)),
+                separatorBuilder: (_, _) => Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
                 itemBuilder: (context, index) {
                   final comment = rootComments[index];
-                  final replies = commentsByParent[comment.commentId] ?? const [];
+                  final replies = repliesByRoot[comment.commentId] ?? const [];
 
                   return _CommentItem(
                     key: ValueKey(comment.commentId),
                     comment: comment,
                     replies: replies,
-                    repliesByParent: commentsByParent,
                     nodeId: widget.nodeId,
                     pathId: widget.pathId,
                     onDelete: () => _deleteComment(comment.commentId),
@@ -417,7 +444,11 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
             },
           ),
 
-          Divider(height: 1, thickness: 0.5, color: Colors.white.withValues(alpha: 0.15)),
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: Colors.white.withValues(alpha: 0.15),
+          ),
 
           // ===== INPUT AREA (ด้านล่าง) =====
           _CommentInputArea(
@@ -510,10 +541,10 @@ class _CommentInputAreaState extends State<_CommentInputArea> {
       builder: (context, state) {
         final uniqueUserNames = state is CommentLoaded
             ? state.comments
-                .map((c) => c.userName)
-                .where((n) => n.isNotEmpty)
-                .toSet()
-                .toList()
+                  .map((c) => c.userName)
+                  .where((n) => n.isNotEmpty)
+                  .toSet()
+                  .toList()
             : <String>[];
 
         final filteredUsers = uniqueUserNames
@@ -570,7 +601,10 @@ class _CommentInputAreaState extends State<_CommentInputArea> {
             // Reply indicator banner
             if (widget.replyingToUsername != null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 color: colors.primary.withValues(alpha: 0.08),
                 child: Row(
                   children: [
@@ -605,7 +639,10 @@ class _CommentInputAreaState extends State<_CommentInputArea> {
             // Edit indicator banner
             if (widget.editingUsername != null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 color: colors.secondary.withValues(alpha: 0.12),
                 child: Row(
                   children: [
@@ -645,11 +682,16 @@ class _CommentInputAreaState extends State<_CommentInputArea> {
                 children: [
                   CircleAvatar(
                     radius: 18,
-                    backgroundColor: AppColors.primaryBrand.withValues(alpha: 0.35),
-                    backgroundImage: (widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty)
+                    backgroundColor: AppColors.primaryBrand.withValues(
+                      alpha: 0.35,
+                    ),
+                    backgroundImage:
+                        (widget.avatarUrl != null &&
+                            widget.avatarUrl!.isNotEmpty)
                         ? NetworkImage(widget.avatarUrl!)
                         : null,
-                    child: (widget.avatarUrl == null || widget.avatarUrl!.isEmpty)
+                    child:
+                        (widget.avatarUrl == null || widget.avatarUrl!.isEmpty)
                         ? Text(
                             widget.userInitial,
                             style: const TextStyle(
@@ -681,7 +723,12 @@ class _CommentInputAreaState extends State<_CommentInputArea> {
                           ),
                           border: InputBorder.none,
                           isDense: true,
-                          contentPadding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                          contentPadding: const EdgeInsets.fromLTRB(
+                            12,
+                            10,
+                            12,
+                            10,
+                          ),
                         ),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: colors.onSurface,
@@ -714,7 +761,6 @@ class _CommentInputAreaState extends State<_CommentInputArea> {
 class _CommentItem extends StatefulWidget {
   final Comment comment;
   final List<Comment> replies;
-  final Map<String, List<Comment>> repliesByParent;
   final String? nodeId;
   final String? pathId;
   final VoidCallback onDelete;
@@ -727,7 +773,6 @@ class _CommentItem extends StatefulWidget {
     super.key,
     required this.comment,
     required this.replies,
-    required this.repliesByParent,
     this.nodeId,
     this.pathId,
     required this.onDelete,
@@ -744,16 +789,6 @@ class _CommentItem extends StatefulWidget {
 class _CommentItemState extends State<_CommentItem> {
   bool _showReplies = false;
 
-  @override
-  void didUpdateWidget(_CommentItem oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.replies.length > oldWidget.replies.length) {
-      setState(() {
-        _showReplies = true;
-      });
-    }
-  }
-
   List<TextSpan> _buildMessageSpans(String message, Color primaryColor) {
     final spans = <TextSpan>[];
     int start = 0;
@@ -767,7 +802,10 @@ class _CommentItemState extends State<_CommentItem> {
       spans.add(
         TextSpan(
           text: match.group(0),
-          style: const TextStyle(color: AppColors.secondaryBrand, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: AppColors.secondaryBrand,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       );
       start = match.end;
@@ -809,12 +847,7 @@ class _CommentItemState extends State<_CommentItem> {
         .length;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        widget.isNested ? 0 : 16,
-        8,
-        16,
-        8,
-      ),
+      padding: EdgeInsets.fromLTRB(widget.isNested ? 0 : 16, 8, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -848,9 +881,9 @@ class _CommentItemState extends State<_CommentItem> {
                       ),
                       decoration: BoxDecoration(
                         color: colors.surfaceContainer,
-                        borderRadius: BorderRadius.circular(16).copyWith(
-                          topLeft: const Radius.circular(4),
-                        ),
+                        borderRadius: BorderRadius.circular(
+                          16,
+                        ).copyWith(topLeft: const Radius.circular(4)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -883,7 +916,9 @@ class _CommentItemState extends State<_CommentItem> {
                             _formatTimeAgo(widget.comment.createdAt),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                                  color: colors.onSurface.withValues(alpha: 0.5),
+                                  color: colors.onSurface.withValues(
+                                    alpha: 0.5,
+                                  ),
                                 ),
                           ),
                           const SizedBox(width: 16),
@@ -914,16 +949,15 @@ class _CommentItemState extends State<_CommentItem> {
                                   const SizedBox(width: 3),
                                   Text(
                                     '$likeCount',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall?.copyWith(
-                                      color: isLiked
-                                          ? Colors.red
-                                          : colors.onSurface.withValues(
-                                              alpha: 0.5,
-                                            ),
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: isLiked
+                                              ? Colors.red
+                                              : colors.onSurface.withValues(
+                                                  alpha: 0.5,
+                                                ),
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
                                 ],
                               ],
@@ -937,15 +971,15 @@ class _CommentItemState extends State<_CommentItem> {
                             ),
                             child: Text(
                               'Reply',
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.iconbar,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.iconbar,
+                                  ),
                             ),
                           ),
-                          if (widget.replies.isNotEmpty) ...[
+                          if (!widget.isNested &&
+                              widget.replies.isNotEmpty) ...[
                             const SizedBox(width: 16),
                             GestureDetector(
                               onTap: () {
@@ -957,12 +991,11 @@ class _CommentItemState extends State<_CommentItem> {
                                 _showReplies
                                     ? 'Hide replies'
                                     : '${widget.replies.length} ${widget.replies.length == 1 ? "reply" : "replies"}',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodySmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.iconbar,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.iconbar,
+                                    ),
                               ),
                             ),
                           ],
@@ -1000,7 +1033,7 @@ class _CommentItemState extends State<_CommentItem> {
           ),
 
           // Replies
-          if (_showReplies && widget.replies.isNotEmpty)
+          if (!widget.isNested && _showReplies && widget.replies.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(left: 46.0, top: 4.0),
               child: ListView.builder(
@@ -1011,8 +1044,7 @@ class _CommentItemState extends State<_CommentItem> {
                   final reply = widget.replies[index];
                   return _CommentItem(
                     comment: reply,
-                    replies: widget.repliesByParent[reply.commentId] ?? const [],
-                    repliesByParent: widget.repliesByParent,
+                    replies: const [],
                     nodeId: widget.nodeId,
                     pathId: widget.pathId,
                     currentUserId: widget.currentUserId,
