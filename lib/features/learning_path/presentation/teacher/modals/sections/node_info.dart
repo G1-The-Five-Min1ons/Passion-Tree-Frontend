@@ -116,7 +116,9 @@ class NodeInfoSection extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6, left: 10),
             child: Text(
               videoUrlWarningText!,
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.cancel),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.cancel,
+              ),
             ),
           ),
 
