@@ -515,7 +515,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                       },
                     ),
 
-                  if (item.chapters.isNotEmpty)
+                  if (item.chapters.isNotEmpty && !_isTreeReflectionClosed(item))
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: AppButton(

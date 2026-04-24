@@ -31,7 +31,11 @@ class _SelectPausePeriodPopupState extends State<SelectPausePeriodPopup> {
   DateTime? toDate;
 
   void _openRangePicker() async {
-    final List<DateTime?>? pickedRange = await PixelCalendarDialog.show(context);
+    final List<DateTime?>? pickedRange = await PixelCalendarDialog.show(
+      context,
+      initialRangeStart: fromDate,
+      initialRangeEnd: toDate,
+    );
 
     if (pickedRange != null && pickedRange.length == 2) {
       setState(() {

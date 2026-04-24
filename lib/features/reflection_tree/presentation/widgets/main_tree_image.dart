@@ -27,7 +27,7 @@ class MainTreeImage extends StatelessWidget {
   }
 
   String _moodFromTreeScore(double? score) {
-    if (score == null) return 'neutral';
+    if (score == null) return 'happy';
     if (score <= 3.33) return 'dislike';
     if (score <= 6.66) return 'neutral';
     return 'happy';

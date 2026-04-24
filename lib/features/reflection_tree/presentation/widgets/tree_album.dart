@@ -314,14 +314,14 @@ class TreeAlbumCard extends StatelessWidget {
                     Text(
                       "Paused",
                       style: AppPixelTypography.smallTitle.copyWith(
-                        color: AppColors.surface,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       "Resume on : ${resumeOn ?? '-'}",
                       style: AppTypography.smallBodyRegular.copyWith(
-                        color: AppColors.surface,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
