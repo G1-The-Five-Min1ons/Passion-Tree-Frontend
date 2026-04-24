@@ -335,7 +335,8 @@ class ApiHandler {
     final statusCode = response.statusCode;
 
     try {
-      final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+      final jsonData = jsonDecode(utf8.decode(response.bodyBytes))
+          as Map<String, dynamic>;
 
       LogHandler.response(
         method: method,
