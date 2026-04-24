@@ -94,9 +94,17 @@ class AuthRepositoryImpl implements IAuthRepository {
     }
   }
 
-  /// Generic helper method for OAuth login operations
+  /// Generic helper method for OAuth login operations.
+  ///
+  /// [refreshToken] is optional only for backward-compat with older backend
+  /// builds that didn't return one. When it's a non-empty string we persist it
+  /// so the ApiHandler's silent-refresh path works after the access token
+  /// expires — without this, OAuth sessions cannot survive token expiry and
+  /// subsequent API calls (e.g. Reflection/Album endpoints) fail with 401 and
+  /// a forced logout.
   Future<UserProfile> _handleOAuthLogin({
     required String token,
+    String? refreshToken,
     required String userId,
     required String username,
     required String role,
@@ -107,6 +115,14 @@ class AuthRepositoryImpl implements IAuthRepository {
   }) async {
     LogHandler.info('$logContext: Saving authentication data...');
     await _localDataSource.saveToken(token);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _localDataSource.saveRefreshToken(refreshToken);
+      LogHandler.info('$logContext: Refresh token saved');
+    } else {
+      LogHandler.warning(
+        '$logContext: No refresh_token in response — silent refresh will fail once the access token expires. Backend may be outdated.',
+      );
+    }
     await _localDataSource.saveUserId(userId);
     await _localDataSource.saveUsername(username);
     await _localDataSource.saveRole(role);
@@ -353,6 +369,7 @@ class AuthRepositoryImpl implements IAuthRepository {
 
     return _handleOAuthLogin(
       token: response.token,
+      refreshToken: response.refreshToken,
       userId: response.userId,
       username: response.username,
       role: response.role,
@@ -373,6 +390,7 @@ class AuthRepositoryImpl implements IAuthRepository {
 
     return _handleOAuthLogin(
       token: response.token,
+      refreshToken: response.refreshToken,
       userId: response.userId,
       username: response.username,
       role: response.role,
