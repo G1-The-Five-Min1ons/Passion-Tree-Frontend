@@ -186,6 +186,7 @@ class NodeInfoSection extends StatelessWidget {
 
             const SizedBox(height: 8),
           ],
+          
 
         // ===== FILE LIST =====
         Column(
@@ -198,36 +199,37 @@ class NodeInfoSection extends StatelessWidget {
                 width: double.infinity,
                 height: 40,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: isReadOnly
-                            ? null
-                            : () => openRemoteFile(file.path),
-                        child: Text(
-                          file.name,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.subtitleSemiBold.copyWith(
-                            decoration:
-                                file.path != null &&
-                                    Uri.tryParse(file.path!)?.hasScheme == true
-                                ? TextDecoration.underline
-                                : TextDecoration.none,
+                child: SizedBox.expand(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => openRemoteFile(file.path),
+                          child: Text(
+                            file.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.subtitleSemiBold.copyWith(
+                              decoration:
+                                  file.path != null &&
+                                      Uri.tryParse(file.path!)?.hasScheme ==
+                                          true
+                                  ? TextDecoration.underline
+                                  : TextDecoration.none,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    IconTheme(
-                      data: const IconThemeData(size: 18),
-                      child: isReadOnly
-                          ? const SizedBox.shrink()
-                          : CloseIcon(
-                              color: colors.error,
-                              onPressed: () => onRemoveFile(index),
-                            ),
-                    ),
-                  ],
+                      if (!isReadOnly)
+                        IconTheme(
+                          data: const IconThemeData(size: 18),
+                          child: CloseIcon(
+                            color: colors.error,
+                            onPressed: () => onRemoveFile(index),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             );
