@@ -67,6 +67,33 @@ class AuthRepositoryImpl implements IAuthRepository {
     }
   }
 
+  bool _isJwtExpired(String token) {
+    if (token.isEmpty) return true; // เช็คเบื้องต้น
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return true;
+      
+      final normalizedPayload = base64Url.normalize(parts[1]);
+      final payload = jsonDecode(utf8.decode(base64Url.decode(normalizedPayload)));
+      
+      final exp = payload['exp'];
+      if (exp is! num) return true;
+
+      final expiry = DateTime.fromMillisecondsSinceEpoch(
+        exp.toInt() * 1000,
+        isUtc: true,
+      );
+
+      // ✅ เพิ่ม Buffer 30 วินาที เพื่อสั่ง Refresh ก่อนหมดจริง
+      // ช่วยลดโอกาสที่ Request จะพังกลางทางจังหวะหมดอายุพอดี
+      final nowWithBuffer = DateTime.now().toUtc().add(const Duration(seconds: 30));
+      return nowWithBuffer.isAfter(expiry);
+    } catch (e) {
+      LogHandler.error('JWT Decode failed: $e');
+      return true;
+    }
+  }
+
   /// Generic helper method for OAuth login operations
   Future<UserProfile> _handleOAuthLogin({
     required String token,
@@ -303,9 +330,10 @@ class AuthRepositoryImpl implements IAuthRepository {
   @override
   Future<void> logout() async {
     final token = await _localDataSource.getToken();
+    final refreshToken = await _localDataSource.getRefreshToken();
     if (token != null && token.isNotEmpty) {
       try {
-        await _remoteDataSource.logout(token);
+        await _remoteDataSource.logout(token, refreshToken: refreshToken);
       } catch (e) {
         LogHandler.warning(
           'AuthRepository: remote logout failed, clearing local auth anyway: $e',
@@ -386,7 +414,25 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<bool> isLoggedIn() async {
-    return await _localDataSource.isLoggedIn();
+    final accessToken = await _localDataSource.getToken();
+    if (accessToken == null || accessToken.isEmpty) {
+      return false;
+    }
+
+    if (!_isJwtExpired(accessToken)) {
+      return true;
+    }
+
+    LogHandler.info(
+      'AuthRepository: access token expired, attempting silent refresh...',
+    );
+    final refreshed = await _handleTokenRefresh();
+    if (refreshed) {
+      return true;
+    }
+
+    await _localDataSource.clearAuth();
+    return false;
   }
 
   @override
