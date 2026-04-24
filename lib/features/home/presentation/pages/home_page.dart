@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
@@ -12,6 +13,8 @@ import 'package:passion_tree_frontend/features/home/presentation/widgets/streak_
 import 'package:passion_tree_frontend/features/home/presentation/widgets/popular_learning_path.dart';
 
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/weekly_mission_card_widget.dart';
+import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
+import 'package:passion_tree_frontend/features/dashboard/domain/usecases/get_dashboard_usecase.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,6 +26,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   /// cache overview state เพื่อกัน section หายตอน push/pop
   LearningPathOverviewLoaded? _cachedOverview;
+
+  /// Dashboard data (contains streak, missions, etc.)
+  DashboardResponse? _dashboardData;
 
   @override
   void initState() {
@@ -38,7 +44,23 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
 
     context.read<LearningPathBloc>().add(FetchLearningPathOverview());
+
+    // Fetch dashboard data for streak
+    try {
+      final dashboardUseCase = getIt<GetDashboardUseCase>();
+      final data = await dashboardUseCase.execute();
+      if (mounted) {
+        setState(() {
+          _dashboardData = data;
+        });
+      }
+    } catch (_) {
+      // Silently fail — streak will show 0
+    }
   }
+
+  int get _streakCount =>
+      _dashboardData?.userInfo.learningStreak ?? 0;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +86,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   /// STREAK
-                  const StreakSection(),
+                  StreakSection(streakCount: _streakCount),
 
                   const SizedBox(height: 30),
 
