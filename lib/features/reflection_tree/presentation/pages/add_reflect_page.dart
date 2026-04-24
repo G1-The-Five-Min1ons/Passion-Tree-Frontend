@@ -12,6 +12,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
@@ -39,9 +40,12 @@ class _AddReflectPageState extends State<AddReflectPage>{
   String? _selectedPathId;
   String? _selectedAlbumId;
   List<String> _availableAlbumNames = [];
-  List<dynamic> _availableAlbums = [];
+  List<Album> _availableAlbums = [];
+  Set<String> _usedPathIds = const <String>{};
+  int _usedPathIdsRequestId = 0;
+  bool _isHydratingUsedPathIds = true;
 
-  Set<String> _extractUsedPathIdsFromAlbums(List<dynamic> albums) {
+  Set<String> _extractUsedPathIdsFromAlbums(List<Album> albums) {
     final usedPathIds = <String>{};
 
     for (final album in albums) {
@@ -49,6 +53,9 @@ class _AddReflectPageState extends State<AddReflectPage>{
       if (items == null) continue;
 
       for (final item in items) {
+        final hasTree = (item.treeId ?? '').isNotEmpty;
+        if (!hasTree) continue;
+
         final pathId = item.pathId;
         if (pathId != null && pathId.isNotEmpty) {
           usedPathIds.add(pathId);
@@ -57,6 +64,43 @@ class _AddReflectPageState extends State<AddReflectPage>{
     }
 
     return usedPathIds;
+  }
+
+  Future<void> _hydrateUsedPathIds(List<Album> albums) async {
+    final requestId = ++_usedPathIdsRequestId;
+
+    if (mounted && !_isHydratingUsedPathIds) {
+      setState(() {
+        _isHydratingUsedPathIds = true;
+      });
+    }
+
+    if (albums.isEmpty) {
+      if (!mounted || requestId != _usedPathIdsRequestId) return;
+      setState(() {
+        _usedPathIds = const <String>{};
+        _isHydratingUsedPathIds = false;
+      });
+      return;
+    }
+
+    final albumBloc = context.read<AlbumBloc>();
+    final detailedAlbums = <Album>[];
+
+    for (final album in albums) {
+      final result = await albumBloc.getAlbumById(album.albumId);
+      result.fold(
+        (_) {},
+        (detailedAlbum) => detailedAlbums.add(detailedAlbum),
+      );
+    }
+
+    if (!mounted || requestId != _usedPathIdsRequestId) return;
+
+    setState(() {
+      _usedPathIds = _extractUsedPathIdsFromAlbums(detailedAlbums);
+      _isHydratingUsedPathIds = false;
+    });
   }
 
   @override
@@ -113,6 +157,8 @@ class _AddReflectPageState extends State<AddReflectPage>{
                 }
               }
             });
+
+            _hydrateUsedPathIds(state.albums);
           }
           
           if (state is TreeCreated) {
@@ -156,13 +202,14 @@ class _AddReflectPageState extends State<AddReflectPage>{
           return BlocBuilder<LearningPathBloc, LearningPathState>(
             builder: (context, learningPathState) {
               final bool isLoadingPaths = learningPathState is LearningPathLoading;
-              final usedPathIds = _extractUsedPathIdsFromAlbums(_availableAlbums);
+              final bool isLoadingPathOptions =
+                  isLoadingPaths || _isHydratingUsedPathIds;
               
               final learningPaths = learningPathState is LearningPathStatusLoaded 
                   ? learningPathState.paths 
                   : [];
               final availableLearningPaths = learningPaths.where((path) {
-                final isNotUsedInAnyTree = !usedPathIds.contains(path.pathId);
+                final isNotUsedInAnyTree = !_usedPathIds.contains(path.pathId);
                 return isNotUsedInAnyTree;
               }).toList();
 
@@ -190,7 +237,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
                     ),
 
                     const SizedBox(height: 30),
-                    isLoadingPaths
+                    isLoadingPathOptions
                         ? const Center(
                             child: Padding(
                               padding: EdgeInsets.all(16.0),
