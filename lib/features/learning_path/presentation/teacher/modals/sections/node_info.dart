@@ -106,21 +106,13 @@ class NodeInfoSection extends StatelessWidget {
           hintText: 'Enter YouTube video URL',
           height: 35,
           value: videoUrlValue,
-          borderColor: isVideoUrlInvalid ? AppColors.cancel : null,
+          borderColor: null,
+          topRightFieldText: videoUrlWarningText,
+          topRightFieldTextStyle: Theme.of(context).textTheme.bodySmall
+              ?.copyWith(color: AppColors.cancel),
           onChanged: isReadOnly ? null : (onVideoUrlChanged ?? (_) {}),
           readOnly: isReadOnly,
         ),
-
-        if (videoUrlWarningText != null && videoUrlWarningText!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 6, left: 10),
-            child: Text(
-              videoUrlWarningText!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.cancel,
-              ),
-            ),
-          ),
 
         const SizedBox(height: 12),
 

@@ -30,6 +30,8 @@ class PixelTextField extends StatefulWidget {
   final TextInputAction? textInputAction;
   final EdgeInsets? contentPadding;
   final bool readOnly;
+  final String? topRightFieldText;
+  final TextStyle? topRightFieldTextStyle;
 
   const PixelTextField({
     super.key,
@@ -57,6 +59,8 @@ class PixelTextField extends StatefulWidget {
     this.textInputAction,
     this.contentPadding,
     this.readOnly = false,
+    this.topRightFieldText,
+    this.topRightFieldTextStyle,
   });
 
   @override
@@ -149,42 +153,65 @@ class _PixelTextFieldState extends State<PixelTextField> {
             ),
           const SizedBox(height: 8),
         ],
-        PixelBorderContainer(
-          width: widget.width ?? double.infinity,
-          height: widget.height,
-          pixelSize: widget.pixelSize,
-          borderColor: activeBorderColor,
-          fillColor: activeFillColor,
-          padding: activeContentPadding,
-          child: Scrollbar(
-            controller: scrollController,
-            thumbVisibility: true,
-            child: TextField(
-              controller: _controller,
-              focusNode: widget.focusNode,
-              scrollController: scrollController,
-              minLines: widget.obscureText ? 1 : widget.minLines,
-              maxLines: widget.obscureText ? 1 : widget.maxLines,
-              maxLength: widget.maxLength,
-              expands: widget.obscureText ? false : (widget.maxLines == null),
-              obscureText: widget.obscureText,
-              readOnly: widget.readOnly,
-              textInputAction: widget.textInputAction,
-              onChanged: widget.onChanged,
-              style: (widget.textStyle ?? AppTypography.bodyRegular).copyWith(
-                color: activeTextColor,
-              ),
-              decoration: InputDecoration(
-                hintText: widget.hintText,
-                hintStyle: (widget.textStyle ?? AppTypography.bodyRegular)
-                    .copyWith(color: activeHintColor),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-                counterText: '',
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            PixelBorderContainer(
+              width: widget.width ?? double.infinity,
+              height: widget.height,
+              pixelSize: widget.pixelSize,
+              borderColor: activeBorderColor,
+              fillColor: activeFillColor,
+              padding: activeContentPadding,
+              child: Scrollbar(
+                controller: scrollController,
+                thumbVisibility: true,
+                child: TextField(
+                  controller: _controller,
+                  focusNode: widget.focusNode,
+                  scrollController: scrollController,
+                  minLines: widget.obscureText ? 1 : widget.minLines,
+                  maxLines: widget.obscureText ? 1 : widget.maxLines,
+                  maxLength: widget.maxLength,
+                  expands: widget.obscureText ? false : (widget.maxLines == null),
+                  obscureText: widget.obscureText,
+                  readOnly: widget.readOnly,
+                  textInputAction: widget.textInputAction,
+                  onChanged: widget.onChanged,
+                  style: (widget.textStyle ?? AppTypography.bodyRegular).copyWith(
+                    color: activeTextColor,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: widget.hintText,
+                    hintStyle: (widget.textStyle ?? AppTypography.bodyRegular)
+                        .copyWith(color: activeHintColor),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                    counterText: '',
+                  ),
+                ),
               ),
             ),
-          ),
+            if (widget.topRightFieldText != null &&
+                widget.topRightFieldText!.isNotEmpty)
+              Positioned(
+                top: -10,
+                right: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  color: activeFillColor,
+                  child: Text(
+                    widget.topRightFieldText!,
+                    style:
+                        widget.topRightFieldTextStyle ??
+                        Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: AppColors.cancel),
+                  ),
+                ),
+              ),
+          ],
         ),
       ],
     );
