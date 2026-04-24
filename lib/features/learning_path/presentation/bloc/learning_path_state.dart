@@ -149,8 +149,9 @@ class NodesGeneratedWithAI extends LearningPathState {
 
 class NodeCreated extends LearningPathState {
   final String nodeId;
-  
-  NodeCreated(this.nodeId);
+  final NodeDetail? nodeDetail;
+
+  NodeCreated(this.nodeId, {this.nodeDetail});
 }
 
 class LearningPathDetailLoaded extends LearningPathState {

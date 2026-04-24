@@ -77,13 +77,26 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
     if (trimmed.isEmpty) return;
 
     final normalizedUrl = trimmed.contains('://') ? trimmed : 'https://$trimmed';
-    final uri = Uri.tryParse(normalizedUrl);
+    final encodedUrl = Uri.encodeFull(normalizedUrl);
+    final uri = Uri.tryParse(encodedUrl);
     if (uri == null) return;
 
-    final opened = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
+    bool opened = false;
+
+    // Try external app first (best UX for PDFs), then fallback to default mode.
+    try {
+      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      opened = false;
+    }
+
+    if (!opened) {
+      try {
+        opened = await launchUrl(uri, mode: LaunchMode.platformDefault);
+      } catch (_) {
+        opened = false;
+      }
+    }
 
     if (!opened && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1,5 +1,6 @@
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 import 'package:passion_tree_frontend/features/learning_path/data/models/learning_node_api_model.dart';
+import 'package:passion_tree_frontend/features/learning_path/data/mappers/material_mapper.dart';
 
 extension LearningNodeMapper on LearningNodeApiModel {
   NodeDetail toEntity() {
@@ -9,7 +10,7 @@ extension LearningNodeMapper on LearningNodeApiModel {
       description: description,
       sequence: sequence,
       pathId: pathId,
-      materials: const [],
+      materials: materials.map((m) => m.toEntity()).toList(),
       questions: const [],
       status: status,
       complete: complete,

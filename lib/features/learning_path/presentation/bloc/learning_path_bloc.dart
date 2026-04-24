@@ -31,6 +31,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/cre
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_node.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_choice.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_question_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_choice_usecase.dart';
 
@@ -513,8 +514,18 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           await createNodeQuestionsUseCase(nodeId, event.questions!);
         }
 
+        NodeDetail? createdNodeDetail;
+        try {
+          final userId = await _resolveUserId();
+          createdNodeDetail = await getNodeDetail(nodeId, userId);
+        } catch (e) {
+          LogHandler.warning(
+            '[BLoC] Failed to fetch created node detail for cache sync: $e',
+          );
+        }
+
         LogHandler.debug('[BLoC] Node created: $nodeId');
-        emit(NodeCreated(nodeId));
+        emit(NodeCreated(nodeId, nodeDetail: createdNodeDetail));
       });
     }, transformer: restartable());
 

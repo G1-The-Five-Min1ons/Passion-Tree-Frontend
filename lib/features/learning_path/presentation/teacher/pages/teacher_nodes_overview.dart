@@ -1042,6 +1042,16 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             setState(() {
               _uiNodes[_pendingNodeIndex!].realNodeId = state.nodeId;
               _uiNodes[_pendingNodeIndex!].isCreated = true;
+
+              // Keep cached node detail (including materials/PDF) in sync immediately
+              // so reopening modal right after creation still shows uploaded files.
+              if (state.nodeDetail != null) {
+                _cachedNodes ??= <NodeDetail>[];
+                _cachedNodes!.removeWhere((n) => n.nodeId == state.nodeId);
+                _cachedNodes!.add(state.nodeDetail!);
+                _cachedNodes!.sort((a, b) => a.sequence.compareTo(b.sequence));
+              }
+
               _pendingNodeIndex = null;
             });
           }
