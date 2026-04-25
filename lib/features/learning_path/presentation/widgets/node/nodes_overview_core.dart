@@ -55,6 +55,20 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
       }
     }
 
+    // Student flow: indicator should point to the next required node
+    // (first node that is not completed yet), even if it is still locked.
+    NodeDetail? nextRequiredNode;
+    if (!widget.isEditable) {
+      for (final node in displayNodes) {
+        if (node.complete.toLowerCase() != 'true') {
+          if (nextRequiredNode == null ||
+              node.sequence < nextRequiredNode.sequence) {
+            nextRequiredNode = node;
+          }
+        }
+      }
+    }
+
     return Stack(
       children: [
         SingleChildScrollView(
@@ -84,9 +98,14 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
                             ? LearningNodeState.active
                             : NodeAsset.statusToState(node.status);
 
+                        final indicatorTargetNode =
+                          widget.isEditable
+                          ? latestActiveNode
+                          : (nextRequiredNode ?? latestActiveNode);
+
                         final isLatestActiveNode =
-                            latestActiveNode != null &&
-                            node.nodeId == latestActiveNode.nodeId;
+                          indicatorTargetNode != null &&
+                          node.nodeId == indicatorTargetNode.nodeId;
 
                         final nodeWidget = NodeItem(
                           imagePath: NodeAsset.image(nodeState),
