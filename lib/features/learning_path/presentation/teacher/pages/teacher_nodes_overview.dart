@@ -722,6 +722,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final shouldShowBottomBar =
+        _cachedLearningPath != null && !_isPublished;
 
     return BlocListener<LearningPathBloc, LearningPathState>(
       listener: (context, state) {
@@ -1058,19 +1060,19 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                   child: HeaderBar(title: _displayTitle, showAddButton: false),
                 ),
 
-                /// ===== FLOATING BOTTOM =====
-                Positioned(
-                  bottom: bottomInset + 20,
-                  left: 0,
-                  right: 0,
-                  child: Builder(
-                    builder: (bottomContext) => BottomBar(
-                      onSaveDraft: () => _confirmSaveDraft(bottomContext),
-                      onPublish: () => _confirmPublish(bottomContext),
-                      isPublished: _isPublished,
+                if (shouldShowBottomBar)
+                  Positioned(
+                    bottom: bottomInset + 20,
+                    left: 0,
+                    right: 0,
+                    child: Builder(
+                      builder: (bottomContext) => BottomBar(
+                        onSaveDraft: () => _confirmSaveDraft(bottomContext),
+                        onPublish: () => _confirmPublish(bottomContext),
+                        isPublished: _isPublished,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

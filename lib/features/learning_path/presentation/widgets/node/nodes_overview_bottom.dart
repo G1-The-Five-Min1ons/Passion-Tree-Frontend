@@ -34,7 +34,7 @@ class BottomBar extends StatelessWidget {
                 child: AppButton(
                   variant: AppButtonVariant.text,
                   text: 'Save Draft',
-                  backgroundColor: AppColors.scale,
+                  backgroundColor: AppColors.scale.withOpacity(0.8),
                   textColor: AppColors.textPrimary,
                   onPressed: onSaveDraft,
                 ),

@@ -50,6 +50,38 @@ class _CreateLearningPathInputPageState
 
   bool _isPendingUpdate = false;
 
+  String? _findExistingPlainDraftPathIdFromState() {
+    final state = context.read<LearningPathBloc>().state;
+    if (state is! LearningPathOverviewLoaded) return null;
+
+    final normalizedTitle = _title.trim().toLowerCase();
+    final normalizedObjective = _objectives.trim().toLowerCase();
+    final normalizedDescription = _description.trim().toLowerCase();
+    final normalizedCoverImage = _uploadedImageUrl.trim();
+
+    if (_userId == null || _userId!.isEmpty) return null;
+
+    for (final path in state.allPaths) {
+      if (path.creatorId != _userId) continue;
+      if (path.publishStatus.toLowerCase() != 'draft') continue;
+      if (path.title.trim().toLowerCase() != normalizedTitle) continue;
+      if (path.objective.trim().toLowerCase() != normalizedObjective) continue;
+      if (path.description.trim().toLowerCase() != normalizedDescription) {
+        continue;
+      }
+
+      // If the user already uploaded an image, require cover to match as well.
+      if (normalizedCoverImage.isNotEmpty &&
+          path.coverImageUrl.trim() != normalizedCoverImage) {
+        continue;
+      }
+
+      return path.id;
+    }
+
+    return null;
+  }
+
   bool get _isEditMode => widget.existingPath != null;
 
   @override
@@ -276,6 +308,23 @@ class _CreateLearningPathInputPageState
           backgroundColor: AppColors.cancel,
         ),
       );
+      return;
+    }
+
+    // Reuse existing draft from current bloc state if one already matches input.
+    final existingPathId = _findExistingPlainDraftPathIdFromState();
+    if (existingPathId != null && existingPathId.isNotEmpty) {
+      _plainPathId = existingPathId;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Draft already exists. Redirecting to your existing path.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.status,
+        ),
+      );
+      _navigateToTeacherNodesOverview(context, existingPathId);
       return;
     }
 
