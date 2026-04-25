@@ -239,6 +239,11 @@ class LearningPathRepositoryImpl implements LearningPathRepository {
   }
 
   @override
+  Future<void> deleteQuestion(String questionId) async {
+    return await dataSource.deleteQuestion(questionId);
+  }
+
+  @override
   Future<void> deleteChoice(String choiceId) async {
     return await dataSource.deleteChoice(choiceId);
   }
