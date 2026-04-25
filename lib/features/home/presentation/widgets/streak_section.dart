@@ -26,8 +26,9 @@ class StreakSection extends StatelessWidget {
               streakCount > 0
                   ? "$streakCount day${streakCount == 1 ? '' : 's'} on streak!"
                   : "Start your streak today!",
-              style: AppPixelTypography.smallTitle
-                  .copyWith(color: colors.onPrimary),
+              style: AppPixelTypography.smallTitle.copyWith(
+                color: colors.onPrimary,
+              ),
             ),
             const SizedBox(height: 20),
             Row(
@@ -39,8 +40,8 @@ class StreakSection extends StatelessWidget {
                   state: day < centerDay
                       ? _DayState.completed
                       : day == centerDay && streakCount > 0
-                          ? _DayState.current
-                          : _DayState.locked,
+                      ? _DayState.current
+                      : _DayState.locked,
                 );
               }),
             ),
@@ -74,8 +75,8 @@ class _DayBox extends StatelessWidget {
         iconColor = AppColors.secondaryBrand;
         break;
       case _DayState.locked:
-        icon = Icons.lock_outline;
-        iconColor = AppColors.textSecondary;
+        icon = Icons.local_fire_department;
+        iconColor = AppColors.scale;
         break;
     }
 

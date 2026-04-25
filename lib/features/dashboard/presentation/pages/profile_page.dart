@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
@@ -10,6 +11,10 @@ import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_r
 import 'package:passion_tree_frontend/features/dashboard/domain/usecases/get_dashboard_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_status.dart';
+import 'package:passion_tree_frontend/features/mission/data/models/user_mission_model.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_bloc.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_event.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_state.dart';
 import 'package:passion_tree_frontend/features/setting/presentation/pages/setting_page.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/profile_card_widget.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/tree_card_widget.dart';
@@ -18,7 +23,6 @@ import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/we
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/recent_activity_card_widget.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/activity_heatmap_widget.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/section_title.dart';
-import 'package:passion_tree_frontend/features/dashboard/presentation/mock/mock_missions.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/pages/mission_center_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -46,36 +50,55 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadDashboardData() async {
-    // Fetch profile, dashboard, and enrolled paths in parallel
-    final profileFuture = _getProfileUseCase.execute();
-    final dashboardFuture = _getDashboardUseCase.execute();
-    final userIdFuture = getIt<IAuthRepository>().getUserId();
+    try {
+      // Fetch profile, dashboard, and enrolled paths in parallel
+      final profileFuture = _getProfileUseCase.execute();
+      final dashboardFuture = _getDashboardUseCase.execute();
+      final userIdFuture = getIt<IAuthRepository>().getUserId();
 
-    final profileResult = await profileFuture;
-    final dashboardResult = await dashboardFuture;
-    final userId = await userIdFuture;
+      final profileResult = await profileFuture;
+      final dashboardResult = await dashboardFuture;
+      final userId = await userIdFuture;
 
-    // Fetch enrolled paths using the same API as Learn page
-    List<EnrolledLearningPath> enrolledPaths = [];
-    if (userId != null && userId.isNotEmpty) {
-      try {
-        enrolledPaths = await _getLearningPathStatus.call(userId);
-      } catch (_) {
-        // Fall back to empty list if fetch fails
+      // Fetch enrolled paths using the same API as Learn page
+      List<EnrolledLearningPath> enrolledPaths = [];
+      if (userId != null && userId.isNotEmpty) {
+        try {
+          enrolledPaths = await _getLearningPathStatus.call(userId);
+        } catch (_) {
+          // Fall back to empty list if fetch fails
+        }
+      }
+
+      if (!mounted) return;
+
+      profileResult.fold((_) {}, (profile) {
+        _userProfile = profile;
+      });
+
+      setState(() {
+        _dashboardData = dashboardResult;
+        _enrolledPaths = enrolledPaths;
+        _isLoading = false;
+      });
+    } catch (_) {
+      // Ensure the loading spinner clears even if something throws.
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
 
-    if (!mounted) return;
-
-    profileResult.fold((_) {}, (profile) {
-      _userProfile = profile;
-    });
-
-    setState(() {
-      _dashboardData = dashboardResult;
-      _enrolledPaths = enrolledPaths;
-      _isLoading = false;
-    });
+    // Refresh missions through the shared MissionBloc — done after the
+    // setState so the loading spinner clears regardless of bloc state.
+    if (mounted) {
+      try {
+        context.read<MissionBloc>().add(const FetchMyMissions());
+      } catch (_) {
+        // ignore — provider may not be available in tests
+      }
+    }
   }
 
   void _openSettings() {
@@ -117,10 +140,16 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void _onMissionTap(MissionItem mission) {
-    final missions = resolveWeeklyMissions(
-      _dashboardData?.weeklyMissions ?? [],
-    );
+  void _onMissionTap(UserMissionModel mission) {
+    final state = context.read<MissionBloc>().state;
+    final List<UserMissionModel> missions;
+    if (state is MissionLoaded) {
+      missions = state.missions;
+    } else if (state is MissionError) {
+      missions = state.previousMissions;
+    } else {
+      missions = const [];
+    }
 
     Navigator.push(
       context,
@@ -131,10 +160,6 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
-  }
-
-  List<MissionItem> get _weeklyMissions {
-    return resolveWeeklyMissions(_dashboardData?.weeklyMissions ?? []);
   }
 
   String get _fullName {
@@ -271,9 +296,37 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 8),
                     LearningPathCardWidget(enrolledPaths: _enrolledPaths),
                     const SizedBox(height: 14),
-                    WeeklyMissionCardWidget(
-                      missions: _weeklyMissions,
-                      onMissionTap: _onMissionTap,
+                    BlocBuilder<MissionBloc, MissionState>(
+                      builder: (context, state) {
+                        final List<UserMissionModel> missions;
+                        final bool isLoading;
+                        String? errorMessage;
+
+                        if (state is MissionLoaded) {
+                          missions = state.missions;
+                          isLoading = false;
+                        } else if (state is MissionError) {
+                          missions = state.previousMissions;
+                          isLoading = false;
+                          errorMessage = state.message;
+                        } else if (state is MissionLoading) {
+                          missions = const [];
+                          isLoading = true;
+                        } else {
+                          missions = const [];
+                          isLoading = false;
+                        }
+
+                        return WeeklyMissionCardWidget(
+                          missions: missions,
+                          isLoading: isLoading,
+                          errorMessage: errorMessage,
+                          onMissionTap: _onMissionTap,
+                          onRetry: () => context
+                              .read<MissionBloc>()
+                              .add(const FetchMyMissions()),
+                        );
+                      },
                     ),
                     const SizedBox(height: 14),
                     const SectionTitle(title: 'Recent Activity'),

@@ -2,16 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
-import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
+import 'package:passion_tree_frontend/features/mission/data/models/user_mission_model.dart';
 
 class WeeklyMissionCardWidget extends StatelessWidget {
-  final List<MissionItem> missions;
-  final ValueChanged<MissionItem>? onMissionTap;
+  final List<UserMissionModel> missions;
+  final ValueChanged<UserMissionModel>? onMissionTap;
+  final bool isLoading;
+  final String? errorMessage;
+  final VoidCallback? onRetry;
 
   const WeeklyMissionCardWidget({
     super.key,
     required this.missions,
     this.onMissionTap,
+    this.isLoading = false,
+    this.errorMessage,
+    this.onRetry,
   });
 
   int get _completedCount => missions.where((m) => m.isCompleted).length;
@@ -65,7 +71,67 @@ class WeeklyMissionCardWidget extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        if (missions.isEmpty)
+        if (isLoading && missions.isEmpty)
+          SizedBox(
+            width: double.infinity,
+            child: PixelBorderContainer(
+              pixelSize: 3,
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Loading missions...',
+                    style: AppTypography.bodyRegular.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else if (errorMessage != null && missions.isEmpty)
+          SizedBox(
+            width: double.infinity,
+            child: PixelBorderContainer(
+              pixelSize: 3,
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Failed to load missions',
+                    style: AppTypography.bodyRegular.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    errorMessage!,
+                    style: AppTypography.smallBodyRegular.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  if (onRetry != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: onRetry,
+                        child: const Text('Retry'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          )
+        else if (missions.isEmpty)
           SizedBox(
             width: double.infinity,
             child: PixelBorderContainer(
@@ -93,7 +159,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
                       child: _buildMissionProgress(
                         mission: mission,
                         title: mission.detail,
-                        value: mission.isCompleted ? 1.0 : 0.0,
+                        value: mission.progress,
                         trailing: mission.isCompleted
                             ? 'Done'
                             : '${mission.rewardXp} XP',
@@ -108,7 +174,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
   }
 
   Widget _buildMissionProgress({
-    required MissionItem mission,
+    required UserMissionModel mission,
     required String title,
     required double value,
     required String trailing,

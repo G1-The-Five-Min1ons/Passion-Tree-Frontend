@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc_provider.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_bloc_provider.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc_provider.dart';
 
 class HomeBlocProvider extends StatelessWidget {
@@ -12,7 +13,9 @@ class HomeBlocProvider extends StatelessWidget {
   Widget build(BuildContext context) {
     return LearningPathBlocProvider(
       child: AlbumBlocProvider(
-        child: child,
+        child: MissionBlocProvider(
+          child: child,
+        ),
       ),
     );
   }

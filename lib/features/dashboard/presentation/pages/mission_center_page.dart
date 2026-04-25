@@ -4,7 +4,7 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
+import 'package:passion_tree_frontend/features/mission/data/models/user_mission_model.dart';
 
 class MissionCenterPage extends StatelessWidget {
   const MissionCenterPage({
@@ -13,7 +13,7 @@ class MissionCenterPage extends StatelessWidget {
     this.highlightedMissionId,
   });
 
-  final List<MissionItem> missions;
+  final List<UserMissionModel> missions;
   final String? highlightedMissionId;
 
   @override
@@ -49,7 +49,7 @@ class MissionCenterPage extends StatelessWidget {
 class _MissionTile extends StatelessWidget {
   const _MissionTile({required this.mission, required this.highlighted});
 
-  final MissionItem mission;
+  final UserMissionModel mission;
   final bool highlighted;
 
   @override
@@ -58,6 +58,9 @@ class _MissionTile extends StatelessWidget {
     final expireText = mission.expireAt == null
         ? 'No deadline'
         : 'Due ${mission.expireAt!.day}/${mission.expireAt!.month}/${mission.expireAt!.year}';
+    final progressText = mission.targetValue > 0
+        ? '${mission.currentValue}/${mission.targetValue}'
+        : null;
 
     return PixelBorderContainer(
       width: double.infinity,
@@ -93,15 +96,35 @@ class _MissionTile extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            Text(
-              statusText,
-              style: AppTypography.smallBodyRegular.copyWith(
-                color: mission.isCompleted
-                    ? AppColors.secondaryBrand
-                    : AppColors.textSecondary,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    statusText,
+                    style: AppTypography.smallBodyRegular.copyWith(
+                      color: mission.isCompleted
+                          ? AppColors.secondaryBrand
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                if (progressText != null)
+                  Text(
+                    progressText,
+                    style: AppTypography.smallBodyRegular.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 6),
+            LinearProgressIndicator(
+              value: mission.progress,
+              backgroundColor: AppColors.cardBorder,
+              color: AppColors.secondaryBrand,
+              minHeight: 6,
+            ),
+            const SizedBox(height: 6),
             Text(
               expireText,
               style: AppTypography.smallBodyRegular.copyWith(
