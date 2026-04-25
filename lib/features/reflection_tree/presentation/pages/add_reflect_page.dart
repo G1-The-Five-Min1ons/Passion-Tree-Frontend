@@ -44,6 +44,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
   Set<String> _usedPathIds = const <String>{};
   int _usedPathIdsRequestId = 0;
   bool _isHydratingUsedPathIds = true;
+  bool _isCreatingTree = false;
 
   Set<String> _extractUsedPathIdsFromAlbums(List<Album> albums) {
     final usedPathIds = <String>{};
@@ -162,6 +163,12 @@ class _AddReflectPageState extends State<AddReflectPage>{
           }
           
           if (state is TreeCreated) {
+            if (_isCreatingTree) {
+              setState(() {
+                _isCreatingTree = false;
+              });
+            }
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -187,6 +194,12 @@ class _AddReflectPageState extends State<AddReflectPage>{
               );
             });
           } else if (state is AlbumError) {
+            if (_isCreatingTree) {
+              setState(() {
+                _isCreatingTree = false;
+              });
+            }
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -198,6 +211,8 @@ class _AddReflectPageState extends State<AddReflectPage>{
         child: BlocBuilder<AlbumBloc, AlbumState>(
         builder: (context, albumState) {
           final bool isLoadingAlbums = albumState is AlbumLoading;
+          final bool isCreatingTree =
+              _isCreatingTree || albumState is AlbumOperationLoading;
 
           return BlocBuilder<LearningPathBloc, LearningPathState>(
             builder: (context, learningPathState) {
@@ -356,7 +371,9 @@ class _AddReflectPageState extends State<AddReflectPage>{
                     ),
                     const SizedBox(height: 40),
                     GestureDetector(
-                      onTap: () {
+                      onTap: isCreatingTree
+                          ? null
+                          : () {
                         if (_selectedPathId == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -380,6 +397,10 @@ class _AddReflectPageState extends State<AddReflectPage>{
                         final treeTitle = _categoryController.text.isEmpty 
                             ? 'My Tree' 
                             : _categoryController.text;
+
+                        setState(() {
+                          _isCreatingTree = true;
+                        });
                         
                         context.read<AlbumBloc>().add(
                           CreateTreeEvent(
@@ -390,20 +411,23 @@ class _AddReflectPageState extends State<AddReflectPage>{
                           ),
                         );
                       },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                          "Create Tree",
-                            style: AppPixelTypography.title.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
+                      child: Opacity(
+                        opacity: isCreatingTree ? 0.5 : 1,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                            "Create Tree",
+                              style: AppPixelTypography.title.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Image.asset(
-                            'assets/buttons/navigation/pixel/right_small_light.png'
-                          )
-                        ],
+                            const SizedBox(width: 8),
+                            Image.asset(
+                              'assets/buttons/navigation/pixel/right_small_light.png'
+                            )
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 80),
