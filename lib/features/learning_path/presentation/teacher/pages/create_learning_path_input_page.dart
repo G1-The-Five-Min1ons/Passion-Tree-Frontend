@@ -202,13 +202,13 @@ class _CreateLearningPathInputPageState
     );
   }
 
-  void _openAiNodeReview(
+  Future<void> _openAiNodeReview(
     BuildContext context, {
     required String pathId,
     List<GeneratedNode>? initialNodes,
-  }) {
+  }) async {
     final bloc = context.read<LearningPathBloc>();
-    Navigator.push(
+    final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
@@ -220,12 +220,17 @@ class _CreateLearningPathInputPageState
           ),
         ),
       ),
-    ).then((_) {
-      if (!mounted) return;
-      setState(() {
-        _isCreatingPath = false;
-      });
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _isCreatingPath = false;
     });
+
+    // AI flow success should return to TeacherCreateTab.
+    if (result == true) {
+      Navigator.pop(context);
+    }
   }
 
   void _handleCreatePlainPath(BuildContext context) {
@@ -286,9 +291,12 @@ class _CreateLearningPathInputPageState
     );
   }
 
-  void _navigateToTeacherNodesOverview(BuildContext context, String pathId) {
+  Future<void> _navigateToTeacherNodesOverview(
+    BuildContext context,
+    String pathId,
+  ) async {
     final bloc = context.read<LearningPathBloc>();
-    Navigator.push(
+    final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
@@ -301,6 +309,13 @@ class _CreateLearningPathInputPageState
         ),
       ),
     );
+
+    // Node overview returns true after save draft/publish success.
+    // Close this page so user lands on TeacherCreateTab.
+    if (!mounted) return;
+    if (result == true) {
+      Navigator.pop(context);
+    }
   }
 
   void _handleSave(BuildContext context) {

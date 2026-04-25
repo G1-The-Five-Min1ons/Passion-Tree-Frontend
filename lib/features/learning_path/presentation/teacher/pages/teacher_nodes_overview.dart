@@ -995,14 +995,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             'TeacherNodesOverview: Save Draft success, leaving current page',
           );
 
-          if (_isAiPath) {
-            final navigator = Navigator.of(context);
-            if (navigator.canPop()) navigator.pop();
-            if (navigator.canPop()) navigator.pop();
-            if (navigator.canPop()) navigator.pop();
-          } else {
-            Navigator.pop(context);
-          }
+          final navigator = Navigator.of(context);
+
+          // Return success result to caller page.
+          // - Plain path caller: CreateLearningPathInputPage
+          // - AI path caller: AINodeReviewPage
+          // Each caller will handle the next navigation step.
+          navigator.pop(true);
         } else if (state is LearningPathError) {
           _queuedSaveDraftRetryTimer?.cancel();
           LogHandler.error(
