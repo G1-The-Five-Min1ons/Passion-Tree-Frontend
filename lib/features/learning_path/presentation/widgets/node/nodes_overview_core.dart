@@ -191,6 +191,9 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
   }
 
   bool _hasNodeContent(NodeDetail node) {
+    final normalizedTitle = node.title.trim().toLowerCase();
+    final hasMeaningfulTitle =
+        normalizedTitle.isNotEmpty && normalizedTitle != 'new node';
     final hasDescription = node.description.trim().isNotEmpty;
     final hasVideoLink = (node.linkVdo ?? '').trim().isNotEmpty;
     final hasMaterials = node.materials.any((m) => m.url.trim().isNotEmpty);
@@ -200,7 +203,11 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
           q.choices.any((c) => c.choiceText.trim().isNotEmpty),
     );
 
-    return hasDescription || hasVideoLink || hasMaterials || hasQuestions;
+    return hasMeaningfulTitle ||
+        hasDescription ||
+        hasVideoLink ||
+        hasMaterials ||
+        hasQuestions;
   }
 
   String _shortNodeTitle(String title) {

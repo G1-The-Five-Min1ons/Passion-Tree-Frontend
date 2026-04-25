@@ -38,6 +38,14 @@ class _TeacherLearningPathOverviewPageState
   // Cache overview data
   LearningPathOverviewLoaded? _cachedOverview;
 
+  void _refreshOverviewAfterNodeMutation() {
+    if (_userId == null || _userId!.isEmpty) return;
+
+    // Refresh immediately so the module count on course cards updates without
+    // the visible delay caused by waiting for another interaction.
+    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
+  }
+
   @override
   void initState() {
     super.initState();
@@ -95,14 +103,9 @@ class _TeacherLearningPathOverviewPageState
             if (state is LearningPathCreated ||
                 state is NodeCreated ||
                 state is NodeUpdated ||
+                state is NodeDeleted ||
                 state is LearningPathUpdated) {
-              if (_userId != null && _userId!.isNotEmpty) {
-                Future.delayed(const Duration(milliseconds: 500), () {
-                  if (context.mounted) {
-                    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
-                  }
-                });
-              }
+              _refreshOverviewAfterNodeMutation();
             }
           },
           child: BlocBuilder<LearningPathBloc, LearningPathState>(
