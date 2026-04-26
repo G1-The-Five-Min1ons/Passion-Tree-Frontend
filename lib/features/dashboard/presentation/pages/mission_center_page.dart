@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
@@ -69,7 +71,7 @@ class _MissionTile extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           border: highlighted
-              ? Border.all(color: AppColors.secondaryBrand, width: 1.5)
+              ? Border.all(color: AppColors.cardBorder, width: 1.5)
               : null,
         ),
         padding: const EdgeInsets.all(6),
@@ -132,16 +134,16 @@ class _MissionTile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
+            Center(
+              child: AppButton(
+                variant: AppButtonVariant.text,
+                text: mission.isCompleted ? 'Completed' : 'Go to Learn',
                 onPressed: mission.isCompleted
                     ? null
                     : () {
                         Navigator.pop(context);
                         HomeTabNavigationNotifier.jumpToTab(1);
                       },
-                child: Text(mission.isCompleted ? 'Completed' : 'Go to Learn'),
               ),
             ),
           ],
