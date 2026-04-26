@@ -12,6 +12,7 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/domain/entities/album_model.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
@@ -39,9 +40,13 @@ class _AddReflectPageState extends State<AddReflectPage>{
   String? _selectedPathId;
   String? _selectedAlbumId;
   List<String> _availableAlbumNames = [];
-  List<dynamic> _availableAlbums = [];
+  List<Album> _availableAlbums = [];
+  Set<String> _usedPathIds = const <String>{};
+  int _usedPathIdsRequestId = 0;
+  bool _isHydratingUsedPathIds = true;
+  bool _isCreatingTree = false;
 
-  Set<String> _extractUsedPathIdsFromAlbums(List<dynamic> albums) {
+  Set<String> _extractUsedPathIdsFromAlbums(List<Album> albums) {
     final usedPathIds = <String>{};
 
     for (final album in albums) {
@@ -49,6 +54,9 @@ class _AddReflectPageState extends State<AddReflectPage>{
       if (items == null) continue;
 
       for (final item in items) {
+        final hasTree = (item.treeId ?? '').isNotEmpty;
+        if (!hasTree) continue;
+
         final pathId = item.pathId;
         if (pathId != null && pathId.isNotEmpty) {
           usedPathIds.add(pathId);
@@ -57,6 +65,43 @@ class _AddReflectPageState extends State<AddReflectPage>{
     }
 
     return usedPathIds;
+  }
+
+  Future<void> _hydrateUsedPathIds(List<Album> albums) async {
+    final requestId = ++_usedPathIdsRequestId;
+
+    if (mounted && !_isHydratingUsedPathIds) {
+      setState(() {
+        _isHydratingUsedPathIds = true;
+      });
+    }
+
+    if (albums.isEmpty) {
+      if (!mounted || requestId != _usedPathIdsRequestId) return;
+      setState(() {
+        _usedPathIds = const <String>{};
+        _isHydratingUsedPathIds = false;
+      });
+      return;
+    }
+
+    final albumBloc = context.read<AlbumBloc>();
+    final detailedAlbums = <Album>[];
+
+    for (final album in albums) {
+      final result = await albumBloc.getAlbumById(album.albumId);
+      result.fold(
+        (_) {},
+        (detailedAlbum) => detailedAlbums.add(detailedAlbum),
+      );
+    }
+
+    if (!mounted || requestId != _usedPathIdsRequestId) return;
+
+    setState(() {
+      _usedPathIds = _extractUsedPathIdsFromAlbums(detailedAlbums);
+      _isHydratingUsedPathIds = false;
+    });
   }
 
   @override
@@ -113,9 +158,17 @@ class _AddReflectPageState extends State<AddReflectPage>{
                 }
               }
             });
+
+            _hydrateUsedPathIds(state.albums);
           }
           
           if (state is TreeCreated) {
+            if (_isCreatingTree) {
+              setState(() {
+                _isCreatingTree = false;
+              });
+            }
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -141,6 +194,12 @@ class _AddReflectPageState extends State<AddReflectPage>{
               );
             });
           } else if (state is AlbumError) {
+            if (_isCreatingTree) {
+              setState(() {
+                _isCreatingTree = false;
+              });
+            }
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -152,17 +211,20 @@ class _AddReflectPageState extends State<AddReflectPage>{
         child: BlocBuilder<AlbumBloc, AlbumState>(
         builder: (context, albumState) {
           final bool isLoadingAlbums = albumState is AlbumLoading;
+          final bool isCreatingTree =
+              _isCreatingTree || albumState is AlbumOperationLoading;
 
           return BlocBuilder<LearningPathBloc, LearningPathState>(
             builder: (context, learningPathState) {
               final bool isLoadingPaths = learningPathState is LearningPathLoading;
-              final usedPathIds = _extractUsedPathIdsFromAlbums(_availableAlbums);
+              final bool isLoadingPathOptions =
+                  isLoadingPaths || _isHydratingUsedPathIds;
               
               final learningPaths = learningPathState is LearningPathStatusLoaded 
                   ? learningPathState.paths 
                   : [];
               final availableLearningPaths = learningPaths.where((path) {
-                final isNotUsedInAnyTree = !usedPathIds.contains(path.pathId);
+                final isNotUsedInAnyTree = !_usedPathIds.contains(path.pathId);
                 return isNotUsedInAnyTree;
               }).toList();
 
@@ -190,7 +252,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
                     ),
 
                     const SizedBox(height: 30),
-                    isLoadingPaths
+                    isLoadingPathOptions
                         ? const Center(
                             child: Padding(
                               padding: EdgeInsets.all(16.0),
@@ -309,7 +371,9 @@ class _AddReflectPageState extends State<AddReflectPage>{
                     ),
                     const SizedBox(height: 40),
                     GestureDetector(
-                      onTap: () {
+                      onTap: isCreatingTree
+                          ? null
+                          : () {
                         if (_selectedPathId == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -333,6 +397,10 @@ class _AddReflectPageState extends State<AddReflectPage>{
                         final treeTitle = _categoryController.text.isEmpty 
                             ? 'My Tree' 
                             : _categoryController.text;
+
+                        setState(() {
+                          _isCreatingTree = true;
+                        });
                         
                         context.read<AlbumBloc>().add(
                           CreateTreeEvent(
@@ -343,20 +411,23 @@ class _AddReflectPageState extends State<AddReflectPage>{
                           ),
                         );
                       },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                          "Create Tree",
-                            style: AppPixelTypography.title.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
+                      child: Opacity(
+                        opacity: isCreatingTree ? 0.5 : 1,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                            "Create Tree",
+                              style: AppPixelTypography.title.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Image.asset(
-                            'assets/buttons/navigation/pixel/right_small_light.png'
-                          )
-                        ],
+                            const SizedBox(width: 8),
+                            Image.asset(
+                              'assets/buttons/navigation/pixel/right_small_light.png'
+                            )
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 80),

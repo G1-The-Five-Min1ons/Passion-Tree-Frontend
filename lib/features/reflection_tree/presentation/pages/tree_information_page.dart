@@ -71,15 +71,6 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
     );
   }
 
-  void _showTreeEndedSnackbar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('This tree has ended. You cannot create new nodes.'),
-        backgroundColor: AppColors.cancel,
-      ),
-    );
-  }
-
   void _showTreeIdUnavailableSnackbar() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -515,7 +506,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                       },
                     ),
 
-                  if (item.chapters.isNotEmpty)
+                  if (item.chapters.isNotEmpty && !_isTreeReflectionClosed(item))
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: AppButton(
@@ -548,12 +539,8 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                 child: PageHeader(
                   title: item.subjectName,
                   actionIcon: Symbols.add_rounded,
+                  showAction: !_isTreeReflectionClosed(item),
                   onActionPressed: () {
-                    if (_isTreeReflectionClosed(item)) {
-                      _showTreeEndedSnackbar();
-                      return;
-                    }
-
                     if (_isTreeDied(item)) {
                       _showTreeDiedSnackbar();
                       return;

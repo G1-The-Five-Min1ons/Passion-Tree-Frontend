@@ -87,7 +87,7 @@ class _EndReflectingState extends State<EndReflecting> {
               const SizedBox(height: 48),
 
               SaveCancel(
-                saveText: _isSubmitting ? 'Processing...' : 'Yes',
+                saveText: _isSubmitting ? 'Yes' : 'Yes',
                 cancelText: 'Cancel',
                 saveIcon: _isSubmitting
                     ? const SizedBox(

@@ -3,7 +3,7 @@ import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart'
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/pages/mission_center_page.dart';
 
 class HowToUsePopup extends StatelessWidget {
   const HowToUsePopup({super.key});
@@ -161,7 +161,14 @@ class HowToUsePopup extends StatelessWidget {
                       GestureDetector(
                         onTap: () {
                           Navigator.pop(context);
-                          HomeTabNavigationNotifier.jumpToTab(1);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MissionCenterPage(
+                                missions: [],
+                              ),
+                            ),
+                          );
                         },
                         child: Text(
                           "Go to missions",
