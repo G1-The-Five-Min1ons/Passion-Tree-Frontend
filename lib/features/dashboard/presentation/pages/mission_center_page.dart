@@ -19,7 +19,7 @@ class MissionCenterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: const AppBarWidget(title: 'Mission Center', showBackButton: true),
       body: missions.isEmpty
           ? Center(
