@@ -61,6 +61,9 @@ class ApiConfig {
   // Dashboard endpoint
   static String get dashboard => '$apiBackendUrl/dashboard';
 
+  // Mission endpoints
+  static String get userMissions => '$apiBackendUrl/user/missions';
+
     // Setting endpoints
     static String get settings => '$apiBackendUrl/settings';
     static String settingByKey(String key) =>

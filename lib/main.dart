@@ -78,7 +78,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     if (isAlreadyOnLogin) return;
 
-    navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+    navigator.pushAndRemoveUntil(
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/login'),
+        builder: (_) => const LoginPage(),
+      ),
+      (route) => false,
+    );
 
     // แจ้งผู้ใช้หลังเปลี่ยนหน้าเสร็จ เพื่อไม่ให้ SnackBar หายระหว่างการนำทาง
     WidgetsBinding.instance.addPostFrameCallback((_) {

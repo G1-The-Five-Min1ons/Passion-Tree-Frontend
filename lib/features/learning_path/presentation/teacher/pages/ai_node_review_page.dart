@@ -257,10 +257,10 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                             text: 'Save',
                             onPressed: isLoading || _nodes.isEmpty
                                 ? null
-                                : () {
+                                : () async {
                                     final bloc = context
                                         .read<LearningPathBloc>();
-                                    Navigator.push(
+                                    final result = await Navigator.push<bool>(
                                       context,
                                       MaterialPageRoute(
                                         builder: (_) => BlocProvider.value(
@@ -273,6 +273,11 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                                         ),
                                       ),
                                     );
+
+                                    if (!context.mounted) return;
+                                    if (result == true) {
+                                      Navigator.pop(context, true);
+                                    }
                                   },
                           );
                         },

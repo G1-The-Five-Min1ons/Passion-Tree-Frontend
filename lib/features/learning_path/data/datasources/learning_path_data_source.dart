@@ -500,6 +500,14 @@ class LearningPathDataSource {
     return choiceId;
   }
 
+  Future<void> deleteQuestion(String questionId) async {
+    final response = await _apiHandler.delete(
+      url: '${ApiConfig.apiBackendUrl}/learningpaths/questions/$questionId',
+      headers: await _getAuthHeaders(),
+    );
+    _throwIfError(response, 'DELETE question/$questionId');
+  }
+
   Future<void> deleteChoice(String choiceId) async {
     final response = await _apiHandler.delete(
       url: '${ApiConfig.apiBackendUrl}/learningpaths/questions/choices/$choiceId',

@@ -33,6 +33,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/cre
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_choice.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_question_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_choice_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_question_usecase.dart';
 
 class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GetAllLearningPaths getAllLearningPaths;
@@ -56,6 +57,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final UpdateQuestionUseCase updateQuestionUseCase;
   final UpdateChoiceUseCase updateChoiceUseCase;
   final CreateChoiceUseCase createChoiceUseCase;
+  final DeleteQuestionUseCase deleteQuestionUseCase;
   final DeleteChoiceUseCase deleteChoiceUseCase;
   final SubmitReview submitReview;
   final GetMyRating getMyRating;
@@ -93,6 +95,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.updateQuestionUseCase,
     this.updateChoiceUseCase,
     this.createChoiceUseCase,
+    this.deleteQuestionUseCase,
     this.deleteChoiceUseCase,
     this.submitReview,
     this.getMyRating,
@@ -534,6 +537,25 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             materials: event.materials,
           );
 
+          final deletedQuizzes = event.deletedQuizzes ?? const [];
+        if (deletedQuizzes.isNotEmpty) {
+          LogHandler.debug(
+            'Deleting ${deletedQuizzes.length} removed quizzes...',
+          );
+          for (final deletedQuiz in deletedQuizzes) {
+            final questionId = deletedQuiz.questionId;
+            if (questionId == null || questionId.isEmpty) continue;
+
+            final choiceIds = deletedQuiz.choiceIds ?? const [];
+            for (final choiceId in choiceIds) {
+              if (choiceId.isEmpty) continue;
+              await deleteChoiceUseCase(choiceId);
+            }
+
+            await deleteQuestionUseCase(questionId);
+          }
+        }
+        
           // Keep backward compatibility: update existing quiz IDs and create newly added quizzes.
           final quizzes = event.quizzes ?? const [];
           if (quizzes.isNotEmpty) {

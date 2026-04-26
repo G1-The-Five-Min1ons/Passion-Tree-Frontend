@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:passion_tree_frontend/core/config/api_config.dart';
@@ -72,10 +73,12 @@ class AuthRepositoryImpl implements IAuthRepository {
     try {
       final parts = token.split('.');
       if (parts.length != 3) return true;
-      
+
       final normalizedPayload = base64Url.normalize(parts[1]);
-      final payload = jsonDecode(utf8.decode(base64Url.decode(normalizedPayload)));
-      
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(normalizedPayload)),
+      );
+
       final exp = payload['exp'];
       if (exp is! num) return true;
 
@@ -86,7 +89,9 @@ class AuthRepositoryImpl implements IAuthRepository {
 
       // ✅ เพิ่ม Buffer 30 วินาที เพื่อสั่ง Refresh ก่อนหมดจริง
       // ช่วยลดโอกาสที่ Request จะพังกลางทางจังหวะหมดอายุพอดี
-      final nowWithBuffer = DateTime.now().toUtc().add(const Duration(seconds: 30));
+      final nowWithBuffer = DateTime.now().toUtc().add(
+        const Duration(seconds: 30),
+      );
       return nowWithBuffer.isAfter(expiry);
     } catch (e) {
       LogHandler.error('JWT Decode failed: $e');
@@ -486,6 +491,7 @@ class AuthRepositoryImpl implements IAuthRepository {
       );
       // Initialize Google Sign-In
       await GoogleSignIn.instance.initialize(
+        clientId: kIsWeb ? ApiConfig.googleWebClientId : null,
         serverClientId: ApiConfig.googleWebClientId,
       );
 

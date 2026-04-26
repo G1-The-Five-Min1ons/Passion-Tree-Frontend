@@ -22,7 +22,7 @@ class BottomBar extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // ถ้ายัง draft แสดงสองปุ่ม: Save Draft ซ้าย, Publish ขวา
+    
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 300),
@@ -34,7 +34,7 @@ class BottomBar extends StatelessWidget {
                 child: AppButton(
                   variant: AppButtonVariant.text,
                   text: 'Save Draft',
-                  backgroundColor: AppColors.submit,
+                  backgroundColor: AppColors.scale.withOpacity(0.8),
                   textColor: AppColors.textPrimary,
                   onPressed: onSaveDraft,
                 ),
@@ -44,7 +44,7 @@ class BottomBar extends StatelessWidget {
                 child: AppButton(
                   variant: AppButtonVariant.text,
                   text: 'Publish',
-                  backgroundColor: AppColors.status,
+                  backgroundColor: AppColors.submit,
                   textColor: AppColors.textPrimary,
                   onPressed: onPublish,
                 ),

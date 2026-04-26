@@ -50,6 +50,38 @@ class _CreateLearningPathInputPageState
 
   bool _isPendingUpdate = false;
 
+  String? _findExistingPlainDraftPathIdFromState() {
+    final state = context.read<LearningPathBloc>().state;
+    if (state is! LearningPathOverviewLoaded) return null;
+
+    final normalizedTitle = _title.trim().toLowerCase();
+    final normalizedObjective = _objectives.trim().toLowerCase();
+    final normalizedDescription = _description.trim().toLowerCase();
+    final normalizedCoverImage = _uploadedImageUrl.trim();
+
+    if (_userId == null || _userId!.isEmpty) return null;
+
+    for (final path in state.allPaths) {
+      if (path.creatorId != _userId) continue;
+      if (path.publishStatus.toLowerCase() != 'draft') continue;
+      if (path.title.trim().toLowerCase() != normalizedTitle) continue;
+      if (path.objective.trim().toLowerCase() != normalizedObjective) continue;
+      if (path.description.trim().toLowerCase() != normalizedDescription) {
+        continue;
+      }
+
+      // If the user already uploaded an image, require cover to match as well.
+      if (normalizedCoverImage.isNotEmpty &&
+          path.coverImageUrl.trim() != normalizedCoverImage) {
+        continue;
+      }
+
+      return path.id;
+    }
+
+    return null;
+  }
+
   bool get _isEditMode => widget.existingPath != null;
 
   @override
@@ -202,13 +234,13 @@ class _CreateLearningPathInputPageState
     );
   }
 
-  void _openAiNodeReview(
+  Future<void> _openAiNodeReview(
     BuildContext context, {
     required String pathId,
     List<GeneratedNode>? initialNodes,
-  }) {
+  }) async {
     final bloc = context.read<LearningPathBloc>();
-    Navigator.push(
+    final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
@@ -220,12 +252,17 @@ class _CreateLearningPathInputPageState
           ),
         ),
       ),
-    ).then((_) {
-      if (!mounted) return;
-      setState(() {
-        _isCreatingPath = false;
-      });
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _isCreatingPath = false;
     });
+
+    // AI flow success should return to TeacherCreateTab.
+    if (result == true) {
+      Navigator.pop(context);
+    }
   }
 
   void _handleCreatePlainPath(BuildContext context) {
@@ -274,6 +311,23 @@ class _CreateLearningPathInputPageState
       return;
     }
 
+    // Reuse existing draft from current bloc state if one already matches input.
+    final existingPathId = _findExistingPlainDraftPathIdFromState();
+    if (existingPathId != null && existingPathId.isNotEmpty) {
+      _plainPathId = existingPathId;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Draft already exists. Redirecting to your existing path.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.status,
+        ),
+      );
+      _navigateToTeacherNodesOverview(context, existingPathId);
+      return;
+    }
+
     context.read<LearningPathBloc>().add(
       CreateLearningPathEvent(
         title: _title,
@@ -286,9 +340,12 @@ class _CreateLearningPathInputPageState
     );
   }
 
-  void _navigateToTeacherNodesOverview(BuildContext context, String pathId) {
+  Future<void> _navigateToTeacherNodesOverview(
+    BuildContext context,
+    String pathId,
+  ) async {
     final bloc = context.read<LearningPathBloc>();
-    Navigator.push(
+    final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
@@ -301,6 +358,13 @@ class _CreateLearningPathInputPageState
         ),
       ),
     );
+
+    // Node overview returns true after save draft/publish success.
+    // Close this page so user lands on TeacherCreateTab.
+    if (!mounted) return;
+    if (result == true) {
+      Navigator.pop(context);
+    }
   }
 
   void _handleSave(BuildContext context) {

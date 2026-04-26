@@ -60,6 +60,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/upd
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_question_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_choice_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_choice_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_question_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_choice_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enrolled_learning_paths.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_progress_usecases.dart';
@@ -73,6 +74,11 @@ import 'package:passion_tree_frontend/features/dashboard/data/datasources/dashbo
 import 'package:passion_tree_frontend/features/dashboard/data/repositories/dashboard_repository_impl.dart';
 import 'package:passion_tree_frontend/features/dashboard/domain/repositories/i_dashboard_repository.dart';
 import 'package:passion_tree_frontend/features/dashboard/domain/usecases/get_dashboard_usecase.dart';
+import 'package:passion_tree_frontend/features/mission/data/datasources/mission_remote_data_source.dart';
+import 'package:passion_tree_frontend/features/mission/data/repositories/mission_repository_impl.dart';
+import 'package:passion_tree_frontend/features/mission/domain/repositories/i_mission_repository.dart';
+import 'package:passion_tree_frontend/features/mission/domain/usecases/get_my_missions_usecase.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -357,6 +363,9 @@ Future<void> initializeDependencies() async {
   getIt.registerFactory<CreateChoiceUseCase>(
     () => CreateChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
   );
+  getIt.registerFactory<DeleteQuestionUseCase>(
+    () => DeleteQuestionUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
   getIt.registerFactory<DeleteChoiceUseCase>(
     () => DeleteChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
   );
@@ -385,6 +394,7 @@ Future<void> initializeDependencies() async {
       getIt<UpdateQuestionUseCase>(),
       getIt<UpdateChoiceUseCase>(),
       getIt<CreateChoiceUseCase>(),
+      getIt<DeleteQuestionUseCase>(),
       getIt<DeleteChoiceUseCase>(),
       getIt<SubmitReview>(),
       getIt<GetMyRating>(),
@@ -421,6 +431,28 @@ Future<void> initializeDependencies() async {
   );
   getIt.registerFactory<GetDashboardUseCase>(
     () => GetDashboardUseCase(getIt<IDashboardRepository>()),
+  );
+
+  // Mission Feature
+  getIt.registerLazySingleton<MissionRemoteDataSource>(
+    () => MissionRemoteDataSourceImpl(apiHandler: getIt<ApiHandler>()),
+  );
+  getIt.registerLazySingleton<IMissionRepository>(
+    () => MissionRepositoryImpl(
+      remoteDataSource: getIt<MissionRemoteDataSource>(),
+      localDataSource: getIt<AuthLocalDataSource>(),
+    ),
+  );
+  getIt.registerFactory<GetMyMissionsUseCase>(
+    () => GetMyMissionsUseCase(getIt<IMissionRepository>()),
+  );
+  // Lazy singleton so the Home tab and the Profile/Dashboard tab share the
+  // exact same MissionBloc instance — even though each tab has its own
+  // HomeBlocProvider wrapper. MissionBlocProvider uses BlocProvider.value
+  // so the bloc is not auto-closed when a wrapper is disposed.
+  // resetDependencies() clears the singleton on logout.
+  getIt.registerLazySingleton<MissionBloc>(
+    () => MissionBloc(getMyMissions: getIt<GetMyMissionsUseCase>()),
   );
 
   getIt.registerLazySingleton<StartupPrefetchService>(
