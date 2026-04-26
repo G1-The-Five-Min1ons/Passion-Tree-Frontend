@@ -6,6 +6,7 @@ import 'package:passion_tree_frontend/core/services/startup_prefetch_service.dar
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_role_entry_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/home/presentation/pages/home_wrapper.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
@@ -86,6 +87,7 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
     final startupPrefetchService = getIt<StartupPrefetchService>();
     await startupPrefetchService.runInOrder(
       learningPathBloc: context.read<LearningPathBloc>(),
+      albumBloc: context.read<AlbumBloc>(),
     );
   }
 
@@ -103,7 +105,9 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
 
     switch (index) {
       case 0:
-        _pageCache[index] = const HomeWrapper();
+        _pageCache[index] = HomeWrapper(
+          enableStartupPrefetch: widget.enableStartupPrefetch,
+        );
         break;
       case 1:
         _pageCache[index] = _buildTabNavigator(
@@ -114,11 +118,16 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
       case 2:
         _pageCache[index] = _buildTabNavigator(
           2,
-          const AlbumsReflectionTreeWrapper(),
+          AlbumsReflectionTreeWrapper(
+            enableStartupPrefetch: widget.enableStartupPrefetch,
+          ),
         );
         break;
       case 3:
-        _pageCache[index] = _buildTabNavigator(3, const ProfilePage());
+        _pageCache[index] = _buildTabNavigator(
+          3,
+          ProfilePage(enableStartupPrefetch: widget.enableStartupPrefetch),
+        );
         break;
     }
   }

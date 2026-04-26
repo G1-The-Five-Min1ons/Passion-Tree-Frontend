@@ -23,7 +23,9 @@ import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission
 import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_state.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final bool enableStartupPrefetch;
+
+  const HomePage({super.key, this.enableStartupPrefetch = true});
 
   @override
   State<HomePage> createState() => _HomePageState();

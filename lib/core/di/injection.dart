@@ -458,7 +458,6 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton<StartupPrefetchService>(
     () => StartupPrefetchService(
       authRepository: getIt<IAuthRepository>(),
-      getAlbumsByUserIdUseCase: getIt<GetAlbumsByUserIdUseCase>(),
       getDashboardUseCase: getIt<GetDashboardUseCase>(),
       getSettingsUseCase: getIt<GetSettingsUseCase>(),
     ),

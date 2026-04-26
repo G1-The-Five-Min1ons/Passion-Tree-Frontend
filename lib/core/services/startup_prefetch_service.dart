@@ -4,33 +4,35 @@ import 'package:passion_tree_frontend/features/dashboard/domain/usecases/get_das
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/domain/usecases/album_usecases.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_event.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_state.dart';
 import 'package:passion_tree_frontend/features/setting/domain/usecases/get_settings_usecase.dart';
 
 class StartupPrefetchService {
   StartupPrefetchService({
     required IAuthRepository authRepository,
-    required GetAlbumsByUserIdUseCase getAlbumsByUserIdUseCase,
     required GetDashboardUseCase getDashboardUseCase,
     required GetSettingsUseCase getSettingsUseCase,
   }) : _authRepository = authRepository,
-       _getAlbumsByUserIdUseCase = getAlbumsByUserIdUseCase,
        _getDashboardUseCase = getDashboardUseCase,
        _getSettingsUseCase = getSettingsUseCase;
 
   final IAuthRepository _authRepository;
-  final GetAlbumsByUserIdUseCase _getAlbumsByUserIdUseCase;
   final GetDashboardUseCase _getDashboardUseCase;
   final GetSettingsUseCase _getSettingsUseCase;
 
-  Future<void> runInOrder({required LearningPathBloc learningPathBloc}) async {
+  Future<void> runInOrder({
+    required LearningPathBloc learningPathBloc,
+    required AlbumBloc albumBloc,
+  }) async {
     final userId = await _authRepository.getUserId();
     if (userId == null || userId.isEmpty) {
       return;
     }
 
     await _prefetchHome(learningPathBloc);
-    await _prefetchReflect();
+    await _prefetchReflect(albumBloc);
     await _prefetchDashboard();
     await _prefetchSetting();
   }
@@ -53,14 +55,15 @@ class StartupPrefetchService {
     }
   }
 
-  Future<void> _prefetchReflect() async {
+  Future<void> _prefetchReflect(AlbumBloc albumBloc) async {
     try {
-      final result = await _getAlbumsByUserIdUseCase.call();
-      result.fold(
-        (failure) => LogHandler.warning(
-          'Startup prefetch REFLECT failed: ${failure.message}',
-        ),
-        (_) {},
+      final state = albumBloc.state;
+      if (state is AlbumsLoaded || state is AlbumLoading) return;
+
+      albumBloc.add(const LoadAlbumsEvent());
+
+      await albumBloc.stream.firstWhere(
+        (s) => s is AlbumsLoaded || s is AlbumError,
       );
     } catch (e) {
       LogHandler.warning('Startup prefetch REFLECT failed: $e');

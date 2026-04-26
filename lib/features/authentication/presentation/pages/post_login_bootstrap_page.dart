@@ -7,6 +7,7 @@ import 'package:passion_tree_frontend/core/services/startup_prefetch_service.dar
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 
 class PostLoginBootstrapPage extends StatefulWidget {
   const PostLoginBootstrapPage({super.key});
@@ -32,6 +33,7 @@ class _PostLoginBootstrapPageState extends State<PostLoginBootstrapPage> {
       final service = getIt<StartupPrefetchService>();
       await service.runInOrder(
         learningPathBloc: context.read<LearningPathBloc>(),
+        albumBloc: context.read<AlbumBloc>(),
       );
     } catch (_) {
       // Proceed to home even if some prefetch calls fail.

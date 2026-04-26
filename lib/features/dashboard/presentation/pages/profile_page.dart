@@ -26,7 +26,9 @@ import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/se
 import 'package:passion_tree_frontend/features/dashboard/presentation/pages/mission_center_page.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final bool enableStartupPrefetch;
+
+  const ProfilePage({super.key, this.enableStartupPrefetch = true});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();

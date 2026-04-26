@@ -3,12 +3,17 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree.dart';
 
 class AlbumsReflectionTreeWrapper extends StatelessWidget {
-  const AlbumsReflectionTreeWrapper({super.key});
+  final bool enableStartupPrefetch;
+
+  const AlbumsReflectionTreeWrapper({
+    super.key,
+    this.enableStartupPrefetch = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     return AlbumBlocProvider(
-      child: const ReflectionTreePage(),
+      child: ReflectionTreePage(enableStartupPrefetch: enableStartupPrefetch),
     );
   }
 }
