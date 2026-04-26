@@ -25,6 +25,17 @@ class RecentActivityCardWidget extends StatefulWidget {
 class _RecentActivityCardWidgetState extends State<RecentActivityCardWidget> {
   bool _isExpanded = false;
 
+  Color _badgeColor(ActivityItem item) {
+    switch (item.activityType) {
+      case 'complete_node':
+        return AppColors.status.withOpacity(0.75);
+      case 'enroll_path':
+        return AppColors.warning.withOpacity(0.75);
+      default:
+        return AppColors.primaryBrand;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.activities.isEmpty) {
@@ -95,11 +106,13 @@ class _RecentActivityCardWidgetState extends State<RecentActivityCardWidget> {
                         ),
                       ),
                       Container(
+                        constraints: const BoxConstraints(minWidth: 84),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 4,
                         ),
-                        color: AppColors.primaryBrand,
+                        alignment: Alignment.center,
+                        color: _badgeColor(item),
                         child: Text(
                           item.typeLabel,
                           style: AppTypography.smallBodySemiBold.copyWith(
@@ -126,7 +139,7 @@ class _RecentActivityCardWidgetState extends State<RecentActivityCardWidget> {
                     Text(
                       _isExpanded ? 'Show less' : 'Show more',
                       style: AppTypography.smallBodySemiBold.copyWith(
-                        color: AppColors.primaryBrand,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -135,7 +148,7 @@ class _RecentActivityCardWidgetState extends State<RecentActivityCardWidget> {
                           ? Icons.keyboard_arrow_up
                           : Icons.keyboard_arrow_down,
                       size: 18,
-                      color: AppColors.primaryBrand,
+                      color: AppColors.textPrimary,
                     ),
                   ],
                 ),

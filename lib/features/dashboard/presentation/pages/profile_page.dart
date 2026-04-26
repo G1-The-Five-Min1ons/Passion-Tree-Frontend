@@ -249,7 +249,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: const AppBarWidget(
-        title: 'Dashboard & Profile',
+        title: 'Profile & Dashboard',
         showBackButton: false,
       ),
       body: _isLoading

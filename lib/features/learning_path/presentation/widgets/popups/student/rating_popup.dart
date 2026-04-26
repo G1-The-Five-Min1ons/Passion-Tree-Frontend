@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/save_cancel.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/rating_section.dart';
 
@@ -158,6 +159,7 @@ class _RatingPopupState extends State<RatingPopup> {
               SaveCancel(
                 saveText: 'Submit',
                 cancelText: 'Cancel',
+                cancelButtonColor: AppColors.scale.withOpacity(0.8),
                 cancelTextColor: Colors.white,
                 onCancel: widget.onCancel ?? () => Navigator.pop(context),
                 onSave: _handleSubmit,

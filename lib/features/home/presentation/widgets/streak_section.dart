@@ -26,7 +26,7 @@ class StreakSection extends StatelessWidget {
               streakCount > 0
                   ? "$streakCount day${streakCount == 1 ? '' : 's'} on streak!"
                   : "Start your streak today!",
-              style: AppPixelTypography.smallTitle.copyWith(
+              style: AppPixelTypography.small.copyWith(
                 color: colors.onPrimary,
               ),
             ),
