@@ -10,6 +10,7 @@ class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
   final ValueChanged<String>? onSearch;
   final double titleFontSize;
   final List<Widget>? actions;
+  final Color? titleColor;
 
   const AppBarWidget({
     super.key,
@@ -19,6 +20,7 @@ class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
     this.onSearch,
     this.titleFontSize = 22,
     this.actions,
+    this.titleColor,
   });
 
   @override
@@ -74,7 +76,8 @@ class _AppBarWidgetState extends State<AppBarWidget>
   @override
   Widget build(BuildContext context) {
     final Color bgColor = AppColors.appBarColor;
-    final Color textColor = Theme.of(context).colorScheme.onPrimary;
+    final Color textColor =
+        widget.titleColor ?? Theme.of(context).colorScheme.onPrimary;
 
     return Container(
       height: widget.preferredSize.height + MediaQuery.of(context).padding.top,

@@ -16,6 +16,7 @@ class AppButton extends StatefulWidget {
   final Color? backgroundColor;
   final Color? borderColor;
   final Color? textColor;
+  final double disabledOpacity;
 
   final bool fullWidth;
 
@@ -31,6 +32,7 @@ class AppButton extends StatefulWidget {
     this.borderColor,
     this.textColor,
     this.fullWidth = false,
+    this.disabledOpacity = 0.4,
   });
 
   @override
@@ -48,12 +50,17 @@ class _AppButtonState extends State<AppButton> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDisabled = widget.onPressed == null;
+    final disabledOpacity = widget.disabledOpacity.clamp(0.0, 1.0);
     final bgColor = isDisabled
-        ? (widget.backgroundColor ?? scheme.primary).withValues(alpha: 0.4)
+      ? (widget.backgroundColor ?? scheme.primary).withValues(
+        alpha: disabledOpacity,
+        )
         : widget.backgroundColor ?? scheme.primary;
     final bdColor = widget.borderColor ?? AppColors.background;
     final fgColor = isDisabled
-        ? (widget.textColor ?? scheme.onPrimary).withValues(alpha: 0.4)
+        ? (widget.textColor ?? scheme.onPrimary).withValues(
+            alpha: disabledOpacity,
+          )
         : widget.textColor ?? scheme.onPrimary;
 
     final TextStyle buttonTextStyle = AppPixelTypography.smallTitle.copyWith(

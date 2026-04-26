@@ -3,14 +3,17 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/material.dart' as lp;
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/material.dart'
+    as lp;
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LearningNodeContent extends StatefulWidget {
   final String title;
   final String description;
   final List<lp.Material> materials;
+  final VoidCallback onStartLearning;
   final VoidCallback onTakeQuiz;
   final String status;
   final String? videoUrl;
@@ -22,6 +25,7 @@ class LearningNodeContent extends StatefulWidget {
     required this.title,
     required this.description,
     required this.materials,
+    required this.onStartLearning,
     required this.onTakeQuiz,
     required this.status,
     this.videoUrl,
@@ -36,11 +40,13 @@ class LearningNodeContent extends StatefulWidget {
 class _LearningNodeContentState extends State<LearningNodeContent> {
   String? _videoId;
   bool _showPlayer = false;
+  bool _hasStartedLearning = false;
 
   @override
   void initState() {
     super.initState();
-    final videoUrl = widget.videoUrl ?? 'https://youtu.be/Yf4M3WZilRI?si=HU_zfUG1GzGMizNb';
+    final videoUrl =
+        widget.videoUrl ?? 'https://youtu.be/Yf4M3WZilRI?si=HU_zfUG1GzGMizNb';
     _videoId = YoutubePlayer.convertUrlToId(videoUrl) ?? '';
   }
 
@@ -48,17 +54,38 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
     if (widget.controller != null) {
       widget.controller!.play();
       setState(() => _showPlayer = true);
+
+      if (!_hasStartedLearning) {
+        _hasStartedLearning = true;
+        widget.onStartLearning();
+      }
     }
+  }
+
+  Future<void> _openMaterial(String url) async {
+    final uri = Uri.tryParse(url.trim());
+    if (uri == null || !uri.hasScheme) return;
+
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  String _fileNameFromUrl(String url) {
+    final uri = Uri.tryParse(url);
+    final segments = uri?.pathSegments;
+    if (segments != null && segments.isNotEmpty) {
+      return Uri.decodeComponent(segments.last);
+    }
+    return Uri.decodeComponent(url.split('/').last);
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final hasPlaybackStarted =
-      (widget.controller?.value.position.inMilliseconds ?? 0) > 0 ||
-      (widget.controller?.value.isPlaying ?? false);
+        (widget.controller?.value.position.inMilliseconds ?? 0) > 0 ||
+        (widget.controller?.value.isPlaying ?? false);
     final shouldShowPlayer =
-      widget.player != null && (_showPlayer || hasPlaybackStarted);
+        widget.player != null && (_showPlayer || hasPlaybackStarted);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,7 +97,9 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
             alignment: Alignment.centerLeft,
             child: Text(
               widget.title,
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(color: colors.onPrimary),
+              style: Theme.of(
+                context,
+              ).textTheme.displayLarge?.copyWith(color: colors.onPrimary),
             ),
           ),
         ),
@@ -120,7 +149,11 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
                           color: Colors.black.withValues(alpha: 0.6),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.play_arrow, size: 48, color: Colors.white),
+                        child: const Icon(
+                          Icons.play_arrow,
+                          size: 48,
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),
@@ -138,11 +171,16 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Node Description', style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                'Node Description',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: 12),
               Text(
                 widget.description,
-                style: AppTypography.bodySemiBold.copyWith(color: colors.onSurface),
+                style: AppTypography.bodySemiBold.copyWith(
+                  color: colors.onSurface,
+                ),
               ),
             ],
           ),
@@ -159,22 +197,49 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Learning Materials', style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                'Learning Materials',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: 12),
               ...widget.materials.map(
                 (material) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.attach_file, size: 16, color: colors.onSurface),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${material.type}: ${material.url}',
-                          style: AppTypography.subtitleSemiBold.copyWith(color: colors.onSurface),
-                        ),
+                  child: InkWell(
+                    onTap: () => _openMaterial(material.url),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 10,
                       ),
-                    ],
+                      child: Row(
+                        children: [
+                          Icon(
+                            material.type.toLowerCase() == 'file'
+                                ? Icons.description_outlined
+                                : Icons.attach_file,
+                            size: 18,
+                            color: colors.onSurface,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _fileNameFromUrl(material.url),
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.subtitleSemiBold.copyWith(
+                                color: colors.onSurface,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.open_in_new,
+                            size: 16,
+                            color: colors.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -193,13 +258,7 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
               if (widget.status.toLowerCase() == 'active') {
                 widget.onTakeQuiz();
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Please complete previous nodes first'),
-                    duration: const Duration(seconds: 3),
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                  ),
-                );
+                widget.onStartLearning();
               }
             },
           ),

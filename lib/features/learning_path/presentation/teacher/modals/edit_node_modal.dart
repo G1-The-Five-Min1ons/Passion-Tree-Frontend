@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/nod
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_choice.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_detail_usecase.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -34,6 +36,7 @@ class EditNodeModal extends StatefulWidget {
   final String? sequence;
   final NodeDetail? initialNode;
   final bool isReadOnly;
+  final bool canDeleteNode;
   final VoidCallback? onDeleteUnsavedNode;
 
   const EditNodeModal({
@@ -47,6 +50,7 @@ class EditNodeModal extends StatefulWidget {
     this.sequence,
     this.initialNode,
     this.isReadOnly = false,
+    this.canDeleteNode = true,
     this.onDeleteUnsavedNode,
   });
 
@@ -56,6 +60,7 @@ class EditNodeModal extends StatefulWidget {
 
 class _EditNodeModalState extends State<EditNodeModal> {
   static const String _materialNameMapKey = 'learning_path_material_name_map';
+  static const Duration _videoUrlValidationDelay = Duration(seconds: 2);
 
   String _title = '';
   String _description = '';
@@ -65,6 +70,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
   List<NodeQuiz> _quizzes = []; //ส่วนเพิ่ม quiz
   bool _isUploading = false;
   bool _isSubmitting = false;
+  int _saveAttemptCount = 0;
+  Timer? _videoUrlValidationTimer;
+  bool _shouldShowVideoUrlValidation = false;
 
   String _normalizeVideoUrl(String value) {
     final trimmed = value.trim();
@@ -93,17 +101,24 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
   bool get _isValidVideoUrl {
     final value = _videoUrl.trim();
-    if (value.isEmpty) return false;
+    if (value.isEmpty) return true; // Video URL is optional
     final normalized = _normalizeVideoUrl(value);
     final uri = Uri.tryParse(normalized);
     return uri != null && uri.hasAuthority && uri.host.contains('.');
   }
 
   String? get _videoUrlWarningText {
+    if (_saveAttemptCount < 1) return null;
     final value = _videoUrl.trim();
-    if (value.isEmpty) return null;
+    if (value.isEmpty) return null; // Not required, no warning when empty
     if (_isValidVideoUrl) return null;
-    return 'Video URL ต้องเป็นลิงก์ที่ถูกต้อง เช่น youtube.com/...';
+    return 'Video URL must be a valid URL.';
+  }
+
+  bool get _hasMaterialContent {
+    final hasVideoUrl = _videoUrl.trim().isNotEmpty && _isValidVideoUrl;
+    final hasFiles = _files.isNotEmpty;
+    return hasVideoUrl || hasFiles;
   }
 
   bool get _hasRequiredQuiz {
@@ -117,8 +132,44 @@ class _EditNodeModalState extends State<EditNodeModal> {
   bool get _isSaveEnabled {
     return _title.trim().isNotEmpty &&
         _description.trim().isNotEmpty &&
-        _isValidVideoUrl &&
+        _isValidVideoUrl && // only validates format when non-empty
+        _hasMaterialContent && // require video URL or files
         _hasRequiredQuiz;
+  }
+
+  bool get _isTitleValid => _title.trim().isNotEmpty;
+
+  bool get _isDescriptionValid => _description.trim().isNotEmpty;
+
+  void _scheduleVideoUrlValidation() {
+    _videoUrlValidationTimer?.cancel();
+    _shouldShowVideoUrlValidation = false;
+    _videoUrlValidationTimer = Timer(_videoUrlValidationDelay, () {
+      if (!mounted) return;
+      setState(() {
+        _shouldShowVideoUrlValidation = true;
+      });
+    });
+  }
+
+  void _handleVideoUrlChanged(String value) {
+    setState(() {
+      _videoUrl = value;
+      _shouldShowVideoUrlValidation = false;
+    });
+    _scheduleVideoUrlValidation();
+  }
+
+  String? get _titleWarningText {
+    if (_saveAttemptCount < 1) return null;
+    if (_isTitleValid) return null;
+    return 'Title is required';
+  }
+
+  String? get _descriptionWarningText {
+    if (_saveAttemptCount < 1) return null;
+    if (_isDescriptionValid) return null;
+    return 'Description is required';
   }
 
   String _deriveDisplayFileName(String url) {
@@ -196,6 +247,45 @@ class _EditNodeModalState extends State<EditNodeModal> {
     });
   }
 
+  Future<void> _loadExistingNodeDetail() async {
+    if (widget.isNewNode) return;
+    if (widget.nodeId.startsWith('new_node_') ||
+        widget.nodeId.startsWith('draft_node_')) {
+      return;
+    }
+
+    try {
+      final getNodeDetail = getIt<GetNodeDetail>();
+      final node = await getNodeDetail(widget.nodeId, '');
+      if (!mounted) return;
+
+      setState(() {
+        _title = node.title;
+        _description = node.description;
+        _videoUrl = node.linkVdo ?? '';
+        _files
+          ..clear()
+          ..addAll(
+            node.materials
+                .where((material) => material.url.trim().isNotEmpty)
+                .map(
+                  (material) => UploadedFileItem(
+                    name: _deriveDisplayFileName(material.url),
+                    size: 0,
+                    path: material.url,
+                  ),
+                ),
+          );
+      });
+
+      if (_videoUrl.trim().isNotEmpty) {
+        _scheduleVideoUrlValidation();
+      }
+    } catch (_) {
+      // Fallback to the initial node data if reloading the full detail fails.
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -240,7 +330,21 @@ class _EditNodeModalState extends State<EditNodeModal> {
       if (!widget.isNewNode) {
         _loadQuestionsFromApi();
       }
+
+      if (_videoUrl.trim().isNotEmpty) {
+        _scheduleVideoUrlValidation();
+      }
     }
+
+    if (!widget.isNewNode) {
+      _loadExistingNodeDetail();
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoUrlValidationTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadQuestionsFromApi() async {
@@ -285,6 +389,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
   bool get _cannotDeleteLastNode {
     return widget.totalNodes <= 1;
+  }
+
+  bool get _isFirstNode {
+    final effectiveSequence = widget.sequence != null
+        ? int.tryParse(widget.sequence!)
+        : widget.initialNode?.sequence;
+    return effectiveSequence == 1;
   }
 
   //  ===== FILE FUNCTIONS  =====
@@ -393,14 +504,42 @@ class _EditNodeModalState extends State<EditNodeModal> {
   Future<void> _handleUpdate(BuildContext context) async {
     // Guard against double-tap / duplicate submit while the first request is in-flight.
     if (_isSubmitting) return;
-    setState(() => _isSubmitting = true);
 
-    if (!_isValidVideoUrl) {
+    // Increment save attempt counter so validation warnings become visible
+    setState(() {
+      _saveAttemptCount++;
+      _isSubmitting = true;
+    });
+
+    // Check overall validity and abort with visible warnings if incomplete
+    if (!_isSaveEnabled) {
       setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
+
+      // Show specific message for missing material content on 2nd+ failed attempt
+      if (!_hasMaterialContent && _saveAttemptCount >= 2) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please provide at least a Video URL or upload a file.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
+          ),
+        );
+      }
+      return;
+    }
+
+    if (_videoUrl.trim().isNotEmpty && !_isValidVideoUrl) {
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
         const SnackBar(
           content: Text(
-            'Video URL ต้องเป็นลิงก์ที่ถูกต้อง เช่น youtube.com/...',
+            'Video URL must be a valid URL.',
             style: TextStyle(color: AppColors.textPrimary),
           ),
           backgroundColor: AppColors.cancel,
@@ -607,11 +746,19 @@ class _EditNodeModalState extends State<EditNodeModal> {
                       onTitleChanged: (v) => setState(() => _title = v),
                       onDescriptionChanged: (v) =>
                           setState(() => _description = v),
+                      isTitleInvalid: false,
+                      isDescriptionInvalid: false,
+                      titleWarningText: _titleWarningText,
+                      descriptionWarningText: _descriptionWarningText,
 
                       // ===== VIDEO URL =====
                       videoUrlValue: _videoUrl,
-                      onVideoUrlChanged: (v) => setState(() => _videoUrl = v),
+                      onVideoUrlChanged: _handleVideoUrlChanged,
                       videoUrlWarningText: _videoUrlWarningText,
+                      isVideoUrlInvalid:
+                          _saveAttemptCount >= 1 &&
+                          _videoUrl.trim().isNotEmpty &&
+                          !_isValidVideoUrl,
                       isReadOnly: widget.isReadOnly,
 
                       // ===== FILE UPLOAD =====
@@ -624,6 +771,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                     NodeQuizSection(
                       initialQuizzes: _quizzes.isNotEmpty ? _quizzes : null,
                       isReadOnly: widget.isReadOnly,
+                      isQuizInvalid: false,
                       onQuizzesChanged: (quizzes) {
                         setState(() {
                           _quizzes = quizzes;
@@ -633,7 +781,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
                     const SizedBox(height: 14),
 
-                    if (!widget.isReadOnly)
+                    if (!widget.isReadOnly || widget.canDeleteNode)
                       BlocBuilder<LearningPathBloc, LearningPathState>(
                         builder: (context, state) {
                           final isLoading =
@@ -642,9 +790,26 @@ class _EditNodeModalState extends State<EditNodeModal> {
                               _isSubmitting;
 
                           return NodeFooter(
-                            onDelete: isLoading
+                            onDelete: !widget.canDeleteNode || isLoading
                                 ? null
                                 : () {
+                                    if (_isFirstNode) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'You cannot delete the first node.',
+                                            style: TextStyle(
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          backgroundColor: AppColors.cancel,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
                                     DeletePopUp.show(
                                       context,
                                       title: 'Delete?',
@@ -682,7 +847,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
                                       },
                                     );
                                   },
-                            onSave: isLoading || !_isSaveEnabled
+                            onSave: isLoading
                                 ? null
                                 : () => _handleUpdate(context),
                           );

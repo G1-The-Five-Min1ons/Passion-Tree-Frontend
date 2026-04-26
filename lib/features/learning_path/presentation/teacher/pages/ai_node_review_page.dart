@@ -16,11 +16,13 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 class AINodeReviewPage extends StatefulWidget {
   final String pathId;
   final String objective;
+  final List<GeneratedNode>? initialNodes;
 
   const AINodeReviewPage({
     super.key,
     required this.pathId,
     required this.objective,
+    this.initialNodes,
   });
 
   @override
@@ -32,19 +34,25 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
   bool _isInitialized = false;
 
   @override
+  void initState() {
+    super.initState();
+    _nodes = List<GeneratedNode>.from(widget.initialNodes ?? const []);
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isInitialized) {
       _isInitialized = true;
-      _generateNodes();
+      if (_nodes.isEmpty) {
+        _generateNodes();
+      }
     }
   }
 
   void _generateNodes() {
     context.read<LearningPathBloc>().add(
-      GenerateNodesWithAIEvent(
-        topic: widget.objective,
-      ),
+      GenerateNodesWithAIEvent(topic: widget.objective),
     );
   }
 
@@ -59,19 +67,32 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
             _nodes = state.nodes;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Generated ${state.nodes.length} nodes', style: const TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.status),
+            SnackBar(
+              content: Text(
+                'Generated ${state.nodes.length} nodes',
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
           );
         } else if (state is LearningPathError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${state.message}', style: const TextStyle(color: AppColors.textPrimary)),
+              content: Text(
+                'Error: ${state.message}',
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
               backgroundColor: AppColors.cancel,
             ),
           );
         }
       },
       child: Scaffold(
-        appBar: const AppBarWidget(title: 'Learning Paths', showBackButton: true),
+        appBar: const AppBarWidget(
+          title: 'Learning Paths',
+          showBackButton: true,
+          titleColor: Colors.white,
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -91,9 +112,9 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         'Node review',
-                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: Colors.white,
-                        ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.displaySmall?.copyWith(color: Colors.white),
                       ),
                     ),
                   ),
@@ -116,7 +137,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                               child: Text(
                                 'Nodes Contain in Path',
                                 style: AppTypography.h3SemiBold.copyWith(
-                                  color: colors.primary,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
@@ -126,13 +147,15 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                             // Refresh icon
                             BlocBuilder<LearningPathBloc, LearningPathState>(
                               builder: (context, state) {
-                                final isLoading = state is LearningPathLoading;
+                                final isLoading = state is GeneratingNodesWithAI;
                                 return IconButton(
                                   icon: isLoading
                                       ? const SizedBox(
                                           width: 20,
                                           height: 20,
-                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
                                         )
                                       : const Icon(Icons.autorenew),
                                   onPressed: isLoading ? null : _generateNodes,
@@ -147,7 +170,7 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                         // ===== NODE LIST =====
                         BlocBuilder<LearningPathBloc, LearningPathState>(
                           builder: (context, state) {
-                            if (state is LearningPathLoading) {
+                            if (state is GeneratingNodesWithAI) {
                               return const Expanded(
                                 child: Center(
                                   child: CircularProgressIndicator(),
@@ -161,7 +184,9 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                                   child: Text(
                                     'No nodes generated yet',
                                     style: AppTypography.bodyMedium.copyWith(
-                                      color: colors.onSurface.withValues(alpha: 0.6)
+                                      color: colors.onSurface.withValues(
+                                        alpha: 0.6,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -176,16 +201,20 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
                                     padding: const EdgeInsets.only(bottom: 8),
                                     child: RichText(
                                       text: TextSpan(
-                                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                          color: Colors.white,
-                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(color: Colors.white),
                                         children: [
                                           TextSpan(
                                             text: 'Node${index + 1} : ',
-                                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                           ),
                                           TextSpan(text: _nodes[index].title),
                                         ],
@@ -222,14 +251,15 @@ class _AINodeReviewPageState extends State<AINodeReviewPage> {
 
                       BlocBuilder<LearningPathBloc, LearningPathState>(
                         builder: (context, state) {
-                          final isLoading = state is LearningPathLoading;
+                          final isLoading = state is GeneratingNodesWithAI;
                           return AppButton(
                             variant: AppButtonVariant.text,
                             text: 'Save',
                             onPressed: isLoading || _nodes.isEmpty
                                 ? null
                                 : () {
-                                    final bloc = context.read<LearningPathBloc>();
+                                    final bloc = context
+                                        .read<LearningPathBloc>();
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(

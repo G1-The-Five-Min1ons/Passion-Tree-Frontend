@@ -25,6 +25,12 @@ class CoursePreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final objectiveStyle = AppTypography.smallBodyMedium.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+    final objectiveLineHeight =
+        (objectiveStyle.fontSize ?? 14) * (objectiveStyle.height ?? 1.0);
+    final objectiveBlockHeight = objectiveLineHeight * 2;
 
     return BaseCourseCard(
       borderColor: AppColors.cardBorder,
@@ -74,13 +80,14 @@ class CoursePreviewCard extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  Text(
-                    objectives.isEmpty ? 'Path objectives' : objectives,
-                    style: AppTypography.smallBodyMedium.copyWith(
-                      fontWeight: FontWeight.w600,
+                  SizedBox(
+                    height: objectiveBlockHeight,
+                    child: Text(
+                      objectives.isEmpty ? 'Path objectives' : objectives,
+                      style: objectiveStyle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
 
                   const SizedBox(height: 12),
