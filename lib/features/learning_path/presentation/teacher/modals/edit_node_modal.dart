@@ -123,11 +123,11 @@ class _EditNodeModalState extends State<EditNodeModal> {
   }
 
   String? get _videoUrlWarningText {
-    if (_saveAttemptCount < 1) return null;
     final value = _videoUrl.trim();
     if (value.isEmpty) return null; // Not required, no warning when empty
     if (_isValidVideoUrl) return null;
-    return 'Video URL must be a valid URL.';
+    if (_saveAttemptCount < 1 && !_shouldShowVideoUrlValidation) return null;
+    return 'Invalid URL format';
   }
 
   bool get _hasMaterialContent {

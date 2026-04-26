@@ -69,6 +69,7 @@ class NodeInfoSection extends StatelessWidget {
           hintText: 'Enter node title',
           height: 35,
           value: initialTitle,
+          fillColor: colors.surface,
           borderColor: isTitleInvalid ? AppColors.cancel : null,
           onChanged: isReadOnly ? null : onTitleChanged,
           readOnly: isReadOnly,
@@ -91,6 +92,7 @@ class NodeInfoSection extends StatelessWidget {
           hintText: 'Enter node description',
           height: 35,
           value: initialDescription,
+          fillColor: colors.surface,
           borderColor: isDescriptionInvalid ? AppColors.cancel : null,
           onChanged: isReadOnly ? null : onDescriptionChanged,
           readOnly: isReadOnly,
@@ -109,23 +111,36 @@ class NodeInfoSection extends StatelessWidget {
         const SizedBox(height: 12),
 
         // ===== VIDEO URL =====
-        PixelTextField(
-          label: 'Video URL',
-          hintText: 'Enter YouTube video URL',
-          height: 35,
-          value: videoUrlValue,
-          onChanged: isReadOnly ? null : (onVideoUrlChanged ?? (_) {}),
-          readOnly: isReadOnly,
-        ),
-
-        if (videoUrlWarningText != null && videoUrlWarningText!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 6, left: 10),
-            child: Text(
-              videoUrlWarningText!,
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.cancel),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            PixelTextField(
+              label: 'Video URL',
+              hintText: 'Enter YouTube video URL',
+              height: 35,
+              value: videoUrlValue,
+              fillColor: colors.surface,
+              borderColor: isVideoUrlInvalid ? AppColors.cancel : null,
+              onChanged: isReadOnly ? null : (onVideoUrlChanged ?? (_) {}),
+              readOnly: isReadOnly,
             ),
-          ),
+            if (videoUrlWarningText != null && videoUrlWarningText!.isNotEmpty)
+              Positioned(
+                right: 10,
+                top: 31,
+                child: Container(
+                  color: colors.surface,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    videoUrlWarningText!,
+                    style: AppTypography.smallBodyRegular.copyWith(
+                      color: AppColors.cancel,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
 
         const SizedBox(height: 12),
 
