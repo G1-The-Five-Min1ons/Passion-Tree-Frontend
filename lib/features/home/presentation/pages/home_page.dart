@@ -49,9 +49,13 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadData() async {
     if (!mounted) return;
 
-    // Learning paths
+    // Learning paths — skip if data is already loaded or a fetch is in progress
     try {
-      context.read<LearningPathBloc>().add(FetchLearningPathOverview());
+      final lpBloc = context.read<LearningPathBloc>();
+      if (lpBloc.state is! LearningPathOverviewLoaded &&
+          lpBloc.state is! LearningPathLoading) {
+        lpBloc.add(FetchLearningPathOverview());
+      }
     } catch (_) {
       // ignore — provider may not be available in tests
     }
@@ -82,8 +86,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  int get _streakCount =>
-      _dashboardData?.userInfo.learningStreak ?? 0;
+  int get _streakCount => _dashboardData?.userInfo.learningStreak ?? 0;
 
   void _onMissionTap(UserMissionModel mission) {
     final state = context.read<MissionBloc>().state;
@@ -163,15 +166,7 @@ class _HomePageState extends State<HomePage> {
                         return PopularLearningPathsSection(
                           paths: unenrolledPaths,
                           hasEnrolledPaths: hasEnrolledPaths,
-                          isLoading: state is LearningPathLoading,
-                        );
-                      }
-
-                      if (state is LearningPathLoading) {
-                        return const PopularLearningPathsSection(
-                          paths: [],
-                          hasEnrolledPaths: false,
-                          isLoading: true,
+                          isLoading: false,
                         );
                       }
 
@@ -208,9 +203,9 @@ class _HomePageState extends State<HomePage> {
                         isLoading: isLoading,
                         errorMessage: errorMessage,
                         onMissionTap: _onMissionTap,
-                        onRetry: () => context
-                            .read<MissionBloc>()
-                            .add(const FetchMyMissions()),
+                        onRetry: () => context.read<MissionBloc>().add(
+                          const FetchMyMissions(),
+                        ),
                       );
                     },
                   ),

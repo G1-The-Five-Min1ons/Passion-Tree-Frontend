@@ -1,8 +1,6 @@
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/features/dashboard/domain/usecases/get_dashboard_usecase.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_status.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
@@ -12,24 +10,15 @@ import 'package:passion_tree_frontend/features/setting/domain/usecases/get_setti
 class StartupPrefetchService {
   StartupPrefetchService({
     required IAuthRepository authRepository,
-    required GetAllLearningPaths getAllLearningPaths,
-    required GetLearningPathStatus getLearningPathStatus,
-    required GetRecommendedLearningPaths getRecommendedLearningPaths,
     required GetAlbumsByUserIdUseCase getAlbumsByUserIdUseCase,
     required GetDashboardUseCase getDashboardUseCase,
     required GetSettingsUseCase getSettingsUseCase,
   }) : _authRepository = authRepository,
-       _getAllLearningPaths = getAllLearningPaths,
-       _getLearningPathStatus = getLearningPathStatus,
-       _getRecommendedLearningPaths = getRecommendedLearningPaths,
        _getAlbumsByUserIdUseCase = getAlbumsByUserIdUseCase,
        _getDashboardUseCase = getDashboardUseCase,
        _getSettingsUseCase = getSettingsUseCase;
 
   final IAuthRepository _authRepository;
-  final GetAllLearningPaths _getAllLearningPaths;
-  final GetLearningPathStatus _getLearningPathStatus;
-  final GetRecommendedLearningPaths _getRecommendedLearningPaths;
   final GetAlbumsByUserIdUseCase _getAlbumsByUserIdUseCase;
   final GetDashboardUseCase _getDashboardUseCase;
   final GetSettingsUseCase _getSettingsUseCase;
@@ -40,17 +29,13 @@ class StartupPrefetchService {
       return;
     }
 
-    await _prefetchHome(learningPathBloc, userId);
-    await _prefetchLearningPath(userId);
+    await _prefetchHome(learningPathBloc);
     await _prefetchReflect();
     await _prefetchDashboard();
     await _prefetchSetting();
   }
 
-  Future<void> _prefetchHome(
-    LearningPathBloc learningPathBloc,
-    String userId,
-  ) async {
+  Future<void> _prefetchHome(LearningPathBloc learningPathBloc) async {
     try {
       final state = learningPathBloc.state;
 
@@ -65,16 +50,6 @@ class StartupPrefetchService {
       );
     } catch (e) {
       LogHandler.warning('Startup prefetch HOME failed: $e');
-    }
-  }
-
-  Future<void> _prefetchLearningPath(String userId) async {
-    try {
-      await _getAllLearningPaths.call();
-      await _getLearningPathStatus.call(userId);
-      await _getRecommendedLearningPaths.call();
-    } catch (e) {
-      LogHandler.warning('Startup prefetch LEARNING_PATH failed: $e');
     }
   }
 

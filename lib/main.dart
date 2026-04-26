@@ -113,7 +113,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         theme: AppTheme.lightTheme,
         themeMode: ThemeMode.light,
         builder: (context, child) => AppBackground(child: child!),
-        home: const AuthGate(),
+        home: const HomeBlocProvider(child: AuthGate()),
         // home: const ForestPreviewPage(),
       ),
     );
@@ -202,7 +202,7 @@ class AuthGate extends StatelessWidget {
           }
 
           /// STEP 3: เข้า app
-          return const HomeBlocProvider(child: HomeBarWidget());
+          return const HomeBarWidget();
         }
 
         // Fallback กรณีฉุกเฉิน

@@ -200,14 +200,13 @@ class CourseProgressCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Container(
-                      height: 10,
-                      width: double.infinity,
-                      color: colors.secondary,
-                      child: FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: progress,
-                        child: Container(color: colors.primary),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: AppColors.cardBorder,
+                        color: AppColors.secondaryBrand,
+                        minHeight: 8,
                       ),
                     ),
                     const SizedBox(height: 4),

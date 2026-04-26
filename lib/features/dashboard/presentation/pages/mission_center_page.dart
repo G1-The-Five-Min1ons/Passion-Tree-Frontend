@@ -5,6 +5,8 @@ import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/mission/data/models/user_mission_model.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 
 class MissionCenterPage extends StatelessWidget {
   const MissionCenterPage({
@@ -19,7 +21,7 @@ class MissionCenterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: const AppBarWidget(title: 'Mission Center', showBackButton: true),
       body: missions.isEmpty
           ? Center(
@@ -69,7 +71,7 @@ class _MissionTile extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           border: highlighted
-              ? Border.all(color: AppColors.secondaryBrand, width: 1.5)
+              ? Border.all(color: AppColors.cardBorder, width: 1.5)
               : null,
         ),
         padding: const EdgeInsets.all(6),
@@ -132,16 +134,16 @@ class _MissionTile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
+            Center(
+              child: AppButton(
+                variant: AppButtonVariant.text,
+                text: mission.isCompleted ? 'Completed' : 'Go to Learn',
                 onPressed: mission.isCompleted
                     ? null
                     : () {
                         Navigator.pop(context);
                         HomeTabNavigationNotifier.jumpToTab(1);
                       },
-                child: Text(mission.isCompleted ? 'Completed' : 'Go to Learn'),
               ),
             ),
           ],

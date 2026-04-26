@@ -546,6 +546,7 @@ class _CreateLearningPathInputPageState
                   PixelTextField(
                     label: 'Path Title',
                     labelColor: Theme.of(context).colorScheme.onPrimary,
+                    fillColor: colors.surface,
                     hintText: 'Enter learning path title',
                     value: _title,
                     height: 35,
@@ -658,6 +659,7 @@ class _CreateLearningPathInputPageState
                   PixelTextField(
                     label: 'Path Objectives',
                     labelColor: Theme.of(context).colorScheme.onPrimary,
+                    fillColor: colors.surface,
                     hintText: 'Enter learning path objectives',
                     value: _objectives,
                     height: 35,
@@ -674,6 +676,7 @@ class _CreateLearningPathInputPageState
                   PixelTextField(
                     label: 'Path Description',
                     labelColor: Theme.of(context).colorScheme.onPrimary,
+                    fillColor: colors.surface,
                     hintText: 'Describe this learning path in detail',
                     value: _description,
                     height: 150,

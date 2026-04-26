@@ -3,98 +3,145 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 
+const _kDayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+enum _DayState { completed, current, inactive }
+
 class StreakSection extends StatelessWidget {
   final int streakCount;
 
   const StreakSection({super.key, required this.streakCount});
 
+  String get _motivationalText {
+    if (streakCount == 0) return 'Start your streak today!';
+    if (streakCount < 3) return 'Good start! Keep it up!';
+    if (streakCount < 7) return 'Keep the fire alive!';
+    if (streakCount < 14) return 'This is your longest streak!';
+    if (streakCount < 30) return "You're on fire! Amazing!";
+    return "Legendary! You're unstoppable!";
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
-    // Build a 5-day window centered on the current streak day
-    final int centerDay = streakCount > 0 ? streakCount : 1;
-    final int startDay = (centerDay - 2).clamp(1, double.maxFinite.toInt());
+    final today = DateTime.now().weekday; // 1=Mon, 7=Sun
 
     return PixelBorderContainer(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              streakCount > 0
-                  ? "$streakCount day${streakCount == 1 ? '' : 's'} on streak!"
-                  : "Start your streak today!",
-              style: AppPixelTypography.smallTitle.copyWith(
-                color: colors.onPrimary,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$streakCount',
+                    style: AppPixelTypography.h1.copyWith(
+                      color: streakCount > 0
+                          ? AppColors.secondaryBrand
+                          : AppColors.textSecondary,
+                      fontSize: 40,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Streak Days !',
+                    style: AppTypography.titleSemiBold.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
+              const Spacer(),
+              Icon(
+                Icons.local_fire_department_rounded,
+                color: streakCount > 0
+                    ? AppColors.secondaryBrand
+                    : AppColors.textDisabled,
+                size: 72,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _motivationalText,
+            style: AppTypography.bodyRegular.copyWith(
+              color: AppColors.textSecondary,
             ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(5, (i) {
-                final day = startDay + i;
-                return _DayBox(
-                  label: '${day}D',
-                  state: day < centerDay
-                      ? _DayState.completed
-                      : day == centerDay && streakCount > 0
-                      ? _DayState.current
-                      : _DayState.locked,
-                );
-              }),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(7, (i) {
+              final dayIndex = i + 1;
+              final daysAgo = today - dayIndex;
+
+              final _DayState state;
+              if (daysAgo == 0 && streakCount > 0) {
+                state = _DayState.current;
+              } else if (daysAgo > 0 && daysAgo < streakCount) {
+                state = _DayState.completed;
+              } else {
+                state = _DayState.inactive;
+              }
+
+              return _DayDot(label: _kDayLabels[i], state: state);
+            }),
+          ),
+        ],
       ),
     );
   }
 }
 
-enum _DayState { completed, current, locked }
-
-class _DayBox extends StatelessWidget {
+class _DayDot extends StatelessWidget {
   final String label;
   final _DayState state;
 
-  const _DayBox({required this.label, required this.state});
+  const _DayDot({required this.label, required this.state});
 
   @override
   Widget build(BuildContext context) {
-    final IconData icon;
-    final Color iconColor;
-
-    switch (state) {
-      case _DayState.completed:
-        icon = Icons.check_circle;
-        iconColor = AppColors.submit;
-        break;
-      case _DayState.current:
-        icon = Icons.local_fire_department;
-        iconColor = AppColors.secondaryBrand;
-        break;
-      case _DayState.locked:
-        icon = Icons.local_fire_department;
-        iconColor = AppColors.scale;
-        break;
-    }
+    final bool isActive = state != _DayState.inactive;
+    final Color fireColor =
+        isActive ? AppColors.secondaryBrand : AppColors.scale;
+    final Color labelColor =
+        isActive ? AppColors.textPrimary : AppColors.textDisabled;
+    final List<BoxShadow> shadows = state == _DayState.current
+        ? [
+            BoxShadow(
+              // ignore: deprecated_member_use
+              color: AppColors.secondaryBrand.withOpacity(0.5),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+          ]
+        : const [];
 
     return Column(
       children: [
-        SizedBox(
-          width: 28,
-          height: 28,
-          child: Icon(icon, color: iconColor, size: 28),
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.cardBorder,
+            shape: BoxShape.circle,
+            boxShadow: shadows,
+          ),
+          child: Icon(
+            Icons.local_fire_department_rounded,
+            color: fireColor,
+            size: 28,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-            color: state == _DayState.locked
-                ? AppColors.textSecondary
-                : AppColors.textPrimary,
-            fontSize: 12,
+          style: AppTypography.smallBodyRegular.copyWith(
+            color: labelColor,
+            fontSize: 9,
           ),
         ),
       ],

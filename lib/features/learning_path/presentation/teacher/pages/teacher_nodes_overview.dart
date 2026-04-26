@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
@@ -16,6 +17,7 @@ import 'package:passion_tree_frontend/features/authentication/domain/repositorie
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // UI State class สำหรับจัดการ node ใน UI
 class NodeUiState {
@@ -59,6 +61,8 @@ class TeacherNodesOverviewPage extends StatefulWidget {
 }
 
 class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
+  static const String _unsavedNodesStoragePrefix =
+      'teacher_nodes_overview_unsaved';
   late List<NodeUiState> _uiNodes;
   int? _pendingNodeIndex; // เก็บ index ของ node ที่กำลังสร้างอยู่
   final List<int> _createQueue =
@@ -84,6 +88,89 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       _cachedLearningPath?.publishStatus.toLowerCase() == 'published';
 
   bool get _isAiPath => widget.aiNodes != null && widget.aiNodes!.isNotEmpty;
+
+  String get _unsavedNodesStorageKey =>
+      '$_unsavedNodesStoragePrefix:${widget.pathId}';
+
+  Future<void> _persistUnsavedUiNodes() async {
+    final unsavedNodes = _uiNodes
+        .where((n) => !n.isCreated && (n.realNodeId == null || n.realNodeId!.isEmpty))
+        .map(
+          (n) => {
+            'title': n.title,
+            'description': n.description,
+            'sequence': n.sequence,
+          },
+        )
+        .toList();
+
+    final prefs = await SharedPreferences.getInstance();
+    if (unsavedNodes.isEmpty) {
+      await prefs.remove(_unsavedNodesStorageKey);
+      return;
+    }
+
+    await prefs.setString(_unsavedNodesStorageKey, jsonEncode(unsavedNodes));
+  }
+
+  Future<void> _restoreUnsavedUiNodes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_unsavedNodesStorageKey);
+    if (raw == null || raw.isEmpty) return;
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return;
+
+      final restored = decoded
+          .whereType<Map>()
+          .map(
+            (item) => NodeUiState(
+              title: (item['title'] ?? 'New Node').toString(),
+              description: (item['description'] ?? '').toString(),
+              sequence: (item['sequence'] is int)
+                  ? item['sequence'] as int
+                  : int.tryParse('${item['sequence']}') ?? 1,
+              isCreated: false,
+            ),
+          )
+          .toList();
+
+      if (restored.isEmpty || !mounted) return;
+
+      setState(() {
+        final shouldReplaceDefaultDraft =
+            _uiNodes.length == 1 &&
+            !_uiNodes.first.isCreated &&
+            (_uiNodes.first.realNodeId == null || _uiNodes.first.realNodeId!.isEmpty) &&
+            _uiNodes.first.title == 'New Node' &&
+            _uiNodes.first.description.isEmpty;
+
+        if (shouldReplaceDefaultDraft) {
+          _uiNodes = restored;
+        } else {
+          final existingKeys = _uiNodes
+              .where((n) => !n.isCreated && (n.realNodeId == null || n.realNodeId!.isEmpty))
+              .map((n) => '${n.sequence}|${n.title}|${n.description}')
+              .toSet();
+
+          for (final node in restored) {
+            final key = '${node.sequence}|${node.title}|${node.description}';
+            if (!existingKeys.contains(key)) {
+              _uiNodes.add(node);
+            }
+          }
+        }
+
+        _uiNodes.sort((a, b) => a.sequence.compareTo(b.sequence));
+        for (int i = 0; i < _uiNodes.length; i++) {
+          _uiNodes[i].sequence = i + 1;
+        }
+      });
+    } catch (_) {
+      // Ignore corrupted local cache and continue with current in-memory state.
+    }
+  }
 
   @override
   void dispose() {
@@ -130,6 +217,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         ),
       ];
     }
+    _restoreUnsavedUiNodes();
   }
 
   Future<void> _loadUserAndFetchNodes() async {
@@ -378,6 +466,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         _uiNodes[i].sequence = i + 1;
       }
     });
+    _persistUnsavedUiNodes();
   }
 
   void _handleAddNodeAfter(int afterIndex) {
@@ -398,6 +487,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         _uiNodes[i].sequence = i + 1;
       }
     });
+    _persistUnsavedUiNodes();
 
     // Open edit modal for the new node
     _openEditNodeModal(context, index: insertIndex);
@@ -421,6 +511,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         }
       }
     });
+    _persistUnsavedUiNodes();
 
     // Sync new order to backend using realNodeIds only (skip draft nodes)
     final orderedNodeIds = _uiNodes
@@ -867,6 +958,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
               _uiNodes[i].sequence = i + 1;
             }
           });
+          _persistUnsavedUiNodes();
 
           // Also sync with backend
           Future.delayed(const Duration(milliseconds: 500), () {
@@ -887,6 +979,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
               _uiNodes[_pendingNodeIndex!].isCreated = true;
               _pendingNodeIndex = null;
             });
+            _persistUnsavedUiNodes();
           }
 
           // ถ้ายังมี node ที่ต้องสร้างต่อ ให้ทำทีละตัวตามลำดับก่อน finalize

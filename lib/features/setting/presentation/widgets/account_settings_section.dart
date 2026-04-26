@@ -416,22 +416,20 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
                   if (_isEditing) ...[
                     const SizedBox(height: 16),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Expanded(
-                          child: AppButton(
-                            variant: AppButtonVariant.text,
-                            text: 'Cancel',
-                            backgroundColor: AppColors.surface,
-                            onPressed: _cancel,
-                          ),
+                        AppButton(
+                          variant: AppButtonVariant.text,
+                          text: 'Cancel',
+                          backgroundColor: AppColors.scale.withValues(alpha: 0.8),
+                          textColor: AppColors.textPrimary,
+                          onPressed: _cancel,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: AppButton(
-                            variant: AppButtonVariant.text,
-                            text: 'Save',
-                            onPressed: _isSaving ? () {} : () => _save(),
-                          ),
+                        const SizedBox(width: 2),
+                        AppButton(
+                          variant: AppButtonVariant.text,
+                          text: 'Save',
+                          onPressed: _isSaving ? () {} : () => _save(),
                         ),
                       ],
                     ),
@@ -481,7 +479,7 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
           Text(
             label,
             style: AppTypography.smallBodyRegular.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -508,8 +506,8 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
       height: 36,
       decoration: BoxDecoration(
         color: readOnly
-            ? AppColors.surface.withValues(alpha: 0.2)
-            : AppColors.surface.withValues(alpha: 0.4),
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.white.withValues(alpha: 0.12),
         border: Border.all(
           color: readOnly ? AppColors.cardBorder : AppColors.primaryBrand,
         ),

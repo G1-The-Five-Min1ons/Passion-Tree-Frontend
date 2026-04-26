@@ -10,7 +10,8 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/bottom_buttons.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/pixel_password_field.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/select_role_popup.dart';
-import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
+import 'package:passion_tree_frontend/features/home/presentation/bloc/home_bloc_provider.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/pages/post_login_bootstrap_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/register_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/forgot_password_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/verify_email_page.dart';
@@ -32,7 +33,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   String? _usernameError;
   String? _passwordError;
 
@@ -47,7 +48,7 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.dispose();
     super.dispose();
   }
-  
+
   // Validation methods
   String? _validateUsername(String value) {
     if (value.isEmpty) {
@@ -55,20 +56,20 @@ class _LoginPageState extends State<LoginPage> {
     }
     return null;
   }
-  
+
   String? _validatePassword(String value) {
     if (value.isEmpty) {
       return 'Password is required';
     }
     return null;
   }
-  
+
   bool _validateAllFields() {
     setState(() {
       _usernameError = _validateUsername(_usernameController.text.trim());
       _passwordError = _validatePassword(_passwordController.text);
     });
-    
+
     return _usernameError == null && _passwordError == null;
   }
 
@@ -105,73 +106,82 @@ class _LoginPageState extends State<LoginPage> {
         selectRole: getIt(),
         getUserRole: getIt(),
       ),
-      child: MultiBlocListener(
-        listeners: [
-          // Error listener
-          BlocListener<LoginBloc, LoginState>(
-            listenWhen: (previous, current) => current.status == LoginStatus.failure,
-            listener: (context, state) {
-              if (state.errorMessage != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.errorMessage!),
-                    backgroundColor: AppColors.cancel,
-                  ),
-                );
-              }
-            },
-          ),
-          // Navigation listener
-          BlocListener<LoginBloc, LoginState>(
-            listenWhen: (previous, current) =>
-                current.status == LoginStatus.success && current.nextStep != null,
-            listener: (context, state) async {
-              switch (state.nextStep!) {
-                case LoginNextStep.otpVerification:
-                  await _showOtpDialog(context, state);
-                  break;
+      child: Builder(
+        builder: (innerContext) => MultiBlocListener(
+          listeners: [
+            // Error listener
+            BlocListener<LoginBloc, LoginState>(
+              listenWhen: (previous, current) =>
+                  current.status == LoginStatus.failure,
+              listener: (context, state) {
+                if (state.errorMessage != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.errorMessage!),
+                      backgroundColor: AppColors.cancel,
+                    ),
+                  );
+                }
+              },
+            ),
+            // Navigation listener
+            BlocListener<LoginBloc, LoginState>(
+              listenWhen: (previous, current) =>
+                  current.status == LoginStatus.success &&
+                  current.nextStep != null,
+              listener: (context, state) async {
+                switch (state.nextStep!) {
+                  case LoginNextStep.otpVerification:
+                    await _showOtpDialog(context, state);
+                    break;
 
-                case LoginNextStep.checkingRole:
-                  if (context.mounted) {
-                    context.read<LoginBloc>().add(const CheckRoleStatus());
-                  }
-                  break;
-
-                case LoginNextStep.roleSelection:
-                  await _showRoleSelectionDialog(context);
-                  break;
-
-                case LoginNextStep.accountReactivation:
-                  await _showReactivationDialog(context, state.gracePeriodDays);
-                  break;
-
-                case LoginNextStep.complete:
-                  if (context.mounted) {
-                    // Load user data into UserBloc before navigation
-                    try {
-                      final userId = await getIt<IAuthRepository>().getUserId();
-                      if (userId != null && context.mounted) {
-                        context.read<UserBloc>().add(LoadUser(userId));
-                      }
-                    } catch (e) {
-                      // Log error but continue navigation
-                      debugPrint('Failed to load user data: $e');
-                    }
-                    
+                  case LoginNextStep.checkingRole:
                     if (context.mounted) {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (context) => const HomeBarWidget(),
-                        ),
-                      );
+                      context.read<LoginBloc>().add(const CheckRoleStatus());
                     }
-                  }
-                  break;
-              }
-            },
-          ),
-        ],
-        child: _buildLoginForm(context, colorScheme),
+                    break;
+
+                  case LoginNextStep.roleSelection:
+                    await _showRoleSelectionDialog(context);
+                    break;
+
+                  case LoginNextStep.accountReactivation:
+                    await _showReactivationDialog(
+                      context,
+                      state.gracePeriodDays,
+                    );
+                    break;
+
+                  case LoginNextStep.complete:
+                    if (context.mounted) {
+                      // Load user profile
+                      try {
+                        final userId = await getIt<IAuthRepository>()
+                            .getUserId();
+                        if (userId != null && context.mounted) {
+                          context.read<UserBloc>().add(LoadUser(userId));
+                        }
+                      } catch (e) {
+                        debugPrint('Failed to load user data: $e');
+                      }
+
+                      if (context.mounted) {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => const HomeBlocProvider(
+                              child: PostLoginBootstrapPage(),
+                            ),
+                          ),
+                        );
+                      }
+                    }
+                    break;
+                }
+              },
+            ),
+          ],
+          child: _buildLoginForm(innerContext, colorScheme),
+        ),
       ),
     );
   }
@@ -191,7 +201,9 @@ class _LoginPageState extends State<LoginPage> {
                 padding: const EdgeInsets.all(24),
                 child: BlocBuilder<LoginBloc, LoginState>(
                   builder: (context, state) {
-                    final isLoading = state.status == LoginStatus.loading;
+                    final isLoading =
+                        state.status == LoginStatus.loading ||
+                        state.status == LoginStatus.success;
 
                     return Column(
                       mainAxisSize: MainAxisSize.min,
@@ -244,13 +256,18 @@ class _LoginPageState extends State<LoginPage> {
                               height: 35,
                               onChanged: (value) {
                                 setState(() {
-                                  _usernameError = _validateUsername(value.trim());
+                                  _usernameError = _validateUsername(
+                                    value.trim(),
+                                  );
                                 });
                               },
                             ),
                             if (_usernameError != null)
                               Padding(
-                                padding: const EdgeInsets.only(left: 12, top: 4),
+                                padding: const EdgeInsets.only(
+                                  left: 12,
+                                  top: 4,
+                                ),
                                 child: Text(
                                   _usernameError!,
                                   style: AppTypography.bodyRegular.copyWith(
@@ -279,7 +296,10 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             if (_passwordError != null)
                               Padding(
-                                padding: const EdgeInsets.only(left: 12, top: 4),
+                                padding: const EdgeInsets.only(
+                                  left: 12,
+                                  top: 4,
+                                ),
                                 child: Text(
                                   _passwordError!,
                                   style: AppTypography.bodyRegular.copyWith(
@@ -297,7 +317,8 @@ class _LoginPageState extends State<LoginPage> {
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) => const ForgotPasswordPage(),
+                                  builder: (context) =>
+                                      const ForgotPasswordPage(),
                                 ),
                               );
                             },
@@ -315,7 +336,9 @@ class _LoginPageState extends State<LoginPage> {
                         AppButton(
                           variant: AppButtonVariant.text,
                           text: isLoading ? 'Signing in...' : 'Sign in',
-                          onPressed: isLoading ? () {} : () => _handleLogin(context),
+                          onPressed: isLoading
+                              ? () {}
+                              : () => _handleLogin(context),
                         ),
                         const SizedBox(height: 24),
 
@@ -363,12 +386,16 @@ class _LoginPageState extends State<LoginPage> {
                           onGoogleTap: isLoading
                               ? () {}
                               : () {
-                                  context.read<LoginBloc>().add(const LoginWithGoogle());
+                                  context.read<LoginBloc>().add(
+                                    const LoginWithGoogle(),
+                                  );
                                 },
                           onDiscordTap: isLoading
                               ? () {}
                               : () {
-                                  context.read<LoginBloc>().add(const LoginWithDiscord());
+                                  context.read<LoginBloc>().add(
+                                    const LoginWithDiscord(),
+                                  );
                                 },
                         ),
                       ],
@@ -438,7 +465,10 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   /// Show account reactivation confirmation dialog
-  Future<void> _showReactivationDialog(BuildContext context, int gracePeriodDays) async {
+  Future<void> _showReactivationDialog(
+    BuildContext context,
+    int gracePeriodDays,
+  ) async {
     return showDialog(
       context: context,
       barrierDismissible: false,
@@ -491,7 +521,9 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () {
                           Navigator.of(dialogContext).pop();
                           if (context.mounted) {
-                            context.read<LoginBloc>().add(const ConfirmReactivation());
+                            context.read<LoginBloc>().add(
+                              const ConfirmReactivation(),
+                            );
                           }
                         },
                       ),

@@ -100,7 +100,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
             width: double.infinity,
             child: PixelBorderContainer(
               pixelSize: 3,
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -154,16 +154,14 @@ class WeeklyMissionCardWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: missions
                   .map(
-                    (mission) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _buildMissionProgress(
-                        mission: mission,
-                        title: mission.detail,
-                        value: mission.progress,
-                        trailing: mission.isCompleted
-                            ? 'Done'
-                            : '${mission.rewardXp} XP',
-                      ),
+                    (mission) => _buildMissionProgress(
+                      mission: mission,
+                      title: mission.title,
+                      value: mission.progress,
+                      trailing: mission.isCompleted
+                          ? 'Done'
+                          : '${mission.rewardXp} XP',
+                      useRecentActivityStyle: false,
                     ),
                   )
                   .toList(),
@@ -178,13 +176,19 @@ class WeeklyMissionCardWidget extends StatelessWidget {
     required String title,
     required double value,
     required String trailing,
+    required bool useRecentActivityStyle,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onMissionTap == null ? null : () => onMissionTap!(mission),
         child: Container(
-          padding: const EdgeInsets.all(8),
+          margin: useRecentActivityStyle
+              ? const EdgeInsets.only(bottom: 8)
+              : EdgeInsets.zero,
+          padding: useRecentActivityStyle
+              ? const EdgeInsets.symmetric(horizontal: 8, vertical: 7)
+              : const EdgeInsets.all(8),
           decoration: BoxDecoration(
             border: Border.all(color: AppColors.cardBorder),
           ),

@@ -171,43 +171,35 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
         try {
           final userId = await _resolveUserId();
-          // Always fetch recommendedPaths (API will use auth header)
           final List<dynamic> results = await Future.wait([
             getAllLearningPaths(),
             getLearningPathStatus(userId),
-            getRecommendedLearningPaths(),
           ]);
           final List<LearningPath> allPaths = List<LearningPath>.from(results[0] as List);
           final List<EnrolledLearningPath> enrolledPaths = List<EnrolledLearningPath>.from(results[1] as List);
-          final List<LearningPath> recommendedPaths = List<LearningPath>.from(results[2] as List);
-          LogHandler.debug('[BLoC] Overview: \\${allPaths.length} all, \\${enrolledPaths.length} enrolled, \\${recommendedPaths.length} recommended');
+          LogHandler.debug('[BLoC] Overview: \${allPaths.length} all, \${enrolledPaths.length} enrolled');
+
+          // Emit basic state first so the UI can render immediately.
           emit(LearningPathOverviewLoaded(
             allPaths: allPaths,
             enrolledPaths: enrolledPaths,
             recommendedPaths: const <LearningPath>[],
-          ),
-        );
+          ));
 
-        // Fetch recommended paths after first paint to avoid blocking Home UI.
-        if (enrolledPaths.isNotEmpty) {
-          try {
-            final recommendedPaths = await getRecommendedLearningPaths();
-            LogHandler.debug(
-              '[BLoC] Overview recommended: \\${recommendedPaths.length}',
-            );
-            emit(
-              LearningPathOverviewLoaded(
+          // Fetch recommendations only once, only when the user has enrolled paths.
+          if (enrolledPaths.isNotEmpty) {
+            try {
+              final recommendedPaths = await getRecommendedLearningPaths();
+              LogHandler.debug('[BLoC] Recommended: \${recommendedPaths.length}');
+              emit(LearningPathOverviewLoaded(
                 allPaths: allPaths,
                 enrolledPaths: enrolledPaths,
                 recommendedPaths: recommendedPaths,
-              ),
-            );
-          } catch (e) {
-            LogHandler.warning(
-              '[BLoC] Recommended paths fetch failed (non-blocking): $e',
-            );
+              ));
+            } catch (e) {
+              LogHandler.warning('[BLoC] Recommended paths fetch failed (non-blocking): $e');
+            }
           }
-        }
       } catch (e) {
         LogHandler.error('[BLoC] Error fetching overview: $e');
         emit(LearningPathError(e.toString()));

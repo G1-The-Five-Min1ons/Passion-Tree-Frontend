@@ -308,7 +308,7 @@ class ProfileCardWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.primaryBrand,
+        color: Colors.white.withValues(alpha: 0.12),
         border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
@@ -316,24 +316,28 @@ class ProfileCardWidget extends StatelessWidget {
           Icon(icon, size: 16, color: AppColors.secondaryBrand),
           const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: AppTypography.subtitleSemiBold.copyWith(
-                    color: AppColors.textPrimary,
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: value,
+                    style: AppTypography.subtitleSemiBold.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.smallBodyRegular.copyWith(
-                    color: AppColors.textSecondary,
+                  const WidgetSpan(
+                    child: SizedBox(width: 6),
                   ),
-                ),
-              ],
+                  TextSpan(
+                    text: label,
+                    style: AppTypography.smallBodyRegular.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

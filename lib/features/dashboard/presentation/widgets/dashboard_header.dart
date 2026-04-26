@@ -12,7 +12,7 @@ class DashboardHeader extends StatelessWidget {
         Image.asset('assets/icons/tree_icon.png', width: 46, height: 46),
         const SizedBox(width: 8),
         Text(
-          'Dashboard&Profile',
+          'Profile & Dashboard',
           style: AppPixelTypography.smallTitle.copyWith(
             color: AppColors.textPrimary,
           ),

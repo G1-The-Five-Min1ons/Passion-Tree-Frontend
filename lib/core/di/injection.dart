@@ -458,9 +458,6 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton<StartupPrefetchService>(
     () => StartupPrefetchService(
       authRepository: getIt<IAuthRepository>(),
-      getAllLearningPaths: getIt<GetAllLearningPaths>(),
-      getLearningPathStatus: getIt<GetLearningPathStatus>(),
-      getRecommendedLearningPaths: getIt<GetRecommendedLearningPaths>(),
       getAlbumsByUserIdUseCase: getIt<GetAlbumsByUserIdUseCase>(),
       getDashboardUseCase: getIt<GetDashboardUseCase>(),
       getSettingsUseCase: getIt<GetSettingsUseCase>(),
