@@ -69,11 +69,6 @@ class _MissionTile extends StatelessWidget {
       pixelSize: 3,
       padding: const EdgeInsets.all(12),
       child: Container(
-        decoration: BoxDecoration(
-          border: highlighted
-              ? Border.all(color: AppColors.cardBorder, width: 1.5)
-              : null,
-        ),
         padding: const EdgeInsets.all(6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
