@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/dashboard/presentation/pages/mission_center_page.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_bloc.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_state.dart';
+import 'package:passion_tree_frontend/features/mission/data/models/user_mission_model.dart';
 
 class HowToUsePopup extends StatelessWidget {
-  const HowToUsePopup({super.key});
+  const HowToUsePopup({super.key, required this.parentContext});
+
+  final BuildContext parentContext;
 
   static void show(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => const HowToUsePopup(),
+      builder: (dialogContext) => HowToUsePopup(parentContext: context),
     );
   }
 
@@ -160,15 +166,24 @@ class HowToUsePopup extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
+                          final missionState = parentContext.read<MissionBloc>().state;
+                          final missions = missionState is MissionLoaded
+                              ? missionState.missions
+                              : const <UserMissionModel>[];
+
+                          // Close the dialog first
                           Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const MissionCenterPage(
-                                missions: [],
+
+                          // Use the parent context's navigator to push the page
+                          Future.microtask(() {
+                            Navigator.of(parentContext).push(
+                              MaterialPageRoute(
+                                builder: (_) => MissionCenterPage(
+                                  missions: missions,
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          });
                         },
                         child: Text(
                           "Go to missions",

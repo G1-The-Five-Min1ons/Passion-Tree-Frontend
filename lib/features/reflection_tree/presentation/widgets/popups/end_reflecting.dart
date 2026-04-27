@@ -73,18 +73,17 @@ class _EndReflectingState extends State<EndReflecting> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Would you like to end this reflection tree?',
-                style: AppPixelTypography.smallTitle,
+              SizedBox(
+                height: 56,
+                child: Center(
+                  child: Text(
+                    'Would you like to end this tree?',
+                    style: AppPixelTypography.smallTitle,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ),
-              const SizedBox(height: 56),
-              const Divider(color: AppColors.textDisabled, thickness: 1),
-              const SizedBox(height: 5),
-              Text(
-                'This action cannot be undone',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 20),
 
               SaveCancel(
                 saveText: _isSubmitting ? 'Yes' : 'Yes',

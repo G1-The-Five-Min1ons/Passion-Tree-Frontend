@@ -20,6 +20,8 @@ class ProfileCardWidget extends StatelessWidget {
   final String avatarUrl;
   final String rankName;
   final String memberSince;
+  final VoidCallback onSettingsTap;
+  final bool showSettingsIcon;
 
   const ProfileCardWidget({
     super.key,
@@ -35,10 +37,12 @@ class ProfileCardWidget extends StatelessWidget {
     required this.hours,
     required this.streak,
     required this.learningPathCount,
+    required this.onSettingsTap,
     this.achievements = 0,
     this.avatarUrl = '',
     this.rankName = 'Beginner',
     this.memberSince = '',
+    this.showSettingsIcon = true,
   });
 
   @override
@@ -115,6 +119,19 @@ class ProfileCardWidget extends StatelessWidget {
                   ],
                 ),
               ),
+              if (showSettingsIcon)
+                InkWell(
+                  onTap: onSettingsTap,
+                  borderRadius: BorderRadius.circular(16),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(
+                      Icons.settings,
+                      color: AppColors.textSecondary,
+                      size: 24,
+                    ),
+                  ),
+                ),
             ],
           ),
 
