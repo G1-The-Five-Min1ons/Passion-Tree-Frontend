@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:passion_tree_frontend/core/config/api_config.dart';
@@ -72,10 +73,12 @@ class AuthRepositoryImpl implements IAuthRepository {
     try {
       final parts = token.split('.');
       if (parts.length != 3) return true;
-      
+
       final normalizedPayload = base64Url.normalize(parts[1]);
-      final payload = jsonDecode(utf8.decode(base64Url.decode(normalizedPayload)));
-      
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(normalizedPayload)),
+      );
+
       final exp = payload['exp'];
       if (exp is! num) return true;
 
@@ -86,7 +89,9 @@ class AuthRepositoryImpl implements IAuthRepository {
 
       // ✅ เพิ่ม Buffer 30 วินาที เพื่อสั่ง Refresh ก่อนหมดจริง
       // ช่วยลดโอกาสที่ Request จะพังกลางทางจังหวะหมดอายุพอดี
-      final nowWithBuffer = DateTime.now().toUtc().add(const Duration(seconds: 30));
+      final nowWithBuffer = DateTime.now().toUtc().add(
+        const Duration(seconds: 30),
+      );
       return nowWithBuffer.isAfter(expiry);
     } catch (e) {
       LogHandler.error('JWT Decode failed: $e');
@@ -94,9 +99,17 @@ class AuthRepositoryImpl implements IAuthRepository {
     }
   }
 
-  /// Generic helper method for OAuth login operations
+  /// Generic helper method for OAuth login operations.
+  ///
+  /// [refreshToken] is optional only for backward-compat with older backend
+  /// builds that didn't return one. When it's a non-empty string we persist it
+  /// so the ApiHandler's silent-refresh path works after the access token
+  /// expires — without this, OAuth sessions cannot survive token expiry and
+  /// subsequent API calls (e.g. Reflection/Album endpoints) fail with 401 and
+  /// a forced logout.
   Future<UserProfile> _handleOAuthLogin({
     required String token,
+    String? refreshToken,
     required String userId,
     required String username,
     required String role,
@@ -107,6 +120,14 @@ class AuthRepositoryImpl implements IAuthRepository {
   }) async {
     LogHandler.info('$logContext: Saving authentication data...');
     await _localDataSource.saveToken(token);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _localDataSource.saveRefreshToken(refreshToken);
+      LogHandler.info('$logContext: Refresh token saved');
+    } else {
+      LogHandler.warning(
+        '$logContext: No refresh_token in response — silent refresh will fail once the access token expires. Backend may be outdated.',
+      );
+    }
     await _localDataSource.saveUserId(userId);
     await _localDataSource.saveUsername(username);
     await _localDataSource.saveRole(role);
@@ -353,6 +374,7 @@ class AuthRepositoryImpl implements IAuthRepository {
 
     return _handleOAuthLogin(
       token: response.token,
+      refreshToken: response.refreshToken,
       userId: response.userId,
       username: response.username,
       role: response.role,
@@ -373,6 +395,7 @@ class AuthRepositoryImpl implements IAuthRepository {
 
     return _handleOAuthLogin(
       token: response.token,
+      refreshToken: response.refreshToken,
       userId: response.userId,
       username: response.username,
       role: response.role,
@@ -468,6 +491,7 @@ class AuthRepositoryImpl implements IAuthRepository {
       );
       // Initialize Google Sign-In
       await GoogleSignIn.instance.initialize(
+        clientId: kIsWeb ? ApiConfig.googleWebClientId : null,
         serverClientId: ApiConfig.googleWebClientId,
       );
 

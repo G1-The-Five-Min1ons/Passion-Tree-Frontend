@@ -9,12 +9,14 @@ class NodeQuizSection extends StatefulWidget {
   final List<NodeQuiz>? initialQuizzes;
   final ValueChanged<List<NodeQuiz>>? onQuizzesChanged;
   final bool isReadOnly;
+  final bool isQuizInvalid;
 
   const NodeQuizSection({
     super.key,
     this.initialQuizzes,
     this.onQuizzesChanged,
     this.isReadOnly = false,
+    this.isQuizInvalid = false,
   });
 
   @override
@@ -29,7 +31,8 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
   void initState() {
     super.initState();
     // โหลดข้อมูลเดิมหรือสร้าง default quiz
-    _quizzes = widget.initialQuizzes != null && widget.initialQuizzes!.isNotEmpty
+    _quizzes =
+        widget.initialQuizzes != null && widget.initialQuizzes!.isNotEmpty
         ? List<NodeQuiz>.from(widget.initialQuizzes!)
         : [const NodeQuiz()];
   }
@@ -39,7 +42,8 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
     super.didUpdateWidget(oldWidget);
     // อัพเดท _quizzes เมื่อ parent ส่ง initialQuizzes ใหม่มา
     if (widget.initialQuizzes != oldWidget.initialQuizzes) {
-      _quizzes = widget.initialQuizzes != null && widget.initialQuizzes!.isNotEmpty
+      _quizzes =
+          widget.initialQuizzes != null && widget.initialQuizzes!.isNotEmpty
           ? List<NodeQuiz>.from(widget.initialQuizzes!)
           : [const NodeQuiz()];
     }
@@ -66,10 +70,13 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
 
   void _addChoice(int qIndex) {
     final quiz = _quizzes[qIndex];
+    final updatedChoiceIds = quiz.choiceIds == null
+        ? null
+        : [...quiz.choiceIds!, ''];
     setState(() {
       _quizzes[qIndex] = quiz.copyWith(
         choices: [...quiz.choices, ''],
-        choiceIds: [...?quiz.choiceIds, ''],
+        choiceIds: updatedChoiceIds,
       );
     });
     _notifyChange();
@@ -78,15 +85,29 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
   void _removeChoice(int qIndex, int cIndex) {
     final quiz = _quizzes[qIndex];
     final newChoices = [...quiz.choices]..removeAt(cIndex);
-    final newReasons = Map<int, String>.from(quiz.reasons)..remove(cIndex);
-    final newChoiceIds = quiz.choiceIds == null
-        ? null
-        : ([...quiz.choiceIds!]..removeAt(cIndex));
+    final newReasons = <int, String>{};
+    for (final entry in quiz.reasons.entries) {
+      if (entry.key == cIndex) continue;
+      final shiftedIndex = entry.key > cIndex ? entry.key - 1 : entry.key;
+      newReasons[shiftedIndex] = entry.value;
+    }
+
+    List<String>? newChoiceIds;
+    if (quiz.choiceIds != null) {
+      final ids = [...quiz.choiceIds!];
+      if (cIndex >= 0 && cIndex < ids.length) {
+        ids.removeAt(cIndex);
+      }
+      newChoiceIds = ids;
+    }
+
     final newSelectedIndex = quiz.selectedIndex == cIndex
-        ? (newChoices.isEmpty ? 0 : (cIndex >= newChoices.length ? newChoices.length - 1 : cIndex))
+        ? (newChoices.isEmpty
+              ? 0
+              : (cIndex >= newChoices.length ? newChoices.length - 1 : cIndex))
         : (quiz.selectedIndex > cIndex
-            ? quiz.selectedIndex - 1
-            : quiz.selectedIndex);
+              ? quiz.selectedIndex - 1
+              : quiz.selectedIndex);
 
     setState(() {
       _quizzes[qIndex] = quiz.copyWith(
@@ -109,7 +130,9 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
         RichText(
           text: TextSpan(
             style: AppTypography.titleSemiBold.copyWith(
-              color: Theme.of(context).colorScheme.onSurface,
+              color: widget.isQuizInvalid
+                  ? AppColors.cancel
+                  : Theme.of(context).colorScheme.onSurface,
             ),
             children: const [
               TextSpan(text: 'Question'),
@@ -122,6 +145,15 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
         ),
         const SizedBox(height: 8),
 
+        if (widget.isQuizInvalid)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              'Please add at least 1 question with 2 or more choices.',
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.cancel),
+            ),
+          ),
+
         // ===== QUIZ LIST =====
         ...List.generate(_quizzes.length, (qIndex) {
           final quiz = _quizzes[qIndex];
@@ -132,7 +164,9 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: AppColors.textSecondary.withValues(alpha: 0.4),
+                  color: widget.isQuizInvalid
+                      ? AppColors.cancel
+                      : AppColors.textSecondary.withValues(alpha: 0.4),
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -151,9 +185,9 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                         child: InlineTextField(
                           hintText: 'Enter question',
                           value: quiz.question,
-                                  readOnly: widget.isReadOnly,
+                          readOnly: widget.isReadOnly,
                           onChanged: (v) {
-                                    if (widget.isReadOnly) return;
+                            if (widget.isReadOnly) return;
                             setState(() {
                               _quizzes[qIndex] = quiz.copyWith(question: v);
                             });
@@ -161,11 +195,15 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                           },
                         ),
                       ),
-                              if (!widget.isReadOnly)
-                                IconButton(
-                                  icon: Icon(Icons.close, size: 18, color: colors.error),
-                                  onPressed: () => _removeQuestion(qIndex),
-                                ),
+                      if (!widget.isReadOnly)
+                        IconButton(
+                          icon: Icon(
+                            Icons.close,
+                            size: 18,
+                            color: colors.error,
+                          ),
+                          onPressed: () => _removeQuestion(qIndex),
+                        ),
                     ],
                   ),
 
@@ -223,7 +261,8 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                                     size: 18,
                                     color: colors.error,
                                   ),
-                                  onPressed: () => _removeChoice(qIndex, cIndex),
+                                  onPressed: () =>
+                                      _removeChoice(qIndex, cIndex),
                                 ),
                             ],
                           ),
@@ -300,4 +339,3 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
     );
   }
 }
-

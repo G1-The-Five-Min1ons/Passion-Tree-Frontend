@@ -139,6 +139,8 @@ class UpdateNodeEvent extends LearningPathEvent {
   final String? linkvdo;
   final List<CreateMaterial>? materials;
   final List<NodeQuiz>? quizzes;
+  final List<NodeQuiz>?
+  deletedQuizzes; // Track question IDs that should be deleted
   
   UpdateNodeEvent({
     required this.nodeId,
@@ -147,6 +149,7 @@ class UpdateNodeEvent extends LearningPathEvent {
     this.linkvdo,
     this.materials,
     this.quizzes,
+    this.deletedQuizzes,
   });
 }
 

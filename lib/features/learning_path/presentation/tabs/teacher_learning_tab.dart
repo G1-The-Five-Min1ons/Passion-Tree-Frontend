@@ -275,7 +275,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
                   direction: NavigationDirection.down,
                   onPressed: () {
                     setState(() {
-                      _allListShownCount += 4;
+                      _allListShownCount = filteredNonEnrolled.length;
                     });
                   },
                 ),

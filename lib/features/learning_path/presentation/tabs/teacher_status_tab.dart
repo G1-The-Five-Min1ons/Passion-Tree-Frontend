@@ -20,8 +20,8 @@ class TeacherLearningPathStatus extends StatefulWidget {
 }
 
 class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
-  int inProgressShown = 2;
-  int completedShown = 2;
+  int inProgressShown = 4;
+  int completedShown = 4;
 
   // Cached filtered lists to avoid re-filtering on every build
   List<EnrolledLearningPath> _inProgressPaths = [];
@@ -144,9 +144,35 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
                     direction: NavigationDirection.down,
                     onPressed: () {
                       setState(() {
-                        inProgressShown += 2;
+                        inProgressShown = _inProgressPaths.length;
                       });
                     },
+                  ),
+                ],
+              ),
+            ),
+          )
+        else if (inProgressCourses.length > 4)
+          Padding(
+            padding: const EdgeInsets.only(top: 40),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  NavigationButton(
+                    direction: NavigationDirection.up,
+                    onPressed: () {
+                      setState(() {
+                        inProgressShown = 4;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Less',
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
                   ),
                 ],
               ),
@@ -233,9 +259,35 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
                     direction: NavigationDirection.down,
                     onPressed: () {
                       setState(() {
-                        completedShown += 2;
+                        completedShown = _completedPaths.length;
                       });
                     },
+                  ),
+                ],
+              ),
+            ),
+          )
+        else if (completedCourses.length > 4)
+          Padding(
+            padding: const EdgeInsets.only(top: 40),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  NavigationButton(
+                    direction: NavigationDirection.up,
+                    onPressed: () {
+                      setState(() {
+                        completedShown = 4;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Less',
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
                   ),
                 ],
               ),

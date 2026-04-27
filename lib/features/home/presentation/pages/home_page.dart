@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
 
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
@@ -12,9 +13,19 @@ import 'package:passion_tree_frontend/features/home/presentation/widgets/streak_
 import 'package:passion_tree_frontend/features/home/presentation/widgets/popular_learning_path.dart';
 
 import 'package:passion_tree_frontend/features/dashboard/presentation/widgets/weekly_mission_card_widget.dart';
+import 'package:passion_tree_frontend/features/dashboard/data/models/dashboard_response.dart';
+import 'package:passion_tree_frontend/features/dashboard/domain/usecases/get_dashboard_usecase.dart';
+import 'package:passion_tree_frontend/features/dashboard/presentation/pages/mission_center_page.dart';
+
+import 'package:passion_tree_frontend/features/mission/data/models/user_mission_model.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_bloc.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_event.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_state.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final bool enableStartupPrefetch;
+
+  const HomePage({super.key, this.enableStartupPrefetch = true});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -23,6 +34,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   /// cache overview state เพื่อกัน section หายตอน push/pop
   LearningPathOverviewLoaded? _cachedOverview;
+
+  /// Dashboard data (contains streak)
+  DashboardResponse? _dashboardData;
 
   @override
   void initState() {
@@ -37,7 +51,65 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadData() async {
     if (!mounted) return;
 
-    context.read<LearningPathBloc>().add(FetchLearningPathOverview());
+    // Learning paths — skip if data is already loaded or a fetch is in progress
+    try {
+      final lpBloc = context.read<LearningPathBloc>();
+      if (lpBloc.state is! LearningPathOverviewLoaded &&
+          lpBloc.state is! LearningPathLoading) {
+        lpBloc.add(FetchLearningPathOverview());
+      }
+    } catch (_) {
+      // ignore — provider may not be available in tests
+    }
+
+    // Missions are auto-fetched by MissionBlocProvider on first mount.
+    // Re-trigger here only if we don't have data yet (e.g., the previous
+    // fetch failed). This is a no-op when the bloc is already loaded.
+    try {
+      final missionBloc = context.read<MissionBloc>();
+      if (missionBloc.state is! MissionLoaded) {
+        missionBloc.add(const FetchMyMissions());
+      }
+    } catch (_) {
+      // ignore — provider may not be available in tests
+    }
+
+    // Fetch dashboard data for streak
+    try {
+      final dashboardUseCase = getIt<GetDashboardUseCase>();
+      final data = await dashboardUseCase.execute();
+      if (mounted) {
+        setState(() {
+          _dashboardData = data;
+        });
+      }
+    } catch (_) {
+      // Silently fail — streak will show 0
+    }
+  }
+
+  int get _streakCount => _dashboardData?.resolvedLearningStreak ?? 0;
+
+  void _onMissionTap(UserMissionModel mission) {
+    final state = context.read<MissionBloc>().state;
+    final List<UserMissionModel> missions;
+    if (state is MissionLoaded) {
+      missions = state.missions;
+    } else if (state is MissionError) {
+      missions = state.previousMissions;
+    } else {
+      missions = const [];
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MissionCenterPage(
+          missions: missions,
+          highlightedMissionId: mission.missionId,
+        ),
+      ),
+    );
   }
 
   @override
@@ -64,7 +136,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   /// STREAK
-                  const StreakSection(),
+                  StreakSection(streakCount: _streakCount),
 
                   const SizedBox(height: 30),
 
@@ -96,15 +168,7 @@ class _HomePageState extends State<HomePage> {
                         return PopularLearningPathsSection(
                           paths: unenrolledPaths,
                           hasEnrolledPaths: hasEnrolledPaths,
-                          isLoading: state is LearningPathLoading,
-                        );
-                      }
-
-                      if (state is LearningPathLoading) {
-                        return const PopularLearningPathsSection(
-                          paths: [],
-                          hasEnrolledPaths: false,
-                          isLoading: true,
+                          isLoading: false,
                         );
                       }
 
@@ -114,8 +178,39 @@ class _HomePageState extends State<HomePage> {
 
                   const SizedBox(height: 30),
 
-                  /// WEEKLY MISSION (แทน Reflection)
-                  const WeeklyMissionCardWidget(missions: []),
+                  /// WEEKLY MISSION (real backend via MissionBloc)
+                  BlocBuilder<MissionBloc, MissionState>(
+                    builder: (context, state) {
+                      final List<UserMissionModel> missions;
+                      final bool isLoading;
+                      String? errorMessage;
+
+                      if (state is MissionLoaded) {
+                        missions = state.missions;
+                        isLoading = false;
+                      } else if (state is MissionError) {
+                        missions = state.previousMissions;
+                        isLoading = false;
+                        errorMessage = state.message;
+                      } else if (state is MissionLoading) {
+                        missions = const [];
+                        isLoading = true;
+                      } else {
+                        missions = const [];
+                        isLoading = false;
+                      }
+
+                      return WeeklyMissionCardWidget(
+                        missions: missions,
+                        isLoading: isLoading,
+                        errorMessage: errorMessage,
+                        onMissionTap: _onMissionTap,
+                        onRetry: () => context.read<MissionBloc>().add(
+                          const FetchMyMissions(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

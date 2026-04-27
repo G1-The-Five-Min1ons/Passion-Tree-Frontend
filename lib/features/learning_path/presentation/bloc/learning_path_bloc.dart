@@ -33,6 +33,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/cre
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_choice.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_question_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_choice_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_question_usecase.dart';
 
 class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GetAllLearningPaths getAllLearningPaths;
@@ -56,6 +57,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final UpdateQuestionUseCase updateQuestionUseCase;
   final UpdateChoiceUseCase updateChoiceUseCase;
   final CreateChoiceUseCase createChoiceUseCase;
+  final DeleteQuestionUseCase deleteQuestionUseCase;
   final DeleteChoiceUseCase deleteChoiceUseCase;
   final SubmitReview submitReview;
   final GetMyRating getMyRating;
@@ -93,6 +95,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
     this.updateQuestionUseCase,
     this.updateChoiceUseCase,
     this.createChoiceUseCase,
+    this.deleteQuestionUseCase,
     this.deleteChoiceUseCase,
     this.submitReview,
     this.getMyRating,
@@ -168,43 +171,35 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
 
         try {
           final userId = await _resolveUserId();
-          // Always fetch recommendedPaths (API will use auth header)
           final List<dynamic> results = await Future.wait([
             getAllLearningPaths(),
             getLearningPathStatus(userId),
-            getRecommendedLearningPaths(),
           ]);
           final List<LearningPath> allPaths = List<LearningPath>.from(results[0] as List);
           final List<EnrolledLearningPath> enrolledPaths = List<EnrolledLearningPath>.from(results[1] as List);
-          final List<LearningPath> recommendedPaths = List<LearningPath>.from(results[2] as List);
-          LogHandler.debug('[BLoC] Overview: \\${allPaths.length} all, \\${enrolledPaths.length} enrolled, \\${recommendedPaths.length} recommended');
+          LogHandler.debug('[BLoC] Overview: \${allPaths.length} all, \${enrolledPaths.length} enrolled');
+
+          // Emit basic state first so the UI can render immediately.
           emit(LearningPathOverviewLoaded(
             allPaths: allPaths,
             enrolledPaths: enrolledPaths,
             recommendedPaths: const <LearningPath>[],
-          ),
-        );
+          ));
 
-        // Fetch recommended paths after first paint to avoid blocking Home UI.
-        if (enrolledPaths.isNotEmpty) {
-          try {
-            final recommendedPaths = await getRecommendedLearningPaths();
-            LogHandler.debug(
-              '[BLoC] Overview recommended: \\${recommendedPaths.length}',
-            );
-            emit(
-              LearningPathOverviewLoaded(
+          // Fetch recommendations only once, only when the user has enrolled paths.
+          if (enrolledPaths.isNotEmpty) {
+            try {
+              final recommendedPaths = await getRecommendedLearningPaths();
+              LogHandler.debug('[BLoC] Recommended: \${recommendedPaths.length}');
+              emit(LearningPathOverviewLoaded(
                 allPaths: allPaths,
                 enrolledPaths: enrolledPaths,
                 recommendedPaths: recommendedPaths,
-              ),
-            );
-          } catch (e) {
-            LogHandler.warning(
-              '[BLoC] Recommended paths fetch failed (non-blocking): $e',
-            );
+              ));
+            } catch (e) {
+              LogHandler.warning('[BLoC] Recommended paths fetch failed (non-blocking): $e');
+            }
           }
-        }
       } catch (e) {
         LogHandler.error('[BLoC] Error fetching overview: $e');
         emit(LearningPathError(e.toString()));
@@ -534,6 +529,25 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
             materials: event.materials,
           );
 
+          final deletedQuizzes = event.deletedQuizzes ?? const [];
+        if (deletedQuizzes.isNotEmpty) {
+          LogHandler.debug(
+            'Deleting ${deletedQuizzes.length} removed quizzes...',
+          );
+          for (final deletedQuiz in deletedQuizzes) {
+            final questionId = deletedQuiz.questionId;
+            if (questionId == null || questionId.isEmpty) continue;
+
+            final choiceIds = deletedQuiz.choiceIds ?? const [];
+            for (final choiceId in choiceIds) {
+              if (choiceId.isEmpty) continue;
+              await deleteChoiceUseCase(choiceId);
+            }
+
+            await deleteQuestionUseCase(questionId);
+          }
+        }
+        
           // Keep backward compatibility: update existing quiz IDs and create newly added quizzes.
           final quizzes = event.quizzes ?? const [];
           if (quizzes.isNotEmpty) {

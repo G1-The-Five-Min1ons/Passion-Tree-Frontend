@@ -5,13 +5,13 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 
 class BottomBar extends StatelessWidget {
   final VoidCallback onSaveDraft;
-  final VoidCallback onCancel;
+  final VoidCallback onPublish;
   final bool isPublished;
 
   const BottomBar({
     super.key,
     required this.onSaveDraft,
-    required this.onCancel,
+    required this.onPublish,
     this.isPublished = false,
   });
 
@@ -22,32 +22,35 @@ class BottomBar extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // ถ้ายัง draft แสดงทั้งสองปุ่ม
+    
     return Center(
-      child: SizedBox(
-        width: 320, // ความกว้างกลุ่มปุ่ม
-        child: Row(
-          children: [
-            Expanded(
-              child: AppButton(
-                variant: AppButtonVariant.text,
-                text: 'Cancel',
-                backgroundColor: AppColors.scale,
-                textColor: AppColors.background,
-                onPressed: onCancel,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 300),
+        child: SizedBox(
+          width: double.infinity,
+          child: Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  variant: AppButtonVariant.text,
+                  text: 'Save Draft',
+                  backgroundColor: AppColors.scale.withOpacity(0.8),
+                  textColor: AppColors.textPrimary,
+                  onPressed: onSaveDraft,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: AppButton(
-                variant: AppButtonVariant.text,
-                text: 'Save Draft',
-                backgroundColor: AppColors.submit,
-                textColor: AppColors.textPrimary,
-                onPressed: onSaveDraft,
+              const SizedBox(width: 12),
+              Expanded(
+                child: AppButton(
+                  variant: AppButtonVariant.text,
+                  text: 'Publish',
+                  backgroundColor: AppColors.submit,
+                  textColor: AppColors.textPrimary,
+                  onPressed: onPublish,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

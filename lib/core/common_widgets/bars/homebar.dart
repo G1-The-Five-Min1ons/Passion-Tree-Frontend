@@ -4,27 +4,29 @@ import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier.dart';
 import 'package:passion_tree_frontend/core/services/startup_prefetch_service.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_role_entry_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/home/presentation/pages/home_wrapper.dart';
+import 'package:passion_tree_frontend/features/home/presentation/pages/main_tab_bootstrap_pages.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree_wrapper.dart';
-import 'package:passion_tree_frontend/features/dashboard/presentation/pages/profile_page.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar_visibility.dart';
 
 class HomeBarWidget extends StatefulWidget {
-  const HomeBarWidget({super.key});
+  final bool enableStartupPrefetch;
+
+  const HomeBarWidget({super.key, this.enableStartupPrefetch = true});
 
   @override
   State<HomeBarWidget> createState() => _HomeBarWidgetState();
 }
 
 class _HomeBarWidgetState extends State<HomeBarWidget> {
+  static const int _tabCount = 4;
+
   int _selectedIndex = 0;
   bool _hasStartedPrefetch = false;
-
-  late final List<Widget> _pages;
+  late final List<Widget?> _pageCache;
 
   final List<GlobalKey<NavigatorState>> _navigatorKeys = [
     GlobalKey<NavigatorState>(),
@@ -38,17 +40,15 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
   @override
   void initState() {
     super.initState();
-    _pages = [
-      const HomeWrapper(),
-      _buildTabNavigator(1, const LearningPathRoleEntryPage()),
-      _buildTabNavigator(2, const AlbumsReflectionTreeWrapper()),
-      _buildTabNavigator(3, const ProfilePage()),
-    ];
+    _pageCache = List<Widget?>.filled(_tabCount, null, growable: false);
+    _ensurePageInitialized(0);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _runStartupPrefetchInOrder();
-    });
+    if (widget.enableStartupPrefetch) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _runStartupPrefetchInOrder();
+      });
+    }
 
     HomeTabNavigationNotifier.changes.addListener(_handleExternalTabNavigation);
   }
@@ -63,9 +63,11 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
 
   void _handleExternalTabNavigation() {
     final target = HomeTabNavigationNotifier.consumeTargetTab();
-    if (target == null || target < 0 || target >= _pages.length) {
+    if (target == null || target < 0 || target >= _tabCount) {
       return;
     }
+
+    _ensurePageInitialized(target);
 
     _navigatorKeys[target].currentState?.popUntil((route) => route.isFirst);
 
@@ -83,6 +85,7 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
     final startupPrefetchService = getIt<StartupPrefetchService>();
     await startupPrefetchService.runInOrder(
       learningPathBloc: context.read<LearningPathBloc>(),
+      albumBloc: context.read<AlbumBloc>(),
     );
   }
 
@@ -95,10 +98,42 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
     );
   }
 
+  void _ensurePageInitialized(int index) {
+    if (_pageCache[index] != null) return;
+
+    switch (index) {
+      case 0:
+        _pageCache[index] = HomeWrapper(
+          enableStartupPrefetch: widget.enableStartupPrefetch,
+        );
+        break;
+      case 1:
+        _pageCache[index] = _buildTabNavigator(
+          1,
+          const LearnTabBootstrapPage(),
+        );
+        break;
+      case 2:
+        _pageCache[index] = _buildTabNavigator(
+          2,
+          const ReflectTabBootstrapPage(),
+        );
+        break;
+      case 3:
+        _pageCache[index] = _buildTabNavigator(
+          3,
+          const ProfileTabBootstrapPage(),
+        );
+        break;
+    }
+  }
+
   void _setSelectedIndex(int index) {
-    if (index < 0 || index >= _pages.length || _selectedIndex == index) {
+    if (index < 0 || index >= _tabCount || _selectedIndex == index) {
       return;
     }
+
+    _ensurePageInitialized(index);
 
     setState(() {
       _selectedIndex = index;
@@ -108,7 +143,13 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _pages),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: List<Widget>.generate(
+          _tabCount,
+          (index) => _pageCache[index] ?? const SizedBox.shrink(),
+        ),
+      ),
       bottomNavigationBar: ValueListenableBuilder<bool>(
         valueListenable: homeBarVisibilityNotifier,
         builder: (context, isVisible, _) {

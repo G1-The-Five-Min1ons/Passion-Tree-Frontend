@@ -3,6 +3,7 @@ import 'package:passion_tree_frontend/core/error/exceptions.dart';
 class NativeDiscordSignInResponse {
   final bool success;
   final String token;
+  final String refreshToken;
   final String userId;
   final String username;
   final String email;
@@ -13,6 +14,7 @@ class NativeDiscordSignInResponse {
   NativeDiscordSignInResponse({
     required this.success,
     required this.token,
+    required this.refreshToken,
     required this.userId,
     required this.username,
     required this.email,
@@ -27,6 +29,7 @@ class NativeDiscordSignInResponse {
       return NativeDiscordSignInResponse(
         success: json['success'] as bool? ?? true,
         token: json['token'] as String,
+        refreshToken: (json['refresh_token'] as String?) ?? '',
         userId: user['user_id'] as String,
         username: user['username'] as String,
         email: user['email'] as String,

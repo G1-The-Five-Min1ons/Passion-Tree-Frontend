@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
@@ -28,22 +29,31 @@ class PixelCourseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final descriptionStyle = AppTypography.smallBodyMedium;
+    final textScaler = MediaQuery.textScalerOf(context);
+    final descriptionHeightPainter = TextPainter(
+      text: TextSpan(text: 'A\nA', style: descriptionStyle),
+      maxLines: 2,
+      textDirection: TextDirection.ltr,
+      textScaler: textScaler,
+    )..layout();
+    final descriptionBlockHeight = descriptionHeightPainter.height + 2;
 
     return InkWell(
       borderRadius: BorderRadius.circular(8), // ให้ ripple สวยตามการ์ด
-      onTap: onCardTap ?? () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BlocProvider.value(
-              value: context.read<LearningPathBloc>(),
-              child: LearningCoursePage(
-                course: course,
+      onTap:
+          onCardTap ??
+          () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => BlocProvider.value(
+                  value: context.read<LearningPathBloc>(),
+                  child: LearningCoursePage(course: course),
+                ),
               ),
-            ),
-          ),
-        );
-      },
+            );
+          },
       child: BaseCourseCard(
         child: Column(
           children: [
@@ -63,7 +73,7 @@ class PixelCourseCard extends StatelessWidget {
                           child: CircularProgressIndicator(
                             value: loadingProgress.expectedTotalBytes != null
                                 ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
+                                      loadingProgress.expectedTotalBytes!
                                 : null,
                           ),
                         );
@@ -90,7 +100,7 @@ class PixelCourseCard extends StatelessWidget {
                       width: 67,
                       height: 23,
                       child: Container(
-                        color: colors.primary,
+                        color: AppColors.cardBorder,
                         alignment: Alignment.center,
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -148,10 +158,8 @@ class PixelCourseCard extends StatelessWidget {
                             onPressed: () {
                               ActionPopUp.show(
                                 context,
-                                onEdit: onEdit ?? () {
-                                },
-                                onDelete: onDelete ?? () {
-                                },
+                                onEdit: onEdit ?? () {},
+                                onDelete: onDelete ?? () {},
                               );
                             },
                           ),
@@ -167,11 +175,18 @@ class PixelCourseCard extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    Text(
-                      course.description,
-                      style: AppTypography.smallBodyMedium,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    SizedBox(
+                      height: descriptionBlockHeight,
+                      child: Text(
+                        course.description,
+                        style: descriptionStyle,
+                        strutStyle: StrutStyle.fromTextStyle(
+                          descriptionStyle,
+                          forceStrutHeight: true,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
 
                     const SizedBox(height: 10),

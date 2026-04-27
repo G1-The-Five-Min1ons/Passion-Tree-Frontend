@@ -5,6 +5,7 @@ import 'package:passion_tree_frontend/core/network/log_handler.dart';
 class NativeGoogleSignInResponse {
   final bool success;
   final String token;
+  final String refreshToken;
   final String userId;
   final String username;
   final String email;
@@ -15,6 +16,7 @@ class NativeGoogleSignInResponse {
   NativeGoogleSignInResponse({
     required this.success,
     required this.token,
+    required this.refreshToken,
     required this.userId,
     required this.username,
     required this.email,
@@ -28,13 +30,14 @@ class NativeGoogleSignInResponse {
       LogHandler.info('DEBUG: NativeGoogleSignInResponse.fromJson received: $json');
       LogHandler.info('DEBUG: json[\'data\'] = ${json['data']}');
       LogHandler.info('DEBUG: json[\'data\'] type = ${json['data'].runtimeType}');
-      
+
       final user = json['data'] as Map<String, dynamic>;
       LogHandler.info('DEBUG: user map = $user');
-      
+
       return NativeGoogleSignInResponse(
         success: json['success'] as bool? ?? true,
         token: json['token'] as String,
+        refreshToken: (json['refresh_token'] as String?) ?? '',
         userId: user['user_id'] as String,
         username: user['username'] as String,
         email: user['email'] as String,

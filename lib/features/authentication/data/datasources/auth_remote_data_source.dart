@@ -99,10 +99,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         final fullBody = _parseMap(response.rawBody, 'rawBody');
         LogHandler.info('Raw Backend Response: $fullBody');
         LogHandler.info('Token: ${fullBody['token']}');
+        LogHandler.info('RefreshToken present: ${fullBody['refresh_token'] != null}');
         LogHandler.info('Data: ${fullBody['data']}');
         final raw = <String, dynamic>{
           'success': response.success,
           'token': _parseString(fullBody['token'], 'token'),
+          // Forward refresh_token if backend supplied one (root-level, next to `token`).
+          // Kept nullable here — response model will default to '' when missing so
+          // older backend builds don't break parsing outright.
+          'refresh_token': fullBody['refresh_token'],
           'data': fullBody['data'],
         };
         LogHandler.info('Constructed raw object: $raw');

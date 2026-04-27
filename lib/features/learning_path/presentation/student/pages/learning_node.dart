@@ -46,9 +46,6 @@ class _LearningNodePageState extends State<LearningNodePage> {
     super.initState();
     LogHandler.info('Action: User joined learning node ${widget.nodeId}');
     context.read<LearningPathBloc>().add(
-      StartNodeEvent(nodeId: widget.nodeId),
-    );
-    context.read<LearningPathBloc>().add(
       FetchNodeDetail(nodeId: widget.nodeId),
     );
   }
@@ -154,6 +151,11 @@ class _LearningNodePageState extends State<LearningNodePage> {
                         videoUrl: nodeDetail.linkVdo,
                         controller: _videoController,
                         player: player,
+                        onStartLearning: () {
+                          context.read<LearningPathBloc>().add(
+                            StartNodeEvent(nodeId: widget.nodeId),
+                          );
+                        },
                         onTakeQuiz: () async {
                           final bloc = context.read<LearningPathBloc>();
                           final quizCompleted = await Navigator.push<bool>(
