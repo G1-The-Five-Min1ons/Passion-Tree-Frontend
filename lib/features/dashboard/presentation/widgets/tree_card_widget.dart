@@ -33,73 +33,102 @@ class _TreeCardWidgetState extends State<TreeCardWidget>
     super.dispose();
   }
 
+  void _openGardenModal(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Garden',
+      barrierColor: Colors.black.withValues(alpha: 0.88),
+      transitionDuration: const Duration(milliseconds: 280),
+      transitionBuilder: (ctx, anim, _, child) => ScaleTransition(
+        scale: CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
+        child: FadeTransition(opacity: anim, child: child),
+      ),
+      pageBuilder: (ctx, _, __) => Material(
+        type: MaterialType.transparency,
+        child: Center(
+          child: _GardenModal(treeStats: widget.treeStats),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final treesPlanted = widget.treeStats?.totalTreesPlanted ?? 0;
     final nodesUnlocked = widget.treeStats?.totalNodesUnlocked ?? 0;
 
-    return PixelBorderContainer(
-      width: double.infinity,
-      pixelSize: 3,
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.park, size: 18, color: AppColors.secondaryBrand),
-              const SizedBox(width: 6),
-              Text(
-                '$treesPlanted Tree${treesPlanted != 1 ? 's' : ''} Planted',
-                style: AppTypography.bodySemiBold.copyWith(
-                  color: AppColors.textPrimary,
+    return GestureDetector(
+      onTap: () => _openGardenModal(context),
+      child: PixelBorderContainer(
+        width: double.infinity,
+        pixelSize: 3,
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.park, size: 18, color: AppColors.secondaryBrand),
+                const SizedBox(width: 6),
+                Text(
+                  '$treesPlanted Tree${treesPlanted != 1 ? 's' : ''} Planted',
+                  style: AppTypography.bodySemiBold.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              Text(
-                '$nodesUnlocked Nodes',
-                style: AppTypography.smallBodyRegular.copyWith(
+                const Spacer(),
+                Text(
+                  '$nodesUnlocked Nodes',
+                  style: AppTypography.smallBodyRegular.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.open_in_full,
+                  size: 13,
                   color: AppColors.textSecondary,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRect(
-            child: SizedBox(
-              width: double.infinity,
-              height: 190,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: AnimatedBuilder(
-                      animation: _twinkle,
-                      builder: (_, _) => CustomPaint(
-                        painter: _ForestPainter(
-                          treeCount: treesPlanted,
-                          twinkle: _twinkle.value,
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRect(
+              child: SizedBox(
+                width: double.infinity,
+                height: 190,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: AnimatedBuilder(
+                        animation: _twinkle,
+                        builder: (_, _) => CustomPaint(
+                          painter: _ForestPainter(
+                            treeCount: treesPlanted,
+                            twinkle: _twinkle.value,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  if (treesPlanted == 0)
-                    Positioned(
-                      bottom: 14,
-                      left: 0,
-                      right: 0,
-                      child: Text(
-                        'Start learning to grow your forest!',
-                        textAlign: TextAlign.center,
-                        style: AppTypography.smallBodyRegular.copyWith(
-                          color: AppColors.textSecondary,
+                    if (treesPlanted == 0)
+                      Positioned(
+                        bottom: 14,
+                        left: 0,
+                        right: 0,
+                        child: Text(
+                          'Start learning to grow your forest!',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.smallBodyRegular.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -487,4 +516,110 @@ class _ForestPainter extends CustomPainter {
   @override
   bool shouldRepaint(_ForestPainter old) =>
       old.treeCount != treeCount || old.twinkle != twinkle;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GardenModal extends StatefulWidget {
+  final TreeCounterStats? treeStats;
+  const _GardenModal({this.treeStats});
+
+  @override
+  State<_GardenModal> createState() => _GardenModalState();
+}
+
+class _GardenModalState extends State<_GardenModal>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _twinkle;
+
+  @override
+  void initState() {
+    super.initState();
+    _twinkle = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _twinkle.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final treesPlanted = widget.treeStats?.totalTreesPlanted ?? 0;
+    final nodesUnlocked = widget.treeStats?.totalNodesUnlocked ?? 0;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.park, size: 20, color: AppColors.secondaryBrand),
+              const SizedBox(width: 8),
+              Text(
+                'My Garden',
+                style: AppTypography.bodySemiBold
+                    .copyWith(color: AppColors.textPrimary),
+              ),
+              const Spacer(),
+              Text(
+                '$treesPlanted Trees · $nodesUnlocked Nodes',
+                style: AppTypography.smallBodyRegular
+                    .copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(width: 10),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const Icon(Icons.close, color: Colors.white54, size: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final w = constraints.maxWidth;
+              return ClipRRect(
+                child: SizedBox(
+                  width: w,
+                  height: 320,
+                  child: InteractiveViewer(
+                    minScale: 0.8,
+                    maxScale: 6.0,
+                    child: SizedBox(
+                      width: w,
+                      height: 320,
+                      child: AnimatedBuilder(
+                        animation: _twinkle,
+                        builder: (_, _) => CustomPaint(
+                          painter: _ForestPainter(
+                            treeCount: treesPlanted,
+                            twinkle: _twinkle.value,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              'Pinch to zoom · Drag to pan',
+              style: AppTypography.smallBodyRegular.copyWith(
+                color: Colors.white30,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
