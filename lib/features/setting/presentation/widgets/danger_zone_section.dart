@@ -332,16 +332,14 @@ class DangerZoneSection extends StatelessWidget {
           style: AppTypography.titleSemiBold.copyWith(color: AppColors.cancel),
         ),
         const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.cancel, width: 2),
-            borderRadius: BorderRadius.circular(4),
-          ),
+        PixelBorderContainer(
+          pixelSize: 4,
+          borderColor: AppColors.cancel,
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Divider(color: AppColors.cardBorder, height: 20),
+              const SizedBox(height: 2),
               _buildDangerRow(
                 title: 'Sign out all devices',
                 subtitle: 'Revoke all active sessions and tokens',
@@ -349,7 +347,7 @@ class DangerZoneSection extends StatelessWidget {
                 buttonColor: AppColors.surface,
                 onTap: () => _handleSignOutAll(context),
               ),
-              const Divider(color: AppColors.cardBorder, height: 20),
+              const SizedBox(height: 12),
               _buildDangerRow(
                 title: 'Deactivate account',
                 subtitle:
@@ -358,7 +356,7 @@ class DangerZoneSection extends StatelessWidget {
                 buttonColor: AppColors.surface,
                 onTap: () => _handleDeactivate(context),
               ),
-              const Divider(color: AppColors.cardBorder, height: 20),
+              const SizedBox(height: 12),
               _buildDangerRow(
                 title: 'Delete account',
                 subtitle: 'Permanently delete your account and all data',

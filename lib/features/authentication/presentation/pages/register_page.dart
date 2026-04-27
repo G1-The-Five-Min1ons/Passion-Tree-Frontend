@@ -563,6 +563,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                         AppButton(
                           variant: AppButtonVariant.text,
                           text: isLoading ? 'Create account' : 'Create account',
+                          fullWidth: true,
                           onPressed: () {
                             if (!_validateAllFields()) {
                               ScaffoldMessenger.of(context).showSnackBar(

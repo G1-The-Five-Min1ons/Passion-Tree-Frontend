@@ -195,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
         child: Center(
           child: SingleChildScrollView(
             child: SizedBox(
-              width: 400,
+              width: double.infinity,
               child: PixelBorderContainer(
                 pixelSize: 4,
                 padding: const EdgeInsets.all(24),

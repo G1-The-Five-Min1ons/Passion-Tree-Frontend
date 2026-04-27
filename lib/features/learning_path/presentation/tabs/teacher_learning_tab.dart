@@ -6,8 +6,8 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_progress_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/arrow_button.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 
 
 class TeacherLearningTab extends StatefulWidget {
@@ -142,22 +142,26 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ===== TITLE + STATUS BUTTON =====
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'My Learning Paths',
-              style: AppPixelTypography.title.copyWith(color: colors.onPrimary),
-            ),
-            SizedBox(
-              width: 18,
-              height: 30,
-              child: NavigationButton(
-                direction: NavigationDirection.right,
-                onPressed: widget.onOpenStatus, // ให้ Page จัดการ
+        GestureDetector(
+          onTap: widget.onOpenStatus,
+          behavior: HitTestBehavior.opaque,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'My Learning Paths',
+                style: AppPixelTypography.title.copyWith(
+                  color: colors.onPrimary,
+                ),
               ),
-            ),
-          ],
+              ArrowButton(
+                direction: ArrowDirection.right,
+                onPressed: widget.onOpenStatus,
+                color: AppColors.textPrimary,
+                size: 24,
+              ),
+            ],
+          ),
         ),
 
         const SizedBox(height: 40),
@@ -271,13 +275,15 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
                   ),
                 ),
                 const SizedBox(height: 5),
-                NavigationButton(
-                  direction: NavigationDirection.down,
+                ArrowButton(
+                  direction: ArrowDirection.down,
                   onPressed: () {
                     setState(() {
                       _allListShownCount = filteredNonEnrolled.length;
                     });
                   },
+                  color: AppColors.textPrimary,
+                  size: 24,
                 ),
               ],
             ),

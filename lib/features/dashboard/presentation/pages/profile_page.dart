@@ -276,9 +276,16 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: const AppBarWidget(
+      appBar: AppBarWidget(
         title: 'Profile & Dashboard',
         showBackButton: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.white, size: 24),
+            onPressed: _openSettings,
+            tooltip: 'Settings',
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -310,7 +317,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       streak: _streak,
                       learningPathCount: _learningPathCount,
                       memberSince: _memberSince,
-                      onSettingsTap: _openSettings,
                     ),
                     const SizedBox(height: 14),
                     const SectionTitle(title: 'My Garden'),

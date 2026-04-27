@@ -14,7 +14,7 @@ class ArrowButton extends StatelessWidget {
     required this.direction,
     required this.onPressed,
     this.color,
-    this.size = 35,
+    this.size = 28,
   });
 
   @override
@@ -27,13 +27,21 @@ class ArrowButton extends StatelessWidget {
         ? Symbols.expand_less_rounded
         : Symbols.expand_more_rounded;
 
+    final isHorizontal = direction == ArrowDirection.left ||
+        direction == ArrowDirection.right;
+
     return IconButton(
       onPressed: onPressed,
-      icon: Icon(
-        iconData,
-        color: color ?? Theme.of(context).colorScheme.surface,
-        size: size,
-        weight: 400,
+      icon: Transform.scale(
+        scaleX: isHorizontal ? 1.4 : 1.0,
+        child: Icon(
+          iconData,
+          color: color ?? Theme.of(context).colorScheme.surface,
+          size: size,
+          weight: 500,
+          grade: 200,
+          opticalSize: 20,
+        ),
       ),
     );
   }
