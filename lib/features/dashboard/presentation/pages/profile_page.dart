@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier.dart';
-import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/entities/user_profile.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_profile_usecase.dart';

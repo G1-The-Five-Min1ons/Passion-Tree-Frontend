@@ -30,8 +30,6 @@ class CourseProgressCard extends StatelessWidget {
     final progress = (data.progressPercent / 100).clamp(0.0, 1.0);
     final percent = data.progressPercent.round();
 
-    final isCompleted = data.progressStatus == 'Completed';
-
     // Convert EnrolledLearningPath to LearningPath for navigation
     final course = LearningPath(
       id: data.pathId,
@@ -121,26 +119,6 @@ class CourseProgressCard extends StatelessWidget {
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 3,
-                    left: 3,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      color: isCompleted
-                          ? AppColors.status.withValues(alpha: 0.9)
-                          : colors.secondary.withValues(alpha: 0.9),
-                      child: Text(
-                        isCompleted ? 'Completed' : 'In Progress',
-                        style: AppTypography.smallBodyMedium.copyWith(
-                          color: Colors.white,
-                          fontSize: 9,
                         ),
                       ),
                     ),

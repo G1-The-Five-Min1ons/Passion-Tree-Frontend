@@ -261,7 +261,8 @@ class _CreateLearningPathInputPageState
 
     // AI flow success should return to TeacherCreateTab.
     if (result == true) {
-      Navigator.pop(context);
+      if (!context.mounted) return; 
+        Navigator.pop(context);
     }
   }
 
@@ -363,6 +364,7 @@ class _CreateLearningPathInputPageState
     // Close this page so user lands on TeacherCreateTab.
     if (!mounted) return;
     if (result == true) {
+      if (!context.mounted) return; 
       Navigator.pop(context);
     }
   }
@@ -420,7 +422,6 @@ class _CreateLearningPathInputPageState
         if (state is NodesGeneratedWithAI && _aiPathId != null) {
           _cachedAiNodes = state.nodes;
         } else if (state is LearningPathCreated) {
-          final bloc = context.read<LearningPathBloc>();
 
           // Show success snackbar
           ScaffoldMessenger.of(context).showSnackBar(

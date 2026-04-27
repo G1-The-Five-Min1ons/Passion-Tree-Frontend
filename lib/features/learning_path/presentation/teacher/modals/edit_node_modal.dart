@@ -76,8 +76,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
   Timer? _videoUrlValidationTimer;
   bool _shouldShowVideoUrlValidation = false;
 
-
-   void _syncPersistedQuizSnapshot(List<NodeQuiz> sourceQuizzes) {
+  void _syncPersistedQuizSnapshot(List<NodeQuiz> sourceQuizzes) {
     _persistedQuizzesByQuestionId
       ..clear()
       ..addEntries(
@@ -89,6 +88,7 @@ class _EditNodeModalState extends State<EditNodeModal> {
             .map((quiz) => MapEntry(quiz.questionId!.trim(), quiz)),
       );
   }
+
   String _normalizeVideoUrl(String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return trimmed;
@@ -539,14 +539,14 @@ class _EditNodeModalState extends State<EditNodeModal> {
         ScaffoldMessenger.of(context)
           ..clearSnackBars()
           ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Please provide at least a Video URL or upload a file.',
-              style: TextStyle(color: AppColors.textPrimary),
+            const SnackBar(
+              content: Text(
+                'Please provide at least a Video URL or upload a file.',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.cancel,
             ),
-            backgroundColor: AppColors.cancel,
-          ),
-        );
+          );
       }
       return;
     }
@@ -556,14 +556,14 @@ class _EditNodeModalState extends State<EditNodeModal> {
       ScaffoldMessenger.of(context)
         ..clearSnackBars()
         ..showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Video URL must be a valid URL.',
-            style: TextStyle(color: AppColors.textPrimary),
+          const SnackBar(
+            content: Text(
+              'Video URL must be a valid URL.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
           ),
-          backgroundColor: AppColors.cancel,
-        ),
-      );
+        );
       return;
     }
 
@@ -783,10 +783,6 @@ class _EditNodeModalState extends State<EditNodeModal> {
                       videoUrlValue: _videoUrl,
                       onVideoUrlChanged: _handleVideoUrlChanged,
                       videoUrlWarningText: _videoUrlWarningText,
-                      isVideoUrlInvalid:
-                          _saveAttemptCount >= 1 &&
-                          _videoUrl.trim().isNotEmpty &&
-                          !_isValidVideoUrl,
                       isReadOnly: widget.isReadOnly,
 
                       // ===== FILE UPLOAD =====

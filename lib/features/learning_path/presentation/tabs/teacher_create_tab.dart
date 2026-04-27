@@ -23,8 +23,8 @@ class TeacherCreateTab extends StatefulWidget {
 }
 
 class _TeacherCreateTabState extends State<TeacherCreateTab> {
-  int inProgressShown = 2;
-  int completedShown = 2;
+  int inProgressShown = 4;
+  int completedShown = 4;
 
   // Cached filtered lists to avoid re-filtering on every build
   List<LearningPath> _draftPaths = [];
@@ -100,11 +100,12 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     );
   }
 
-  /// Build path grid with empty state and show more button
+  /// Build path grid with empty state and show more/less button
   Widget _buildPathGrid({
     required List<LearningPath> paths,
     required int shownCount,
     required VoidCallback onShowMore,
+    required VoidCallback onShowLess,
     required String emptyMessage,
   }) {
     final colors = Theme.of(context).colorScheme;
@@ -200,6 +201,28 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                 ],
               ),
             ),
+          )
+        else if (paths.length > 4)
+          Padding(
+            padding: const EdgeInsets.only(top: 40),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  NavigationButton(
+                    direction: NavigationDirection.up,
+                    onPressed: onShowLess,
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Less',
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: colors.onPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
       ],
     );
@@ -234,7 +257,12 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
           shownCount: inProgressShown,
           onShowMore: () {
             setState(() {
-              inProgressShown += 2;
+              inProgressShown = _draftPaths.length;
+            });
+          },
+          onShowLess: () {
+            setState(() {
+              inProgressShown = 4;
             });
           },
           emptyMessage: 'No in-progress paths found',
@@ -249,7 +277,12 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
           shownCount: completedShown,
           onShowMore: () {
             setState(() {
-              completedShown += 2;
+              completedShown = _publishedPaths.length;
+            });
+          },
+          onShowLess: () {
+            setState(() {
+              completedShown = 4;
             });
           },
           emptyMessage: 'No published paths found',

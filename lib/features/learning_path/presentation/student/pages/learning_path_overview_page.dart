@@ -182,27 +182,38 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                                 color: colors.onPrimary,
                               ),
                             ),
-                            SizedBox(
-                              width: 18,
-                              height: 30,
-                              child: NavigationButton(
-                                direction: NavigationDirection.right,
-                                onPressed: () async {
-                                  final bloc = context.read<LearningPathBloc>();
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => BlocProvider.value(
-                                        value: bloc,
-                                        child: const LearningPathStatusPage(),
-                                      ),
+                            GestureDetector(
+                              onTap: () async {
+                                final bloc = context.read<LearningPathBloc>();
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => BlocProvider.value(
+                                      value: bloc,
+                                      child: const LearningPathStatusPage(),
                                     ),
-                                  );
-                                  // Refetch overview data when returning
-                                  if (mounted && userId != null) {
-                                    bloc.add(FetchLearningPathOverview());
-                                  }
-                                },
+                                  ),
+                                );
+                                if (mounted && userId != null) {
+                                  bloc.add(FetchLearningPathOverview());
+                                }
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'See all',
+                                    style: AppPixelTypography.smallTitle.copyWith(
+                                      color: colors.onPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Image.asset(
+                                    'assets/buttons/navigation/pixel/right_small_light.png',
+                                    width: 20,
+                                    height: 20,
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -351,7 +362,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           },
                         ),
 
-                      // ===== MORE BUTTON =====
+                      // ===== MORE / LESS BUTTON =====
                       if (_allListShownCount < filteredRecommended.length) ...[
                         const SizedBox(height: 40),
                         Center(
@@ -372,6 +383,31 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                                     _allListShownCount = filteredRecommended.length;
                                   });
                                 },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                      ] else if (filteredRecommended.length > 4) ...[
+                        const SizedBox(height: 40),
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              NavigationButton(
+                                direction: NavigationDirection.up,
+                                onPressed: () {
+                                  setState(() {
+                                    _allListShownCount = 4;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                'Less',
+                                style: AppPixelTypography.smallTitle.copyWith(
+                                  color: colors.onPrimary,
+                                ),
                               ),
                             ],
                           ),

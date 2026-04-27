@@ -94,7 +94,10 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
 
   Future<void> _persistUnsavedUiNodes() async {
     final unsavedNodes = _uiNodes
-        .where((n) => !n.isCreated && (n.realNodeId == null || n.realNodeId!.isEmpty))
+        .where(
+          (n) =>
+              !n.isCreated && (n.realNodeId == null || n.realNodeId!.isEmpty),
+        )
         .map(
           (n) => {
             'title': n.title,
@@ -142,7 +145,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         final shouldReplaceDefaultDraft =
             _uiNodes.length == 1 &&
             !_uiNodes.first.isCreated &&
-            (_uiNodes.first.realNodeId == null || _uiNodes.first.realNodeId!.isEmpty) &&
+            (_uiNodes.first.realNodeId == null ||
+                _uiNodes.first.realNodeId!.isEmpty) &&
             _uiNodes.first.title == 'New Node' &&
             _uiNodes.first.description.isEmpty;
 
@@ -150,7 +154,11 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           _uiNodes = restored;
         } else {
           final existingKeys = _uiNodes
-              .where((n) => !n.isCreated && (n.realNodeId == null || n.realNodeId!.isEmpty))
+              .where(
+                (n) =>
+                    !n.isCreated &&
+                    (n.realNodeId == null || n.realNodeId!.isEmpty),
+              )
               .map((n) => '${n.sequence}|${n.title}|${n.description}')
               .toSet();
 
@@ -178,12 +186,6 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     _queuedSaveDraftRetryTimer?.cancel();
     _queuedPublishRetryTimer?.cancel();
     super.dispose();
-  }
-
-  Future<bool> _onWillPopAutoSaveDraft() async {
-    // Auto-save draft on back navigation has been disabled.
-    // The user must explicitly press the "Save Draft" button to save changes.
-    return true;
   }
 
   @override
@@ -284,7 +286,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       }
 
       LogHandler.warning(
-        'TeacherNodesOverview: Retrying detail fetch for queued Save Draft (${_queuedSaveDraftRetryCount}/8)',
+        'TeacherNodesOverview: Retrying detail fetch for queued Save Draft ($_queuedSaveDraftRetryCount/8)',
       );
       _fetchLearningPathDetail();
     });
@@ -327,7 +329,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       }
 
       LogHandler.warning(
-        'TeacherNodesOverview: Retrying detail fetch for queued Publish (${_queuedPublishRetryCount}/8)',
+        'TeacherNodesOverview: Retrying detail fetch for queued Publish ($_queuedPublishRetryCount/8)',
       );
       _fetchLearningPathDetail();
     });
@@ -813,8 +815,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    final shouldShowBottomBar =
-        _cachedLearningPath != null && !_isPublished;
+    final shouldShowBottomBar = _cachedLearningPath != null && !_isPublished;
 
     return BlocListener<LearningPathBloc, LearningPathState>(
       listener: (context, state) {
@@ -1120,8 +1121,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           );
         }
       },
-      child: WillPopScope(
-        onWillPop: _onWillPopAutoSaveDraft,
+      child: PopScope(
+        canPop: true,
         child: Scaffold(
           appBar: const AppBarWidget(
             title: 'Nodes Overview',

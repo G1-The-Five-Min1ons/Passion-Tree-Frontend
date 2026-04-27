@@ -21,7 +21,6 @@ class NodeInfoSection extends StatelessWidget {
   final String? videoUrlValue;
   final ValueChanged<String>? onVideoUrlChanged;
   final String? videoUrlWarningText;
-  final bool isVideoUrlInvalid;
 
   // Files
   final VoidCallback onUploadFile;
@@ -42,7 +41,6 @@ class NodeInfoSection extends StatelessWidget {
     this.videoUrlValue,
     this.onVideoUrlChanged,
     this.videoUrlWarningText,
-    this.isVideoUrlInvalid = false,
     required this.onUploadFile,
     required this.files,
     required this.onRemoveFile,
@@ -111,99 +109,79 @@ class NodeInfoSection extends StatelessWidget {
         const SizedBox(height: 12),
 
         // ===== VIDEO URL =====
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            PixelTextField(
-              label: 'Video URL',
-              hintText: 'Enter YouTube video URL',
-              height: 35,
-              value: videoUrlValue,
-              fillColor: colors.surface,
-              borderColor: isVideoUrlInvalid ? AppColors.cancel : null,
-              onChanged: isReadOnly ? null : (onVideoUrlChanged ?? (_) {}),
-              readOnly: isReadOnly,
-            ),
-
-            if (videoUrlWarningText != null && videoUrlWarningText!.isNotEmpty)
-              Positioned(
-                right: 10,
-                top: 31,
-                child: Container(
-                  color: colors.surface,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    videoUrlWarningText!,
-                    style: AppTypography.smallBodyRegular.copyWith(
-                      color: AppColors.cancel,
-                    ),
-                  ),
-                ),
-              ),
-          ],
+        PixelTextField(
+          label: 'Video URL',
+          hintText: 'Enter YouTube video URL',
+          height: 35,
+          value: videoUrlValue,
+          fillColor: colors.surface,
+          onChanged: isReadOnly ? null : (onVideoUrlChanged ?? (_) {}),
+          readOnly: isReadOnly,
         ),
-            
+
+        if (videoUrlWarningText != null && videoUrlWarningText!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 10),
+            child: Text(
+              videoUrlWarningText!,
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.cancel),
+            ),
+          ),
 
         const SizedBox(height: 12),
 
         // ===== MATERIALS =====
-        if (!isReadOnly) ...
-          [
-            Text(
-              'Upload Learning Materials',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
+        if (!isReadOnly) ...[
+          Text(
+            'Upload Learning Materials',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
 
-            const SizedBox(height: 8),
+          const SizedBox(height: 8),
 
-            // ===== UPLOAD FILE =====
-            GestureDetector(
-              onTap: onUploadFile,
-              child: PixelBorderContainer(
-                width: double.infinity,
-                height: 150,
-                padding: EdgeInsets.zero,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.upload,
-                        size: 48,
-                        color: AppColors.textSecondary,
+          // ===== UPLOAD FILE =====
+          GestureDetector(
+            onTap: onUploadFile,
+            child: PixelBorderContainer(
+              width: double.infinity,
+              height: 150,
+              padding: EdgeInsets.zero,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.upload,
+                      size: 48,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Click to upload or drag and drop file\nMax 200MB',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textSecondary.withValues(alpha: 0.5),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Click to upload or drag and drop file\nMax 200MB',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
+          ),
 
-            const SizedBox(height: 12),
-          ]
-        else if (files.isNotEmpty) ...
-          [
-            Text(
-              'Learning Materials',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
+          const SizedBox(height: 12),
+        ] else if (files.isNotEmpty) ...[
+          Text(
+            'Learning Materials',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
 
-            const SizedBox(height: 8),
-          ],
-          
+          const SizedBox(height: 8),
+        ],
 
         // ===== FILE LIST =====
         Column(

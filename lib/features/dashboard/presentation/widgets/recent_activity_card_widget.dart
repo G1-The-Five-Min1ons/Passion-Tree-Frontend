@@ -28,9 +28,9 @@ class _RecentActivityCardWidgetState extends State<RecentActivityCardWidget> {
   Color _badgeColor(ActivityItem item) {
     switch (item.activityType) {
       case 'complete_node':
-        return AppColors.status.withOpacity(0.75);
+        return AppColors.status.withValues(alpha: 0.75);
       case 'enroll_path':
-        return AppColors.warning.withOpacity(0.75);
+        return AppColors.warning.withValues(alpha: 0.75);
       default:
         return AppColors.primaryBrand;
     }

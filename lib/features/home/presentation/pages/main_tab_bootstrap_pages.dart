@@ -227,6 +227,7 @@ class _ProfileTabBootstrapPageState extends State<ProfileTabBootstrapPage> {
             _enrolledPaths = const [];
           }
 
+          if (!mounted) return;
           try {
             context.read<MissionBloc>().add(const FetchMyMissions());
           } catch (_) {
