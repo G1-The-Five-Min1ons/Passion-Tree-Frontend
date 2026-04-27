@@ -81,6 +81,7 @@ class LogoutSection extends StatelessWidget {
         AppButton(
           variant: AppButtonVariant.text,
           text: 'Log Out',
+          fullWidth: true,
           backgroundColor: AppColors.surface,
           textColor: AppColors.textPrimary,
           borderColor: AppColors.primaryBrand,

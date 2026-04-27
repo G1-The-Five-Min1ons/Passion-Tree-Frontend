@@ -336,9 +336,8 @@ class _LoginPageState extends State<LoginPage> {
                         AppButton(
                           variant: AppButtonVariant.text,
                           text: isLoading ? 'Signing in...' : 'Sign in',
-                          onPressed: isLoading
-                              ? () {}
-                              : () => _handleLogin(context),
+                          fullWidth: true,
+                          onPressed: isLoading ? () {} : () => _handleLogin(context),
                         ),
                         const SizedBox(height: 24),
 
