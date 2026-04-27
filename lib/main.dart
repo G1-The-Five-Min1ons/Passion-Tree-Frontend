@@ -6,9 +6,9 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/layout/app_background.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/services/session_expiry_notifier.dart';
-import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/home/presentation/bloc/home_bloc_provider.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/pages/post_login_bootstrap_page.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -202,7 +202,7 @@ class AuthGate extends StatelessWidget {
           }
 
           /// STEP 3: เข้า app
-          return const HomeBarWidget();
+          return const PostLoginBootstrapPage();
         }
 
         // Fallback กรณีฉุกเฉิน

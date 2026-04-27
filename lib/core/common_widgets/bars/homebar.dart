@@ -4,14 +4,12 @@ import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier.dart';
 import 'package:passion_tree_frontend/core/services/startup_prefetch_service.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/pages/learning_path_role_entry_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/home/presentation/pages/home_wrapper.dart';
+import 'package:passion_tree_frontend/features/home/presentation/pages/main_tab_bootstrap_pages.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:passion_tree_frontend/features/reflection_tree/presentation/pages/albums_reflection_tree_wrapper.dart';
-import 'package:passion_tree_frontend/features/dashboard/presentation/pages/profile_page.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar_visibility.dart';
 
 class HomeBarWidget extends StatefulWidget {
@@ -112,21 +110,19 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
       case 1:
         _pageCache[index] = _buildTabNavigator(
           1,
-          const LearningPathRoleEntryPage(),
+          const LearnTabBootstrapPage(),
         );
         break;
       case 2:
         _pageCache[index] = _buildTabNavigator(
           2,
-          AlbumsReflectionTreeWrapper(
-            enableStartupPrefetch: widget.enableStartupPrefetch,
-          ),
+          const ReflectTabBootstrapPage(),
         );
         break;
       case 3:
         _pageCache[index] = _buildTabNavigator(
           3,
-          ProfilePage(enableStartupPrefetch: widget.enableStartupPrefetch),
+          const ProfileTabBootstrapPage(),
         );
         break;
     }

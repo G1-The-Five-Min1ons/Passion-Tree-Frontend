@@ -27,8 +27,17 @@ import 'package:passion_tree_frontend/features/dashboard/presentation/pages/miss
 
 class ProfilePage extends StatefulWidget {
   final bool enableStartupPrefetch;
+  final UserProfile? initialUserProfile;
+  final DashboardResponse? initialDashboardData;
+  final List<EnrolledLearningPath>? initialEnrolledPaths;
 
-  const ProfilePage({super.key, this.enableStartupPrefetch = true});
+  const ProfilePage({
+    super.key,
+    this.enableStartupPrefetch = true,
+    this.initialUserProfile,
+    this.initialDashboardData,
+    this.initialEnrolledPaths,
+  });
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -48,6 +57,20 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+
+    final hasPrefetchedData =
+        widget.initialUserProfile != null ||
+        widget.initialDashboardData != null ||
+        widget.initialEnrolledPaths != null;
+
+    if (hasPrefetchedData) {
+      _userProfile = widget.initialUserProfile;
+      _dashboardData = widget.initialDashboardData;
+      _enrolledPaths = widget.initialEnrolledPaths ?? const [];
+      _isLoading = false;
+      return;
+    }
+
     _loadDashboardData();
   }
 
@@ -324,9 +347,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           isLoading: isLoading,
                           errorMessage: errorMessage,
                           onMissionTap: _onMissionTap,
-                          onRetry: () => context
-                              .read<MissionBloc>()
-                              .add(const FetchMyMissions()),
+                          onRetry: () => context.read<MissionBloc>().add(
+                            const FetchMyMissions(),
+                          ),
                         );
                       },
                     ),
