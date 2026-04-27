@@ -21,32 +21,76 @@ class DashboardResponse {
       userInfo: DashboardUserInfo.fromJson(
         json['user_information'] as Map<String, dynamic>? ?? {},
       ),
-      weeklyMissions: (json['weekly_missions'] as List<dynamic>?)
+      weeklyMissions:
+          (json['weekly_missions'] as List<dynamic>?)
               ?.map((e) => MissionItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      currentPaths: (json['current_paths'] as List<dynamic>?)
-              ?.map(
-                (e) => CurrentPathItem.fromJson(e as Map<String, dynamic>),
-              )
+      currentPaths:
+          (json['current_paths'] as List<dynamic>?)
+              ?.map((e) => CurrentPathItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       treeCounter: TreeCounterStats.fromJson(
         json['tree_counter'] as Map<String, dynamic>? ?? {},
       ),
-      recentActivity: (json['recent_activity'] as List<dynamic>?)
+      recentActivity:
+          (json['recent_activity'] as List<dynamic>?)
               ?.map((e) => ActivityItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      activitySummary: (json['activity_summary'] as List<dynamic>?)
+      activitySummary:
+          (json['activity_summary'] as List<dynamic>?)
               ?.map(
-                (e) =>
-                    ActivityHeatmapItem.fromJson(e as Map<String, dynamic>),
+                (e) => ActivityHeatmapItem.fromJson(e as Map<String, dynamic>),
               )
               .toList() ??
           [],
     );
   }
+
+  int get resolvedLearningStreak {
+    if (userInfo.learningStreak > 0) {
+      return userInfo.learningStreak;
+    }
+
+    return _computeStreakFromActivitySummary(activitySummary);
+  }
+}
+
+int _computeStreakFromActivitySummary(List<ActivityHeatmapItem> items) {
+  if (items.isEmpty) return 0;
+
+  final activeDates = <DateTime>{};
+  for (final item in items) {
+    if (item.count <= 0) continue;
+    final parsed = DateTime.tryParse(item.date);
+    if (parsed == null) continue;
+    activeDates.add(DateTime(parsed.year, parsed.month, parsed.day));
+  }
+
+  if (activeDates.isEmpty) return 0;
+
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = today.subtract(const Duration(days: 1));
+
+  DateTime cursor;
+  if (activeDates.contains(today)) {
+    cursor = today;
+  } else if (activeDates.contains(yesterday)) {
+    cursor = yesterday;
+  } else {
+    return 0;
+  }
+
+  var streak = 0;
+  while (activeDates.contains(cursor)) {
+    streak += 1;
+    cursor = cursor.subtract(const Duration(days: 1));
+  }
+
+  return streak;
 }
 
 class DashboardUserInfo {
@@ -181,7 +225,8 @@ class ActivityItem {
     return ActivityItem(
       activityType: json['activity_type'] as String? ?? '',
       title: json['title'] as String? ?? '',
-      timestamp: DateTime.tryParse(json['timestamp'] as String? ?? '') ??
+      timestamp:
+          DateTime.tryParse(json['timestamp'] as String? ?? '') ??
           DateTime.now(),
     );
   }
@@ -214,10 +259,7 @@ class ActivityHeatmapItem {
   final String date;
   final int count;
 
-  ActivityHeatmapItem({
-    required this.date,
-    required this.count,
-  });
+  ActivityHeatmapItem({required this.date, required this.count});
 
   factory ActivityHeatmapItem.fromJson(Map<String, dynamic> json) {
     return ActivityHeatmapItem(

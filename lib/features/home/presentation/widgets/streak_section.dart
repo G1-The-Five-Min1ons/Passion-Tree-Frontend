@@ -31,7 +31,7 @@ class StreakSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,10 +42,10 @@ class StreakSection extends StatelessWidget {
                       color: streakCount > 0
                           ? AppColors.secondaryBrand
                           : AppColors.textSecondary,
-                      fontSize: 40,
+                      fontSize: 52,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     'Streak Days !',
                     style: AppTypography.titleSemiBold.copyWith(
@@ -104,31 +104,25 @@ class _DayDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isActive = state != _DayState.inactive;
-    final Color fireColor =
-        isActive ? AppColors.secondaryBrand : AppColors.scale;
-    final Color labelColor =
-        isActive ? AppColors.textPrimary : AppColors.textDisabled;
-    final List<BoxShadow> shadows = state == _DayState.current
-        ? [
-            BoxShadow(
-              // ignore: deprecated_member_use
-              color: AppColors.secondaryBrand.withOpacity(0.5),
-              blurRadius: 10,
-              spreadRadius: 2,
-            ),
-          ]
-        : const [];
-
+    final Color fireColor = state == _DayState.inactive
+        ? AppColors.textDisabled
+        : AppColors.secondaryBrand;
+    final Color labelColor = state == _DayState.inactive
+        ? AppColors.textDisabled
+        : AppColors.textPrimary;
+    final Color dotBg = switch (state) {
+      _DayState.current => const Color(0xFF2E1F00),
+      _DayState.completed => const Color(0xFF243060),
+      _DayState.inactive => AppColors.cardBorder,
+    };
     return Column(
       children: [
         Container(
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: AppColors.cardBorder,
+            color: dotBg,
             shape: BoxShape.circle,
-            boxShadow: shadows,
           ),
           child: Icon(
             Icons.local_fire_department_rounded,

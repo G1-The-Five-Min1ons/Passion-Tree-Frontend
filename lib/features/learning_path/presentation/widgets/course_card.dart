@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
@@ -99,7 +100,7 @@ class PixelCourseCard extends StatelessWidget {
                       width: 67,
                       height: 23,
                       child: Container(
-                        color: colors.primary,
+                        color: AppColors.cardBorder,
                         alignment: Alignment.center,
                         child: Row(
                           mainAxisSize: MainAxisSize.min,

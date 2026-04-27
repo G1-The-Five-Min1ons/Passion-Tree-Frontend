@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/create_learning_path_input_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/teacher_nodes_overview.dart';
@@ -13,9 +11,6 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
-import 'package:passion_tree_frontend/core/di/injection.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
-import 'package:passion_tree_frontend/features/setting/presentation/pages/teacher_verification_page.dart';
 
 class TeacherCreateTab extends StatefulWidget {
   final List<LearningPath> allPaths;
@@ -34,8 +29,6 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
   // Cached filtered lists to avoid re-filtering on every build
   List<LearningPath> _draftPaths = [];
   List<LearningPath> _publishedPaths = [];
-  final IAuthRepository _authRepository = getIt<IAuthRepository>();
-
   @override
   void initState() {
     super.initState();
@@ -74,40 +67,6 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     _publishedPaths = userPaths
         .where((path) => path.publishStatus.toLowerCase() == 'published')
         .toList();
-  }
-
-  Future<void> _onCreatePressed() async {
-    try {
-      final status = await _authRepository.getTeacherVerificationStatus();
-      if (!mounted) return;
-
-      if (status.applicationStatus != 'approved') {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const TeacherVerificationPage(),
-          ),
-        );
-        return;
-      }
-
-      final bloc = context.read<LearningPathBloc>();
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: bloc,
-            child: const CreateLearningPathInputPage(),
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to check verification status: $e', style: const TextStyle(color: AppColors.textPrimary)), backgroundColor: AppColors.cancel),
-      );
-    }
   }
 
   /// Build section header with title and status
@@ -268,18 +227,6 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        // ===== Add button (top right) =====
-        Align(
-          alignment: Alignment.centerRight,
-          child: AppButton(
-            variant: AppButtonVariant.iconOnly,
-            icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
-            onPressed: _onCreatePressed,
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
         // My Learning Paths - Drafts
         _buildSectionHeader('Drafts', colors.secondary),
         _buildPathGrid(

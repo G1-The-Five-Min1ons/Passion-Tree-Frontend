@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 // Filter section removed
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/teacher_tab_bar.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/tabs/teacher_learning_tab.dart';
@@ -10,7 +13,9 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/tabs/t
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/create_learning_path_input_page.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:passion_tree_frontend/features/setting/presentation/pages/teacher_verification_page.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 
 enum TeacherLearningView { main, status }
@@ -35,8 +40,49 @@ class _TeacherLearningPathOverviewPageState
 
   String? _userId;
 
+  final IAuthRepository _authRepository = getIt<IAuthRepository>();
+
   // Cache overview data
   LearningPathOverviewLoaded? _cachedOverview;
+
+  Future<void> _onCreatePressed() async {
+    try {
+      final status = await _authRepository.getTeacherVerificationStatus();
+      if (!mounted) return;
+
+      if (status.applicationStatus != 'approved') {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const TeacherVerificationPage(),
+          ),
+        );
+        return;
+      }
+
+      final bloc = context.read<LearningPathBloc>();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: bloc,
+            child: const CreateLearningPathInputPage(),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to check verification status: $e',
+            style: const TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+    }
+  }
 
   void _refreshOverviewAfterNodeMutation() {
     if (_userId == null || _userId!.isEmpty) return;
@@ -53,18 +99,13 @@ class _TeacherLearningPathOverviewPageState
   }
 
   Future<void> _loadOverviewData() async {
-    final storedUserId = await getIt<IAuthRepository>().getUserId();
+    final storedUserId = await _authRepository.getUserId();
     if (!mounted) return;
     
     setState(() => _userId = storedUserId);
     
     // Fetch overview data from backend
     context.read<LearningPathBloc>().add(FetchLearningPathOverview());
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   @override
@@ -142,16 +183,41 @@ class _TeacherLearningPathOverviewPageState
                       // ===== SEARCH & FILTERS REMOVED =====
 
                       // ===== TAB BAR =====
-                      TeacherTabBar(
-                        activeIndex: _activeTab,
-                        onChanged: (index) {
-                          setState(() {
-                            _activeTab = index;
-                            if (_activeTab == 0) {
-                              _learningView = TeacherLearningView.main;
-                            }
-                          });
-                        },
+                      Row(
+                        children: [
+                          TeacherTabBar(
+                            activeIndex: _activeTab,
+                            onChanged: (index) {
+                              setState(() {
+                                _activeTab = index;
+                                if (_activeTab == 0) {
+                                  _learningView = TeacherLearningView.main;
+                                }
+                              });
+                            },
+                          ),
+                          const Spacer(),
+                          if (_activeTab == 1)
+                            GestureDetector(
+                              onTap: _onCreatePressed,
+                              child: PixelBorderContainer(
+                                pixelSize: 2,
+                                fillColor: Theme.of(context).colorScheme.primary,
+                                borderColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 3.8,
+                                ),
+                                child: Text(
+                                  '+',
+                                  style: AppPixelTypography.smallTitle.copyWith(
+                                    color: Theme.of(context).colorScheme.onPrimary,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
 
                       const SizedBox(height: 20),

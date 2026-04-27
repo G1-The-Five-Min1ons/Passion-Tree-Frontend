@@ -206,11 +206,14 @@ class _ProfilePageState extends State<ProfilePage> {
     final userInfo = _dashboardData?.userInfo;
 
     if (profile != null) {
+      final fallbackStreak = _dashboardData?.resolvedLearningStreak ?? 0;
       return _ResolvedProfileStats(
         level: profile.level,
         xp: profile.xp,
         hours: profile.hourLearned,
-        streak: profile.learningStreak,
+        streak: profile.learningStreak > 0
+            ? profile.learningStreak
+            : fallbackStreak,
         learningPathCount: profile.learningCount,
       );
     }
@@ -220,7 +223,8 @@ class _ProfilePageState extends State<ProfilePage> {
         level: userInfo.level,
         xp: userInfo.xp,
         hours: userInfo.hourLearned,
-        streak: userInfo.learningStreak,
+        streak:
+            _dashboardData?.resolvedLearningStreak ?? userInfo.learningStreak,
         learningPathCount: _dashboardData?.currentPaths.length ?? 0,
       );
     }

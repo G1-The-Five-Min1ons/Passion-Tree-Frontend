@@ -88,7 +88,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  int get _streakCount => _dashboardData?.userInfo.learningStreak ?? 0;
+  int get _streakCount => _dashboardData?.resolvedLearningStreak ?? 0;
 
   void _onMissionTap(UserMissionModel mission) {
     final state = context.read<MissionBloc>().state;

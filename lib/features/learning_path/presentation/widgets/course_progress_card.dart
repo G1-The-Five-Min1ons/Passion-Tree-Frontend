@@ -103,7 +103,7 @@ class CourseProgressCard extends StatelessWidget {
                       width: 67,
                       height: 23,
                       child: Container(
-                        color: colors.primary,
+                        color: AppColors.cardBorder,
                         alignment: Alignment.center,
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
