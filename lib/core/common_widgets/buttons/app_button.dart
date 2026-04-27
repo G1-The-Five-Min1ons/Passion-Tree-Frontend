@@ -60,7 +60,7 @@ class _AppButtonState extends State<AppButton> {
       color: fgColor,
     );
 
-    final double buttonWidth = switch (widget.variant) {
+    final double baseButtonWidth = switch (widget.variant) {
       AppButtonVariant.iconOnly => _iconOnlyWidth(),
       AppButtonVariant.textWithIcon => _calculateWidthFromTextAndIcon(
         buttonTextStyle,
@@ -71,44 +71,54 @@ class _AppButtonState extends State<AppButton> {
       ),
     };
 
-    final Widget buttonContent = SizedBox(
-      width: buttonWidth,
-      height: _height(),
-      child: Center(child: _buildContent(buttonTextStyle)),
-    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hasBoundedWidth = constraints.hasBoundedWidth &&
+            constraints.maxWidth != double.infinity;
+        final buttonWidth = widget.fullWidth && hasBoundedWidth
+            ? _snapToPixel((constraints.maxWidth - _shadowOffset).clamp(_pixel, constraints.maxWidth))
+            : baseButtonWidth;
 
-    return GestureDetector(
-      onTap: widget.onPressed,
-      child: Padding(
-        padding: const EdgeInsets.only(
-          right: _shadowOffset,
-          bottom: _shadowOffset,
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: _shadowOffset,
-              top: _shadowOffset,
-              child: PixelBorderContainer(
-                padding: EdgeInsets.zero,
-                fillColor: AppColors.background,
-                borderColor: bdColor,
-                child: SizedBox(
-                  width: buttonWidth,
-                  height: _height(),
+        final Widget buttonContent = SizedBox(
+          width: buttonWidth,
+          height: _height(),
+          child: Center(child: _buildContent(buttonTextStyle)),
+        );
+
+        return GestureDetector(
+          onTap: widget.onPressed,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              right: _shadowOffset,
+              bottom: _shadowOffset,
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  left: _shadowOffset,
+                  top: _shadowOffset,
+                  child: PixelBorderContainer(
+                    padding: EdgeInsets.zero,
+                    fillColor: AppColors.background,
+                    borderColor: bdColor,
+                    child: SizedBox(
+                      width: buttonWidth,
+                      height: _height(),
+                    ),
+                  ),
                 ),
-              ),
+                PixelBorderContainer(
+                  padding: EdgeInsets.zero,
+                  fillColor: bgColor,
+                  borderColor: bdColor,
+                  child: buttonContent,
+                ),
+              ],
             ),
-            PixelBorderContainer(
-              padding: EdgeInsets.zero,
-              fillColor: bgColor,
-              borderColor: bdColor,
-              child: buttonContent,
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -176,6 +186,10 @@ class _AppButtonState extends State<AppButton> {
   }
 
   double _iconOnlyWidth() => 60;
+
+  double _snapToPixel(double value) {
+    return (value / _pixel).floor() * _pixel;
+  }
 
   double _calculateWidthFromText(TextStyle style) {
     final mainPainter = TextPainter(

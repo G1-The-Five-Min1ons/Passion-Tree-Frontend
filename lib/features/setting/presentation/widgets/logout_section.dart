@@ -28,7 +28,7 @@ class LogoutSection extends StatelessWidget {
             children: [
               Text(
                 'Log Out',
-                style: AppTypography.h3SemiBold.copyWith(
+                style: AppTypography.h2SemiBold.copyWith(
                   color: AppColors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
@@ -71,19 +71,14 @@ class LogoutSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Session',
-          style: AppTypography.titleSemiBold.copyWith(
-            color: AppColors.textPrimary,
-          ),
-        ),
         const SizedBox(height: 12),
         AppButton(
           variant: AppButtonVariant.text,
           text: 'Log Out',
+          fullWidth: true,
           backgroundColor: AppColors.surface,
-          textColor: AppColors.cancel,
-          borderColor: AppColors.cancel,
+          textColor: AppColors.textPrimary,
+          borderColor: AppColors.primaryBrand,
           onPressed: () => _handleLogout(context),
         ),
       ],
