@@ -317,6 +317,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       streak: _streak,
                       learningPathCount: _learningPathCount,
                       memberSince: _memberSince,
+                      onSettingsTap: _openSettings,
+                      showSettingsIcon: false,
                     ),
                     const SizedBox(height: 14),
                     const SectionTitle(title: 'My Garden'),

@@ -71,12 +71,6 @@ class LogoutSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Session',
-          style: AppTypography.titleSemiBold.copyWith(
-            color: AppColors.textPrimary,
-          ),
-        ),
         const SizedBox(height: 12),
         AppButton(
           variant: AppButtonVariant.text,
