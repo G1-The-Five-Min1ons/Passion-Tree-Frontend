@@ -156,7 +156,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
                   .map(
                     (mission) => _buildMissionProgress(
                       mission: mission,
-                      title: mission.title,
+                      title: mission.detail,
                       value: mission.progress,
                       trailing: mission.isCompleted
                           ? 'Done'
@@ -189,9 +189,6 @@ class WeeklyMissionCardWidget extends StatelessWidget {
           padding: useRecentActivityStyle
               ? const EdgeInsets.symmetric(horizontal: 8, vertical: 7)
               : const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.cardBorder),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -200,14 +197,14 @@ class WeeklyMissionCardWidget extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: AppTypography.bodyRegular.copyWith(
+                      style: AppTypography.bodySemiBold.copyWith(
                         color: AppColors.textPrimary,
                       ),
                     ),
                   ),
                   Text(
                     trailing,
-                    style: AppTypography.smallBodyRegular.copyWith(
+                    style: AppTypography.smallBodySemiBold.copyWith(
                       color: AppColors.textSecondary,
                     ),
                   ),

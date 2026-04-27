@@ -76,6 +76,62 @@ class _EditNodeModalState extends State<EditNodeModal> {
   Timer? _videoUrlValidationTimer;
   bool _shouldShowVideoUrlValidation = false;
 
+  void _hydrateFromWidget() {
+    _videoUrlValidationTimer?.cancel();
+
+    _title = '';
+    _description = '';
+    _videoUrl = '';
+    _files.clear();
+    _materialNameByUrl = {};
+    _quizzes = [];
+    _persistedQuizzesByQuestionId.clear();
+    _isUploading = false;
+    _isSubmitting = false;
+    _saveAttemptCount = 0;
+    _shouldShowVideoUrlValidation = false;
+
+    final node = widget.initialNode;
+    if (node == null) {
+      return;
+    }
+
+    _title = node.title;
+    _description = node.description;
+    _videoUrl = node.linkVdo ?? '';
+
+    _quizzes = node.questions.map((question) {
+      int correctIndex = 0;
+      final reasons = <int, String>{};
+      final choiceIds = <String>[];
+
+      for (int i = 0; i < question.choices.length; i++) {
+        final choice = question.choices[i];
+        choiceIds.add(choice.choiceId);
+        if (choice.isCorrect) {
+          correctIndex = i;
+          if (choice.reasoning.isNotEmpty) {
+            reasons[i] = choice.reasoning;
+          }
+        }
+      }
+
+      return NodeQuiz(
+        question: question.questionText,
+        choices: question.choices.map((c) => c.choiceText).toList(),
+        selectedIndex: correctIndex,
+        reasons: reasons,
+        questionId: question.questionId,
+        choiceIds: choiceIds,
+      );
+    }).toList();
+    _syncPersistedQuizSnapshot(_quizzes);
+
+    if (_videoUrl.trim().isNotEmpty) {
+      _scheduleVideoUrlValidation();
+    }
+  }
+
   void _syncPersistedQuizSnapshot(List<NodeQuiz> sourceQuizzes) {
     _persistedQuizzesByQuestionId
       ..clear()
@@ -306,50 +362,45 @@ class _EditNodeModalState extends State<EditNodeModal> {
   void initState() {
     super.initState();
 
-    // โหลดข้อมูลเดิมถ้าเป็นการแก้ไขโหนด
+    _hydrateFromWidget();
+
     if (widget.initialNode != null) {
-      _title = widget.initialNode!.title;
-      _description = widget.initialNode!.description;
-      _videoUrl = widget.initialNode!.linkVdo ?? '';
-
       _loadExistingMaterials();
-
-      // โหลด questions และแปลงเป็น NodeQuiz
-      _quizzes = widget.initialNode!.questions.map((question) {
-        // หา correct choice index
-        int correctIndex = 0;
-        Map<int, String> reasons = {};
-        final choiceIds = <String>[];
-
-        for (int i = 0; i < question.choices.length; i++) {
-          final choice = question.choices[i];
-          choiceIds.add(choice.choiceId);
-          if (choice.isCorrect) {
-            correctIndex = i;
-            if (choice.reasoning.isNotEmpty) {
-              reasons[i] = choice.reasoning;
-            }
-          }
-        }
-
-        return NodeQuiz(
-          question: question.questionText,
-          choices: question.choices.map((c) => c.choiceText).toList(),
-          selectedIndex: correctIndex,
-          reasons: reasons,
-          questionId: question.questionId,
-          choiceIds: choiceIds,
-        );
-      }).toList();
-      _syncPersistedQuizSnapshot(_quizzes);
 
       // Fetch latest questions only for existing backend nodes.
       if (!widget.isNewNode) {
         _loadQuestionsFromApi();
       }
+    }
 
-      if (_videoUrl.trim().isNotEmpty) {
-        _scheduleVideoUrlValidation();
+    if (!widget.isNewNode) {
+      _loadExistingNodeDetail();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant EditNodeModal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final hasNodeIdentityChanged =
+        oldWidget.nodeId != widget.nodeId ||
+        oldWidget.isNewNode != widget.isNewNode ||
+        oldWidget.sequence != widget.sequence ||
+        oldWidget.initialNode != widget.initialNode;
+
+    if (!hasNodeIdentityChanged) {
+      return;
+    }
+
+    setState(() {
+      _hydrateFromWidget();
+    });
+
+    if (widget.initialNode != null) {
+      _loadExistingMaterials();
+
+      if (!widget.isNewNode) {
+        _loadQuestionsFromApi();
       }
     }
 
