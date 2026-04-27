@@ -22,21 +22,19 @@ class BottomBar extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // ถ้ายัง draft แสดงทั้งสองปุ่ม
-    return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 25, // ระยะลอยจากขอบล่าง
-      ),
-      child: Center(
+    
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 300),
         child: SizedBox(
-          width: 320, // ความกว้างกลุ่มปุ่ม
+          width: double.infinity,
           child: Row(
             children: [
               Expanded(
                 child: AppButton(
                   variant: AppButtonVariant.text,
                   text: 'Save Draft',
-                  backgroundColor: AppColors.scale,
+                  backgroundColor: AppColors.scale.withOpacity(0.8),
                   textColor: AppColors.textPrimary,
                   onPressed: onSaveDraft,
                 ),
@@ -46,6 +44,8 @@ class BottomBar extends StatelessWidget {
                 child: AppButton(
                   variant: AppButtonVariant.text,
                   text: 'Publish',
+                  backgroundColor: AppColors.submit,
+                  textColor: AppColors.textPrimary,
                   onPressed: onPublish,
                 ),
               ),
@@ -56,4 +56,3 @@ class BottomBar extends StatelessWidget {
     );
   }
 }
-

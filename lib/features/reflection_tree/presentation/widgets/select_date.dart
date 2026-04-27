@@ -4,12 +4,26 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 
 class PixelCalendarDialog extends StatefulWidget {
-  const PixelCalendarDialog({super.key});
+  final DateTime? initialRangeStart;
+  final DateTime? initialRangeEnd;
 
-  static Future<List<DateTime?>?> show(BuildContext context) {
+  const PixelCalendarDialog({
+    super.key,
+    this.initialRangeStart,
+    this.initialRangeEnd,
+  });
+
+  static Future<List<DateTime?>?> show(
+    BuildContext context, {
+    DateTime? initialRangeStart,
+    DateTime? initialRangeEnd,
+  }) {
     return showDialog<List<DateTime?>>(
       context: context,
-      builder: (context) => const PixelCalendarDialog(),
+      builder: (context) => PixelCalendarDialog(
+        initialRangeStart: initialRangeStart,
+        initialRangeEnd: initialRangeEnd,
+      ),
     );
   }
 
@@ -18,10 +32,18 @@ class PixelCalendarDialog extends StatefulWidget {
 }
 
 class _PixelCalendarDialogState extends State<PixelCalendarDialog> {
-  DateTime viewingMonth = DateTime.now();
+  late DateTime viewingMonth;
   DateTime? rangeStart;
   DateTime? rangeEnd;
   final List<String> weekDays = ['S', 'M', 'T', 'W', 'TH', 'F', 'S'];
+
+  @override
+  void initState() {
+    super.initState();
+    rangeStart = widget.initialRangeStart;
+    rangeEnd = widget.initialRangeEnd;
+    viewingMonth = _initialViewingMonth();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,20 +103,20 @@ class _PixelCalendarDialogState extends State<PixelCalendarDialog> {
 
                   int day = index - firstDayOffset + 1;
                   DateTime dateAtSlot = DateTime(viewingMonth.year, viewingMonth.month, day);
-                  
-                  bool isStart = rangeStart != null && dateAtSlot.isAtSameMomentAs(rangeStart!);
-                  bool isEnd = rangeEnd != null && dateAtSlot.isAtSameMomentAs(rangeEnd!);
-                  bool isInRange = rangeStart != null && rangeEnd != null && 
-                                   dateAtSlot.isAfter(rangeStart!) && dateAtSlot.isBefore(rangeEnd!);
+                  final bool isPast = _isPastDate(dateAtSlot);
+                  final bool isStart = rangeStart != null && _isSameDay(dateAtSlot, rangeStart!);
+                  final bool isEnd = rangeEnd != null && _isSameDay(dateAtSlot, rangeEnd!);
+                  final bool isInRange = rangeStart != null && rangeEnd != null &&
+                      dateAtSlot.isAfter(rangeStart!) && dateAtSlot.isBefore(rangeEnd!);
 
                   return GestureDetector(
-                    onTap: () => _handleDateTap(dateAtSlot),
+                    onTap: isPast ? null : () => _handleDateTap(dateAtSlot),
                     child: Stack(
                       children: [
                         if (isInRange || isStart || isEnd)
                           Positioned.fill(
                             child: Container(
-                              margin: const EdgeInsets.symmetric(vertical: 4), 
+                              margin: const EdgeInsets.symmetric(vertical: 4),
                               decoration: BoxDecoration(
                                 color: AppColors.primaryBrand.withValues(alpha: 0.10),
                                 borderRadius: BorderRadius.only(
@@ -114,14 +136,18 @@ class _PixelCalendarDialogState extends State<PixelCalendarDialog> {
                             height: 30,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: (isStart || isEnd) ? AppColors.primaryBrand : Colors.transparent,
+                              color: (isStart || isEnd) ? AppColors.textPrimary : Colors.transparent,
                             ),
                             child: Center(
                               child: Text(
                                 "$day",
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: (isStart || isEnd) ? AppColors.surface : AppColors.textPrimary,
+                                  color: (isStart || isEnd)
+                                      ? AppColors.surface
+                                      : isPast
+                                          ? AppColors.textDisabled
+                                          : AppColors.textPrimary,
                                   fontWeight: (isStart || isEnd) ? FontWeight.bold : FontWeight.normal,
                                 ),
                               ),
@@ -138,6 +164,23 @@ class _PixelCalendarDialogState extends State<PixelCalendarDialog> {
         ),
       ),
     );
+  }
+
+  DateTime _initialViewingMonth() {
+    final anchor = rangeStart ?? rangeEnd ?? DateTime.now();
+    return DateTime(anchor.year, anchor.month);
+  }
+
+  bool _isSameDay(DateTime first, DateTime second) {
+    return first.year == second.year &&
+        first.month == second.month &&
+        first.day == second.day;
+  }
+
+  bool _isPastDate(DateTime date) {
+    final today = DateTime.now();
+    final normalizedToday = DateTime(today.year, today.month, today.day);
+    return date.isBefore(normalizedToday);
   }
 
   void _handleDateTap(DateTime date) {
@@ -161,7 +204,7 @@ class _PixelCalendarDialogState extends State<PixelCalendarDialog> {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(2),
-        decoration: const BoxDecoration(color: AppColors.primaryBrand, shape: BoxShape.circle),
+        decoration: const BoxDecoration(color: AppColors.textPrimary, shape: BoxShape.circle),
         child: Icon(icon, color: AppColors.surface, size: 18),
       ),
     );

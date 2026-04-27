@@ -10,10 +10,10 @@ class DetailReflectContent extends StatelessWidget {
 
   const DetailReflectContent({
     super.key,
-    this.learn = "วันนี้ได้ทบทวนเรื่องโครงสร้างเซลล์",
-    this.feel = "รู้สึกเข้าใจเนื้อหามากขึ้นหลังจากเรียน",
-    this.progress = 4,
-    this.challenge = 2,
+    required this.learn,
+    required this.feel,
+    required this.progress,
+    required this.challenge,
   });
 
   @override
@@ -21,32 +21,54 @@ class DetailReflectContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("You've learned :", 
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface)),
+        Text(
+          "You've learned :",
+          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
+        ),
         const SizedBox(height: 8),
-        Text(learn, 
-          style: AppTypography.subtitleRegular.copyWith(color: AppColors.surface)),
+        Text(
+          learn,
+          style: AppTypography.subtitleRegular.copyWith(
+            color: AppColors.textPrimary,
+          ),
+        ),
 
         const SizedBox(height: 20),
-        Text("You felt :", 
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface)),
+        Text(
+          "You felt :",
+          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
+        ),
         const SizedBox(height: 8),
-        Text(feel, 
-          style: AppTypography.subtitleRegular.copyWith(color: AppColors.surface)),
+        Text(
+          feel,
+          style: AppTypography.subtitleRegular.copyWith(
+            color: AppColors.textPrimary,
+          ),
+        ),
         const SizedBox(height: 30),
-        _buildScoreLine("Progress", progress),
+        _buildScoreLine("Knowledge Gained", progress),
         const SizedBox(height: 15),
         _buildScoreLine("Challenge", challenge),
       ],
     );
   }
+
   Widget _buildScoreLine(String label, int val) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface)),
-        Text("$val/5", 
-          style: AppTypography.titleSemiBold.copyWith(color: AppColors.surface)),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          "$val/5",
+          textAlign: TextAlign.right,
+          style: AppTypography.titleSemiBold.copyWith(color: AppColors.textPrimary),
+        ),
       ],
     );
   }

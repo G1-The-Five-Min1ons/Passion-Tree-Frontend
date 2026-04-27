@@ -7,6 +7,8 @@ class DashedLinePainter extends CustomPainter {
   final double strokeWidth;
   final double dashWidth;
   final double dashSpace;
+  final Offset? gapCenter;
+  final double gapRadius;
 
   DashedLinePainter({
     required this.path,
@@ -14,6 +16,8 @@ class DashedLinePainter extends CustomPainter {
     this.strokeWidth = 4.0,
     this.dashWidth = 8.0,
     this.dashSpace = 8.0,
+    this.gapCenter,
+    this.gapRadius = 20.0,
   });
 
   @override
@@ -26,15 +30,37 @@ class DashedLinePainter extends CustomPainter {
     for (ui.PathMetric measurePath in path.computeMetrics()) {
       double distance = 0.0;
       while (distance < measurePath.length) {
-        canvas.drawPath(
-          measurePath.extractPath(distance, distance + dashWidth),
-          paint,
-        );
+        final start = distance;
+        final end = (distance + dashWidth).clamp(0.0, measurePath.length);
+
+        bool shouldDraw = true;
+        if (gapCenter != null) {
+          final midOffset = (start + end) / 2;
+          final tangent = measurePath.getTangentForOffset(midOffset);
+          final midPoint = tangent?.position;
+          if (midPoint != null &&
+              (midPoint - gapCenter!).distance <= gapRadius) {
+            shouldDraw = false;
+          }
+        }
+
+        if (shouldDraw) {
+          canvas.drawPath(measurePath.extractPath(start, end), paint);
+        }
+
         distance += dashWidth + dashSpace;
       }
     }
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant DashedLinePainter oldDelegate) {
+    return oldDelegate.path != path ||
+        oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.dashWidth != dashWidth ||
+        oldDelegate.dashSpace != dashSpace ||
+        oldDelegate.gapCenter != gapCenter ||
+        oldDelegate.gapRadius != gapRadius;
+  }
 }

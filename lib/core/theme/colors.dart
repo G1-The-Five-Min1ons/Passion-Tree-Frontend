@@ -20,6 +20,11 @@ class AppColors{
   static const Color title = Color(0xFF0088FF);
   static const Color cardBorder     = Color(0xFF1E4080);
   static const Color buttonBorder   = Color(0xFFFFFFFF);
+  static const Color activityone = Color.fromARGB(255, 117, 234, 126);
+  static const Color activitytwo = Color.fromARGB(255, 91, 182, 98);
+  static const Color activitythree = Color.fromARGB(255, 58, 118, 63);
+  static const Color activityfour = Color.fromARGB(255, 44, 86, 165);
+  static const Color died = Color(0xFF000000);
 
   // AppBackground ambient blobs 
   static const Color bgGradientTop  = Color(0xFF091A38); // dark navy top-left

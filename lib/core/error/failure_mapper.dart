@@ -5,6 +5,13 @@ import 'failures.dart';
 class FailureMapper {
   /// Convert any exception to a Failure
   static Failure fromException(dynamic exception) {
+    if (exception is AccountReactivationRequiredException) {
+      return AccountReactivationRequiredFailure(
+        gracePeriodDays: exception.gracePeriodDays,
+        technicalMessage: exception.toString(),
+      );
+    }
+
     if (exception is NetworkException) {
       return NetworkFailure(
         technicalMessage: exception.toString(),
@@ -85,6 +92,9 @@ class FailureMapper {
         );
       default:
         return AuthFailure(
+          message: exception.message.isNotEmpty
+              ? exception.message
+              : 'Invalid or expired verification code.',
           technicalMessage: exception.toString(),
         );
     }
@@ -95,10 +105,12 @@ class FailureMapper {
     switch (exception.statusCode) {
       case 400:
         return BadRequestFailure(
+          message: exception.message,
           technicalMessage: exception.toString(),
         );
       case 404:
         return NotFoundFailure(
+          message: exception.message,
           technicalMessage: exception.toString(),
         );
       case 409:

@@ -89,7 +89,7 @@ class PixelRadioButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color themeSurface = Theme.of(context).colorScheme.surface;
-    final Color themePrimary = Theme.of(context).colorScheme.primary;
+    final Color themePrimary = Theme.of(context).colorScheme.onPrimary;
 
 
     return CustomPaint(
@@ -134,6 +134,14 @@ class _PixelRadioGroupState extends State<PixelRadioGroup> {
   void initState() {
     super.initState();
     _currentValue = widget.initialValue;
+  }
+
+  @override
+  void didUpdateWidget(PixelRadioGroup oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialValue != widget.initialValue) {
+      _currentValue = widget.initialValue;
+    }
   }
 
   @override

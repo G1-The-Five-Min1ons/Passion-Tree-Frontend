@@ -3,20 +3,46 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/close_icon.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
+import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:passion_tree_frontend/core/theme/typography.dart';
+import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/reflection_data_source.dart';
+import 'package:passion_tree_frontend/features/reflection_tree/data/models/reflection_api_model.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/page._two.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/page_one.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/page_three.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/add_reflect/reflection_overview.dart';
 
 class AddReflectPopup extends StatefulWidget {
-  const AddReflectPopup({super.key});
+  final String treeNodeId;
+  final String nodeName;
+  final void Function(
+    ReflectionApiModel createdReflection,
+    CreateReflectionRequest request,
+  )?
+  onReflectionCreated;
 
-  static void show(BuildContext context) {
+  const AddReflectPopup({
+    super.key,
+    required this.treeNodeId,
+    required this.nodeName,
+    this.onReflectionCreated,
+  });
+
+  static void show(
+    BuildContext context, {
+    required String treeNodeId,
+    required String nodeName,
+    void Function(ReflectionApiModel, CreateReflectionRequest)?
+    onReflectionCreated,
+  }) {
     showDialog(
       context: context,
-      builder: (context) => const AddReflectPopup(),
+      builder: (context) => AddReflectPopup(
+        treeNodeId: treeNodeId,
+        nodeName: nodeName,
+        onReflectionCreated: onReflectionCreated,
+      ),
     );
   }
 
@@ -26,9 +52,12 @@ class AddReflectPopup extends StatefulWidget {
 
 class _AddReflectPopupState extends State<AddReflectPopup> {
   final PageController _pageController = PageController();
-  int _currentPage = 0;
+  final ReflectionDataSource _reflectionDataSource = ReflectionDataSource();
+  final AuthLocalDataSource _authLocalDataSource = getIt<AuthLocalDataSource>();
 
-  //TODO: จัดการ state
+  int _currentPage = 0;
+  bool _isSubmitting = false;
+
   String learn = "";
   String feel = "";
   int score = 0;
@@ -40,6 +69,60 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
     if (_currentPage == 1) return score > 0 && feel.trim().isNotEmpty;
     if (_currentPage == 2) return progress > 0 && challenge > 0;
     return true;
+  }
+
+  Future<void> _submitReflection() async {
+    if (_isSubmitting) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final token = await _authLocalDataSource.getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found');
+      }
+
+      final request = CreateReflectionRequest(
+        learningReflect: learn,
+        moodReflect: feel,
+        feelScore: score,
+        progressScore: progress,
+        challengeScore: challenge,
+        treeNodeId: widget.treeNodeId,
+      );
+
+      // Call API
+      final createdReflection = await _reflectionDataSource.createReflection(
+        request,
+        token,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onReflectionCreated?.call(createdReflection, request);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Reflected successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -60,42 +143,44 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
                 children: [
                   if (_currentPage < 3) ...[
                     const SizedBox(height: 10),
-                    Text("Add Reflect", style: Theme.of(context).textTheme.displaySmall),
+                    Text(
+                      "Add Reflect",
+                      style: Theme.of(context).textTheme.displaySmall,
+                    ),
                     const SizedBox(height: 20),
                   ] else ...[
                     const SizedBox(height: 10),
                   ],
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Node: ',
-                      style: AppTypography.h3SemiBold,
-                    ),
-                  ),
-
                   Expanded(
                     child: PageView(
                       controller: _pageController,
                       physics: const NeverScrollableScrollPhysics(),
-                      onPageChanged: (index) => setState(() => _currentPage = index),
+                      onPageChanged: (index) =>
+                          setState(() => _currentPage = index),
                       children: [
                         PageOneView(
+                          nodeName: widget.nodeName,
                           initialValue: learn,
                           onLearnChanged: (val) => setState(() => learn = val),
                         ),
                         PageTwoView(
+                          nodeName: widget.nodeName,
                           initialScore: score,
                           initialText: feel,
                           onScoreChanged: (val) => setState(() => score = val),
                           onTextChanged: (val) => setState(() => feel = val),
                         ),
                         PageThreeView(
+                          nodeName: widget.nodeName,
                           initialProgress: progress,
                           initialChallenge: challenge,
-                          onProgressChanged: (val) => setState(() => progress = val),
-                          onChallengeChanged: (val) => setState(() => challenge = val),
+                          onProgressChanged: (val) =>
+                              setState(() => progress = val),
+                          onChallengeChanged: (val) =>
+                              setState(() => challenge = val),
                         ),
                         ReflectionOverview(
+                          nodeName: widget.nodeName,
                           learn: learn,
                           feel: feel,
                           level: score,
@@ -123,6 +208,14 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
               ),
             ),
           ),
+
+          if (_isSubmitting)
+            Positioned.fill(
+              child: Container(
+                color: AppColors.scale.withValues(alpha: 0.2),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+            ),
         ],
       ),
     );
@@ -133,17 +226,27 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
       return Row(
         children: [
           GestureDetector(
-            onTap: () => _pageController.previousPage(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
-            child: Image.asset('assets/buttons/navigation/pixel/left_small_light.png', width: 24, height: 24),
+            onTap: _isSubmitting
+                ? null
+                : () => _pageController.previousPage(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                  ),
+            child: Image.asset(
+              'assets/buttons/navigation/pixel/left_small_light.png',
+              width: 24,
+              height: 24,
+            ),
           ),
           const Spacer(),
           AppButton(
-              variant: AppButtonVariant.text,
-              text: 'Submit',
-              onPressed: () {
-                //TODO save to db
-              },
-            ),
+            variant: AppButtonVariant.text,
+            text: 'Submit',
+            onPressed: _isSubmitting ? () {} : _submitReflection,
+            backgroundColor: _isSubmitting ? AppColors.scale : null,
+            borderColor: _isSubmitting ? AppColors.textDisabled : null,
+            textColor: _isSubmitting ? AppColors.textDisabled : null,
+          ),
         ],
       );
     }
@@ -151,12 +254,18 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
     return Row(
       children: [
         _currentPage > 0
-        ? GestureDetector(
-            onTap: () => _pageController.previousPage(
-                duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
-            child: Image.asset('assets/buttons/navigation/pixel/left_small_light.png', width: 24, height: 24),
-          )
-        : const SizedBox(width: 24),
+            ? GestureDetector(
+                onTap: () => _pageController.previousPage(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                ),
+                child: Image.asset(
+                  'assets/buttons/navigation/pixel/left_small_light.png',
+                  width: 24,
+                  height: 24,
+                ),
+              )
+            : const SizedBox(width: 24),
         const SizedBox(width: 12),
         Expanded(
           child: Row(
@@ -167,8 +276,8 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
                     color: index <= _currentPage
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.secondary,
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.secondary,
                   ),
                 ),
               );
@@ -177,15 +286,17 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
         ),
         const SizedBox(width: 12),
         GestureDetector(
-          onTap: _canGoNext 
+          onTap: _canGoNext
               ? () => _pageController.nextPage(
-                  duration: const Duration(milliseconds: 250), curve: Curves.easeInOut)
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                )
               : null,
           child: Image.asset(
-            _canGoNext 
-                ? 'assets/buttons/navigation/pixel/right_small_light.png' 
+            _canGoNext
+                ? 'assets/buttons/navigation/pixel/right_small_light.png'
                 : 'assets/buttons/navigation/pixel/gray_right_small_light.png',
-            width: 24, 
+            width: 24,
             height: 24,
           ),
         ),

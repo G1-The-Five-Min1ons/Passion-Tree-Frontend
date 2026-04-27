@@ -9,6 +9,7 @@ class InlineTextField extends StatelessWidget {
   final TextStyle? textStyle;
   final bool showUnderline;
   final EdgeInsets padding;
+  final bool readOnly;
 
   const InlineTextField({
     super.key,
@@ -18,6 +19,7 @@ class InlineTextField extends StatelessWidget {
     this.textStyle,
     this.showUnderline = true,
     this.padding = const EdgeInsets.symmetric(vertical: 4),
+    this.readOnly = false,
   });
 
   @override
@@ -44,6 +46,7 @@ class InlineTextField extends StatelessWidget {
               )
             : null,
         onChanged: onChanged,
+        readOnly: readOnly,
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: AppTypography.bodyRegular.copyWith(

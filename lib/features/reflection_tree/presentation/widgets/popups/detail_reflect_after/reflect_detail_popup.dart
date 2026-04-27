@@ -7,16 +7,58 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/detail_reflect_after/detail_reflect_content.dart';
 
 class ReflectDetailPopup extends StatefulWidget {
-
+  final String nodeName;
+  final int level;
+  final String learn;
+  final String feel;
+  final int progress;
+  final int challenge;
+  final String sentiment;
+  final double reflectionScore;
+  final String summary;
+  final String strugglePoint;
 
   const ReflectDetailPopup({
     super.key,
+    this.nodeName = '',
+    this.level = 0,
+    this.learn = '',
+    this.feel = '',
+    this.progress = 0,
+    this.challenge = 0,
+    this.sentiment = '',
+    this.reflectionScore = 0,
+    this.summary = '',
+    this.strugglePoint = '',
   });
 
-  static void show(BuildContext context) {
+  static void show(
+    BuildContext context, {
+    String nodeName = '',
+    int level = 0,
+    String learn = '',
+    String feel = '',
+    int progress = 0,
+    int challenge = 0,
+    String sentiment = '',
+    double reflectionScore = 0,
+    String summary = '',
+    String strugglePoint = '',
+  }) {
     showDialog(
       context: context,
-      builder: (context) => const ReflectDetailPopup(),
+      builder: (context) => ReflectDetailPopup(
+        nodeName: nodeName,
+        level: level,
+        learn: learn,
+        feel: feel,
+        progress: progress,
+        challenge: challenge,
+        sentiment: sentiment,
+        reflectionScore: reflectionScore,
+        summary: summary,
+        strugglePoint: strugglePoint,
+      ),
     );
   }
 
@@ -43,38 +85,51 @@ class _ReflectDetailPopupState extends State<ReflectDetailPopup> {
               padding: const EdgeInsets.only(bottom: 4),
               child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          //TODO: ดึงชื่อ node จริงมาแสดง
-                          const SizedBox(height: 12),
-                          RichText(
-                            text: TextSpan(
-                              style: AppTypography.h3SemiBold.copyWith(color: AppColors.textPrimary),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Scrollbar(
+                        thumbVisibility: true,
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const TextSpan(text: "Node : "),
-                                TextSpan(
-                                  //TODO: กำหนด maxline อีกทีหลังจากดึงอีโมจิมา
-                                  text: "Biology",
-                                  style: AppTypography.h3SemiBold.copyWith(color: AppColors.textPrimary),
+                                const SizedBox(height: 12),
+                                RichText(
+                                  text: TextSpan(
+                                    style: AppTypography.h3SemiBold.copyWith(
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    children: [
+                                      const TextSpan(text: "Node : "),
+                                      TextSpan(
+                                        text: widget.nodeName,
+                                        style: AppTypography.h3SemiBold
+                                            .copyWith(
+                                              color: AppColors.textPrimary,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 30),
+                                Center(
+                                  child: Image.asset(
+                                    'assets/images/emojis/level_${widget.level}.png',
+                                    height: 160,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          Text("เดี๋ยวดึงอีโมจิจาก db มาแสดงอีกที", 
-                            style: AppTypography.h3SemiBold.copyWith(color: AppColors.textPrimary)
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-
-                  const Spacer(),
 
                   Column(
                     children: [
@@ -94,13 +149,19 @@ class _ReflectDetailPopupState extends State<ReflectDetailPopup> {
                           color: AppColors.primaryBrand,
                         ),
                         child: SingleChildScrollView(
-                          child: _selectedTab == 0 
-                            ? DetailReflectContent(
-                              //TODO: ส่งค่าจาก db จริง
-                              ) 
-                            : AIAnalysisContent(
-                              //TODO:เพิ่มค่าที่รับส่งจากตัว ai
-                              ),
+                          child: _selectedTab == 0
+                              ? DetailReflectContent(
+                                  learn: widget.learn,
+                                  feel: widget.feel,
+                                  progress: widget.progress,
+                                  challenge: widget.challenge,
+                                )
+                              : AIAnalysisContent(
+                                  sentiment: widget.sentiment,
+                                  reflectScore: widget.reflectionScore,
+                                  summary: widget.summary,
+                                  strugglePoint: widget.strugglePoint,
+                                ),
                         ),
                       ),
                     ],
@@ -144,7 +205,7 @@ class _ReflectDetailPopupState extends State<ReflectDetailPopup> {
         child: Text(
           title,
           style: isSelected 
-          ? AppTypography.subtitleMedium.copyWith(color: AppColors.surface)
+          ? AppTypography.subtitleMedium.copyWith(color: AppColors.textPrimary)
           : AppTypography.subtitleRegular.copyWith(color: AppColors.surface),
         ),
       ),

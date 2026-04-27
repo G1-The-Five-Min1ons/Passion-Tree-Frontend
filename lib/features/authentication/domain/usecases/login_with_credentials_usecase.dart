@@ -11,6 +11,7 @@ class LoginWithCredentialsUseCase {
   Future<Either<Failure, String>> execute({
     required String identifier,
     required String password,
+    bool confirmReactivate = false,
   }) async {
     // Validation
     if (identifier.trim().isEmpty) {
@@ -26,6 +27,7 @@ class LoginWithCredentialsUseCase {
       final token = await _repository.login(
         identifier: identifier,
         password: password,
+        confirmReactivate: confirmReactivate,
       );
       return right(token);
     } catch (e) {

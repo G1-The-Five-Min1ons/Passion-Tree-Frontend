@@ -7,13 +7,23 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/widg
 
 class TreeStatusPopup extends StatelessWidget {
   final String status;
+  final void Function(DateTime pauseFrom, DateTime resumeOn)? onPauseSelected;
 
-  const TreeStatusPopup({super.key, required this.status});
+  const TreeStatusPopup({
+    super.key,
+    required this.status,
+    this.onPauseSelected,
+  });
 
-  static void show(BuildContext context, String status) {
+  static void show(
+    BuildContext context,
+    String status, {
+    void Function(DateTime pauseFrom, DateTime resumeOn)? onPauseSelected,
+  }) {
     showDialog(
       context: context,
-      builder: (context) => TreeStatusPopup(status: status),
+      builder: (context) =>
+          TreeStatusPopup(status: status, onPauseSelected: onPauseSelected),
     );
   }
 
@@ -73,15 +83,17 @@ class TreeStatusPopup extends StatelessWidget {
                   const SizedBox(height: 48),
 
                   SaveCancel(
-                  saveText: 'Yes',
-                  cancelText: 'Cancel',
-                  onCancel: () => Navigator.pop(context),
-                  onSave: () {
-                    Navigator.pop(context);
-                    SelectPausePeriodPopup.show(context);
-                  },
-                ),
-                  
+                    saveText: 'Yes',
+                    cancelText: 'Cancel',
+                    onCancel: () => Navigator.pop(context),
+                    onSave: () {
+                      Navigator.pop(context);
+                      SelectPausePeriodPopup.show(
+                        context,
+                        onPauseSelected: onPauseSelected,
+                      );
+                    },
+                  ),
                 ],
               ),
             ],

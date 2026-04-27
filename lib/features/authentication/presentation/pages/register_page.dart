@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
@@ -21,6 +22,7 @@ import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_bloc.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/user_event.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
@@ -82,17 +84,17 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
   }
 
   /// Navigate to home after successful OAuth login/register
-  Future<void> _navigateToHome(BuildContext context) async {
-    if (!context.mounted) return;
+  Future<void> _navigateToHome() async {
+    if (!mounted) return;
     try {
       final userId = await getIt<IAuthRepository>().getUserId();
-      if (userId != null && context.mounted) {
+      if (userId != null && mounted) {
         context.read<UserBloc>().add(LoadUser(userId));
       }
     } catch (e) {
       debugPrint('Failed to load user data: $e');
     }
-    if (context.mounted) {
+    if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const HomeBarWidget()),
         (route) => false,
@@ -196,7 +198,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
             state.nextStep == RegisterNextStep.oauthComplete) {
           // OAuth login/register completed - navigate to home
           LogHandler.success('OAuth registration/login complete, redirecting to home');
-          _navigateToHome(context);
+          _navigateToHome();
         } else if (state.status == RegisterStatus.success &&
             state.nextStep == RegisterNextStep.complete) {
           LogHandler.success('Registration complete, redirecting to login');
@@ -281,7 +283,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               label: 'Username *',
                               hintText: 'Enter a unique username',
                               controller: _usernameController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _usernameError = _validateUsername(
@@ -313,7 +315,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               label: 'First name *',
                               hintText: 'Enter your first name',
                               controller: _firstNameController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _firstNameError = _validateName(
@@ -346,7 +348,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               label: 'Last name *',
                               hintText: 'Enter your last name',
                               controller: _lastNameController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _lastNameError = _validateName(
@@ -379,7 +381,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               label: 'Email *',
                               hintText: 'Enter your email',
                               controller: _emailController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _emailError = _validateEmail(value.trim());
@@ -409,7 +411,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               label: 'Password *',
                               hintText: 'Enter Password',
                               controller: _passwordController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _passwordError = _validatePassword(value);
@@ -448,7 +450,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               hintText: 'Confirm your password',
                               controller: _confirmPasswordController,
                               obscureText: _obscureConfirmPassword,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _confirmPasswordError =
@@ -502,18 +504,32 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                                           text: 'Terms',
                                           style: AppTypography.subtitleMedium
                                               .copyWith(
-                                                color: colorScheme.primary,
+                                                color: AppColors.textPrimary,
+                                                decoration: TextDecoration.underline,
                                               ),
-                                          // TODO: Add gesture recognizer for Terms
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () {
+                                              launchUrl(
+                                                Uri.parse('https://passion-tree.com/terms'),
+                                                mode: LaunchMode.externalApplication,
+                                              );
+                                            },
                                         ),
                                         const TextSpan(text: ' and '),
                                         TextSpan(
                                           text: 'Privacy Policy.',
                                           style: AppTypography.subtitleMedium
                                               .copyWith(
-                                                color: colorScheme.primary,
+                                                color: AppColors.textPrimary,
+                                                decoration: TextDecoration.underline,
                                               ),
-                                          // TODO: Add gesture recognizer for Privacy Policy
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () {
+                                              launchUrl(
+                                                Uri.parse('https://passion-tree.com/privacy'),
+                                                mode: LaunchMode.externalApplication,
+                                              );
+                                            },
                                         ),
                                         TextSpan(
                                           text: ' *',
@@ -547,6 +563,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                         AppButton(
                           variant: AppButtonVariant.text,
                           text: isLoading ? 'Create account' : 'Create account',
+                          fullWidth: true,
                           onPressed: () {
                             if (!_validateAllFields()) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -587,7 +604,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               child: Text(
                                 'Sign in',
                                 style: AppTypography.titleMedium.copyWith(
-                                  color: colorScheme.primary,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ),

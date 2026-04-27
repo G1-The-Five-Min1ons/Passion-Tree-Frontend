@@ -141,7 +141,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               label: 'Reset Code',
                               hintText: 'Enter the code from your email',
                               controller: _codeController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 context.read<ResetPasswordBloc>().add(CodeChanged(value));
                               },
@@ -172,7 +172,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               label: 'New Password',
                               hintText: 'Enter new password',
                               controller: _passwordController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 context.read<ResetPasswordBloc>().add(PasswordChanged(value));
                               },
@@ -203,7 +203,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               label: 'Confirm Password',
                               hintText: 'Confirm new password',
                               controller: _confirmPasswordController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 context.read<ResetPasswordBloc>().add(ConfirmPasswordChanged(value));
                               },

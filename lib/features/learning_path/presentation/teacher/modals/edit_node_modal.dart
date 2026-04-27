@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,6 +13,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/teache
 import 'package:passion_tree_frontend/core/common_widgets/popups/delete_popup.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
 import 'package:passion_tree_frontend/features/upload/upload_service.dart';
@@ -18,25 +21,37 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/nod
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_quiz.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_choice.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/quiz_question.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_detail_usecase.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EditNodeModal extends StatefulWidget {
   final String nodeId;
   final bool isNewNode;
+  final bool isAiPath;
+  final bool isPrimaryNode;
+  final int totalNodes;
   final String? pathId;
   final String? sequence;
   final NodeDetail? initialNode;
-  
+  final bool isReadOnly;
+  final bool canDeleteNode;
+  final VoidCallback? onDeleteUnsavedNode;
+
   const EditNodeModal({
     super.key,
     required this.nodeId,
     this.isNewNode = false,
+    this.isAiPath = false,
+    this.isPrimaryNode = false,
+    this.totalNodes = 0,
     this.pathId,
     this.sequence,
     this.initialNode,
+    this.isReadOnly = false,
+    this.canDeleteNode = true,
+    this.onDeleteUnsavedNode,
   });
 
   @override
@@ -44,64 +59,360 @@ class EditNodeModal extends StatefulWidget {
 }
 
 class _EditNodeModalState extends State<EditNodeModal> {
+  static const String _materialNameMapKey = 'learning_path_material_name_map';
+  static const Duration _videoUrlValidationDelay = Duration(seconds: 2);
+
   String _title = '';
   String _description = '';
   String _videoUrl = '';
   final List<UploadedFileItem> _files = []; //ส่วนเพิ่มfile
+  Map<String, String> _materialNameByUrl = {};
   List<NodeQuiz> _quizzes = []; //ส่วนเพิ่ม quiz
+  final Map<String, NodeQuiz> _persistedQuizzesByQuestionId =
+      {}; // Track original question IDs for deletion detection
   bool _isUploading = false;
+  bool _isSubmitting = false;
+  int _saveAttemptCount = 0;
+  Timer? _videoUrlValidationTimer;
+  bool _shouldShowVideoUrlValidation = false;
+
+  void _hydrateFromWidget() {
+    _videoUrlValidationTimer?.cancel();
+
+    _title = '';
+    _description = '';
+    _videoUrl = '';
+    _files.clear();
+    _materialNameByUrl = {};
+    _quizzes = [];
+    _persistedQuizzesByQuestionId.clear();
+    _isUploading = false;
+    _isSubmitting = false;
+    _saveAttemptCount = 0;
+    _shouldShowVideoUrlValidation = false;
+
+    final node = widget.initialNode;
+    if (node == null) {
+      return;
+    }
+
+    _title = node.title;
+    _description = node.description;
+    _videoUrl = node.linkVdo ?? '';
+
+    _quizzes = node.questions.map((question) {
+      int correctIndex = 0;
+      final reasons = <int, String>{};
+      final choiceIds = <String>[];
+
+      for (int i = 0; i < question.choices.length; i++) {
+        final choice = question.choices[i];
+        choiceIds.add(choice.choiceId);
+        if (choice.isCorrect) {
+          correctIndex = i;
+          if (choice.reasoning.isNotEmpty) {
+            reasons[i] = choice.reasoning;
+          }
+        }
+      }
+
+      return NodeQuiz(
+        question: question.questionText,
+        choices: question.choices.map((c) => c.choiceText).toList(),
+        selectedIndex: correctIndex,
+        reasons: reasons,
+        questionId: question.questionId,
+        choiceIds: choiceIds,
+      );
+    }).toList();
+    _syncPersistedQuizSnapshot(_quizzes);
+
+    if (_videoUrl.trim().isNotEmpty) {
+      _scheduleVideoUrlValidation();
+    }
+  }
+
+  void _syncPersistedQuizSnapshot(List<NodeQuiz> sourceQuizzes) {
+    _persistedQuizzesByQuestionId
+      ..clear()
+      ..addEntries(
+        sourceQuizzes
+            .where(
+              (quiz) =>
+                  quiz.questionId != null && quiz.questionId!.trim().isNotEmpty,
+            )
+            .map((quiz) => MapEntry(quiz.questionId!.trim(), quiz)),
+      );
+  }
+
+  String _normalizeVideoUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return trimmed;
+
+    final hasScheme = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://').hasMatch(trimmed);
+    return hasScheme ? trimmed : 'https://$trimmed';
+  }
+
+  bool _isRemoteUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return false;
+
+    final uri = Uri.tryParse(trimmed);
+    if (uri != null && uri.hasScheme) {
+      return (uri.scheme == 'http' || uri.scheme == 'https') &&
+          uri.hasAuthority;
+    }
+
+    final normalized = _normalizeVideoUrl(trimmed);
+    final normalizedUri = Uri.tryParse(normalized);
+    return normalizedUri != null &&
+        normalizedUri.hasAuthority &&
+        normalizedUri.host.contains('.');
+  }
+
+  bool get _isValidVideoUrl {
+    final value = _videoUrl.trim();
+    if (value.isEmpty) return true; // Video URL is optional
+    final normalized = _normalizeVideoUrl(value);
+    final uri = Uri.tryParse(normalized);
+    return uri != null && uri.hasAuthority && uri.host.contains('.');
+  }
+
+  String? get _videoUrlWarningText {
+    if (_saveAttemptCount < 1) return null;
+    final value = _videoUrl.trim();
+    if (value.isEmpty) return null; // Not required, no warning when empty
+    if (_isValidVideoUrl) return null;
+    if (_saveAttemptCount < 1 && !_shouldShowVideoUrlValidation) return null;
+    return 'Invalid URL format';
+  }
+
+  bool get _hasMaterialContent {
+    final hasVideoUrl = _videoUrl.trim().isNotEmpty && _isValidVideoUrl;
+    final hasFiles = _files.isNotEmpty;
+    return hasVideoUrl || hasFiles;
+  }
+
+  bool get _hasRequiredQuiz {
+    return _quizzes.any(
+      (quiz) =>
+          quiz.question.trim().isNotEmpty &&
+          quiz.choices.where((choice) => choice.trim().isNotEmpty).length >= 2,
+    );
+  }
+
+  bool get _isSaveEnabled {
+    return _title.trim().isNotEmpty &&
+        _description.trim().isNotEmpty &&
+        _isValidVideoUrl && // only validates format when non-empty
+        _hasMaterialContent && // require video URL or files
+        _hasRequiredQuiz;
+  }
+
+  bool get _isTitleValid => _title.trim().isNotEmpty;
+
+  bool get _isDescriptionValid => _description.trim().isNotEmpty;
+
+  void _scheduleVideoUrlValidation() {
+    _videoUrlValidationTimer?.cancel();
+    _shouldShowVideoUrlValidation = false;
+    _videoUrlValidationTimer = Timer(_videoUrlValidationDelay, () {
+      if (!mounted) return;
+      setState(() {
+        _shouldShowVideoUrlValidation = true;
+      });
+    });
+  }
+
+  void _handleVideoUrlChanged(String value) {
+    setState(() {
+      _videoUrl = value;
+      _shouldShowVideoUrlValidation = false;
+    });
+    _scheduleVideoUrlValidation();
+  }
+
+  String? get _titleWarningText {
+    if (_saveAttemptCount < 1) return null;
+    if (_isTitleValid) return null;
+    return 'Title is required';
+  }
+
+  String? get _descriptionWarningText {
+    if (_saveAttemptCount < 1) return null;
+    if (_isDescriptionValid) return null;
+    return 'Description is required';
+  }
+
+  String _deriveDisplayFileName(String url) {
+    final decoded = Uri.decodeComponent(url);
+    final segments = Uri.tryParse(decoded)?.pathSegments;
+    final rawName = (segments != null && segments.isNotEmpty)
+        ? segments.last
+        : decoded.split('/').last;
+
+    var cleaned = rawName;
+    cleaned = cleaned.replaceFirst(RegExp(r'^[0-9a-fA-F-]{8,}[_-]+'), '');
+    cleaned = cleaned.replaceFirst(RegExp(r'^\d{8,}[_-]+'), '');
+
+    if (cleaned.isEmpty) return rawName;
+    return cleaned;
+  }
+
+  Future<void> _loadMaterialNameMap() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_materialNameMapKey);
+      if (raw == null || raw.isEmpty) {
+        _materialNameByUrl = {};
+        return;
+      }
+
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) {
+        _materialNameByUrl = decoded.map(
+          (key, value) => MapEntry(key, value.toString()),
+        );
+      }
+    } catch (_) {
+      _materialNameByUrl = {};
+    }
+  }
+
+  Future<void> _rememberMaterialName(String url, String name) async {
+    if (url.trim().isEmpty || name.trim().isEmpty) return;
+
+    _materialNameByUrl[url] = name;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _materialNameMapKey,
+        jsonEncode(_materialNameByUrl),
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _loadExistingMaterials() async {
+    final node = widget.initialNode;
+    if (node == null) return;
+
+    await _loadMaterialNameMap();
+    if (!mounted) return;
+
+    final existing = <UploadedFileItem>[];
+    for (final material in node.materials) {
+      if (material.url.trim().isEmpty) continue;
+
+      final displayName =
+          _materialNameByUrl[material.url] ??
+          _deriveDisplayFileName(material.url);
+
+      existing.add(
+        UploadedFileItem(name: displayName, size: 0, path: material.url),
+      );
+    }
+
+    setState(() {
+      _files
+        ..clear()
+        ..addAll(existing);
+    });
+  }
+
+  Future<void> _loadExistingNodeDetail() async {
+    if (widget.isNewNode) return;
+    if (widget.nodeId.startsWith('new_node_') ||
+        widget.nodeId.startsWith('draft_node_')) {
+      return;
+    }
+
+    try {
+      final getNodeDetail = getIt<GetNodeDetail>();
+      final node = await getNodeDetail(widget.nodeId, '');
+      if (!mounted) return;
+
+      setState(() {
+        _title = node.title;
+        _description = node.description;
+        _videoUrl = node.linkVdo ?? '';
+        _files
+          ..clear()
+          ..addAll(
+            node.materials
+                .where((material) => material.url.trim().isNotEmpty)
+                .map(
+                  (material) => UploadedFileItem(
+                    name: _deriveDisplayFileName(material.url),
+                    size: 0,
+                    path: material.url,
+                  ),
+                ),
+          );
+      });
+
+      if (_videoUrl.trim().isNotEmpty) {
+        _scheduleVideoUrlValidation();
+      }
+    } catch (_) {
+      // Fallback to the initial node data if reloading the full detail fails.
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    
-    // โหลดข้อมูลเดิมถ้าเป็นการแก้ไขโหนด
+
+    _hydrateFromWidget();
+
     if (widget.initialNode != null) {
-      _title = widget.initialNode!.title;
-      _description = widget.initialNode!.description;
-      _videoUrl = widget.initialNode!.linkVdo ?? '';
-      
-      // โหลด materials (files ที่มีอยู่แล้ว)
-      for (final material in widget.initialNode!.materials) {
-        if (material.type == 'file') {
-          // สำหรับไฟล์ที่มีอยู่แล้ว แสดงเป็น URL (ไม่สามารถ edit ได้แต่แสดงให้เห็น)
-          _files.add(
-            UploadedFileItem(
-              name: material.url.split('/').last,
-              size: 0, // ไม่ทราบขนาดไฟล์
-              path: material.url, // เก็บ URL แทน path
-            ),
-          );
-        }
+      _loadExistingMaterials();
+
+      // Fetch latest questions only for existing backend nodes.
+      if (!widget.isNewNode) {
+        _loadQuestionsFromApi();
       }
-
-      // โหลด questions และแปลงเป็น NodeQuiz
-      _quizzes = widget.initialNode!.questions.map((question) {
-        // หา correct choice index
-        int correctIndex = 0;
-        Map<int, String> reasons = {};
-        
-        for (int i = 0; i < question.choices.length; i++) {
-          final choice = question.choices[i];
-          if (choice.isCorrect) {
-            correctIndex = i;
-            if (choice.reasoning.isNotEmpty) {
-              reasons[i] = choice.reasoning;
-            }
-          }
-        }
-
-        return NodeQuiz(
-          question: question.questionText,
-          choices: question.choices.map((c) => c.choiceText).toList(),
-          selectedIndex: correctIndex,
-          reasons: reasons,
-        );
-      }).toList();
-
-      // ดึงคำถามล่าสุดจาก API เฉพาะหน้าแก้ไขโหนด
-      _loadQuestionsFromApi();
     }
+
+    if (!widget.isNewNode) {
+      _loadExistingNodeDetail();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant EditNodeModal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final hasNodeIdentityChanged =
+        oldWidget.nodeId != widget.nodeId ||
+        oldWidget.isNewNode != widget.isNewNode ||
+        oldWidget.sequence != widget.sequence ||
+        oldWidget.initialNode != widget.initialNode;
+
+    if (!hasNodeIdentityChanged) {
+      return;
+    }
+
+    setState(() {
+      _hydrateFromWidget();
+    });
+
+    if (widget.initialNode != null) {
+      _loadExistingMaterials();
+
+      if (!widget.isNewNode) {
+        _loadQuestionsFromApi();
+      }
+    }
+
+    if (!widget.isNewNode) {
+      _loadExistingNodeDetail();
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoUrlValidationTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadQuestionsFromApi() async {
@@ -113,9 +424,11 @@ class _EditNodeModalState extends State<EditNodeModal> {
       final quizzesFromApi = questions.map((question) {
         int correctIndex = 0;
         final reasons = <int, String>{};
+        final choiceIds = <String>[];
 
         for (int i = 0; i < question.choices.length; i++) {
           final choice = question.choices[i];
+          choiceIds.add(choice.choiceId);
           if (choice.isCorrect) {
             correctIndex = i;
             if (choice.reasoning.isNotEmpty) {
@@ -129,15 +442,30 @@ class _EditNodeModalState extends State<EditNodeModal> {
           choices: question.choices.map((c) => c.choiceText).toList(),
           selectedIndex: correctIndex,
           reasons: reasons,
+          questionId: question.questionId,
+          choiceIds: choiceIds,
         );
       }).toList();
 
       setState(() {
         _quizzes = quizzesFromApi;
       });
+
+      _syncPersistedQuizSnapshot(quizzesFromApi);
     } catch (_) {
       // ถ้าโหลดคำถามไม่สำเร็จ จะใช้ค่าเดิมจาก initialNode แทน
     }
+  }
+
+  bool get _cannotDeleteLastNode {
+    return widget.totalNodes <= 1;
+  }
+
+  bool get _isFirstNode {
+    final effectiveSequence = widget.sequence != null
+        ? int.tryParse(widget.sequence!)
+        : widget.initialNode?.sequence;
+    return effectiveSequence == 1;
   }
 
   //  ===== FILE FUNCTIONS  =====
@@ -170,7 +498,9 @@ class _EditNodeModalState extends State<EditNodeModal> {
     if (_quizzes.isEmpty) return null;
 
     // กรองเอาแต่ questions ที่มีข้อความ
-    final validQuizzes = _quizzes.where((q) => q.question.trim().isNotEmpty).toList();
+    final validQuizzes = _quizzes
+        .where((q) => q.question.trim().isNotEmpty)
+        .toList();
     if (validQuizzes.isEmpty) return null;
 
     return validQuizzes.map((quiz) {
@@ -179,12 +509,13 @@ class _EditNodeModalState extends State<EditNodeModal> {
           .entries
           .where((entry) => entry.value.trim().isNotEmpty)
           .map((entry) {
-        return CreateChoice(
-          choiceText: entry.value,
-          isCorrect: entry.key == quiz.selectedIndex,
-          reasoning: quiz.reasons[entry.key] ?? '',
-        );
-      }).toList();
+            return CreateChoice(
+              choiceText: entry.value,
+              isCorrect: entry.key == quiz.selectedIndex,
+              reasoning: quiz.reasons[entry.key] ?? '',
+            );
+          })
+          .toList();
 
       return CreateQuestionWithChoices(
         questionText: quiz.question,
@@ -194,19 +525,111 @@ class _EditNodeModalState extends State<EditNodeModal> {
     }).toList();
   }
 
-  Future<void> _handleUpdate(BuildContext context) async {
-    if (_title.isEmpty || _description.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Title and description are required')),
+  Future<List<CreateMaterial>> _buildMaterialsForSubmit({
+    required bool preserveExistingNonFileMaterials,
+  }) async {
+    final materials = <CreateMaterial>[];
+
+    if (preserveExistingNonFileMaterials && widget.initialNode != null) {
+      for (final material in widget.initialNode!.materials) {
+        if (material.type != 'file' && material.url.trim().isNotEmpty) {
+          materials.add(
+            CreateMaterial(type: material.type, url: material.url.trim()),
+          );
+        }
+      }
+    }
+
+    if (_files.isEmpty) return materials;
+
+    final uploadService = UploadApiService();
+    for (final fileItem in _files) {
+      final filePath = fileItem.path;
+      if (filePath == null || filePath.isEmpty) continue;
+
+      if (_isRemoteUrl(filePath)) {
+        // Keep already-uploaded materials as-is.
+        materials.add(
+          CreateMaterial(type: 'file', url: _normalizeVideoUrl(filePath)),
+        );
+        await _rememberMaterialName(
+          _normalizeVideoUrl(filePath),
+          fileItem.name,
+        );
+        continue;
+      }
+
+      final file = File(filePath);
+      final publicUrl = await uploadService.uploadImage(
+        file,
+        'materials-nodes',
       );
+      materials.add(CreateMaterial(type: 'file', url: publicUrl));
+      await _rememberMaterialName(publicUrl, fileItem.name);
+    }
+
+    return materials;
+  }
+
+  Future<void> _handleUpdate(BuildContext context) async {
+    // Guard against double-tap / duplicate submit while the first request is in-flight.
+    if (_isSubmitting) return;
+
+    // Increment save attempt counter so validation warnings become visible
+    setState(() {
+      _saveAttemptCount++;
+      _isSubmitting = true;
+    });
+
+    // Check overall validity and abort with visible warnings if incomplete
+    if (!_isSaveEnabled) {
+      setState(() => _isSubmitting = false);
+
+      // Show specific message for missing material content on 2nd+ failed attempt
+      if (!_hasMaterialContent && _saveAttemptCount >= 2) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Please provide at least a Video URL or upload a file.',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.cancel,
+            ),
+          );
+      }
+      return;
+    }
+
+    if (_videoUrl.trim().isNotEmpty && !_isValidVideoUrl) {
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Video URL must be a valid URL.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
+          ),
+        );
       return;
     }
 
     if (widget.isNewNode) {
       // สร้าง node ใหม่
       if (widget.pathId == null || widget.sequence == null) {
+        setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Missing path ID or sequence')),
+          const SnackBar(
+            content: Text(
+              'Missing path ID or sequence',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
+          ),
         );
         return;
       }
@@ -214,29 +637,14 @@ class _EditNodeModalState extends State<EditNodeModal> {
       setState(() => _isUploading = true);
 
       try {
-        // Upload files และรวม materials
-        List<CreateMaterial> materials = [];
+        final materials = await _buildMaterialsForSubmit(
+          preserveExistingNonFileMaterials: false,
+        );
 
-        // Upload files และเพิ่ม URLs
-        if (_files.isNotEmpty) {
-          final uploadService = UploadApiService();
-
-          for (final fileItem in _files) {
-            final path = fileItem.path;
-            if (path != null && path.isNotEmpty) {
-              final file = File(path);
-              final publicUrl = await uploadService.uploadImage(
-                file,
-                'materials-nodes',
-              );
-              materials.add(CreateMaterial(type: 'file', url: publicUrl));
-            }
-          }
-        }
-
-        if (!mounted) return;
+        if (!context.mounted) return;
 
         final questions = _convertQuizzesToQuestions();
+        final normalizedVideoUrl = _normalizeVideoUrl(_videoUrl);
 
         context.read<LearningPathBloc>().add(
           CreateNodeEvent(
@@ -244,19 +652,28 @@ class _EditNodeModalState extends State<EditNodeModal> {
             description: _description,
             pathId: widget.pathId!,
             sequence: widget.sequence!,
-            linkvdo: _videoUrl,
-            materials: materials.isNotEmpty ? materials : null,
+            linkvdo: normalizedVideoUrl,
+            materials: materials,
             questions: questions,
           ),
         );
       } catch (e) {
-        if (!mounted) return;
-        
+        if (!context.mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload files: $e')),
+          SnackBar(
+            content: Text(
+              'Failed to upload files: $e',
+              style: const TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
+          ),
         );
+        if (context.mounted) {
+          setState(() => _isSubmitting = false);
+        }
       } finally {
-        if (mounted) {
+        if (context.mounted) {
           setState(() => _isUploading = false);
         }
       }
@@ -265,48 +682,50 @@ class _EditNodeModalState extends State<EditNodeModal> {
       setState(() => _isUploading = true);
 
       try {
-        // Upload files และรวม materials
-        List<CreateMaterial> materials = [];
+        final materials = await _buildMaterialsForSubmit(
+          preserveExistingNonFileMaterials: true,
+        );
 
-        // Upload files และเพิ่ม URLs
-        if (_files.isNotEmpty) {
-          final uploadService = UploadApiService();
+        if (!context.mounted) return;
 
-          for (final fileItem in _files) {
-            final path = fileItem.path;
-            if (path != null && path.isNotEmpty) {
-              final file = File(path);
-              final publicUrl = await uploadService.uploadImage(
-                file,
-                'materials-nodes',
-              );
-              materials.add(CreateMaterial(type: 'file', url: publicUrl));
-            }
-          }
-        }
-
-        if (!mounted) return;
-
-        final questions = _convertQuizzesToQuestions();
+        final normalizedVideoUrl = _normalizeVideoUrl(_videoUrl);
+        final currentQuestionIds = _quizzes
+            .map((quiz) => quiz.questionId?.trim() ?? '')
+            .where((id) => id.isNotEmpty)
+            .toSet();
+        final deletedQuizzes = _persistedQuizzesByQuestionId.entries
+            .where((entry) => !currentQuestionIds.contains(entry.key))
+            .map((entry) => entry.value)
+            .toList();
 
         context.read<LearningPathBloc>().add(
           UpdateNodeEvent(
             nodeId: widget.nodeId,
             title: _title,
             description: _description,
-            linkvdo: _videoUrl.isNotEmpty ? _videoUrl : null,
-            materials: materials.isNotEmpty ? materials : null,
-            questions: questions,
+            linkvdo: _videoUrl.isNotEmpty ? normalizedVideoUrl : null,
+            materials: materials,
+            quizzes: _quizzes,
+            deletedQuizzes: deletedQuizzes,
           ),
         );
       } catch (e) {
-        if (!mounted) return;
-        
+        if (!context.mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload files: $e')),
+          SnackBar(
+            content: Text(
+              'Failed to upload files: $e',
+              style: const TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
+          ),
         );
+        if (context.mounted) {
+          setState(() => _isSubmitting = false);
+        }
       } finally {
-        if (mounted) {
+        if (context.mounted) {
           setState(() => _isUploading = false);
         }
       }
@@ -321,34 +740,55 @@ class _EditNodeModalState extends State<EditNodeModal> {
       listener: (context, state) {
         if (state is NodeUpdated) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node updated successfully')),
+            const SnackBar(
+              content: Text(
+                'Node updated successfully',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
           );
-          // Delay closing modal to allow parent listeners to process and refetch
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (mounted) {
-              Navigator.pop(context);
-            }
-          });
+          if (context.mounted) {
+            Navigator.pop(context);
+          }
         } else if (state is NodeCreated) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node created successfully')),
+            const SnackBar(
+              content: Text(
+                'Node created successfully',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
           );
-          // Delay closing modal to allow parent listeners to process and refetch
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (mounted) {
-              Navigator.pop(context);
-            }
-          });
+          if (context.mounted) {
+            Navigator.pop(context);
+          }
         } else if (state is NodeDeleted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node deleted successfully')),
+            const SnackBar(
+              content: Text(
+                'Node deleted successfully',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
           );
-          if (mounted) {
+          if (context.mounted) {
             Navigator.pop(context);
           }
         } else if (state is LearningPathError) {
+          if (context.mounted) {
+            setState(() => _isSubmitting = false);
+          }
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${state.message}')),
+            SnackBar(
+              content: Text(
+                'Error: ${state.message}',
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.cancel,
+            ),
           );
         }
       },
@@ -371,30 +811,42 @@ class _EditNodeModalState extends State<EditNodeModal> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    NodeModalHeader(isNewNode: widget.isNewNode),
+                    NodeModalHeader(
+                      isNewNode: widget.isNewNode,
+                      isReadOnly: widget.isReadOnly,
+                    ),
                     const SizedBox(height: 10),
 
                     // ===== INFO + MATERIALS =====
                     NodeInfoSection(
                       // ===== NODE INFO =====
-                      initialTitle: _title.isEmpty ? null : _title,
-                      initialDescription: _description.isEmpty ? null : _description,
+                      initialTitle: _title,
+                      initialDescription: _description,
                       onTitleChanged: (v) => setState(() => _title = v),
-                      onDescriptionChanged: (v) => setState(() => _description = v),
+                      onDescriptionChanged: (v) =>
+                          setState(() => _description = v),
+                      isTitleInvalid: false,
+                      isDescriptionInvalid: false,
+                      titleWarningText: _titleWarningText,
+                      descriptionWarningText: _descriptionWarningText,
 
                       // ===== VIDEO URL =====
-                      videoUrlValue: _videoUrl.isEmpty ? null : _videoUrl,
-                      onVideoUrlChanged: (v) => setState(() => _videoUrl = v),
+                      videoUrlValue: _videoUrl,
+                      onVideoUrlChanged: _handleVideoUrlChanged,
+                      videoUrlWarningText: _videoUrlWarningText,
+                      isReadOnly: widget.isReadOnly,
 
                       // ===== FILE UPLOAD =====
                       files: _files,
                       onUploadFile: _pickFile,
                       onRemoveFile: _removeFile,
                     ),
-                    
+
                     const SizedBox(height: 14),
                     NodeQuizSection(
                       initialQuizzes: _quizzes.isNotEmpty ? _quizzes : null,
+                      isReadOnly: widget.isReadOnly,
+                      isQuizInvalid: false,
                       onQuizzesChanged: (quizzes) {
                         setState(() {
                           _quizzes = quizzes;
@@ -404,33 +856,78 @@ class _EditNodeModalState extends State<EditNodeModal> {
 
                     const SizedBox(height: 14),
 
-                    BlocBuilder<LearningPathBloc, LearningPathState>(
-                      builder: (context, state) {
-                        final isLoading = state is LearningPathLoading || _isUploading;
-                        
-                        return NodeFooter(
-                          onDelete: () {
-                            DeletePopUp.show(
-                              context,
-                              title: 'Delete?',
-                              body:
-                                  'Are you sure you want to delete?\nThis Process cannot be undone.',
-                              onDelete: () {
-                                if (widget.isNewNode) {
-                                  Navigator.pop(context);
-                                  return;
-                                }
+                    if (!widget.isReadOnly || widget.canDeleteNode)
+                      BlocBuilder<LearningPathBloc, LearningPathState>(
+                        builder: (context, state) {
+                          final isLoading =
+                              state is LearningPathLoading ||
+                              _isUploading ||
+                              _isSubmitting;
 
-                                context.read<LearningPathBloc>().add(
-                                  DeleteNodeEvent(nodeId: widget.nodeId),
-                                );
-                              },
-                            );
-                          },
-                          onSave: isLoading ? () {} : () => _handleUpdate(context),
-                        );
-                      },
-                    ),
+                          return NodeFooter(
+                            onDelete: !widget.canDeleteNode || isLoading
+                                ? null
+                                : () {
+                                    if (_isFirstNode) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'You cannot delete the first node.',
+                                            style: TextStyle(
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          backgroundColor: AppColors.cancel,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    DeletePopUp.show(
+                                      context,
+                                      title: 'Delete?',
+                                      body:
+                                          'Are you sure you want to delete?\nThis Process cannot be undone.',
+                                      onDelete: () {
+                                        if (_cannotDeleteLastNode) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Unable to delete the last node',
+                                                style: TextStyle(
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                              ),
+                                              backgroundColor: AppColors.cancel,
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        if (widget.isNewNode) {
+                                          widget.onDeleteUnsavedNode?.call();
+                                          Navigator.pop(context);
+                                          return;
+                                        }
+
+                                        context.read<LearningPathBloc>().add(
+                                          DeleteNodeEvent(
+                                            nodeId: widget.nodeId,
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                            onSave: isLoading
+                                ? null
+                                : () => _handleUpdate(context),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ),

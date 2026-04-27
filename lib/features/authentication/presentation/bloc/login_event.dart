@@ -25,15 +25,6 @@ class LoginPasswordChanged extends LoginEvent {
   List<Object?> get props => [password];
 }
 
-class LoginRememberMeToggled extends LoginEvent {
-  final bool rememberMe;
-
-  const LoginRememberMeToggled(this.rememberMe);
-
-  @override
-  List<Object?> get props => [rememberMe];
-}
-
 class LoginSubmitted extends LoginEvent {
   const LoginSubmitted();
 }
@@ -79,4 +70,8 @@ class SelectRoleSubmitted extends LoginEvent {
 
   @override
   List<Object?> get props => [role];
+}
+
+class ConfirmReactivation extends LoginEvent {
+  const ConfirmReactivation();
 }

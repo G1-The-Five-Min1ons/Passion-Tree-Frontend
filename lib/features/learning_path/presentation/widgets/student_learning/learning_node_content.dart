@@ -3,26 +3,34 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dar
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/entities/material.dart' as lp;
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/material.dart'
+    as lp;
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LearningNodeContent extends StatefulWidget {
   final String title;
   final String description;
   final List<lp.Material> materials;
+  final VoidCallback onStartLearning;
   final VoidCallback onTakeQuiz;
   final String status;
   final String? videoUrl;
+  final YoutubePlayerController? controller;
+  final Widget? player;
 
   const LearningNodeContent({
     super.key,
     required this.title,
     required this.description,
     required this.materials,
+    required this.onStartLearning,
     required this.onTakeQuiz,
     required this.status,
     this.videoUrl,
+    this.controller,
+    this.player,
   });
 
   @override
@@ -30,43 +38,54 @@ class LearningNodeContent extends StatefulWidget {
 }
 
 class _LearningNodeContentState extends State<LearningNodeContent> {
-  YoutubePlayerController? _controller;
   String? _videoId;
   bool _showPlayer = false;
+  bool _hasStartedLearning = false;
 
   @override
   void initState() {
     super.initState();
-    // Extract video ID from YouTube URL
-    // Use video URL from backend if available, otherwise use default
-    final videoUrl = widget.videoUrl ?? 'https://youtu.be/Yf4M3WZilRI?si=HU_zfUG1GzGMizNb';
+    final videoUrl =
+        widget.videoUrl ?? 'https://youtu.be/Yf4M3WZilRI?si=HU_zfUG1GzGMizNb';
     _videoId = YoutubePlayer.convertUrlToId(videoUrl) ?? '';
   }
 
   void _initializePlayer() {
-    if (_videoId != null && _videoId!.isNotEmpty) {
-      _controller = YoutubePlayerController(
-        initialVideoId: _videoId!,
-        flags: const YoutubePlayerFlags(
-          autoPlay: true,
-          mute: false,
-        ),
-      );
-      setState(() {
-        _showPlayer = true;
-      });
+    if (widget.controller != null) {
+      widget.controller!.play();
+      setState(() => _showPlayer = true);
+
+      if (!_hasStartedLearning) {
+        _hasStartedLearning = true;
+        widget.onStartLearning();
+      }
     }
   }
 
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
+  Future<void> _openMaterial(String url) async {
+    final uri = Uri.tryParse(url.trim());
+    if (uri == null || !uri.hasScheme) return;
+
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  String _fileNameFromUrl(String url) {
+    final uri = Uri.tryParse(url);
+    final segments = uri?.pathSegments;
+    if (segments != null && segments.isNotEmpty) {
+      return Uri.decodeComponent(segments.last);
+    }
+    return Uri.decodeComponent(url.split('/').last);
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final hasPlaybackStarted =
+        (widget.controller?.value.position.inMilliseconds ?? 0) > 0 ||
+        (widget.controller?.value.isPlaying ?? false);
+    final shouldShowPlayer =
+        widget.player != null && (_showPlayer || hasPlaybackStarted);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,18 +112,13 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
           height: 180,
           borderColor: AppColors.cardBorder,
           fillColor: colors.surface,
-          child: _showPlayer && _controller != null
-              ? YoutubePlayer(
-                  controller: _controller!,
-                  showVideoProgressIndicator: true,
-                  progressIndicatorColor: colors.primary,
-                )
+          child: shouldShowPlayer
+              ? widget.player!
               : GestureDetector(
                   onTap: _initializePlayer,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Thumbnail image from YouTube
                       if (_videoId != null && _videoId!.isNotEmpty)
                         Image.network(
                           'https://img.youtube.com/vi/$_videoId/maxresdefault.jpg',
@@ -112,14 +126,12 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
                           height: 240,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            // Fallback to lower quality thumbnail
                             return Image.network(
                               'https://img.youtube.com/vi/$_videoId/hqdefault.jpg',
                               width: double.infinity,
                               height: 240,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
-                                // If both fail, show placeholder
                                 return Container(
                                   color: colors.surface,
                                   child: const Center(
@@ -130,7 +142,6 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
                             );
                           },
                         ),
-                      // Play button overlay
                       Container(
                         width: 80,
                         height: 80,
@@ -162,9 +173,7 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
             children: [
               Text(
                 'Node Description',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
               Text(
@@ -190,31 +199,47 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
             children: [
               Text(
                 'Learning Materials',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
               ...widget.materials.map(
                 (material) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.attach_file,
-                        size: 16,
-                        color: colors.onSurface,
+                  child: InkWell(
+                    onTap: () => _openMaterial(material.url),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 10,
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${material.type}: ${material.url}',
-                          style: AppTypography.subtitleSemiBold.copyWith(
+                      child: Row(
+                        children: [
+                          Icon(
+                            material.type.toLowerCase() == 'file'
+                                ? Icons.description_outlined
+                                : Icons.attach_file,
+                            size: 18,
                             color: colors.onSurface,
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _fileNameFromUrl(material.url),
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.subtitleSemiBold.copyWith(
+                                color: colors.onSurface,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.open_in_new,
+                            size: 16,
+                            color: colors.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -230,20 +255,10 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
             variant: AppButtonVariant.text,
             text: 'Take Quiz',
             onPressed: () {
-              // Check if node is active before allowing quiz
               if (widget.status.toLowerCase() == 'active') {
                 widget.onTakeQuiz();
               } else {
-                // Show snackbar warning if trying to skip nodes
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text(
-                      'Please complete previous nodes first',
-                    ),
-                    duration: const Duration(seconds: 3),
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                  ),
-                );
+                widget.onStartLearning();
               }
             },
           ),

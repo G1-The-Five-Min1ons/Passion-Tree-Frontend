@@ -19,7 +19,9 @@ import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc_provider.dart';
 
 class ReflectionTreePage extends StatefulWidget {
-  const ReflectionTreePage({super.key});
+  final bool enableStartupPrefetch;
+
+  const ReflectionTreePage({super.key, this.enableStartupPrefetch = true});
 
   @override
   State<ReflectionTreePage> createState() => _ReflectionTreePageState();
@@ -43,6 +45,12 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
     }
     if (!mounted) return;
     setState(() => userId = storedUserId);
+
+    if (!widget.enableStartupPrefetch &&
+        context.read<AlbumBloc>().state is AlbumsLoaded) {
+      return;
+    }
+
     LogHandler.info('Loading albums for user: $userId');
     context.read<AlbumBloc>().add(const LoadAlbumsEvent());
   }
@@ -242,7 +250,7 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
                   ),
                 );
                 // Reload albums when returning from detail page
-                if (mounted) {
+                if (context.mounted) {
                   context.read<AlbumBloc>().add(const RefreshAlbumsEvent());
                 }
               },

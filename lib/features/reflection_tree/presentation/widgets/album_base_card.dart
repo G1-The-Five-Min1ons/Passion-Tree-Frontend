@@ -69,7 +69,7 @@ class PixelBaseCard extends StatelessWidget {
                                   style: AppPixelTypography.smallTitle.copyWith(
                                     color: Theme.of(context).colorScheme.onPrimary),
                                   maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  overflow: TextOverflow.clip,
                                 ),
                               if (subtitle != null)
                                 Text(
@@ -77,7 +77,7 @@ class PixelBaseCard extends StatelessWidget {
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Theme.of(context).colorScheme.onPrimary),
                                   maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  overflow: TextOverflow.clip,
                                 ),
                             ],
                           ),

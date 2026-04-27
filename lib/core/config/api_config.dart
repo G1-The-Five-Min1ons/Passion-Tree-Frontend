@@ -1,5 +1,7 @@
 class ApiConfig {
   static const String apiBaseUrl = 'http://10.0.2.2:5000';
+  // static const String apiBaseUrl = 'http://localhost:5000';
+  // static const String _devAIUrl = 'http://localhost:8000';
   static const String _devAIUrl = 'http://10.0.2.2:8000';
 
   // Auto-detect environment (or use --dart-define for build)
@@ -12,11 +14,11 @@ class ApiConfig {
     'AI_BASE_URL',
     defaultValue: _devAIUrl,
   );
-  
+
   // OAuth Configuration
   static const String googleWebClientId = String.fromEnvironment(
     'GOOGLE_WEB_CLIENT_ID',
-    defaultValue: '1018698126969-ea61vm6q39icnr4vom4p5uot8712r59d.apps.googleusercontent.com',
+    defaultValue: '757180191292-blgkl3rlakvoie71b5fi4fcofuqd4qu1.apps.googleusercontent.com',
   );
   
   static const String discordClientId = String.fromEnvironment(
@@ -41,6 +43,9 @@ class ApiConfig {
   static String get authUpdateUser => '$apiBackendUrl/auth/user';
   static String get authChangePassword => '$apiBackendUrl/auth/change-password';
   static String get authDeleteUser => '$apiBackendUrl/auth/user';
+  static String get authLogout => '$apiBackendUrl/auth/logout';
+  static String get authDeactivate => '$apiBackendUrl/auth/deactivate';
+  static String get authReactivate => '$apiBackendUrl/auth/reactivate';
   static String get authNativeGoogleSignIn =>
       '$apiBackendUrl/auth/native/google';
   static String get authNativeDiscordSignIn =>
@@ -49,6 +54,20 @@ class ApiConfig {
   static String get authTeacherVerificationStatus =>
       '$apiBackendUrl/auth/teacher/verification-status';
   static String get authApplyTeacher => '$apiBackendUrl/auth/teacher/apply';
+
+  // Onboarding endpoint
+  static String get onboarding => '$apiBackendUrl/onboarding';
+
+  // Dashboard endpoint
+  static String get dashboard => '$apiBackendUrl/dashboard';
+
+  // Mission endpoints
+  static String get userMissions => '$apiBackendUrl/user/missions';
+
+    // Setting endpoints
+    static String get settings => '$apiBackendUrl/settings';
+    static String settingByKey(String key) =>
+            '$apiBackendUrl/settings/${Uri.encodeComponent(key)}';
 
   // Learning Path endpoints
   static String get learningPaths => '$apiBackendUrl/learningpaths';
@@ -69,6 +88,10 @@ class ApiConfig {
   // Tree endpoints
   static String get trees => '$apiBackendUrl/trees';
   static String treeById(String treeId) => '$apiBackendUrl/trees/$treeId';
+    static String endReflectingTree(String treeId) =>
+      '$apiBackendUrl/trees/$treeId/end-reflecting';
+  static String retrieveTree(String treeId) =>
+      '$apiBackendUrl/trees/$treeId/retrieve';
   static String treesByAlbumId(String albumId) =>
       '$apiBackendUrl/trees?album_id=$albumId';
   static String pauseTree(String treeId) =>

@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:passion_tree_frontend/core/config/api_config.dart';
 import 'package:passion_tree_frontend/core/network/api_handler.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
+import 'package:passion_tree_frontend/core/services/session_expiry_notifier.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_local_data_source.dart';
 import 'package:passion_tree_frontend/features/authentication/data/datasources/auth_remote_data_source.dart';
 import 'package:passion_tree_frontend/features/authentication/data/models/register_request.dart';
@@ -38,6 +42,12 @@ class AuthRepositoryImpl implements IAuthRepository {
     // Inject token refresh logic into the shared ApiHandler
     _apiHandler.getToken = () => _localDataSource.getToken();
     _apiHandler.onTokenRefresh = _handleTokenRefresh;
+    _apiHandler.onSessionExpired = _handleSessionExpired;
+  }
+
+  Future<void> _handleSessionExpired() async {
+    await _localDataSource.clearAuth();
+    SessionExpiryNotifier.notifyExpired();
   }
 
   /// Handles the silent token refresh flow
@@ -53,15 +63,53 @@ class AuthRepositoryImpl implements IAuthRepository {
       await _localDataSource.saveRefreshToken(response.refreshToken);
       return true;
     } catch (e) {
-      // If refresh fails (e.g., token expired), clear auth to force logout
-      await _localDataSource.clearAuth();
+      LogHandler.warning('AuthRepository: silent refresh failed: $e');
       return false;
     }
   }
 
-  /// Generic helper method for OAuth login operations
+  bool _isJwtExpired(String token) {
+    if (token.isEmpty) return true; // เช็คเบื้องต้น
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return true;
+
+      final normalizedPayload = base64Url.normalize(parts[1]);
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(normalizedPayload)),
+      );
+
+      final exp = payload['exp'];
+      if (exp is! num) return true;
+
+      final expiry = DateTime.fromMillisecondsSinceEpoch(
+        exp.toInt() * 1000,
+        isUtc: true,
+      );
+
+      // ✅ เพิ่ม Buffer 30 วินาที เพื่อสั่ง Refresh ก่อนหมดจริง
+      // ช่วยลดโอกาสที่ Request จะพังกลางทางจังหวะหมดอายุพอดี
+      final nowWithBuffer = DateTime.now().toUtc().add(
+        const Duration(seconds: 30),
+      );
+      return nowWithBuffer.isAfter(expiry);
+    } catch (e) {
+      LogHandler.error('JWT Decode failed: $e');
+      return true;
+    }
+  }
+
+  /// Generic helper method for OAuth login operations.
+  ///
+  /// [refreshToken] is optional only for backward-compat with older backend
+  /// builds that didn't return one. When it's a non-empty string we persist it
+  /// so the ApiHandler's silent-refresh path works after the access token
+  /// expires — without this, OAuth sessions cannot survive token expiry and
+  /// subsequent API calls (e.g. Reflection/Album endpoints) fail with 401 and
+  /// a forced logout.
   Future<UserProfile> _handleOAuthLogin({
     required String token,
+    String? refreshToken,
     required String userId,
     required String username,
     required String role,
@@ -72,9 +120,18 @@ class AuthRepositoryImpl implements IAuthRepository {
   }) async {
     LogHandler.info('$logContext: Saving authentication data...');
     await _localDataSource.saveToken(token);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _localDataSource.saveRefreshToken(refreshToken);
+      LogHandler.info('$logContext: Refresh token saved');
+    } else {
+      LogHandler.warning(
+        '$logContext: No refresh_token in response — silent refresh will fail once the access token expires. Backend may be outdated.',
+      );
+    }
     await _localDataSource.saveUserId(userId);
     await _localDataSource.saveUsername(username);
     await _localDataSource.saveRole(role);
+    await _sendPendingOnboarding(token);
 
     // Try to fetch full profile, but don't let it block login
     try {
@@ -140,10 +197,16 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<String> login({
     required String identifier,
     required String password,
+    bool confirmReactivate = false,
   }) async {
-    LogHandler.info('AuthRepository: Attempting login for $identifier');
+    LogHandler.info(
+      'AuthRepository: Attempting login for $identifier${confirmReactivate ? ' (with reactivation)' : ''}',
+    );
     final request = LoginRequest(identifier: identifier, password: password);
-    final response = await _remoteDataSource.login(request);
+    final response = await _remoteDataSource.login(
+      request,
+      confirmReactivate: confirmReactivate,
+    );
     LogHandler.success('AuthRepository: Login successful');
     return response.message;
   }
@@ -154,6 +217,31 @@ class AuthRepositoryImpl implements IAuthRepository {
     final response = await _remoteDataSource.verifyEmail(request);
     await _localDataSource.saveToken(response.accessToken);
     await _localDataSource.saveRefreshToken(response.refreshToken);
+    await _sendPendingOnboarding(response.accessToken);
+  }
+
+  /// After any successful auth that yields a token, send pending onboarding data
+  Future<void> _sendPendingOnboarding(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('pending_onboarding');
+      if (raw == null || raw.isEmpty) return;
+
+      final body = jsonDecode(raw) as Map<String, dynamic>;
+      final response = await _apiHandler.post(
+        url: ApiConfig.onboarding,
+        headers: ApiConfig.getAuthHeaders(token),
+        body: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await prefs.remove('pending_onboarding');
+        LogHandler.info('AuthRepository: Onboarding data sent successfully');
+      }
+    } catch (e) {
+      // Non-fatal: log and continue — data remains in SharedPreferences for retry
+      LogHandler.error('AuthRepository: Failed to send pending onboarding: $e');
+    }
   }
 
   @override
@@ -200,7 +288,6 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<void> updateAccountSettings({
-    required String username,
     required String firstName,
     required String lastName,
     String? location,
@@ -212,7 +299,6 @@ class AuthRepositoryImpl implements IAuthRepository {
     if (token == null) throw Exception('No token found');
 
     final userRequest = UpdateUserRequest(
-      username: username,
       firstName: firstName,
       lastName: lastName,
     );
@@ -226,8 +312,6 @@ class AuthRepositoryImpl implements IAuthRepository {
 
     await _remoteDataSource.updateUser(token, userRequest);
     await _remoteDataSource.updateProfile(token, profileRequest);
-
-    await _localDataSource.saveUsername(username);
   }
 
   @override
@@ -242,26 +326,55 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
-  Future<void> deleteUser() async {
+  Future<void> deleteUser(String password) async {
     final token = await _localDataSource.getToken();
     if (token == null) throw Exception('No token found');
-    await _remoteDataSource.deleteUser(token);
+    await _remoteDataSource.deleteUser(token, password);
     await _localDataSource.clearAuth();
   }
 
   @override
+  Future<void> deactivateAccount() async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+    await _remoteDataSource.deactivateAccount(token);
+    await _localDataSource.clearAuth();
+  }
+
+  @override
+  Future<void> reactivateAccount() async {
+    final token = await _localDataSource.getToken();
+    if (token == null) throw Exception('No token found');
+    await _remoteDataSource.reactivateAccount(token);
+  }
+
+  @override
   Future<void> logout() async {
+    final token = await _localDataSource.getToken();
+    final refreshToken = await _localDataSource.getRefreshToken();
+    if (token != null && token.isNotEmpty) {
+      try {
+        await _remoteDataSource.logout(token, refreshToken: refreshToken);
+      } catch (e) {
+        LogHandler.warning(
+          'AuthRepository: remote logout failed, clearing local auth anyway: $e',
+        );
+      }
+    }
     await _localDataSource.clearAuth();
   }
 
   @override
   Future<UserProfile> nativeGoogleSignIn(String idToken) async {
-    LogHandler.info('AuthRepository: Starting nativeGoogleSignIn with backend...');
+    LogHandler.info(
+      'AuthRepository: Starting nativeGoogleSignIn with backend...',
+    );
     final response = await _remoteDataSource.nativeGoogleSignIn(idToken);
     LogHandler.success('AuthRepository: Backend returned success');
-    
+
     return _handleOAuthLogin(
       token: response.token,
+      refreshToken: response.refreshToken,
       userId: response.userId,
       username: response.username,
       role: response.role,
@@ -274,12 +387,15 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<UserProfile> nativeDiscordSignIn(String code) async {
-    LogHandler.info('AuthRepository: Starting nativeDiscordSignIn with backend code...');
+    LogHandler.info(
+      'AuthRepository: Starting nativeDiscordSignIn with backend code...',
+    );
     final response = await _remoteDataSource.nativeDiscordSignIn(code);
     LogHandler.success('AuthRepository: Backend returned success');
 
     return _handleOAuthLogin(
       token: response.token,
+      refreshToken: response.refreshToken,
       userId: response.userId,
       username: response.username,
       role: response.role,
@@ -321,7 +437,25 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<bool> isLoggedIn() async {
-    return await _localDataSource.isLoggedIn();
+    final accessToken = await _localDataSource.getToken();
+    if (accessToken == null || accessToken.isEmpty) {
+      return false;
+    }
+
+    if (!_isJwtExpired(accessToken)) {
+      return true;
+    }
+
+    LogHandler.info(
+      'AuthRepository: access token expired, attempting silent refresh...',
+    );
+    final refreshed = await _handleTokenRefresh();
+    if (refreshed) {
+      return true;
+    }
+
+    await _localDataSource.clearAuth();
+    return false;
   }
 
   @override
@@ -357,6 +491,7 @@ class AuthRepositoryImpl implements IAuthRepository {
       );
       // Initialize Google Sign-In
       await GoogleSignIn.instance.initialize(
+        clientId: kIsWeb ? ApiConfig.googleWebClientId : null,
         serverClientId: ApiConfig.googleWebClientId,
       );
 

@@ -24,7 +24,10 @@ import 'package:passion_tree_frontend/features/authentication/data/models/teache
 
 abstract class AuthRemoteDataSource {
   Future<RegisterResponse> register(RegisterRequest request);
-  Future<LoginOtpResponse> login(LoginRequest request);
+  Future<LoginOtpResponse> login(
+    LoginRequest request, {
+    bool confirmReactivate = false,
+  });
   Future<VerifyEmailResponse> verifyEmail(VerifyEmailRequest request);
   Future<void> resendVerificationEmail(ResendVerificationRequest request);
   Future<void> forgotPassword(ForgotPasswordRequest request);
@@ -33,7 +36,10 @@ abstract class AuthRemoteDataSource {
   Future<void> updateUser(String token, UpdateUserRequest request);
   Future<void> updateProfile(String token, UpdateProfileRequest request);
   Future<void> changePassword(String token, ChangePasswordRequest request);
-  Future<void> deleteUser(String token);
+  Future<void> deleteUser(String token, String password);
+  Future<void> deactivateAccount(String token);
+  Future<void> reactivateAccount(String token);
+  Future<void> logout(String token, {String? refreshToken});
   Future<NativeGoogleSignInResponse> nativeGoogleSignIn(String idToken);
   Future<NativeDiscordSignInResponse> nativeDiscordSignIn(String code);
   Future<VerifyEmailResponse> refreshToken(String refreshTokenValue);
@@ -61,13 +67,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }) async {
     LogHandler.separator(title: logTitle);
     final response = await apiCall();
-    
-    if (response.isSuccess && 
-        (expectedStatusCode == null || response.statusCode == expectedStatusCode)) {
+
+    if (response.isSuccess &&
+        (expectedStatusCode == null ||
+            response.statusCode == expectedStatusCode)) {
       LogHandler.success('$context successful');
       return onSuccess(response);
     }
-    
+
     throw _handleError(response, context);
   }
 
@@ -92,10 +99,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         final fullBody = _parseMap(response.rawBody, 'rawBody');
         LogHandler.info('Raw Backend Response: $fullBody');
         LogHandler.info('Token: ${fullBody['token']}');
+        LogHandler.info('RefreshToken present: ${fullBody['refresh_token'] != null}');
         LogHandler.info('Data: ${fullBody['data']}');
         final raw = <String, dynamic>{
           'success': response.success,
           'token': _parseString(fullBody['token'], 'token'),
+          // Forward refresh_token if backend supplied one (root-level, next to `token`).
+          // Kept nullable here — response model will default to '' when missing so
+          // older backend builds don't break parsing outright.
+          'refresh_token': fullBody['refresh_token'],
           'data': fullBody['data'],
         };
         LogHandler.info('Constructed raw object: $raw');
@@ -128,14 +140,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<LoginOtpResponse> login(LoginRequest request) async {
+  Future<LoginOtpResponse> login(
+    LoginRequest request, {
+    bool? confirmReactivate,
+  }) {
     return _executeRequest<LoginOtpResponse>(
       logTitle: 'AUTH REMOTE · LOGIN',
       context: 'login',
       apiCall: () => _apiHandler.post(
         url: ApiConfig.authLogin,
         headers: ApiConfig.defaultHeaders,
-        body: jsonEncode(request.toJson()),
+        body: jsonEncode({
+          ...request.toJson(),
+          // ignore: use_null_aware_elements
+          if (confirmReactivate != null)
+            'confirm_reactivate': confirmReactivate,
+        }),
         timeout: ApiConfig.connectionTimeout,
       ),
       onSuccess: (response) => LoginOtpResponse(
@@ -287,15 +307,67 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> deleteUser(String token) async {
+  Future<void> deleteUser(String token, String password) async {
     return _executeRequest<void>(
       logTitle: 'AUTH REMOTE · DELETE USER',
       context: 'deleteUser',
       apiCall: () => _apiHandler.delete(
         url: ApiConfig.authDeleteUser,
         headers: ApiConfig.getAuthHeaders(token),
+        body: jsonEncode({'password': password}),
         timeout: ApiConfig.connectionTimeout,
       ),
+      onSuccess: (_) {},
+    );
+  }
+
+  @override
+  Future<void> deactivateAccount(String token) async {
+    LogHandler.separator(title: 'AUTH REMOTE · DEACTIVATE ACCOUNT');
+    final response = await _apiHandler.post(
+      url: ApiConfig.authDeactivate,
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Account deactivated');
+      return;
+    }
+    throw _handleError(response, 'deactivateAccount');
+  }
+
+  @override
+  Future<void> reactivateAccount(String token) async {
+    LogHandler.separator(title: 'AUTH REMOTE · REACTIVATE ACCOUNT');
+    final response = await _apiHandler.post(
+      url: ApiConfig.authReactivate,
+      headers: ApiConfig.getAuthHeaders(token),
+      timeout: ApiConfig.connectionTimeout,
+    );
+    if (response.isSuccess) {
+      LogHandler.success('Account reactivated');
+      return;
+    }
+    throw _handleError(response, 'reactivateAccount');
+  }
+
+  @override
+  Future<void> logout(String token, {String? refreshToken}) async {
+    return _executeRequest<void>(
+      logTitle: 'AUTH REMOTE · LOGOUT',
+      context: 'logout',
+      apiCall: () {
+        final Map<String, dynamic>? body = (refreshToken != null && refreshToken.isNotEmpty)
+            ? {'refresh_token': refreshToken}
+            : null;
+
+        return _apiHandler.post(
+          url: ApiConfig.authLogout,
+          headers: ApiConfig.getAuthHeaders(token),
+          body: body != null ? jsonEncode(body) : null,
+          timeout: ApiConfig.connectionTimeout,
+        );
+      },
       onSuccess: (_) {},
     );
   }
@@ -350,7 +422,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       response.error ?? response.message ?? '',
       context,
     );
-    LogHandler.error('$context failed: $msg');
+
+    if (response.statusCode >= 400 && response.statusCode < 500) {
+      LogHandler.warning('$context validation failed: $msg');
+    } else {
+      LogHandler.error('$context system failure: $msg', error: response.error);
+    }
+
     return AuthException(message: msg, statusCode: response.statusCode);
   }
 

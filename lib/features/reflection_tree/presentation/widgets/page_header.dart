@@ -7,12 +7,14 @@ class PageHeader extends StatelessWidget {
   final String title;
   final IconData actionIcon;
   final VoidCallback onActionPressed;
+  final bool showAction;
 
   const PageHeader({
     super.key,
     required this.title,
     required this.actionIcon,
     required this.onActionPressed,
+    this.showAction = true,
   });
 
   @override
@@ -26,16 +28,17 @@ class PageHeader extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onPrimary,
               ),
         ),
-         Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            AppButton(
-              variant: AppButtonVariant.iconOnly,
-              icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
-              onPressed: onActionPressed,
-            ),
-          ],
-        ), 
+        if (showAction)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              AppButton(
+                variant: AppButtonVariant.iconOnly,
+                icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
+                onPressed: onActionPressed,
+              ),
+            ],
+          ), 
       ],
     );
   }

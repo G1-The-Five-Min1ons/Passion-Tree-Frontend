@@ -5,15 +5,16 @@ import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.da
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/text_field.dart';
-import 'package:passion_tree_frontend/core/common_widgets/selections/checkbox.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/bottom_buttons.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/pixel_password_field.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/widgets/select_role_popup.dart';
-import 'package:passion_tree_frontend/core/common_widgets/bars/homebar.dart';
+import 'package:passion_tree_frontend/features/home/presentation/bloc/home_bloc_provider.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/pages/post_login_bootstrap_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/register_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/forgot_password_page.dart';
+import 'package:passion_tree_frontend/features/authentication/presentation/pages/verify_email_page.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_bloc.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_event.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/bloc/login_state.dart';
@@ -32,7 +33,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   String? _usernameError;
   String? _passwordError;
 
@@ -47,7 +48,7 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.dispose();
     super.dispose();
   }
-  
+
   // Validation methods
   String? _validateUsername(String value) {
     if (value.isEmpty) {
@@ -55,20 +56,20 @@ class _LoginPageState extends State<LoginPage> {
     }
     return null;
   }
-  
+
   String? _validatePassword(String value) {
     if (value.isEmpty) {
       return 'Password is required';
     }
     return null;
   }
-  
+
   bool _validateAllFields() {
     setState(() {
       _usernameError = _validateUsername(_usernameController.text.trim());
       _passwordError = _validatePassword(_passwordController.text);
     });
-    
+
     return _usernameError == null && _passwordError == null;
   }
 
@@ -105,69 +106,82 @@ class _LoginPageState extends State<LoginPage> {
         selectRole: getIt(),
         getUserRole: getIt(),
       ),
-      child: MultiBlocListener(
-        listeners: [
-          // Error listener
-          BlocListener<LoginBloc, LoginState>(
-            listenWhen: (previous, current) => current.status == LoginStatus.failure,
-            listener: (context, state) {
-              if (state.errorMessage != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.errorMessage!),
-                    backgroundColor: AppColors.cancel,
-                  ),
-                );
-              }
-            },
-          ),
-          // Navigation listener
-          BlocListener<LoginBloc, LoginState>(
-            listenWhen: (previous, current) =>
-                current.status == LoginStatus.success && current.nextStep != null,
-            listener: (context, state) async {
-              switch (state.nextStep!) {
-                case LoginNextStep.otpVerification:
-                  await _showOtpDialog(context);
-                  break;
+      child: Builder(
+        builder: (innerContext) => MultiBlocListener(
+          listeners: [
+            // Error listener
+            BlocListener<LoginBloc, LoginState>(
+              listenWhen: (previous, current) =>
+                  current.status == LoginStatus.failure,
+              listener: (context, state) {
+                if (state.errorMessage != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.errorMessage!),
+                      backgroundColor: AppColors.cancel,
+                    ),
+                  );
+                }
+              },
+            ),
+            // Navigation listener
+            BlocListener<LoginBloc, LoginState>(
+              listenWhen: (previous, current) =>
+                  current.status == LoginStatus.success &&
+                  current.nextStep != null,
+              listener: (context, state) async {
+                switch (state.nextStep!) {
+                  case LoginNextStep.otpVerification:
+                    await _showOtpDialog(context, state);
+                    break;
 
-                case LoginNextStep.checkingRole:
-                  if (context.mounted) {
-                    context.read<LoginBloc>().add(const CheckRoleStatus());
-                  }
-                  break;
-
-                case LoginNextStep.roleSelection:
-                  await _showRoleSelectionDialog(context);
-                  break;
-
-                case LoginNextStep.complete:
-                  if (context.mounted) {
-                    // Load user data into UserBloc before navigation
-                    try {
-                      final userId = await getIt<IAuthRepository>().getUserId();
-                      if (userId != null && context.mounted) {
-                        context.read<UserBloc>().add(LoadUser(userId));
-                      }
-                    } catch (e) {
-                      // Log error but continue navigation
-                      debugPrint('Failed to load user data: $e');
-                    }
-                    
+                  case LoginNextStep.checkingRole:
                     if (context.mounted) {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (context) => const HomeBarWidget(),
-                        ),
-                      );
+                      context.read<LoginBloc>().add(const CheckRoleStatus());
                     }
-                  }
-                  break;
-              }
-            },
-          ),
-        ],
-        child: _buildLoginForm(context, colorScheme),
+                    break;
+
+                  case LoginNextStep.roleSelection:
+                    await _showRoleSelectionDialog(context);
+                    break;
+
+                  case LoginNextStep.accountReactivation:
+                    await _showReactivationDialog(
+                      context,
+                      state.gracePeriodDays,
+                    );
+                    break;
+
+                  case LoginNextStep.complete:
+                    if (context.mounted) {
+                      // Load user profile
+                      try {
+                        final userId = await getIt<IAuthRepository>()
+                            .getUserId();
+                        if (userId != null && context.mounted) {
+                          context.read<UserBloc>().add(LoadUser(userId));
+                        }
+                      } catch (e) {
+                        debugPrint('Failed to load user data: $e');
+                      }
+
+                      if (context.mounted) {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => const HomeBlocProvider(
+                              child: PostLoginBootstrapPage(),
+                            ),
+                          ),
+                        );
+                      }
+                    }
+                    break;
+                }
+              },
+            ),
+          ],
+          child: _buildLoginForm(innerContext, colorScheme),
+        ),
       ),
     );
   }
@@ -181,13 +195,15 @@ class _LoginPageState extends State<LoginPage> {
         child: Center(
           child: SingleChildScrollView(
             child: SizedBox(
-              width: 400,
+              width: double.infinity,
               child: PixelBorderContainer(
                 pixelSize: 4,
                 padding: const EdgeInsets.all(24),
                 child: BlocBuilder<LoginBloc, LoginState>(
                   builder: (context, state) {
-                    final isLoading = state.status == LoginStatus.loading;
+                    final isLoading =
+                        state.status == LoginStatus.loading ||
+                        state.status == LoginStatus.success;
 
                     return Column(
                       mainAxisSize: MainAxisSize.min,
@@ -237,16 +253,21 @@ class _LoginPageState extends State<LoginPage> {
                               label: 'Username or Email',
                               hintText: 'Enter your username or email',
                               controller: _usernameController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
-                                  _usernameError = _validateUsername(value.trim());
+                                  _usernameError = _validateUsername(
+                                    value.trim(),
+                                  );
                                 });
                               },
                             ),
                             if (_usernameError != null)
                               Padding(
-                                padding: const EdgeInsets.only(left: 12, top: 4),
+                                padding: const EdgeInsets.only(
+                                  left: 12,
+                                  top: 4,
+                                ),
                                 child: Text(
                                   _usernameError!,
                                   style: AppTypography.bodyRegular.copyWith(
@@ -266,7 +287,7 @@ class _LoginPageState extends State<LoginPage> {
                               label: 'Password',
                               hintText: 'Enter Password',
                               controller: _passwordController,
-                              height: 38,
+                              height: 35,
                               onChanged: (value) {
                                 setState(() {
                                   _passwordError = _validatePassword(value);
@@ -275,7 +296,10 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             if (_passwordError != null)
                               Padding(
-                                padding: const EdgeInsets.only(left: 12, top: 4),
+                                padding: const EdgeInsets.only(
+                                  left: 12,
+                                  top: 4,
+                                ),
                                 child: Text(
                                   _passwordError!,
                                   style: AppTypography.bodyRegular.copyWith(
@@ -287,42 +311,24 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Remember me & Forgot password
-                        Row(
-                          children: [
-                            const SizedBox(width: 8),
-                            PixelCheckbox(
-                              value: state.rememberMe,
-                              onChanged: (value) {
-                                context.read<LoginBloc>().add(
-                                      LoginRememberMeToggled(value ?? false),
-                                    );
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Remember me',
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ForgotPasswordPage(),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              'Forgot password',
                               style: AppTypography.subtitleMedium.copyWith(
                                 color: AppColors.textSecondary,
                               ),
                             ),
-                            const Spacer(),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const ForgotPasswordPage(),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                'Forgot password',
-                                style: AppTypography.subtitleMedium.copyWith(
-                                  color: colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                         const SizedBox(height: 24),
 
@@ -330,6 +336,7 @@ class _LoginPageState extends State<LoginPage> {
                         AppButton(
                           variant: AppButtonVariant.text,
                           text: isLoading ? 'Signing in...' : 'Sign in',
+                          fullWidth: true,
                           onPressed: isLoading ? () {} : () => _handleLogin(context),
                         ),
                         const SizedBox(height: 24),
@@ -355,7 +362,7 @@ class _LoginPageState extends State<LoginPage> {
                               child: Text(
                                 'Sign up',
                                 style: AppTypography.titleMedium.copyWith(
-                                  color: colorScheme.primary,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ),
@@ -378,12 +385,16 @@ class _LoginPageState extends State<LoginPage> {
                           onGoogleTap: isLoading
                               ? () {}
                               : () {
-                                  context.read<LoginBloc>().add(const LoginWithGoogle());
+                                  context.read<LoginBloc>().add(
+                                    const LoginWithGoogle(),
+                                  );
                                 },
                           onDiscordTap: isLoading
                               ? () {}
                               : () {
-                                  context.read<LoginBloc>().add(const LoginWithDiscord());
+                                  context.read<LoginBloc>().add(
+                                    const LoginWithDiscord(),
+                                  );
                                 },
                         ),
                       ],
@@ -399,9 +410,64 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   /// Show OTP dialog
-  Future<void> _showOtpDialog(BuildContext context) async {
-    final otpController = TextEditingController();
+  Future<void> _showOtpDialog(BuildContext context, LoginState state) async {
+    final resendEmail = state.otpResendEmail.isNotEmpty
+        ? state.otpResendEmail
+        : _extractEmailForResend(_usernameController.text.trim());
 
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => VerifyEmailPage(
+        resendEmail: resendEmail,
+        otpExpirySeconds: 300,
+        initialResendCooldownSeconds: 10,
+        onCancel: () {
+          if (context.mounted) {
+            context.read<LoginBloc>().add(const LoginReset());
+          }
+        },
+        onSuccess: () {
+          if (context.mounted) {
+            context.read<LoginBloc>().add(const CheckRoleStatus());
+          }
+        },
+      ),
+    );
+  }
+
+  String? _extractEmailForResend(String identifier) {
+    if (identifier.isEmpty) {
+      return null;
+    }
+
+    final emailPattern = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return emailPattern.hasMatch(identifier) ? identifier : null;
+  }
+
+  /// Show role selection dialog
+  Future<void> _showRoleSelectionDialog(BuildContext context) async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return SelectRolePopup(
+          onRoleSelected: (role) {
+            Navigator.of(dialogContext).pop();
+            if (context.mounted) {
+              context.read<LoginBloc>().add(SelectRoleSubmitted(role));
+            }
+          },
+        );
+      },
+    );
+  }
+
+  /// Show account reactivation confirmation dialog
+  Future<void> _showReactivationDialog(
+    BuildContext context,
+    int gracePeriodDays,
+  ) async {
     return showDialog(
       context: context,
       barrierDismissible: false,
@@ -416,7 +482,7 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Email Verification',
+                  'Account Deactivated',
                   style: AppPixelTypography.h3.copyWith(
                     color: Theme.of(dialogContext).colorScheme.onSurface,
                   ),
@@ -424,18 +490,11 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Please enter the verification code sent to your email',
+                  'Your account has been deactivated. Reactivate it within $gracePeriodDays days to continue using Passion Tree.',
                   style: AppTypography.bodySemiBold.copyWith(
                     color: AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                PixelTextField(
-                  label: 'Verification Code',
-                  hintText: 'Enter 6-digit code',
-                  controller: otpController,
-                  height: 38,
                 ),
                 const SizedBox(height: 24),
                 Row(
@@ -447,7 +506,9 @@ class _LoginPageState extends State<LoginPage> {
                         backgroundColor: AppColors.cancel,
                         onPressed: () {
                           Navigator.of(dialogContext).pop();
-                          context.read<LoginBloc>().add(const LoginReset());
+                          if (context.mounted) {
+                            context.read<LoginBloc>().add(const LoginReset());
+                          }
                         },
                       ),
                     ),
@@ -455,12 +516,13 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(
                       child: AppButton(
                         variant: AppButtonVariant.text,
-                        text: 'Verify',
+                        text: 'Reactivate',
                         onPressed: () {
-                          final code = otpController.text.trim();
-                          if (code.isNotEmpty) {
-                            Navigator.of(dialogContext).pop();
-                            context.read<LoginBloc>().add(VerifyEmailSubmitted(code));
+                          Navigator.of(dialogContext).pop();
+                          if (context.mounted) {
+                            context.read<LoginBloc>().add(
+                              const ConfirmReactivation(),
+                            );
                           }
                         },
                       ),
@@ -470,22 +532,6 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
           ),
-        );
-      },
-    );
-  }
-
-  /// Show role selection dialog
-  Future<void> _showRoleSelectionDialog(BuildContext context) async {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return SelectRolePopup(
-          onRoleSelected: (role) {
-            Navigator.of(dialogContext).pop();
-            context.read<LoginBloc>().add(SelectRoleSubmitted(role));
-          },
         );
       },
     );

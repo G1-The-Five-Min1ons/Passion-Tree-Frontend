@@ -22,8 +22,13 @@ class AlbumItem {
   final String subjectName;
   final String lastEdited;
   final String status;
+  final bool isReflectionClosed;
   final List<Chapter> chapters;
   final String overallStatus;
+  final double? treeScore;
+  final bool isPaused;
+  final String? pauseFrom;
+  final String? pauseTo;
   final String? resumeOn;
   final String? pathId;
 
@@ -32,16 +37,21 @@ class AlbumItem {
     required this.subjectName,
     required this.lastEdited,
     required this.status,
+    this.isReflectionClosed = false,
     this.chapters = const [],
     required this.overallStatus,
+    this.treeScore,
+    this.isPaused = false,
+    this.pauseFrom,
+    this.pauseTo,
     this.resumeOn,
     this.pathId,
   });
 
   Color get statusColor {
-    switch (status.toLowerCase()) {
+    switch (status.trim().toLowerCase()) {
       case 'died':
-        return AppColors.textPrimary;
+        return AppColors.died;
       case 'fading':
         return AppColors.warning;
       case 'dying':
@@ -54,11 +64,32 @@ class AlbumItem {
 }
 
 class Chapter {
+  final String treeNodeId;
   final String name;
   final bool isEnrolled;
+  final String? status;
+  final String? complete;
+  final int sequence;
+  final String? reflectionId;
+  final bool isStandalone;
 
   Chapter({
+    required this.treeNodeId,
     required this.name,
     this.isEnrolled = false,
+    this.status,
+    this.complete,
+    this.sequence = 0,
+    this.reflectionId,
+    this.isStandalone = false,
   });
+
+  // Helper to check if node is completed
+  bool get isCompleted => complete == 'true';
+  
+  // Helper to check if node has reflection
+  bool get hasReflection => reflectionId != null && reflectionId!.isNotEmpty;
+
+  // Helper to check if node can be reflected (completed LP node or standalone reflection node)
+  bool get canReflect => isCompleted || isStandalone;
 }

@@ -1,60 +1,83 @@
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_material.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/create_question_with_choices.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_quiz.dart';
 
 abstract class LearningPathEvent {}
 
 class FetchLearningPaths extends LearningPathEvent {}
 
-class FetchLearningPathStatus extends LearningPathEvent {
-  final String userId;
-  FetchLearningPathStatus({required this.userId});
-}
+class FetchLearningPathStatus extends LearningPathEvent {}
 
-class FetchLearningPathOverview extends LearningPathEvent {
-  final String? userId; // null if not logged in
-  FetchLearningPathOverview({this.userId});
-}
+class FetchLearningPathOverview extends LearningPathEvent {}
 
 class FetchNodesForPath extends LearningPathEvent {
   final String pathId;
-  final String userId;
-  FetchNodesForPath({required this.pathId, required this.userId});
+  FetchNodesForPath({required this.pathId});
 }
 
 class FetchNodeDetail extends LearningPathEvent {
   final String nodeId;
-  final String userId;
-  FetchNodeDetail({required this.nodeId, required this.userId});
+  FetchNodeDetail({required this.nodeId});
 }
 
 class StartNodeEvent extends LearningPathEvent {
   final String nodeId;
-  final String userId;
-  StartNodeEvent({required this.nodeId, required this.userId});
+  StartNodeEvent({required this.nodeId});
 }
 
 class EnrollPathEvent extends LearningPathEvent {
   final String pathId;
-  final String userId;
-  EnrollPathEvent({required this.pathId, required this.userId});
+  EnrollPathEvent({required this.pathId});
 }
 
 class CompleteNodeEvent extends LearningPathEvent {
   final String nodeId;
-  final String userId;
-  CompleteNodeEvent({required this.nodeId, required this.userId});
+  CompleteNodeEvent({required this.nodeId});
+}
+
+class SubmitReviewEvent extends LearningPathEvent {
+  final String pathId;
+  final int contentQualityRating;
+  final int instructorRating;
+  final int overallRating;
+  
+  SubmitReviewEvent({
+    required this.pathId,
+    required this.contentQualityRating,
+    required this.instructorRating,
+    required this.overallRating,
+  });
+}
+
+class FetchMyRatingEvent extends LearningPathEvent {
+  final String pathId;
+
+  FetchMyRatingEvent({required this.pathId});
+}
+
+class DeleteRatingEvent extends LearningPathEvent {
+  final String pathId;
+
+  DeleteRatingEvent({required this.pathId});
 }
 
 class DeleteLearningPathEvent extends LearningPathEvent {
   final String pathId;
-  final String? userId; // For refreshing overview after delete
-  DeleteLearningPathEvent({required this.pathId, this.userId});
+  final String? publishStatus; // 'draft' or 'published' for snackbar message
+  DeleteLearningPathEvent({required this.pathId, this.publishStatus});
 }
 
 class DeleteNodeEvent extends LearningPathEvent {
   final String nodeId;
 
   DeleteNodeEvent({required this.nodeId});
+}
+
+class ReorderNodesEvent extends LearningPathEvent {
+  final String pathId;
+  final List<String> nodeIds;
+
+  ReorderNodesEvent({required this.pathId, required this.nodeIds});
 }
 
 // ===== TEACHER EVENTS =====
@@ -115,7 +138,9 @@ class UpdateNodeEvent extends LearningPathEvent {
   final String description;
   final String? linkvdo;
   final List<CreateMaterial>? materials;
-  final List<CreateQuestionWithChoices>? questions;
+  final List<NodeQuiz>? quizzes;
+  final List<NodeQuiz>?
+  deletedQuizzes; // Track question IDs that should be deleted
   
   UpdateNodeEvent({
     required this.nodeId,
@@ -123,7 +148,8 @@ class UpdateNodeEvent extends LearningPathEvent {
     required this.description,
     this.linkvdo,
     this.materials,
-    this.questions,
+    this.quizzes,
+    this.deletedQuizzes,
   });
 }
 

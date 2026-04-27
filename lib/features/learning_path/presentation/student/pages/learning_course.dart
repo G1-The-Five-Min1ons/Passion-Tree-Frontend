@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/learning_course_content.dart';
@@ -36,6 +37,7 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
   bool _isEnrolling = false;
   String? _userId;
   EnrolledLearningPath? _enrolledPath; // Cache enrolled path after enrollment
+  LearningPath? _fullCourse; // Full course data fetched from API
 
   @override
   void initState() {
@@ -44,13 +46,32 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
     _loadUserAndFetchNodes();
   }
 
+  String get _title =>
+      _enrolledPath?.title ?? _fullCourse?.title ?? widget.course.title;
+
+  String get _description =>
+      _enrolledPath?.description ??
+      _fullCourse?.description ??
+      widget.course.description;
+
   Future<void> _loadUserAndFetchNodes() async {
+    // Load nodes for preview map on this page.
+    context.read<LearningPathBloc>().add(
+      FetchNodesForPath(pathId: widget.course.id),
+    );
+
     final storedUserId = await getIt<IAuthRepository>().getUserId();
     if (!mounted) return;
     setState(() => _userId = storedUserId ?? '');
     if (storedUserId != null && storedUserId.isNotEmpty) {
+      context.read<LearningPathBloc>().add(FetchLearningPathOverview());
+    }
+
+    // Fetch full path details if description is missing (e.g. from Dashboard)
+    if (widget.course.description.isEmpty &&
+        (widget.enrolledPath?.description.isEmpty ?? true)) {
       context.read<LearningPathBloc>().add(
-        FetchNodesForPath(pathId: widget.course.id, userId: storedUserId),
+        GetLearningPathByIdEvent(pathId: widget.course.id),
       );
     }
   }
@@ -58,8 +79,8 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
   /// Navigate to nodes overview page and refetch data when returning
   void _navigateToNodesOverview() {
     if (!mounted) return;
-    
-    Navigator.push(
+
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
@@ -70,16 +91,7 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
           ),
         ),
       ),
-    ).then((_) {
-      // Refetch overview data when returning (in case user completes a course)
-      if (!mounted) return;
-      final userId = _userId ?? '';
-      if (userId.isNotEmpty) {
-        context.read<LearningPathBloc>().add(
-          FetchLearningPathOverview(userId: userId),
-        );
-      }
-    });
+    );
   }
 
   void _handleStartJourney(BuildContext context) {
@@ -90,7 +102,7 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
     if (_enrolledPath == null) {
       setState(() => _isEnrolling = true);
       context.read<LearningPathBloc>().add(
-        EnrollPathEvent(pathId: widget.course.id, userId: userId),
+        EnrollPathEvent(pathId: widget.course.id),
       );
     } else {
       // Already enrolled, navigate directly
@@ -105,13 +117,21 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
       body: SafeArea(
         child: BlocListener<LearningPathBloc, LearningPathState>(
           listener: (context, state) {
+            // Handle full path details loaded (from Dashboard with incomplete data)
+            if (state is LearningPathDetailLoaded) {
+              setState(() {
+                _fullCourse = state.learningPath;
+              });
+            }
+
             // Handle enrollment success
             if (state is PathEnrolled &&
                 state.pathId == widget.course.id &&
                 _isEnrolling) {
               setState(() {
                 _isEnrolling = false;
-                _enrolledPath = state.enrolledPath; // Use enrolled path data from backend
+                _enrolledPath =
+                    state.enrolledPath; // Use enrolled path data from backend
               });
               _navigateToNodesOverview();
             }
@@ -122,7 +142,13 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
               setState(() => _isEnrolling = false);
 
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Failed to enroll: ${state.message}')),
+                SnackBar(
+                  content: Text(
+                    'Failed to enroll: ${state.message}',
+                    style: const TextStyle(color: AppColors.textPrimary),
+                  ),
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
               );
             }
           },
@@ -149,11 +175,8 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                     children: [
                       /// ===== COURSE CONTENT =====
                       LearningCourseContent(
-                        title:
-                            _enrolledPath?.title ?? widget.course.title,
-                        description:
-                            _enrolledPath?.description ??
-                            widget.course.description,
+                        title: _title,
+                        description: _description,
                         isEnrolled: _enrolledPath != null,
                         isEnrolling: _isEnrolling,
                         nodes: nodes,

@@ -7,6 +7,7 @@ class NodeItem extends StatelessWidget {
   final VoidCallback? onTap;
   final double size;
   final bool showCurrentIndicator;
+  final String? title;
 
   const NodeItem({
     super.key,
@@ -14,10 +15,44 @@ class NodeItem extends StatelessWidget {
     this.onTap,
     this.size = 64,
     this.showCurrentIndicator = false,
+    this.title,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasTitle = title != null && title!.trim().isNotEmpty;
+
+    final nodeWithSideTitle = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Image.asset(
+          imagePath,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.none,
+        ),
+        if (hasTitle)
+          Positioned(
+            left: size + 6,
+            top: (size / 2) - 8,
+            child: SizedBox(
+              width: 96,
+              child: Text(
+                title!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.left,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -36,13 +71,7 @@ class NodeItem extends StatelessWidget {
             ),
             const SizedBox(height: 4),
           ],
-          Image.asset(
-            imagePath,
-            width: size,
-            height: size,
-            fit: BoxFit.contain,
-            filterQuality: FilterQuality.none,
-          ),
+          nodeWithSideTitle,
           const SizedBox(height: 8),
         ],
       ),

@@ -30,7 +30,6 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
        super(const LoginState()) {
     on<LoginUsernameChanged>(_onUsernameChanged);
     on<LoginPasswordChanged>(_onPasswordChanged);
-    on<LoginRememberMeToggled>(_onRememberMeToggled);
     on<LoginSubmitted>(_onLoginSubmitted);
     on<LoginWithGoogle>(_onLoginWithGoogle);
     on<LoginWithDiscord>(_onLoginWithDiscord);
@@ -38,6 +37,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<VerifyEmailSubmitted>(_onVerifyEmailSubmitted);
     on<CheckRoleStatus>(_onCheckRoleStatus);
     on<SelectRoleSubmitted>(_onSelectRoleSubmitted);
+    on<ConfirmReactivation>(_onConfirmReactivation);
     on<LoginReset>(_onLoginReset);
   }
 
@@ -63,18 +63,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     emit(state.copyWith(password: event.password));
   }
 
-  void _onRememberMeToggled(
-    LoginRememberMeToggled event,
-    Emitter<LoginState> emit,
-  ) {
-    emit(state.copyWith(rememberMe: event.rememberMe));
-  }
-
   Future<void> _onLoginSubmitted(
     LoginSubmitted event,
     Emitter<LoginState> emit,
   ) async {
-    emit(state.copyWith(status: LoginStatus.loading));
+    emit(state.copyWith(status: LoginStatus.loading, otpResendEmail: ''));
 
     final result = await _loginWithCredentials.execute(
       identifier: state.username,
@@ -88,6 +81,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             status: LoginStatus.success,
             nextStep: LoginNextStep.otpVerification,
             errorMessage: null,
+            otpResendEmail: _extractOtpResendEmail(failure.message),
           ));
           return;
         }
@@ -97,9 +91,10 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
           errorMessage: failure.message,
         ));
       },
-      (_) => emit(state.copyWith(
+      (otpMessage) => emit(state.copyWith(
         status: LoginStatus.success,
         nextStep: LoginNextStep.otpVerification,
+        otpResendEmail: _extractOtpResendEmail(otpMessage),
       )),
     );
   }
@@ -109,6 +104,12 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     return normalized.contains('verification_required') ||
         normalized.contains('6-digit code') ||
         normalized.contains('otp');
+  }
+
+  String _extractOtpResendEmail(String message) {
+    final match = RegExp(r'[\w\-.]+@([\w\-]+\.)+[\w\-]{2,4}')
+        .firstMatch(message);
+    return match?.group(0) ?? '';
   }
 
   Future<void> _onLoginWithGoogle(
@@ -317,6 +318,37 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         state.copyWith(
           status: LoginStatus.success,
           nextStep: LoginNextStep.complete,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onConfirmReactivation(
+    ConfirmReactivation event,
+    Emitter<LoginState> emit,
+  ) async {
+    emit(state.copyWith(status: LoginStatus.loading));
+
+    // Retry login with confirmReactivate=true
+    final result = await _loginWithCredentials.execute(
+      identifier: state.username,
+      password: state.password,
+      confirmReactivate: true,
+    );
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: LoginStatus.failure,
+          errorMessage: failure.message,
+          requiresReactivation: false,
+        ),
+      ),
+      (_) => emit(
+        state.copyWith(
+          status: LoginStatus.success,
+          nextStep: LoginNextStep.otpVerification,
+          requiresReactivation: false,
         ),
       ),
     );

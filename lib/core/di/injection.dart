@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:passion_tree_frontend/core/network/api_handler.dart';
+import 'package:passion_tree_frontend/core/services/startup_prefetch_service.dart';
 import 'package:passion_tree_frontend/core/services/upload_service.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/datasources/album_data_source.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/data/repositories/album_repository.dart';
@@ -13,6 +14,7 @@ import 'package:passion_tree_frontend/features/authentication/domain/usecases/lo
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_google_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/login_with_discord_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/register_user_usecase.dart';
+import 'package:passion_tree_frontend/features/authentication/domain/usecases/resend_verification_email_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/verify_email_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/get_profile_usecase.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/usecases/select_role_usecase.dart';
@@ -46,17 +48,37 @@ import 'package:passion_tree_frontend/features/learning_path/domain/usecases/sta
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/complete_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_node_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/reorder_nodes_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_learning_path_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/generate_nodes_with_ai_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/get_learning_path_by_id_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_node_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_learning_path_usecase.dart';
-import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_question_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_choice_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/create_choice_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_question_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_choice_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/enrolled_learning_paths.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_progress_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
+import 'package:passion_tree_frontend/features/setting/data/datasources/setting_remote_data_source.dart';
+import 'package:passion_tree_frontend/features/setting/data/repositories/setting_repository_impl.dart';
+import 'package:passion_tree_frontend/features/setting/domain/repositories/setting_repository.dart';
+import 'package:passion_tree_frontend/features/setting/domain/usecases/get_settings_usecase.dart';
+import 'package:passion_tree_frontend/features/setting/domain/usecases/update_setting_usecase.dart';
+import 'package:passion_tree_frontend/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:passion_tree_frontend/features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'package:passion_tree_frontend/features/dashboard/domain/repositories/i_dashboard_repository.dart';
+import 'package:passion_tree_frontend/features/dashboard/domain/usecases/get_dashboard_usecase.dart';
+import 'package:passion_tree_frontend/features/mission/data/datasources/mission_remote_data_source.dart';
+import 'package:passion_tree_frontend/features/mission/data/repositories/mission_repository_impl.dart';
+import 'package:passion_tree_frontend/features/mission/domain/repositories/i_mission_repository.dart';
+import 'package:passion_tree_frontend/features/mission/domain/usecases/get_my_missions_usecase.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -93,6 +115,9 @@ Future<void> initializeDependencies() async {
   );
   getIt.registerFactory<RegisterUserUseCase>(
     () => RegisterUserUseCase(getIt<IAuthRepository>()),
+  );
+  getIt.registerFactory<ResendVerificationEmailUseCase>(
+    () => ResendVerificationEmailUseCase(getIt<IAuthRepository>()),
   );
   getIt.registerFactory<VerifyEmailUseCase>(
     () => VerifyEmailUseCase(getIt<IAuthRepository>()),
@@ -156,6 +181,10 @@ Future<void> initializeDependencies() async {
     () => GetAlbumByIdUseCase(getIt<IAlbumRepository>()),
   );
 
+  getIt.registerFactory<GetHeartCountUseCase>(
+    () => GetHeartCountUseCase(getIt<IAuthRepository>()),
+  );
+
   getIt.registerFactory<CreateAlbumUseCase>(
     () => CreateAlbumUseCase(
       getIt<IAlbumRepository>(),
@@ -181,6 +210,18 @@ Future<void> initializeDependencies() async {
 
   getIt.registerFactory<DeleteTreeUseCase>(
     () => DeleteTreeUseCase(getIt<IAlbumRepository>()),
+  );
+
+  getIt.registerFactory<RetrieveTreeUseCase>(
+    () => RetrieveTreeUseCase(getIt<IAlbumRepository>()),
+  );
+
+  getIt.registerFactory<PauseTreeUseCase>(
+    () => PauseTreeUseCase(getIt<IAlbumRepository>()),
+  );
+
+  getIt.registerFactory<ResumeTreeUseCase>(
+    () => ResumeTreeUseCase(getIt<IAlbumRepository>()),
   );
   // Comment Feature
   getIt.registerLazySingleton<CommentRemoteDataSource>(
@@ -229,7 +270,10 @@ Future<void> initializeDependencies() async {
 
   // Learning Path Feature
   getIt.registerLazySingleton<LearningPathDataSource>(
-    () => LearningPathDataSource(),
+    () => LearningPathDataSource(
+      apiHandler: getIt<ApiHandler>(),
+      authLocalDataSource: getIt<AuthLocalDataSource>(),
+    ),
   );
 
   getIt.registerLazySingleton<LearningPathRepositoryImpl>(
@@ -285,6 +329,9 @@ Future<void> initializeDependencies() async {
   getIt.registerFactory<UpdateLearningPathUseCase>(
     () => UpdateLearningPathUseCase(getIt<LearningPathRepositoryImpl>()),
   );
+  getIt.registerFactory<ReorderNodesUseCase>(
+    () => ReorderNodesUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
   getIt.registerFactory<GetNodeQuestions>(
     () => GetNodeQuestions(getIt<LearningPathRepositoryImpl>()),
   );
@@ -295,10 +342,39 @@ Future<void> initializeDependencies() async {
     () => GetLearningPathProgress(getIt<LearningPathRepositoryImpl>()),
   );
 
+  getIt.registerFactory<GetRecommendedLearningPaths>(
+    () => GetRecommendedLearningPaths(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<SubmitReview>(
+    () => SubmitReview(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<GetMyRating>(
+    () => GetMyRating(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<DeleteRating>(
+    () => DeleteRating(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<UpdateQuestionUseCase>(
+    () => UpdateQuestionUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<UpdateChoiceUseCase>(
+    () => UpdateChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<CreateChoiceUseCase>(
+    () => CreateChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<DeleteQuestionUseCase>(
+    () => DeleteQuestionUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+  getIt.registerFactory<DeleteChoiceUseCase>(
+    () => DeleteChoiceUseCase(getIt<LearningPathRepositoryImpl>()),
+  );
+
   // Learning Path Bloc
   getIt.registerFactory<LearningPathBloc>(
     () => LearningPathBloc(
       getIt<GetAllLearningPaths>(),
+      getIt<GetRecommendedLearningPaths>(),
       getIt<GetLearningPathStatus>(),
       getIt<GetNodesForPath>(),
       getIt<GetNodeDetail>(),
@@ -314,6 +390,76 @@ Future<void> initializeDependencies() async {
       getIt<GetLearningPathByIdUseCase>(),
       getIt<UpdateLearningPathUseCase>(),
       getIt<UpdateNodeUseCase>(),
+      getIt<ReorderNodesUseCase>(),
+      getIt<UpdateQuestionUseCase>(),
+      getIt<UpdateChoiceUseCase>(),
+      getIt<CreateChoiceUseCase>(),
+      getIt<DeleteQuestionUseCase>(),
+      getIt<DeleteChoiceUseCase>(),
+      getIt<SubmitReview>(),
+      getIt<GetMyRating>(),
+      getIt<DeleteRating>(),
+    ),
+  );
+
+  // Setting Feature
+  getIt.registerLazySingleton<SettingRemoteDataSource>(
+    () => SettingRemoteDataSourceImpl(apiHandler: getIt<ApiHandler>()),
+  );
+  getIt.registerLazySingleton<ISettingRepository>(
+    () => SettingRepositoryImpl(
+      remoteDataSource: getIt<SettingRemoteDataSource>(),
+      localDataSource: getIt<AuthLocalDataSource>(),
+    ),
+  );
+  getIt.registerFactory<GetSettingsUseCase>(
+    () => GetSettingsUseCase(getIt<ISettingRepository>()),
+  );
+  getIt.registerFactory<UpdateSettingUseCase>(
+    () => UpdateSettingUseCase(getIt<ISettingRepository>()),
+  );
+
+  // Dashboard Feature
+  getIt.registerLazySingleton<DashboardRemoteDataSource>(
+    () => DashboardRemoteDataSourceImpl(apiHandler: getIt<ApiHandler>()),
+  );
+  getIt.registerLazySingleton<IDashboardRepository>(
+    () => DashboardRepositoryImpl(
+      remoteDataSource: getIt<DashboardRemoteDataSource>(),
+      localDataSource: getIt<AuthLocalDataSource>(),
+    ),
+  );
+  getIt.registerFactory<GetDashboardUseCase>(
+    () => GetDashboardUseCase(getIt<IDashboardRepository>()),
+  );
+
+  // Mission Feature
+  getIt.registerLazySingleton<MissionRemoteDataSource>(
+    () => MissionRemoteDataSourceImpl(apiHandler: getIt<ApiHandler>()),
+  );
+  getIt.registerLazySingleton<IMissionRepository>(
+    () => MissionRepositoryImpl(
+      remoteDataSource: getIt<MissionRemoteDataSource>(),
+      localDataSource: getIt<AuthLocalDataSource>(),
+    ),
+  );
+  getIt.registerFactory<GetMyMissionsUseCase>(
+    () => GetMyMissionsUseCase(getIt<IMissionRepository>()),
+  );
+  // Lazy singleton so the Home tab and the Profile/Dashboard tab share the
+  // exact same MissionBloc instance — even though each tab has its own
+  // HomeBlocProvider wrapper. MissionBlocProvider uses BlocProvider.value
+  // so the bloc is not auto-closed when a wrapper is disposed.
+  // resetDependencies() clears the singleton on logout.
+  getIt.registerLazySingleton<MissionBloc>(
+    () => MissionBloc(getMyMissions: getIt<GetMyMissionsUseCase>()),
+  );
+
+  getIt.registerLazySingleton<StartupPrefetchService>(
+    () => StartupPrefetchService(
+      authRepository: getIt<IAuthRepository>(),
+      getDashboardUseCase: getIt<GetDashboardUseCase>(),
+      getSettingsUseCase: getIt<GetSettingsUseCase>(),
     ),
   );
 }

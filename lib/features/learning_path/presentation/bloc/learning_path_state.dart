@@ -2,6 +2,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/lea
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/generated_node.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path_rating.dart';
 
 abstract class LearningPathState {}
 
@@ -67,10 +68,12 @@ class LearningPathStatusLoaded extends LearningPathState {
 class LearningPathOverviewLoaded extends LearningPathState {
   final List<LearningPath> allPaths;
   final List<EnrolledLearningPath> enrolledPaths;
+  final List<LearningPath> recommendedPaths;
 
   LearningPathOverviewLoaded({
     required this.allPaths,
     required this.enrolledPaths,
+    required this.recommendedPaths,
   });
 }
 
@@ -106,6 +109,18 @@ class LearningPathDeleted extends LearningPathState {
   final String message;
 
   LearningPathDeleted(this.message);
+}
+
+class LearningPathRatingLoaded extends LearningPathState {
+  final LearningPathRating rating;
+
+  LearningPathRatingLoaded(this.rating);
+}
+
+class LearningPathRatingDeleted extends LearningPathState {
+  final String pathId;
+
+  LearningPathRatingDeleted(this.pathId);
 }
 
 class LearningPathError extends LearningPathState {
@@ -154,6 +169,11 @@ class NodeDeleted extends LearningPathState {
   final String nodeId;
 
   NodeDeleted(this.nodeId);
+}
+
+class NodesReordered extends LearningPathState {
+  final String pathId;
+  NodesReordered(this.pathId);
 }
 
 class LearningPathUpdated extends LearningPathState {

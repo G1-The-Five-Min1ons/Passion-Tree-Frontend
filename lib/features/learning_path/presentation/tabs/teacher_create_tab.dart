@@ -2,19 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
-import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/create_learning_path_input_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/teacher_nodes_overview.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
-import 'package:passion_tree_frontend/core/di/injection.dart';
-import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
-import 'package:passion_tree_frontend/features/setting/presentation/pages/teacher_verification_page.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 
 class TeacherCreateTab extends StatefulWidget {
   final List<LearningPath> allPaths;
@@ -27,14 +23,12 @@ class TeacherCreateTab extends StatefulWidget {
 }
 
 class _TeacherCreateTabState extends State<TeacherCreateTab> {
-  int inProgressShown = 2;
-  int completedShown = 2;
+  int inProgressShown = 4;
+  int completedShown = 4;
 
   // Cached filtered lists to avoid re-filtering on every build
   List<LearningPath> _draftPaths = [];
   List<LearningPath> _publishedPaths = [];
-  final IAuthRepository _authRepository = getIt<IAuthRepository>();
-
   @override
   void initState() {
     super.initState();
@@ -75,72 +69,6 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
         .toList();
   }
 
-  Future<void> _onCreatePressed() async {
-    try {
-      final status = await _authRepository.getTeacherVerificationStatus();
-      if (!mounted) return;
-
-      if (!status.isVerified) {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const TeacherVerificationPage(),
-          ),
-        );
-        return;
-      }
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const CreateLearningPathInputPage(),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to check verification status: $e')),
-      );
-    }
-  }
-
-  Future<void> _confirmDeletePath(LearningPath path) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete Learning Path'),
-          content: Text(
-            'Are you sure you want to delete "${path.title}"?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
-              ),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldDelete != true) return;
-
-    if (!mounted) return;
-    context.read<LearningPathBloc>().add(
-      DeleteLearningPathEvent(
-        pathId: path.id,
-        userId: widget.userId,
-      ),
-    );
-  }
-
   /// Build section header with title and status
   Widget _buildSectionHeader(String status, Color statusColor) {
     return Column(
@@ -172,21 +100,25 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     );
   }
 
-  /// Build path grid with empty state and show more button
+  /// Build path grid with empty state and show more/less button
   Widget _buildPathGrid({
     required List<LearningPath> paths,
     required int shownCount,
     required VoidCallback onShowMore,
+    required VoidCallback onShowLess,
     required String emptyMessage,
   }) {
     final colors = Theme.of(context).colorScheme;
 
     if (paths.isEmpty) {
-      return Center(
-        child: Text(
-          emptyMessage,
-          style: AppTypography.subtitleSemiBold.copyWith(
-            color: colors.onPrimary,
+      return SizedBox(
+        height: 260,
+        child: Center(
+          child: Text(
+            emptyMessage,
+            style: AppTypography.subtitleSemiBold.copyWith(
+              color: colors.onPrimary,
+            ),
           ),
         ),
       );
@@ -238,7 +170,12 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                 );
               },
               onDelete: () {
-                _confirmDeletePath(paths[index]);
+                context.read<LearningPathBloc>().add(
+                  DeleteLearningPathEvent(
+                    pathId: paths[index].id,
+                    publishStatus: paths[index].publishStatus,
+                  ),
+                );
               },
             );
           },
@@ -264,6 +201,28 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
                 ],
               ),
             ),
+          )
+        else if (paths.length > 4)
+          Padding(
+            padding: const EdgeInsets.only(top: 40),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  NavigationButton(
+                    direction: NavigationDirection.up,
+                    onPressed: onShowLess,
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Less',
+                    style: AppPixelTypography.smallTitle.copyWith(
+                      color: colors.onPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
       ],
     );
@@ -277,31 +236,33 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     final inProgressCourses = _draftPaths;
     final completedCourses = _publishedPaths;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ===== Add button (top right) =====
-        Align(
-          alignment: Alignment.centerRight,
-          child: AppButton(
-            variant: AppButtonVariant.iconOnly,
-            icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
-            onPressed: _onCreatePressed,
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
-        // =====================================================
+    return BlocListener<LearningPathBloc, LearningPathState>(
+      listener: (context, state) {
+        if (state is LearningPathError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message, style: const TextStyle(color: AppColors.textPrimary)),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         // My Learning Paths - Drafts
-        // =====================================================
         _buildSectionHeader('Drafts', colors.secondary),
         _buildPathGrid(
           paths: inProgressCourses,
           shownCount: inProgressShown,
           onShowMore: () {
             setState(() {
-              inProgressShown += 2;
+              inProgressShown = _draftPaths.length;
+            });
+          },
+          onShowLess: () {
+            setState(() {
+              inProgressShown = 4;
             });
           },
           emptyMessage: 'No in-progress paths found',
@@ -309,21 +270,25 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
 
         const SizedBox(height: 60),
 
-        // =====================================================
         // My Learning Paths - Published
-        // =====================================================
         _buildSectionHeader('Published', AppColors.status),
         _buildPathGrid(
           paths: completedCourses,
           shownCount: completedShown,
           onShowMore: () {
             setState(() {
-              completedShown += 2;
+              completedShown = _publishedPaths.length;
+            });
+          },
+          onShowLess: () {
+            setState(() {
+              completedShown = 4;
             });
           },
           emptyMessage: 'No published paths found',
         ),
       ],
+      ),
     );
   }
 }

@@ -7,12 +7,18 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/select_date.dart'; // ตรวจสอบ path นี้
 
 class SelectPausePeriodPopup extends StatefulWidget {
-  const SelectPausePeriodPopup({super.key});
+  final void Function(DateTime pauseFrom, DateTime resumeOn)? onPauseSelected;
 
-  static void show(BuildContext context) {
+  const SelectPausePeriodPopup({super.key, this.onPauseSelected});
+
+  static void show(
+    BuildContext context, {
+    void Function(DateTime pauseFrom, DateTime resumeOn)? onPauseSelected,
+  }) {
     showDialog(
       context: context,
-      builder: (context) => const SelectPausePeriodPopup(),
+      builder: (context) =>
+          SelectPausePeriodPopup(onPauseSelected: onPauseSelected),
     );
   }
 
@@ -25,7 +31,11 @@ class _SelectPausePeriodPopupState extends State<SelectPausePeriodPopup> {
   DateTime? toDate;
 
   void _openRangePicker() async {
-    final List<DateTime?>? pickedRange = await PixelCalendarDialog.show(context);
+    final List<DateTime?>? pickedRange = await PixelCalendarDialog.show(
+      context,
+      initialRangeStart: fromDate,
+      initialRangeEnd: toDate,
+    );
 
     if (pickedRange != null && pickedRange.length == 2) {
       setState(() {
@@ -50,7 +60,7 @@ class _SelectPausePeriodPopupState extends State<SelectPausePeriodPopup> {
             children: [
               Text("Select Date Period", style: AppPixelTypography.smallTitle),
               const SizedBox(height: 30),
-              
+
               Row(
                 children: [
                   SizedBox(
@@ -89,12 +99,14 @@ class _SelectPausePeriodPopupState extends State<SelectPausePeriodPopup> {
                 saveText: '3',
                 saveIcon: const PixelIcon('assets/icons/Pixel_heart.png'),
                 onCancel: () => Navigator.pop(context),
-                onSave: (fromDate != null && toDate != null) 
-                  ? () { 
-                      debugPrint("Save: $fromDate to $toDate");
-                      Navigator.pop(context); 
-                    } 
-                  : null, 
+                onSave: (fromDate != null && toDate != null)
+                    ? () {
+                        if (fromDate != null && toDate != null) {
+                          widget.onPauseSelected?.call(fromDate!, toDate!);
+                        }
+                        Navigator.pop(context);
+                      }
+                    : null,
               ),
             ],
           ),

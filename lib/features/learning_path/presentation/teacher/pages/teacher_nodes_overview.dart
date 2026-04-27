@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
@@ -5,7 +7,6 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_bottom.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/modals/edit_node_modal.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_core.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/teacher/confirm_popup.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/generated_node.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/node_detail.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
@@ -14,6 +15,9 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_state.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
+import 'package:passion_tree_frontend/core/network/log_handler.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // UI State class สำหรับจัดการ node ใน UI
 class NodeUiState {
@@ -37,11 +41,18 @@ class TeacherNodesOverviewPage extends StatefulWidget {
   final List<GeneratedNode>? aiNodes;
   final String pathId;
 
+  /// True เมื่อ path ถูกสร้างขึ้นมาใหม่ในรอบ session นี้ (มาจาก
+  /// CreateLearningPathInputPage หรือ AINodeReviewPage). ใช้สำหรับการ cleanup
+  /// path อัตโนมัติเมื่อผู้ใช้กดย้อนกลับโดยไม่ได้กด Save Draft / Publish เพื่อ
+  /// ป้องกัน orphan paths ค้างใน backend
+  final bool isNewlyCreated;
+
   const TeacherNodesOverviewPage({
     super.key,
     required this.title,
     this.aiNodes,
     required this.pathId,
+    this.isNewlyCreated = false,
   });
 
   @override
@@ -50,24 +61,150 @@ class TeacherNodesOverviewPage extends StatefulWidget {
 }
 
 class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
+  static const String _unsavedNodesStoragePrefix =
+      'teacher_nodes_overview_unsaved';
   late List<NodeUiState> _uiNodes;
-  int? _pendingNodeIndex; // เก็บ index ของ node ที่รอ response จาก BLoC
+  int? _pendingNodeIndex; // เก็บ index ของ node ที่กำลังสร้างอยู่
+  final List<int> _createQueue =
+      []; // คิว sequence ของ nodes ที่รอสร้างตามลำดับ
+  Timer? _draftAutoSaveTimer;
   String? _userId;
   List<NodeDetail>? _cachedNodes; // Cache nodes from backend
   LearningPath? _cachedLearningPath; // Cache learning path details for updating
+  bool _pendingPublish = false; // รอ node สร้างเสร็จแล้วค่อย publish
+  bool _pendingSaveDraft = false; // รอ node สร้างเสร็จแล้วค่อย save draft
+  bool _queuedSaveDraftAfterPathLoad = false;
+  Timer? _queuedSaveDraftRetryTimer;
+  int _queuedSaveDraftRetryCount = 0;
+  bool _queuedPublishAfterPathLoad = false;
+  Timer? _queuedPublishRetryTimer;
+  int _queuedPublishRetryCount = 0;
+  bool _shouldExitAfterPathUpdate = false;
+  String? _requestedPathUpdateStatus;
+  late String
+  _displayTitle; // Title ที่แสดงใน header (อัพเดทจาก backend เมื่อโหลดเสร็จ)
+
+  bool get _isPublished =>
+      _cachedLearningPath?.publishStatus.toLowerCase() == 'published';
+
+  bool get _isAiPath => widget.aiNodes != null && widget.aiNodes!.isNotEmpty;
+
+  String get _unsavedNodesStorageKey =>
+      '$_unsavedNodesStoragePrefix:${widget.pathId}';
+
+  Future<void> _persistUnsavedUiNodes() async {
+    final unsavedNodes = _uiNodes
+        .where(
+          (n) =>
+              !n.isCreated && (n.realNodeId == null || n.realNodeId!.isEmpty),
+        )
+        .map(
+          (n) => {
+            'title': n.title,
+            'description': n.description,
+            'sequence': n.sequence,
+          },
+        )
+        .toList();
+
+    final prefs = await SharedPreferences.getInstance();
+    if (unsavedNodes.isEmpty) {
+      await prefs.remove(_unsavedNodesStorageKey);
+      return;
+    }
+
+    await prefs.setString(_unsavedNodesStorageKey, jsonEncode(unsavedNodes));
+  }
+
+  Future<void> _restoreUnsavedUiNodes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_unsavedNodesStorageKey);
+    if (raw == null || raw.isEmpty) return;
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return;
+
+      final restored = decoded
+          .whereType<Map>()
+          .map(
+            (item) => NodeUiState(
+              title: (item['title'] ?? 'New Node').toString(),
+              description: (item['description'] ?? '').toString(),
+              sequence: (item['sequence'] is int)
+                  ? item['sequence'] as int
+                  : int.tryParse('${item['sequence']}') ?? 1,
+              isCreated: false,
+            ),
+          )
+          .toList();
+
+      if (restored.isEmpty || !mounted) return;
+
+      setState(() {
+        final shouldReplaceDefaultDraft =
+            _uiNodes.length == 1 &&
+            !_uiNodes.first.isCreated &&
+            (_uiNodes.first.realNodeId == null ||
+                _uiNodes.first.realNodeId!.isEmpty) &&
+            _uiNodes.first.title == 'New Node' &&
+            _uiNodes.first.description.isEmpty;
+
+        if (shouldReplaceDefaultDraft) {
+          _uiNodes = restored;
+        } else {
+          final existingKeys = _uiNodes
+              .where(
+                (n) =>
+                    !n.isCreated &&
+                    (n.realNodeId == null || n.realNodeId!.isEmpty),
+              )
+              .map((n) => '${n.sequence}|${n.title}|${n.description}')
+              .toSet();
+
+          for (final node in restored) {
+            final key = '${node.sequence}|${node.title}|${node.description}';
+            if (!existingKeys.contains(key)) {
+              _uiNodes.add(node);
+            }
+          }
+        }
+
+        _uiNodes.sort((a, b) => a.sequence.compareTo(b.sequence));
+        for (int i = 0; i < _uiNodes.length; i++) {
+          _uiNodes[i].sequence = i + 1;
+        }
+      });
+    } catch (_) {
+      // Ignore corrupted local cache and continue with current in-memory state.
+    }
+  }
+
+  @override
+  void dispose() {
+    _draftAutoSaveTimer?.cancel();
+    _queuedSaveDraftRetryTimer?.cancel();
+    _queuedPublishRetryTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
+    _displayTitle = widget.title;
     _loadUserAndFetchNodes();
 
     // ถ้ามี AI nodes ให้ใช้ ถ้าไม่มีให้สร้าง default node เปล่าๆ
     if (widget.aiNodes != null && widget.aiNodes!.isNotEmpty) {
-      _uiNodes = widget.aiNodes!.map((aiNode) {
+      // Keep sequence unique and stable in UI order to avoid draft-node loss
+      // when AI-generated sequence values are duplicated.
+      _uiNodes = widget.aiNodes!.asMap().entries.map((entry) {
+        final index = entry.key;
+        final aiNode = entry.value;
         return NodeUiState(
           title: aiNode.title,
           description: "",
-          sequence: aiNode.sequence,
+          sequence: index + 1,
           isCreated: false,
         );
       }).toList();
@@ -82,6 +219,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         ),
       ];
     }
+    _restoreUnsavedUiNodes();
   }
 
   Future<void> _loadUserAndFetchNodes() async {
@@ -97,18 +235,118 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     if (userId.isEmpty) return;
     // Fetch existing nodes from backend
     context.read<LearningPathBloc>().add(
-      FetchNodesForPath(pathId: widget.pathId, userId: userId),
+      FetchNodesForPath(pathId: widget.pathId),
     );
   }
 
   void _fetchLearningPathDetail() {
     // Fetch learning path details for updating publish status
+    LogHandler.info(
+      'TeacherNodesOverview: Fetch learning path detail requested (pathId=${widget.pathId})',
+    );
     context.read<LearningPathBloc>().add(
       GetLearningPathByIdEvent(pathId: widget.pathId),
     );
   }
 
-  void _handleCreateNode(int index) {
+  void _startQueuedSaveDraftRetryWatchdog() {
+    _queuedSaveDraftRetryTimer?.cancel();
+    _queuedSaveDraftRetryCount = 0;
+
+    _queuedSaveDraftRetryTimer = Timer.periodic(const Duration(seconds: 1), (
+      timer,
+    ) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (!_queuedSaveDraftAfterPathLoad || _cachedLearningPath != null) {
+        timer.cancel();
+        return;
+      }
+
+      _queuedSaveDraftRetryCount++;
+      if (_queuedSaveDraftRetryCount > 8) {
+        timer.cancel();
+        _queuedSaveDraftAfterPathLoad = false;
+        LogHandler.error(
+          'TeacherNodesOverview: Save Draft queue timeout - learning path detail did not load',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to load learning path data for Save Draft. Please try again.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
+          ),
+        );
+        return;
+      }
+
+      LogHandler.warning(
+        'TeacherNodesOverview: Retrying detail fetch for queued Save Draft ($_queuedSaveDraftRetryCount/8)',
+      );
+      _fetchLearningPathDetail();
+    });
+  }
+
+  void _startQueuedPublishRetryWatchdog() {
+    _queuedPublishRetryTimer?.cancel();
+    _queuedPublishRetryCount = 0;
+
+    _queuedPublishRetryTimer = Timer.periodic(const Duration(seconds: 1), (
+      timer,
+    ) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (!_queuedPublishAfterPathLoad || _cachedLearningPath != null) {
+        timer.cancel();
+        return;
+      }
+
+      _queuedPublishRetryCount++;
+      if (_queuedPublishRetryCount > 8) {
+        timer.cancel();
+        _queuedPublishAfterPathLoad = false;
+        LogHandler.error(
+          'TeacherNodesOverview: Publish queue timeout - learning path detail did not load',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to load learning path data for Publish. Please try again.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            backgroundColor: AppColors.cancel,
+          ),
+        );
+        return;
+      }
+
+      LogHandler.warning(
+        'TeacherNodesOverview: Retrying detail fetch for queued Publish ($_queuedPublishRetryCount/8)',
+      );
+      _fetchLearningPathDetail();
+    });
+  }
+
+  void _handleCreateNode(int sequence) {
+    final index = _uiNodes.indexWhere(
+      (n) => n.sequence == sequence && !n.isCreated,
+    );
+    if (index < 0) {
+      // Node might already be created from a concurrent refresh; continue queue.
+      if (_createQueue.isNotEmpty) {
+        _handleCreateNode(_createQueue.removeAt(0));
+      }
+      return;
+    }
+
     final node = _uiNodes[index];
 
     setState(() {
@@ -127,43 +365,72 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     );
   }
 
-  void _handleUpdateNode(int index, String title, String description) {
-    final node = _uiNodes[index];
-
-    if (node.realNodeId == null) return;
-
-    setState(() {
-      _pendingNodeIndex = index;
-    });
-
-    context.read<LearningPathBloc>().add(
-      UpdateNodeEvent(
-        nodeId: node.realNodeId!,
-        title: title,
-        description: description,
-      ),
-    );
+  /// สร้าง nodes ทีละตัวตามลำดับ (sequential) เพื่อหลีกเลี่ยง droppable transformer
+  /// ที่จะ drop events ที่ส่งพร้อมกัน
+  void _startSequentialCreate(List<int> sequences) {
+    _createQueue.clear();
+    _createQueue.addAll(sequences);
+    if (_createQueue.isNotEmpty) {
+      _handleCreateNode(_createQueue.removeAt(0));
+    }
   }
 
   void _openEditNodeModal(BuildContext context, {int? index}) {
     String nodeId;
     bool isNewNode;
+    bool isPrimaryNode = false;
+    int totalNodes = _displayNodes.length;
     String? sequence;
     NodeDetail? initialNode;
+    int? unsavedSequenceToDelete;
 
-    // ถ้ามี index (กดที่ node ที่มีอยู่แล้ว)
-    if (index != null && _cachedNodes != null && index < _cachedNodes!.length) {
-      // แก้ไข node ที่มีอยู่แล้วจาก backend
-      nodeId = _cachedNodes![index].nodeId;
-      isNewNode = false;
-      sequence = null;
-      initialNode = _cachedNodes![index]; // ส่งข้อมูลเดิมไปแสดงใน modal
+    if (index != null && index < _displayNodes.length) {
+      final displayNode = _displayNodes[index];
+      isPrimaryNode = index == 0;
+      final displayNodeId = displayNode.nodeId.trim();
+      final uiNode = _uiNodes.firstWhere(
+        (n) => n.realNodeId == displayNodeId,
+        orElse: () => _uiNodes.firstWhere(
+          (n) => n.sequence == displayNode.sequence,
+          orElse: () => NodeUiState(
+            title: displayNode.title,
+            description: displayNode.description,
+            sequence: displayNode.sequence,
+            isCreated: false,
+          ),
+        ),
+      );
+
+      final resolvedNodeId = uiNode.realNodeId;
+      final hasRealNodeId = resolvedNodeId != null && resolvedNodeId.isNotEmpty;
+      final existingNodeId = hasRealNodeId ? resolvedNodeId : null;
+      final isSyntheticNodeId =
+          displayNodeId.startsWith('new_node_') ||
+          displayNodeId.startsWith('draft_node_');
+      final isBackendNode =
+          hasRealNodeId ||
+          (!isSyntheticNodeId &&
+              (_cachedNodes?.any((n) => n.nodeId == displayNodeId) ?? false));
+
+      if (isBackendNode) {
+        // แก้ไข node ที่มีอยู่แล้วจาก backend
+        nodeId = existingNodeId ?? displayNodeId;
+        isNewNode = false;
+        sequence = null;
+        initialNode = displayNode;
+      } else {
+        // AI node ที่ยังไม่ถูกสร้างใน backend
+        nodeId = 'new_node_${DateTime.now().millisecondsSinceEpoch}';
+        isNewNode = true;
+        sequence = displayNode.sequence.toString();
+        unsavedSequenceToDelete = displayNode.sequence;
+        initialNode = displayNode;
+      }
     } else {
       // สร้าง node ใหม่
       nodeId = 'new_node_${DateTime.now().millisecondsSinceEpoch}';
       isNewNode = true;
-      // กำหนด sequence เป็น node ถัดไปจาก _cachedNodes (ข้อมูลจริงจาก backend)
-      final currentNodeCount = _cachedNodes?.length ?? 0;
+      final currentNodeCount = _cachedNodes?.length ?? _uiNodes.length;
       sequence = (currentNodeCount + 1).toString();
       initialNode = null;
     }
@@ -177,115 +444,301 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       builder: (_) => BlocProvider.value(
         value: bloc,
         child: EditNodeModal(
+          key: ValueKey(nodeId),
           nodeId: nodeId,
           isNewNode: isNewNode,
+          isAiPath: _isAiPath,
+          isPrimaryNode: isPrimaryNode,
+          totalNodes: totalNodes,
           pathId: widget.pathId,
           sequence: sequence,
-          initialNode: initialNode, // ส่งข้อมูลเดิมไปยัง modal
+          initialNode: initialNode,
+          isReadOnly: false,
+          canDeleteNode: !_isPublished,
+          onDeleteUnsavedNode: unsavedSequenceToDelete == null
+              ? null
+              : () => _removeUnsavedNodeBySequence(unsavedSequenceToDelete!),
         ),
       ),
     );
   }
 
+  void _removeUnsavedNodeBySequence(int sequence) {
+    setState(() {
+      _uiNodes.removeWhere(
+        (n) => n.realNodeId == null && n.sequence == sequence,
+      );
+      for (int i = 0; i < _uiNodes.length; i++) {
+        _uiNodes[i].sequence = i + 1;
+      }
+    });
+    _persistUnsavedUiNodes();
+  }
+
+  void _handleAddNodeAfter(int afterIndex) {
+    final insertIndex = afterIndex + 1;
+
+    // Create new UI node
+    final newNode = NodeUiState(
+      title: 'New Node',
+      description: '',
+      sequence: insertIndex + 1,
+      isCreated: false,
+    );
+
+    setState(() {
+      _uiNodes.insert(insertIndex, newNode);
+      // Re-sequence all nodes
+      for (int i = 0; i < _uiNodes.length; i++) {
+        _uiNodes[i].sequence = i + 1;
+      }
+    });
+    _persistUnsavedUiNodes();
+
+    // Open edit modal for the new node
+    _openEditNodeModal(context, index: insertIndex);
+  }
+
+  void _handleReorder(int fromIndex, int toIndex) {
+    setState(() {
+      final item = _uiNodes.removeAt(fromIndex);
+      _uiNodes.insert(toIndex, item);
+      // Update sequences to reflect new order
+      for (int i = 0; i < _uiNodes.length; i++) {
+        _uiNodes[i].sequence = i + 1;
+      }
+      // Also reorder cached nodes to keep _displayNodes in sync
+      if (_cachedNodes != null && fromIndex < _cachedNodes!.length) {
+        final cachedItem = _cachedNodes!.removeAt(fromIndex);
+        if (toIndex <= _cachedNodes!.length) {
+          _cachedNodes!.insert(toIndex, cachedItem);
+        } else {
+          _cachedNodes!.add(cachedItem);
+        }
+      }
+    });
+    _persistUnsavedUiNodes();
+
+    // Sync new order to backend using realNodeIds only (skip draft nodes)
+    final orderedNodeIds = _uiNodes
+        .where((n) => n.realNodeId != null)
+        .map((n) => n.realNodeId!)
+        .toList();
+
+    if (orderedNodeIds.isNotEmpty) {
+      context.read<LearningPathBloc>().add(
+        ReorderNodesEvent(pathId: widget.pathId, nodeIds: orderedNodeIds),
+      );
+    }
+
+    _scheduleDraftAutoSave();
+  }
+
+  void _scheduleDraftAutoSave() {
+    // Auto-save draft has been disabled.
+    // The learning path status will only change to 'draft' when the user
+    // explicitly presses the "Save Draft" button.
+    _draftAutoSaveTimer?.cancel();
+  }
+
   void _confirmSaveDraft(BuildContext context) {
+    _draftAutoSaveTimer?.cancel();
+    LogHandler.info(
+      'TeacherNodesOverview: Save Draft tapped (pathId=${widget.pathId})',
+    );
+
     if (_cachedLearningPath == null) {
+      _queuedSaveDraftAfterPathLoad = true;
+      LogHandler.warning(
+        'TeacherNodesOverview: Save Draft queued, learning path detail not loaded yet',
+      );
+      _fetchLearningPathDetail();
+      _startQueuedSaveDraftRetryWatchdog();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Loading learning path data...')),
+        const SnackBar(
+          content: Text(
+            'Preparing save draft... Please wait a moment.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.warning,
+        ),
       );
       return;
     }
 
     // ป้องกันการ save draft เมื่อเป็น published แล้ว
     if (_cachedLearningPath!.publishStatus.toLowerCase() == 'published') {
+      LogHandler.warning(
+        'TeacherNodesOverview: Save Draft blocked, path already published',
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Cannot save as draft. This learning path is already published.',
+            style: TextStyle(color: AppColors.textPrimary),
           ),
+          backgroundColor: AppColors.cancel,
         ),
       );
       return;
     }
 
-    ConfirmPopup.show(
-      context,
-      title: 'Save Draft\n Confirmation',
-      body: 'Are you sure to save draft',
-      confirmText: 'Save',
-      onConfirm: () {
-        // สร้าง nodes เฉพาะเมื่อยังไม่มี nodes ใน backend เลย
-        if (_cachedNodes == null || _cachedNodes!.isEmpty) {
-          for (int i = 0; i < _uiNodes.length; i++) {
-            if (!_uiNodes[i].isCreated) {
-              _handleCreateNode(i);
-            }
-          }
-        }
+    LogHandler.info(
+      'TeacherNodesOverview: Save Draft executing without confirmation',
+    );
 
-        // อัปเดต publish status เป็น draft
-        context.read<LearningPathBloc>().add(
-          UpdateLearningPathEvent(
-            pathId: widget.pathId,
-            title: _cachedLearningPath!.title,
-            objective: _cachedLearningPath!.objective,
-            description: _cachedLearningPath!.description,
-            coverImgUrl: _cachedLearningPath!.coverImageUrl,
-            publishStatus: 'draft',
-          ),
-        );
+    // ถ้ายังไม่มี nodes ใน backend ให้สร้างทีละตัวตามลำดับ แล้วค่อย save draft
+    final uncreatedSequences = [
+      for (int i = 0; i < _uiNodes.length; i++)
+        if (!_uiNodes[i].isCreated) _uiNodes[i].sequence,
+    ];
+    if (uncreatedSequences.isNotEmpty) {
+      LogHandler.info(
+        'TeacherNodesOverview: Save Draft requires creating ${uncreatedSequences.length} unsaved nodes first',
+      );
+      _shouldExitAfterPathUpdate = true;
+      setState(() => _pendingSaveDraft = true);
+      _startSequentialCreate(uncreatedSequences);
+      return; // รอ NodeCreated ครบทุกตัวแล้วค่อย dispatch
+    }
 
-        debugPrint('Saving draft...');
-      },
+    _shouldExitAfterPathUpdate = true;
+    _requestedPathUpdateStatus = 'draft';
+    LogHandler.info(
+      'TeacherNodesOverview: Dispatching UpdateLearningPathEvent as draft',
+    );
+    context.read<LearningPathBloc>().add(
+      UpdateLearningPathEvent(
+        pathId: widget.pathId,
+        title: _cachedLearningPath!.title,
+        objective: _cachedLearningPath!.objective,
+        description: _cachedLearningPath!.description,
+        coverImgUrl: _cachedLearningPath!.coverImageUrl,
+        publishStatus: 'draft',
+      ),
     );
   }
 
-  void _confirmPublish(BuildContext context) {
-    if (_cachedLearningPath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Loading learning path data...')),
-      );
-      return;
+  void _showValidationError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(color: AppColors.textPrimary),
+        ),
+        backgroundColor: AppColors.cancel,
+      ),
+    );
+  }
+
+  bool _validateNodesForPublish() {
+    final nodes = _displayNodes;
+
+    if (nodes.isEmpty) {
+      _showValidationError('Please add at least one node before publishing.');
+      return false;
     }
 
-    // ถ้า published แล้ว ไม่ต้องทำอะไร
-    if (_cachedLearningPath!.publishStatus.toLowerCase() == 'published') {
+    bool hasIncompleteNode = false;
+
+    for (int i = 0; i < nodes.length; i++) {
+      final node = nodes[i];
+
+      // ตรวจสอบเฉพาะข้อมูลที่ overview มีจริง
+      if (node.title.trim().isEmpty || node.description.trim().isEmpty) {
+        hasIncompleteNode = true;
+        break; // เจอตัวที่ไม่ครบปุ๊บ หยุดลูปทันที เพราะเราแค่ต้องการบอกภาพรวม
+      }
+    }
+
+    // แจ้งเตือนแบบภาพรวม
+    if (hasIncompleteNode) {
+      _showValidationError(
+        'Please ensure all nodes have complete information.',
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  void _confirmPublish(BuildContext context) {
+    _draftAutoSaveTimer?.cancel();
+    LogHandler.info(
+      'TeacherNodesOverview: Publish tapped (pathId=${widget.pathId})',
+    );
+
+    if (_cachedLearningPath == null) {
+      _queuedPublishAfterPathLoad = true;
+      LogHandler.warning(
+        'TeacherNodesOverview: Publish queued, learning path detail not loaded yet',
+      );
+      _fetchLearningPathDetail();
+      _startQueuedPublishRetryWatchdog();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('This learning path is already published.'),
+          content: Text(
+            'Preparing publish... Please wait a moment.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.warning,
         ),
       );
       return;
     }
 
-    ConfirmPopup.show(
-      context,
-      title: 'Publish\n Confirmation',
-      body: 'Are you sure to publish Learning Path',
-      confirmText: 'Publish',
-      onConfirm: () {
-        // สร้าง nodes เฉพาะเมื่อยังไม่มี nodes ใน backend เลย
-        if (_cachedNodes == null || _cachedNodes!.isEmpty) {
-          for (int i = 0; i < _uiNodes.length; i++) {
-            if (!_uiNodes[i].isCreated) {
-              _handleCreateNode(i);
-            }
-          }
-        }
-
-        // อัปเดต publish status เป็น published
-        context.read<LearningPathBloc>().add(
-          UpdateLearningPathEvent(
-            pathId: widget.pathId,
-            title: _cachedLearningPath!.title,
-            objective: _cachedLearningPath!.objective,
-            description: _cachedLearningPath!.description,
-            coverImgUrl: _cachedLearningPath!.coverImageUrl,
-            publishStatus: 'published',
+    if (_cachedLearningPath!.publishStatus.toLowerCase() == 'published') {
+      LogHandler.warning(
+        'TeacherNodesOverview: Publish blocked, path already published',
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'This learning path is already published.',
+            style: TextStyle(color: AppColors.textPrimary),
           ),
-        );
+          backgroundColor: AppColors.cancel,
+        ),
+      );
+      return;
+    }
 
-        debugPrint('Publishing learning path: ${widget.pathId}');
-      },
+    if (!_validateNodesForPublish()) {
+      return;
+    }
+
+    LogHandler.info(
+      'TeacherNodesOverview: Publish executing without confirmation',
+    );
+
+    final uncreatedSequences = [
+      for (int i = 0; i < _uiNodes.length; i++)
+        if (!_uiNodes[i].isCreated) _uiNodes[i].sequence,
+    ];
+    if (uncreatedSequences.isNotEmpty) {
+      LogHandler.info(
+        'TeacherNodesOverview: Publish requires creating ${uncreatedSequences.length} unsaved nodes first',
+      );
+      _shouldExitAfterPathUpdate = true;
+      setState(() => _pendingPublish = true);
+      _startSequentialCreate(uncreatedSequences);
+      return;
+    }
+
+    _shouldExitAfterPathUpdate = true;
+    _requestedPathUpdateStatus = 'published';
+    LogHandler.info(
+      'TeacherNodesOverview: Dispatching UpdateLearningPathEvent as published',
+    );
+    context.read<LearningPathBloc>().add(
+      UpdateLearningPathEvent(
+        pathId: widget.pathId,
+        title: _cachedLearningPath!.title,
+        objective: _cachedLearningPath!.objective,
+        description: _cachedLearningPath!.description,
+        coverImgUrl: _cachedLearningPath!.coverImageUrl,
+        publishStatus: 'published',
+      ),
     );
   }
 
@@ -308,49 +761,222 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
         .toList();
   }
 
+  bool get _shouldKeepDraftUiNodes {
+    return _isAiPath ||
+        _uiNodes.any((n) => !n.isCreated) ||
+        _pendingPublish ||
+        _pendingSaveDraft ||
+        _createQueue.isNotEmpty ||
+        _pendingNodeIndex != null;
+  }
+
   List<NodeDetail> get _displayNodes {
     final backendNodes = _cachedNodes;
+    final cachedNodeIds =
+        backendNodes?.map((n) => n.nodeId).toSet() ?? <String>{};
+
+    // Include any _uiNode whose realNodeId is not yet reflected in _cachedNodes.
+    // This covers both uncreated draft nodes AND nodes that were just created
+    // sequentially but whose realNodeId hasn't appeared in a fresh fetch yet,
+    // preventing them from disappearing during the Save Draft sequential flow.
+    final pendingUiNodes = _shouldKeepDraftUiNodes
+        ? _uiNodes
+              .where(
+                (n) =>
+                    n.realNodeId == null ||
+                    !cachedNodeIds.contains(n.realNodeId),
+              )
+              .toList()
+        : <NodeUiState>[];
+
     if (backendNodes != null && backendNodes.isNotEmpty) {
-      return backendNodes;
+      if (pendingUiNodes.isEmpty) return backendNodes;
+
+      // Merge backend nodes + pending UI nodes, sorted by sequence
+      final merged = [
+        ...backendNodes,
+        ...pendingUiNodes.map(
+          (uiNode) => NodeDetail(
+            nodeId: uiNode.realNodeId ?? 'draft_node_${uiNode.sequence}',
+            title: uiNode.title,
+            description: uiNode.description,
+            sequence: uiNode.sequence,
+            pathId: widget.pathId,
+            materials: const [],
+            questions: const [],
+            status: 'locked',
+            complete: 'false',
+            linkVdo: null,
+          ),
+        ),
+      ];
+      merged.sort((a, b) => a.sequence.compareTo(b.sequence));
+      return merged;
     }
     return _buildFallbackNodesFromUiState();
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final shouldShowBottomBar = _cachedLearningPath != null && !_isPublished;
 
     return BlocListener<LearningPathBloc, LearningPathState>(
       listener: (context, state) {
         // Update cached learning path when loaded
         if (state is LearningPathDetailLoaded) {
+          _queuedSaveDraftRetryTimer?.cancel();
+          _queuedPublishRetryTimer?.cancel();
           setState(() {
             _cachedLearningPath = state.learningPath;
+            if (state.learningPath.title.isNotEmpty) {
+              _displayTitle = state.learningPath.title;
+            }
           });
+          LogHandler.info(
+            'TeacherNodesOverview: LearningPathDetailLoaded (status=${state.learningPath.publishStatus})',
+          );
+
+          if (_queuedSaveDraftAfterPathLoad && !_isPublished) {
+            _queuedSaveDraftAfterPathLoad = false;
+            LogHandler.info(
+              'TeacherNodesOverview: Executing queued Save Draft after detail loaded',
+            );
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              _confirmSaveDraft(context);
+            });
+          }
+
+          if (_queuedPublishAfterPathLoad && !_isPublished) {
+            _queuedPublishAfterPathLoad = false;
+            LogHandler.info(
+              'TeacherNodesOverview: Executing queued Publish after detail loaded',
+            );
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              _confirmPublish(context);
+            });
+          }
         }
 
         // Update cached nodes when loaded from backend
         if (state is NodesLoaded && state.pathId == widget.pathId) {
           setState(() {
             _cachedNodes = state.nodes;
-            // Sync _uiNodes with cached nodes from backend
+            // Rebuild _uiNodes to include ALL backend nodes so that
+            // _handleReorder works correctly for both plain path and AI path.
+            // Uncreated UI nodes (draft AI nodes not yet saved) are preserved.
             if (state.nodes.isNotEmpty) {
-              _uiNodes = state.nodes
-                  .map(
-                    (node) => NodeUiState(
-                      title: node.title,
-                      description: node.description,
-                      sequence: node.sequence,
-                      realNodeId: node.nodeId,
-                      isCreated: true, // Nodes from backend are already created
+              final newUiNodes = <NodeUiState>[];
+              final matchedUiIndices = <int>{};
+
+              int findMatchIndex(NodeDetail backendNode) {
+                // 1) Prefer exact real ID match
+                for (int i = 0; i < _uiNodes.length; i++) {
+                  if (matchedUiIndices.contains(i)) continue;
+                  if (_uiNodes[i].realNodeId == backendNode.nodeId) return i;
+                }
+
+                // 2) Then match unsaved drafts by sequence + title
+                for (int i = 0; i < _uiNodes.length; i++) {
+                  if (matchedUiIndices.contains(i)) continue;
+                  final ui = _uiNodes[i];
+                  if (ui.realNodeId == null &&
+                      ui.sequence == backendNode.sequence &&
+                      ui.title.trim() == backendNode.title.trim()) {
+                    return i;
+                  }
+                }
+
+                // 3) Fallback to sequence-only for legacy behavior
+                for (int i = 0; i < _uiNodes.length; i++) {
+                  if (matchedUiIndices.contains(i)) continue;
+                  final ui = _uiNodes[i];
+                  if (ui.realNodeId == null &&
+                      ui.sequence == backendNode.sequence) {
+                    return i;
+                  }
+                }
+
+                return -1;
+              }
+
+              for (final backendNode in state.nodes) {
+                final existingIndex = findMatchIndex(backendNode);
+                if (existingIndex >= 0) {
+                  matchedUiIndices.add(existingIndex);
+                  _uiNodes[existingIndex].title = backendNode.title;
+                  _uiNodes[existingIndex].description = backendNode.description;
+                  _uiNodes[existingIndex].sequence = backendNode.sequence;
+                  _uiNodes[existingIndex].realNodeId = backendNode.nodeId;
+                  _uiNodes[existingIndex].isCreated = true;
+                  newUiNodes.add(_uiNodes[existingIndex]);
+                } else {
+                  // Backend node has no matching UI entry (plain path case):
+                  // create a new NodeUiState for it so _uiNodes mirrors all nodes.
+                  newUiNodes.add(
+                    NodeUiState(
+                      title: backendNode.title,
+                      description: backendNode.description,
+                      sequence: backendNode.sequence,
+                      realNodeId: backendNode.nodeId,
+                      isCreated: true,
                     ),
-                  )
-                  .toList();
+                  );
+                }
+              }
+
+              // Preserve unmatched drafts only when explicitly needed.
+              for (int i = 0; i < _uiNodes.length; i++) {
+                if (matchedUiIndices.contains(i)) continue;
+                final ui = _uiNodes[i];
+                if (!ui.isCreated && _shouldKeepDraftUiNodes) {
+                  newUiNodes.add(ui);
+                }
+              }
+
+              newUiNodes.sort((a, b) => a.sequence.compareTo(b.sequence));
+              _uiNodes = newUiNodes;
+            }
+          });
+        }
+
+        if (state is NodeDeleted) {
+          final deletedNode = _cachedNodes?.cast<NodeDetail?>().firstWhere(
+            (n) => n?.nodeId == state.nodeId,
+            orElse: () => null,
+          );
+
+          // Immediately remove the deleted node from UI
+          setState(() {
+            _uiNodes.removeWhere((n) => n.realNodeId == state.nodeId);
+            if (deletedNode != null) {
+              _uiNodes.removeWhere(
+                (n) =>
+                    n.realNodeId == null && n.sequence == deletedNode.sequence,
+              );
+            }
+            _cachedNodes?.removeWhere((n) => n.nodeId == state.nodeId);
+            // Re-sequence remaining nodes
+            for (int i = 0; i < _uiNodes.length; i++) {
+              _uiNodes[i].sequence = i + 1;
+            }
+          });
+          _persistUnsavedUiNodes();
+
+          // Also sync with backend
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted && _userId != null && _userId!.isNotEmpty) {
+              _fetchNodes(_userId!);
             }
           });
         }
 
         if (state is NodeCreated) {
+          LogHandler.info(
+            'TeacherNodesOverview: NodeCreated received (${state.nodeId})',
+          );
           // Node ถูกสร้างสำเร็จ อัพเดท UI state
           if (_pendingNodeIndex != null) {
             setState(() {
@@ -358,7 +984,43 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
               _uiNodes[_pendingNodeIndex!].isCreated = true;
               _pendingNodeIndex = null;
             });
+            _persistUnsavedUiNodes();
           }
+
+          // ถ้ายังมี node ที่ต้องสร้างต่อ ให้ทำทีละตัวตามลำดับก่อน finalize
+          if (_createQueue.isNotEmpty) {
+            LogHandler.info(
+              'TeacherNodesOverview: Continue sequential node creation (${_createQueue.length} remaining)',
+            );
+            _handleCreateNode(_createQueue.removeAt(0));
+            return;
+          }
+
+          // ถ้ามี pending publish/draft ให้ dispatch UpdateLearningPathEvent หลังสร้างครบทุก node
+          if (_pendingPublish || _pendingSaveDraft) {
+            final status = _pendingPublish ? 'published' : 'draft';
+            LogHandler.info(
+              'TeacherNodesOverview: Dispatching deferred path update (status=$status)',
+            );
+            setState(() {
+              _pendingPublish = false;
+              _pendingSaveDraft = false;
+            });
+            _requestedPathUpdateStatus = status;
+            context.read<LearningPathBloc>().add(
+              UpdateLearningPathEvent(
+                pathId: widget.pathId,
+                title: _cachedLearningPath!.title,
+                objective: _cachedLearningPath!.objective,
+                description: _cachedLearningPath!.description,
+                coverImgUrl: _cachedLearningPath!.coverImageUrl,
+                publishStatus: status,
+              ),
+            );
+            return;
+          }
+
+          _scheduleDraftAutoSave();
 
           // Refetch nodes with a small delay to ensure backend transaction is committed
           Future.delayed(const Duration(milliseconds: 500), () {
@@ -368,7 +1030,13 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node created successfully')),
+            const SnackBar(
+              content: Text(
+                'Node created successfully',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
           );
         } else if (state is NodeUpdated) {
           // Node ถูกอัพเดทสำเร็จ
@@ -378,6 +1046,8 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             });
           }
 
+          _scheduleDraftAutoSave();
+
           // Refetch nodes with a small delay to ensure backend transaction is committed
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted && _userId != null && _userId!.isNotEmpty) {
@@ -386,73 +1056,123 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Node updated successfully')),
+            const SnackBar(
+              content: Text(
+                'Node updated successfully',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
           );
         } else if (state is LearningPathUpdated) {
-          // Learning path updated successfully
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Learning path updated successfully')),
+          LogHandler.success(
+            'TeacherNodesOverview: LearningPathUpdated received',
           );
 
-          // Navigate back to previous page - the parent page will handle refetch
-          Navigator.pop(context);
+          if (!_shouldExitAfterPathUpdate) {
+            return;
+          }
+
+          _shouldExitAfterPathUpdate = false;
+
+          final isPublishSuccess = _requestedPathUpdateStatus == 'published';
+          _requestedPathUpdateStatus = null;
+
+          // Learning path updated successfully
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isPublishSuccess
+                    ? 'Learning path published successfully'
+                    : 'Learning path updated successfully',
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.status,
+            ),
+          );
+
+          LogHandler.success(
+            'TeacherNodesOverview: Save Draft success, leaving current page',
+          );
+
+          final navigator = Navigator.of(context);
+
+          // Return success result to caller page.
+          // - Plain path caller: CreateLearningPathInputPage
+          // - AI path caller: AINodeReviewPage
+          // Each caller will handle the next navigation step.
+          navigator.pop(true);
         } else if (state is LearningPathError) {
+          _queuedSaveDraftRetryTimer?.cancel();
+          LogHandler.error(
+            'TeacherNodesOverview: LearningPathError -> ${state.message}',
+          );
           setState(() {
             _pendingNodeIndex = null;
+            _shouldExitAfterPathUpdate = false;
+            _queuedSaveDraftAfterPathLoad = false;
+            _requestedPathUpdateStatus = null;
           });
 
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error: ${state.message}')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Error: ${state.message}',
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.cancel,
+            ),
+          );
         }
       },
-      child: Scaffold(
-        appBar: const AppBarWidget(
-          title: 'Nodes Overview',
-          showBackButton: true,
-        ),
-        body: SafeArea(
-          child: Stack(
-            children: [
-              /// ===== CORE =====
-              NodesOverviewCore(
-                isEditable: true,
-                nodes: _displayNodes,
-                onNodeTap: (index) {
-                  _openEditNodeModal(context, index: index);
-                },
-              ),
-
-              /// ===== HEADER =====
-              Positioned(
-                top: 16,
-                left: 0,
-                right: 0,
-                child: HeaderBar(
-                  title: widget.title,
-                  showAddButton:
-                      _cachedLearningPath?.publishStatus.toLowerCase() !=
-                      'published',
-                  onPressed: () => _openEditNodeModal(context),
+      child: PopScope(
+        canPop: true,
+        child: Scaffold(
+          appBar: const AppBarWidget(
+            title: 'Nodes Overview',
+            showBackButton: true,
+          ),
+          body: SafeArea(
+            child: Stack(
+              children: [
+                /// ===== CORE =====
+                NodesOverviewCore(
+                  isEditable: true,
+                  isDraggable: !_isPublished,
+                  showAddBetween: !_isPublished,
+                  forceLockedStyle: false,
+                  showNodeTitle: true,
+                  nodes: _displayNodes,
+                  onNodeTap: (index) {
+                    _openEditNodeModal(context, index: index);
+                  },
+                  onReorder: _handleReorder,
+                  onAddNodeAfter: _handleAddNodeAfter,
                 ),
-              ),
 
-              /// ===== FLOATING BOTTOM =====
-              Positioned(
-                top: screenHeight * 0.65,
-                left: 0,
-                right: 0,
-                child: Builder(
-                  builder: (bottomContext) => BottomBar(
-                    onSaveDraft: () => _confirmSaveDraft(bottomContext),
-                    onPublish: () => _confirmPublish(bottomContext),
-                    isPublished:
-                        _cachedLearningPath?.publishStatus.toLowerCase() ==
-                        'published',
+                /// ===== HEADER =====
+                Positioned(
+                  top: 16,
+                  left: 0,
+                  right: 0,
+                  child: HeaderBar(title: _displayTitle, showAddButton: false),
+                ),
+
+                if (shouldShowBottomBar)
+                  Positioned(
+                    bottom: bottomInset + 20,
+                    left: 0,
+                    right: 0,
+                    child: Builder(
+                      builder: (bottomContext) => BottomBar(
+                        onSaveDraft: () => _confirmSaveDraft(bottomContext),
+                        onPublish: () => _confirmPublish(bottomContext),
+                        isPublished: _isPublished,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

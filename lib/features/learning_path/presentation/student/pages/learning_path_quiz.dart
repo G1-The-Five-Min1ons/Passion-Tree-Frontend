@@ -13,6 +13,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/popups/student/rating_popup.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/node_questions_usecase.dart';
+import 'package:passion_tree_frontend/features/learning_path/domain/usecases/learning_path_usecases.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
@@ -22,6 +23,7 @@ enum QuizViewState { loading, answering, result, error }
 
 class LearningPathQuizPage extends StatefulWidget {
   final String nodeId;
+  final String pathId;
   final String? title;
   final String? pathName;
   final int? totalNodes;
@@ -31,6 +33,7 @@ class LearningPathQuizPage extends StatefulWidget {
   const LearningPathQuizPage({
     super.key,
     required this.nodeId,
+    required this.pathId,
     this.title,
     this.pathName,
     this.totalNodes,
@@ -157,7 +160,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
                     'Quiz',
                     style: Theme.of(
                       context,
-                    ).textTheme.displaySmall?.copyWith(color: colors.primary),
+                    ).textTheme.displaySmall?.copyWith(color: colors.onPrimary),
                   ),
 
                   const SizedBox(height: 24),
@@ -260,7 +263,7 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
   }
 
   void _finishQuiz() {
-    final userId = widget.userId;
+    
 
     // Check if this is the last node (sequence starts from 1)
 
@@ -275,13 +278,44 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
       final scaffoldContext = context;
       final bloc = context.read<LearningPathBloc>();
 
+      Future<void> goToStatusPage() async {
+        if (!scaffoldContext.mounted) return;
+
+        Navigator.of(scaffoldContext).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: bloc,
+              child: const LearningPathStatusPage(),
+            ),
+          ),
+        );
+      }
+
       // Show congratulation popup
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (congratsDialogContext) => CompletionPopup(
-          onYes: () {
+          onYes: () async {
             // Note: CompletionPopup already handles Navigator.pop internally
+
+            int? initialContentQualityRating;
+            int? initialInstructorRating;
+            int? initialOverallRating;
+
+            try {
+              final getMyRatingUseCase = getIt<GetMyRating>();
+              final existingRating = await getMyRatingUseCase(widget.pathId);
+              initialContentQualityRating = existingRating.ratingContent;
+              initialInstructorRating = existingRating.ratingInstruct;
+              initialOverallRating = existingRating.ratingOverall
+                  .round()
+                  .clamp(1, 5);
+            } catch (_) {
+              // If rating does not exist yet, open popup with empty selection.
+            }
+
+            if (!scaffoldContext.mounted) return;
 
             // Show rating popup
             showDialog(
@@ -289,32 +323,42 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
               barrierDismissible: false,
               builder: (ratingDialogContext) => RatingPopup(
                 pathName: widget.pathName!,
-                onSubmit: () async {
-                  Navigator.of(
-                    ratingDialogContext,
-                  ).pop(); // Close rating popup first
+                initialContentQualityRating: initialContentQualityRating,
+                initialInstructorRating: initialInstructorRating,
+                initialOverallRating: initialOverallRating,
+                onCancel: () async {
+                  Navigator.of(ratingDialogContext).pop();
+
+                  LogHandler.info(
+                    'Action: User skipped rating for node ${widget.nodeId}',
+                  );
+
+                  bloc.add(CompleteNodeEvent(nodeId: widget.nodeId));
+                  await goToStatusPage();
+                },
+                onSubmit: (contentQuality, instructor, overall) async {
+                  Navigator.of(ratingDialogContext).pop();
 
                   LogHandler.info(
                     'Action: User completed and tracked progress for node ${widget.nodeId}',
                   );
+                  
+                  // Submit review with ratings
+                  bloc.add(
+                    SubmitReviewEvent(
+                      pathId: widget.pathId,
+                      contentQualityRating: contentQuality,
+                      instructorRating: instructor,
+                      overallRating: overall,
+                    ),
+                  );
+                  
                   // Mark node as completed
                   bloc.add(
-                    CompleteNodeEvent(nodeId: widget.nodeId, userId: userId),
+                    CompleteNodeEvent(nodeId: widget.nodeId),
                   );
 
-                  // Wait for backend to process completion (1 second)
-                  await Future.delayed(const Duration(milliseconds: 1000));
-
-                  // Navigate to status page after completion
-                  Navigator.of(scaffoldContext).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: bloc,
-                        child: const LearningPathStatusPage(),
-                      ),
-                    ),
-                    (route) => route.isFirst,
-                  );
+                  await goToStatusPage();
                 },
               ),
             );
@@ -326,20 +370,18 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
               'Action: User completed and tracked progress for node ${widget.nodeId}',
             );
             // Mark node as completed
-            bloc.add(CompleteNodeEvent(nodeId: widget.nodeId, userId: userId));
+            bloc.add(CompleteNodeEvent(nodeId: widget.nodeId));
 
-            // Wait for backend to process completion (1 second)
-            await Future.delayed(const Duration(milliseconds: 1000));
+            if (!scaffoldContext.mounted) return;
 
-            // Navigate to status page after completion
-            Navigator.of(scaffoldContext).pushAndRemoveUntil(
+            // Navigate to status page after completion without leaving quiz in back stack.
+            Navigator.of(scaffoldContext).pushReplacement(
               MaterialPageRoute(
                 builder: (_) => BlocProvider.value(
                   value: bloc,
                   child: const LearningPathStatusPage(),
                 ),
               ),
-              (route) => route.isFirst,
             );
           },
         ),
@@ -352,13 +394,11 @@ class _LearningPathQuizPageState extends State<LearningPathQuizPage> {
       );
       // Mark node as completed
       context.read<LearningPathBloc>().add(
-        CompleteNodeEvent(nodeId: widget.nodeId, userId: userId),
+        CompleteNodeEvent(nodeId: widget.nodeId),
       );
 
-      Navigator.pop(context); // Pop quiz page
-      Navigator.pop(
-        context,
-      ); // Pop learning node page -> back to nodes overview
+      // Pop only quiz page so LearningNodePage state is preserved.
+      Navigator.pop(context, true);
     }
   }
 }

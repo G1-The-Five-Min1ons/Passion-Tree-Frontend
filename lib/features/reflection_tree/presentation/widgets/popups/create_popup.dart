@@ -136,6 +136,7 @@ class _CreatePopUpState extends State<CreatePopUp> {
       },
       builder: (context, state) {
         final isLoading = state is ImageUploading || state is AlbumOperationLoading;
+        final colors = Theme.of(context).colorScheme;
 
         return Dialog(
           backgroundColor: Colors.transparent,
@@ -157,68 +158,63 @@ class _CreatePopUpState extends State<CreatePopUp> {
 
                 GestureDetector(
                   onTap: isLoading ? null : _pickImage,
-                  child: PixelBorderContainer(
-                      pixelSize: 2,
-                      width: double.infinity,
-                      height: 150,
-                      padding: EdgeInsets.zero,
-                      borderColor: AppColors.scale,
-                      fillColor: AppColors.scale,
-                      child: _selectedImage != null
-                          ? SizedBox(
+                  child: Container(
+                    width: double.infinity,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      border: Border.all(color: colors.primary, width: 2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: _selectedImage != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.file(
+                              _selectedImage!,
                               width: double.infinity,
-                              height: 150,
-                              child: ClipRRect(
-                                child: Image.file(
-                                  _selectedImage!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Center(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.broken_image,
-                                            size: 48,
-                                            color: AppColors.cancel,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Failed to load image',
-                                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                              color: AppColors.cancel,
-                                            ),
-                                          ),
-                                        ],
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.broken_image,
+                                        size: 40,
+                                        color: colors.error,
                                       ),
-                                    );
-                                  },
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Failed to load image',
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: colors.error,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.cloud_upload_outlined,
+                                size: 40,
+                                color: colors.onSurface.withValues(alpha: 0.5),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Upload Cover Image',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppColors.textSecondary.withValues(alpha: 0.5),
                                 ),
                               ),
-                            )
-                          : Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.add_photo_alternate,
-                                    size: 48,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Upload Cover Image',
-                                    style: Theme.of(context).textTheme.bodyMedium
-                                        ?.copyWith(
-                                          color: AppColors.textSecondary.withValues(
-                                            alpha: 0.5,
-                                          ),
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                    ),
+                            ],
+                          ),
+                  ),
                 ),
 
                 if (_imageError != null)
@@ -243,7 +239,7 @@ class _CreatePopUpState extends State<CreatePopUp> {
                     PixelTextField(
                       controller: _albumNameController,
                       hintText: widget.hint,
-                      height: 38,
+                      height: 35,
                       onChanged: (value) {
                         setState(() {
                           _albumNameError = _validateAlbumName(value.trim());

@@ -12,10 +12,13 @@ class AppButton extends StatefulWidget {
   final String? subText;
   final String? text;
   final Widget? icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color? backgroundColor;
   final Color? borderColor;
   final Color? textColor;
+  final double disabledOpacity;
+
+  final bool fullWidth;
 
   const AppButton({
     super.key,
@@ -28,6 +31,8 @@ class AppButton extends StatefulWidget {
     this.backgroundColor,
     this.borderColor,
     this.textColor,
+    this.fullWidth = false,
+    this.disabledOpacity = 0.4,
   });
 
   @override
@@ -36,6 +41,7 @@ class AppButton extends StatefulWidget {
 
 class _AppButtonState extends State<AppButton> {
   static const double _pixel = 4;
+  static const double _shadowOffset = 4;
   static const double _horizontalPadding = 40; // 20 + 20
   static const double _iconSize = 16;
   static const double _iconSpacing = 16;
@@ -43,15 +49,25 @@ class _AppButtonState extends State<AppButton> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final bgColor = widget.backgroundColor ?? scheme.primary;
-    final bdColor = widget.borderColor ?? AppColors.buttonBorder;
-    final fgColor = widget.textColor ?? scheme.onPrimary;
+    final isDisabled = widget.onPressed == null;
+    final disabledOpacity = widget.disabledOpacity.clamp(0.0, 1.0);
+    final bgColor = isDisabled
+      ? (widget.backgroundColor ?? scheme.primary).withValues(
+        alpha: disabledOpacity,
+        )
+        : widget.backgroundColor ?? scheme.primary;
+    final bdColor = widget.borderColor ?? AppColors.background;
+    final fgColor = isDisabled
+        ? (widget.textColor ?? scheme.onPrimary).withValues(
+            alpha: disabledOpacity,
+          )
+        : widget.textColor ?? scheme.onPrimary;
 
     final TextStyle buttonTextStyle = AppPixelTypography.smallTitle.copyWith(
       color: fgColor,
     );
 
-    final double buttonWidth = switch (widget.variant) {
+    final double baseButtonWidth = switch (widget.variant) {
       AppButtonVariant.iconOnly => _iconOnlyWidth(),
       AppButtonVariant.textWithIcon => _calculateWidthFromTextAndIcon(
         buttonTextStyle,
@@ -62,18 +78,54 @@ class _AppButtonState extends State<AppButton> {
       ),
     };
 
-    return GestureDetector(
-      onTap: widget.onPressed,
-      child: PixelBorderContainer(
-        padding: EdgeInsets.zero,
-        fillColor: bgColor,
-        borderColor: bdColor,
-        child: SizedBox(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hasBoundedWidth = constraints.hasBoundedWidth &&
+            constraints.maxWidth != double.infinity;
+        final buttonWidth = widget.fullWidth && hasBoundedWidth
+            ? _snapToPixel((constraints.maxWidth - _shadowOffset).clamp(_pixel, constraints.maxWidth))
+            : baseButtonWidth;
+
+        final Widget buttonContent = SizedBox(
           width: buttonWidth,
           height: _height(),
           child: Center(child: _buildContent(buttonTextStyle)),
-        ),
-      ),
+        );
+
+        return GestureDetector(
+          onTap: widget.onPressed,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              right: _shadowOffset,
+              bottom: _shadowOffset,
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  left: _shadowOffset,
+                  top: _shadowOffset,
+                  child: PixelBorderContainer(
+                    padding: EdgeInsets.zero,
+                    fillColor: AppColors.background,
+                    borderColor: bdColor,
+                    child: SizedBox(
+                      width: buttonWidth,
+                      height: _height(),
+                    ),
+                  ),
+                ),
+                PixelBorderContainer(
+                  padding: EdgeInsets.zero,
+                  fillColor: bgColor,
+                  borderColor: bdColor,
+                  child: buttonContent,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -141,6 +193,10 @@ class _AppButtonState extends State<AppButton> {
   }
 
   double _iconOnlyWidth() => 60;
+
+  double _snapToPixel(double value) {
+    return (value / _pixel).floor() * _pixel;
+  }
 
   double _calculateWidthFromText(TextStyle style) {
     final mainPainter = TextPainter(

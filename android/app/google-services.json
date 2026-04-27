@@ -12,7 +12,20 @@
           "package_name": "com.example.passion_tree_frontend"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "757180191292-3v3s9iar5ifuaksvrket1vsam7a1ej6h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.passion_tree_frontend",
+            "certificate_hash": "2a1cd930d63186d64d5300cdc8d692d50e3426e2"
+          }
+        },
+        {
+          "client_id": "757180191292-blgkl3rlakvoie71b5fi4fcofuqd4qu1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC_Shub9AtUwzRsTrcHlAVLfQkg1WZC88o"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "757180191292-blgkl3rlakvoie71b5fi4fcofuqd4qu1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

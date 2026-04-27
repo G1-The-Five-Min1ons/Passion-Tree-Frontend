@@ -65,6 +65,9 @@ typedef RefreshTokenCallback = Future<bool> Function();
 /// Callback to get the current access token
 typedef GetTokenCallback = Future<String?> Function();
 
+/// Callback to notify app-level auth expiry (e.g. force navigation to login)
+typedef SessionExpiredCallback = FutureOr<void> Function();
+
 /// API Handler for HTTP requests with logging and silent refresh support
 class ApiHandler {
   final http.Client _client;
@@ -72,28 +75,63 @@ class ApiHandler {
   // Callbacks for token management
   RefreshTokenCallback? onTokenRefresh;
   GetTokenCallback? getToken;
+  SessionExpiredCallback? onSessionExpired;
 
   // State for handling concurrent refreshes
   bool _isRefreshing = false;
+  bool _sessionExpiredNotified = false;
   final List<Completer<bool>> _refreshQueue = [];
 
-  ApiHandler({http.Client? client, this.onTokenRefresh, this.getToken})
-    : _client = client ?? http.Client();
+  ApiHandler({
+    http.Client? client,
+    this.onTokenRefresh,
+    this.getToken,
+    this.onSessionExpired,
+  }) : _client = client ?? http.Client();
+
+  static const Duration _refreshWaitTimeout = Duration(seconds: 8);
+
+  Future<void> _notifySessionExpiredOnce() async {
+    if (_sessionExpiredNotified) return;
+    _sessionExpiredNotified = true;
+    await onSessionExpired?.call();
+  }
+
+  void _abortRefreshQueue({required String reason}) {
+    LogHandler.error('ApiHandler: $reason');
+
+    final currentQueue = List<Completer<bool>>.from(_refreshQueue);
+    _refreshQueue.clear();
+    _isRefreshing = false;
+
+    for (final completer in currentQueue) {
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
+    }
+  }
 
   /// Wait if a token refresh is currently in progress
   Future<void> _waitForRefresh() async {
     if (!_isRefreshing) return;
 
     LogHandler.info('ApiHandler: Request waiting for token refresh...');
+
     final completer = Completer<bool>();
     _refreshQueue.add(completer);
-    final success = await completer.future;
 
-    if (!success) {
-      throw AuthException(
-        message: 'Token refresh failed while waiting',
-        statusCode: 401,
-      );
+    try {
+      final success = await completer.future.timeout(_refreshWaitTimeout);
+      if (!success) {
+        throw AuthException(message: 'Refresh failed', statusCode: 401);
+      }
+    } on TimeoutException {
+      _abortRefreshQueue(reason: 'Wait timeout. Forcing re-login...');
+      await _notifySessionExpiredOnce();
+      throw AuthException(message: 'Wait timeout', statusCode: 401);
+    } catch (e) {
+      await _notifySessionExpiredOnce();
+      rethrow;
     }
   }
 
@@ -155,8 +193,11 @@ class ApiHandler {
 
         if (!refreshSuccess) {
           LogHandler.error('ApiHandler: Token refresh failed. Logging out...');
+          await _notifySessionExpiredOnce();
           return response; // Return the original 401 response
         }
+
+        _sessionExpiredNotified = false;
       }
 
       // 4. If refresh succeeded, we need to update the Authorization header and retry
@@ -269,19 +310,52 @@ class ApiHandler {
   Future<ApiResponse<T>> delete<T>({
     required String url,
     Map<String, String>? headers,
+    dynamic body,
     T Function(dynamic)? fromJson,
     Duration timeout = const Duration(seconds: 30),
   }) async {
-    LogHandler.request(method: 'DELETE', url: url);
+    LogHandler.request(method: 'DELETE', url: url, body: body);
     return _requestWithRetry<T>(
       method: 'DELETE',
       url: url,
       headers: headers,
       fromJson: fromJson,
-      performRequest: (reqHeaders) =>
-          _client.delete(Uri.parse(url), headers: reqHeaders).timeout(timeout),
+      performRequest: (reqHeaders) => _client
+          .delete(
+            Uri.parse(url),
+            headers: reqHeaders,
+            body: body is String ? body : jsonEncode(body),
+          )
+          .timeout(timeout),
     );
   }
+
+    /// Make PATCH request
+    Future<ApiResponse<T>> patch<T>({
+      required String url,
+      Map<String, String>? headers,
+      dynamic body,
+      T Function(dynamic)? fromJson,
+      Duration timeout = const Duration(seconds: 30),
+    }) async {
+      LogHandler.request(method: 'PATCH', url: url, body: body);
+      return _requestWithRetry<T>(
+        method: 'PATCH',
+        url: url,
+        headers: headers,
+        fromJson: fromJson,
+        performRequest: (reqHeaders) => _client
+            .patch(
+              Uri.parse(url),
+              headers: reqHeaders,
+              body: body == null
+                  ? null
+                  : (body is String ? body : jsonEncode(body)),
+            )
+            .timeout(timeout),
+      );
+    }
+  
 
   /// Handle HTTP response
   ApiResponse<T> _handleResponse<T>(
@@ -293,7 +367,8 @@ class ApiHandler {
     final statusCode = response.statusCode;
 
     try {
-      final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+      final jsonData = jsonDecode(utf8.decode(response.bodyBytes))
+          as Map<String, dynamic>;
 
       LogHandler.response(
         method: method,
@@ -311,9 +386,13 @@ class ApiHandler {
       if (apiResponse.isSuccess) {
         LogHandler.success('$method $url completed successfully');
       } else if (apiResponse.isError) {
-        LogHandler.error(
-          '$method $url failed: ${apiResponse.error ?? "Unknown error"}',
-        );
+        final errorMsg =
+            '$method $url failed ($statusCode): ${apiResponse.error ?? "Unknown error"}';
+        if (statusCode >= 400 && statusCode < 500) {
+          LogHandler.warning(errorMsg);
+        } else {
+          LogHandler.error(errorMsg);
+        }
       }
 
       return apiResponse;
