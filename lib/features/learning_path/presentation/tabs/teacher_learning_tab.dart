@@ -197,7 +197,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
         // ===== RECOMMENDED =====
         const SizedBox(height: 60),
         Text(
-          'Recommended for you',
+          'Recommended',
           style: AppPixelTypography.title.copyWith(color: colors.onPrimary),
         ),
         const SizedBox(height: 40),

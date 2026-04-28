@@ -256,7 +256,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
 
                         // Recommended for you section
                         Text(
-                          'Recommended for you',
+                          'Recommended',
                           style: AppPixelTypography.title.copyWith(
                             color: colors.onPrimary,
                           ),
