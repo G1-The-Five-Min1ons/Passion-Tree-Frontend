@@ -25,7 +25,7 @@ class PopularLearningPathsSection extends StatelessWidget {
 
     if (paths.isEmpty && !isLoading) return const SizedBox();
 
-    final title = hasEnrolledPaths ? 'Recommended for you' : 'Popular Learning Paths';
+    final title = hasEnrolledPaths ? 'Recommended' : 'Popular Learning Paths';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
