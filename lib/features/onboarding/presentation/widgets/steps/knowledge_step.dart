@@ -19,11 +19,12 @@ class KnowledgeStep extends StatelessWidget {
       children: [
         Text(
           OnboardingConstants.knowledgeQuestion,
-          style: AppPixelTypography.h2.copyWith(
+          style: AppPixelTypography.h3.copyWith(
             color: Theme.of(context).colorScheme.onPrimary,
+            height: 1.1,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         ...items.map((e) => OnboardingChoiceItem(
               label: e,
               isSelected: selected.contains(e),

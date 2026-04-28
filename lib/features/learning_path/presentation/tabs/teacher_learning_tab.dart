@@ -185,7 +185,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
               crossAxisCount: 2,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
-              childAspectRatio: 0.692, // 180/260 สำหรับ progress card
+              childAspectRatio: 0.62, // taller progress card
             ),
             itemBuilder: (context, index) {
               return CourseProgressCard(
@@ -197,7 +197,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
         // ===== RECOMMENDED =====
         const SizedBox(height: 60),
         Text(
-          'Recommended for you',
+          'Recommended',
           style: AppPixelTypography.title.copyWith(color: colors.onPrimary),
         ),
         const SizedBox(height: 40),
