@@ -97,7 +97,9 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
               }
 
               if (state.message != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                final messenger = ScaffoldMessenger.of(context);
+                messenger.removeCurrentSnackBar();
+                messenger.showSnackBar(
                   SnackBar(
                     content: Text(state.message!),
                     backgroundColor: AppColors.status,
@@ -107,7 +109,9 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
               }
             } else if (state is AlbumError &&
                 _isHeartShortageMessage(state.message)) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.removeCurrentSnackBar();
+              messenger.showSnackBar(
                 SnackBar(
                   content: Text(state.message),
                   backgroundColor: Theme.of(context).colorScheme.error,

@@ -63,7 +63,9 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
   }
 
   void _showTreeDiedSnackbar() {
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
       const SnackBar(
         content: Text('Retrieve the tree to continue'),
         backgroundColor: AppColors.cancel,
@@ -72,7 +74,9 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
   }
 
   void _showTreeIdUnavailableSnackbar() {
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
       const SnackBar(
         content: Text(
           'Tree information is unavailable right now. Please try again.',
@@ -258,7 +262,9 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.removeCurrentSnackBar();
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Failed to end reflecting: $e'),
           backgroundColor: AppColors.cancel,
@@ -410,9 +416,9 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
 
                                     if (_isTreeReflectionClosed(item) &&
                                         !chapter.hasReflection) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
+                                      final messenger = ScaffoldMessenger.of(context);
+                                      messenger.removeCurrentSnackBar();
+                                      messenger.showSnackBar(
                                         const SnackBar(
                                           content: Text(
                                             'This tree has ended. You cannot add new reflections.',
@@ -426,9 +432,9 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
 
                                     if (!chapter.canReflect) {
                                       // Learning Path not completed
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
+                                      final messenger = ScaffoldMessenger.of(context);
+                                      messenger.removeCurrentSnackBar();
+                                      messenger.showSnackBar(
                                         SnackBar(
                                           content: Text(
                                             'Please finish this chapter before reflecting',

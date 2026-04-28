@@ -62,7 +62,9 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
       body: BlocConsumer<AlbumBloc, AlbumState>(
         listener: (context, state) {
           if (state is AlbumError) {
-            ScaffoldMessenger.of(context).showSnackBar(
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.removeCurrentSnackBar();
+            messenger.showSnackBar(
               SnackBar(
                 content: Text(state.message),
                 backgroundColor: Theme.of(context).colorScheme.error,
@@ -72,7 +74,9 @@ class _ReflectionTreePageState extends State<ReflectionTreePage>{
           
           // Show success message when albums are loaded with a message
           if (state is AlbumsLoaded && state.message != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.removeCurrentSnackBar();
+            messenger.showSnackBar(
               SnackBar(
                 content: Text(state.message!),
                 backgroundColor: AppColors.status,

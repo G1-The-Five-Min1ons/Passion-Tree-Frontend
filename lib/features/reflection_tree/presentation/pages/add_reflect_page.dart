@@ -169,7 +169,9 @@ class _AddReflectPageState extends State<AddReflectPage>{
               });
             }
 
-            ScaffoldMessenger.of(context).showSnackBar(
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.removeCurrentSnackBar();
+            messenger.showSnackBar(
               SnackBar(
                 content: Text(state.message),
                 backgroundColor: Colors.green,
@@ -200,7 +202,9 @@ class _AddReflectPageState extends State<AddReflectPage>{
               });
             }
 
-            ScaffoldMessenger.of(context).showSnackBar(
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.removeCurrentSnackBar();
+            messenger.showSnackBar(
               SnackBar(
                 content: Text(state.message),
                 backgroundColor: Colors.red,
@@ -375,7 +379,9 @@ class _AddReflectPageState extends State<AddReflectPage>{
                           ? null
                           : () {
                         if (_selectedPathId == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          final messenger = ScaffoldMessenger.of(context);
+                          messenger.removeCurrentSnackBar();
+                          messenger.showSnackBar(
                             const SnackBar(
                               content: Text('Please select a learning path'),
                               backgroundColor: AppColors.cancel,
@@ -384,7 +390,9 @@ class _AddReflectPageState extends State<AddReflectPage>{
                           return;
                         }
                         if (_selectedAlbumId == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          final messenger = ScaffoldMessenger.of(context);
+                          messenger.removeCurrentSnackBar();
+                          messenger.showSnackBar(
                             const SnackBar(
                               content: Text('Please select an album'),
                               backgroundColor: AppColors.cancel,
