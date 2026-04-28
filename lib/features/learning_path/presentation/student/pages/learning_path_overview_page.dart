@@ -244,7 +244,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                                   mainAxisSpacing: 35,
                                   crossAxisSpacing: 12,
                                   childAspectRatio:
-                                      0.692, // 180/260 สำหรับ progress card
+                                      0.62, // taller progress card
                                 ),
                             itemBuilder: (context, index) {
                               return CourseProgressCard(
@@ -256,7 +256,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
 
                         // Recommended for you section
                         Text(
-                          'Recommended for you',
+                          'Recommended',
                           style: AppPixelTypography.title.copyWith(
                             color: colors.onPrimary,
                           ),
