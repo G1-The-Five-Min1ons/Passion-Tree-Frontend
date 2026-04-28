@@ -485,6 +485,7 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<void> signInWithGoogle() async {
+    SessionExpiryNotifier.isAuthFlowInProgress = true;
     try {
       LogHandler.info(
         'AuthRepository: Initializing Google Sign-In instance...',
@@ -523,6 +524,8 @@ class AuthRepositoryImpl implements IAuthRepository {
       // Sign out from Google to allow re-authentication
       await GoogleSignIn.instance.signOut();
       rethrow;
+    } finally {
+      SessionExpiryNotifier.isAuthFlowInProgress = false;
     }
   }
 

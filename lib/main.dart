@@ -56,6 +56,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   Future<void> _validateSessionOnResume() async {
+    if (SessionExpiryNotifier.isAuthFlowInProgress) return;
+
     final isLoggedIn = await getIt<IAuthRepository>().isLoggedIn();
     if (!mounted || isLoggedIn) return;
 
