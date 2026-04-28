@@ -18,7 +18,7 @@ class AppColors{
   static const Color homeBarColor = Color(0XFF00327C); // BottomNav
   static const Color iconbar      = Color(0XFF8ABCFF);
   static const Color title = Color(0xFF0088FF);
-  static const Color cardBorder     = Color(0xFF1E4080);
+  static const Color cardBorder     = Color.fromARGB(255, 47, 96, 188);
   static const Color buttonBorder   = Color(0xFFFFFFFF);
   static const Color activityone = Color.fromARGB(255, 117, 234, 126);
   static const Color activitytwo = Color.fromARGB(255, 91, 182, 98);
