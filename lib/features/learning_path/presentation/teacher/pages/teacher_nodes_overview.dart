@@ -387,20 +387,23 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
     if (index != null && index < _displayNodes.length) {
       final displayNode = _displayNodes[index];
       isPrimaryNode = index == 0;
+      final displayNodeId = displayNode.nodeId.trim();
       final uiNode = _uiNodes.firstWhere(
-        (n) => n.sequence == displayNode.sequence,
-        orElse: () => NodeUiState(
-          title: displayNode.title,
-          description: displayNode.description,
-          sequence: displayNode.sequence,
-          isCreated: false,
+        (n) => n.realNodeId == displayNodeId,
+        orElse: () => _uiNodes.firstWhere(
+          (n) => n.sequence == displayNode.sequence,
+          orElse: () => NodeUiState(
+            title: displayNode.title,
+            description: displayNode.description,
+            sequence: displayNode.sequence,
+            isCreated: false,
+          ),
         ),
       );
 
       final resolvedNodeId = uiNode.realNodeId;
       final hasRealNodeId = resolvedNodeId != null && resolvedNodeId.isNotEmpty;
       final existingNodeId = hasRealNodeId ? resolvedNodeId : null;
-      final displayNodeId = displayNode.nodeId.trim();
       final isSyntheticNodeId =
           displayNodeId.startsWith('new_node_') ||
           displayNodeId.startsWith('draft_node_');
@@ -441,6 +444,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
       builder: (_) => BlocProvider.value(
         value: bloc,
         child: EditNodeModal(
+          key: ValueKey(nodeId),
           nodeId: nodeId,
           isNewNode: isNewNode,
           isAiPath: _isAiPath,
