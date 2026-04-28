@@ -15,11 +15,21 @@ class ActivityHeatmapWidget extends StatefulWidget {
 
 class _ActivityHeatmapWidgetState extends State<ActivityHeatmapWidget> {
   static const _rows = 7;
-  static const _cols = 16;
+  static const _cols = 12;
   static const _totalDays = _rows * _cols;
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   String? _selectedInfo;
@@ -131,7 +141,9 @@ class _ActivityHeatmapWidgetState extends State<ActivityHeatmapWidget> {
               // --- Heatmap grid ---
               ...List.generate(_rows, (row) {
                 return Padding(
-                  padding: EdgeInsets.only(bottom: row < _rows - 1 ? cellGap : 0),
+                  padding: EdgeInsets.only(
+                    bottom: row < _rows - 1 ? cellGap : 0,
+                  ),
                   child: Row(
                     children: List.generate(_cols, (col) {
                       final level = _levelAt(col, row);

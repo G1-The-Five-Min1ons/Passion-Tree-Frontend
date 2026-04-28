@@ -21,6 +21,7 @@ class LearningNodePage extends StatefulWidget {
   final int? totalNodes;
   final int? currentNodeSequence;
   final String userId;
+  final bool isEnrolled;
 
   const LearningNodePage({
     super.key,
@@ -30,6 +31,7 @@ class LearningNodePage extends StatefulWidget {
     this.totalNodes,
     this.currentNodeSequence,
     required this.userId,
+    this.isEnrolled = true,
   });
 
   @override
@@ -40,10 +42,13 @@ class _LearningNodePageState extends State<LearningNodePage> {
   NodeDetail? _cachedNodeDetail;
   YoutubePlayerController? _videoController;
   bool _isFullscreen = false;
+  late bool _isEnrolled;
+  bool _enrollCalled = false;
 
   @override
   void initState() {
     super.initState();
+    _isEnrolled = widget.isEnrolled;
     LogHandler.info('Action: User joined learning node ${widget.nodeId}');
     context.read<LearningPathBloc>().add(
       FetchNodeDetail(nodeId: widget.nodeId),
@@ -62,6 +67,19 @@ class _LearningNodePageState extends State<LearningNodePage> {
     super.dispose();
   }
 
+  /// Enrolls the user if not yet enrolled. Safe to call multiple times.
+  void _enrollIfNeeded() {
+    if (!_isEnrolled && !_enrollCalled) {
+      _enrollCalled = true;
+      LogHandler.info(
+        'Action: Auto-enroll triggered for path ${widget.pathId}',
+      );
+      context.read<LearningPathBloc>().add(
+        EnrollPathEvent(pathId: widget.pathId),
+      );
+    }
+  }
+
   void _onVideoControllerUpdate() {
     final controller = _videoController;
     if (controller == null) return;
@@ -69,12 +87,9 @@ class _LearningNodePageState extends State<LearningNodePage> {
     final isFullscreen = controller.value.isFullScreen;
     if (isFullscreen == _isFullscreen) return;
 
-    // Keep transition handling minimal to avoid audio glitches caused by
-    // forcing play/seek during fullscreen mode changes.
     _isFullscreen = isFullscreen;
     homeBarVisibilityNotifier.value = !isFullscreen;
 
-    // Hide system overlays in fullscreen and restore on exit.
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.manual,
       overlays: isFullscreen ? const [] : SystemUiOverlay.values,
@@ -152,11 +167,14 @@ class _LearningNodePageState extends State<LearningNodePage> {
                         controller: _videoController,
                         player: player,
                         onStartLearning: () {
+                          _enrollIfNeeded();
                           context.read<LearningPathBloc>().add(
                             StartNodeEvent(nodeId: widget.nodeId),
                           );
                         },
+                        onMaterialTap: _enrollIfNeeded,
                         onTakeQuiz: () async {
+                          _enrollIfNeeded();
                           final bloc = context.read<LearningPathBloc>();
                           final quizCompleted = await Navigator.push<bool>(
                             context,
@@ -219,6 +237,11 @@ class _LearningNodePageState extends State<LearningNodePage> {
       listener: (context, state) {
         if (state is NodeDetailLoaded) {
           _initVideoController(state.nodeDetail.linkVdo);
+        }
+
+        // Track enrollment confirmation
+        if (state is PathEnrolled && state.pathId == widget.pathId) {
+          setState(() => _isEnrolled = true);
         }
       },
       child: _videoController != null

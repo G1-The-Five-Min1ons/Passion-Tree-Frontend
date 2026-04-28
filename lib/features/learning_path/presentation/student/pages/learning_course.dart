@@ -5,12 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/learning_course_content.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/student_nodes_overview.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/node_comments_section.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_node.dart';
 
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
@@ -34,15 +32,14 @@ class LearningCoursePage extends StatefulWidget {
 
 class _LearningCoursePageState extends State<LearningCoursePage> {
   List<NodeDetail>? _cachedNodes;
-  bool _isEnrolling = false;
   String? _userId;
-  EnrolledLearningPath? _enrolledPath; // Cache enrolled path after enrollment
-  LearningPath? _fullCourse; // Full course data fetched from API
+  EnrolledLearningPath? _enrolledPath;
+  LearningPath? _fullCourse;
 
   @override
   void initState() {
     super.initState();
-    _enrolledPath = widget.enrolledPath; // Initialize with widget value
+    _enrolledPath = widget.enrolledPath;
     _loadUserAndFetchNodes();
   }
 
@@ -55,7 +52,6 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
       widget.course.description;
 
   Future<void> _loadUserAndFetchNodes() async {
-    // Load nodes for preview map on this page.
     context.read<LearningPathBloc>().add(
       FetchNodesForPath(pathId: widget.course.id),
     );
@@ -67,7 +63,6 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
       context.read<LearningPathBloc>().add(FetchLearningPathOverview());
     }
 
-    // Fetch full path details if description is missing (e.g. from Dashboard)
     if (widget.course.description.isEmpty &&
         (widget.enrolledPath?.description.isEmpty ?? true)) {
       context.read<LearningPathBloc>().add(
@@ -76,38 +71,37 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
     }
   }
 
-  /// Navigate to nodes overview page and refetch data when returning
-  void _navigateToNodesOverview() {
-    if (!mounted) return;
+  void _handlePreviewNodeTap(int index, List<NodeDetail> nodes) {
+    if (index >= nodes.length) return;
+    final node = nodes[index];
 
-    Navigator.pushReplacement(
+    LogHandler.info('Action: Preview node tap → nodeId=${node.nodeId}');
+
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
           value: context.read<LearningPathBloc>(),
-          child: StudentNodesOverviewPage(
-            course: widget.course,
-            enrolledPath: _enrolledPath,
+          child: LearningNodePage(
+            nodeId: node.nodeId,
+            pathId: widget.course.id,
+            pathName: widget.course.title,
+            totalNodes: nodes.length,
+            currentNodeSequence: node.sequence,
+            userId: _userId ?? '',
+            isEnrolled: _enrolledPath != null,
           ),
         ),
       ),
-    );
-  }
-
-  void _handleStartJourney(BuildContext context) {
-    final userId = _userId ?? '';
-    if (userId.isEmpty) return;
-
-    // If not enrolled yet, enroll first
-    if (_enrolledPath == null) {
-      setState(() => _isEnrolling = true);
-      context.read<LearningPathBloc>().add(
-        EnrollPathEvent(pathId: widget.course.id),
-      );
-    } else {
-      // Already enrolled, navigate directly
-      _navigateToNodesOverview();
-    }
+    ).then((_) {
+      if (!mounted) return;
+      if (_userId?.isNotEmpty == true) {
+        context.read<LearningPathBloc>().add(FetchLearningPathOverview());
+        context.read<LearningPathBloc>().add(
+          FetchNodesForPath(pathId: widget.course.id),
+        );
+      }
+    });
   }
 
   @override
@@ -117,49 +111,37 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
       body: SafeArea(
         child: BlocListener<LearningPathBloc, LearningPathState>(
           listener: (context, state) {
-            // Handle full path details loaded (from Dashboard with incomplete data)
             if (state is LearningPathDetailLoaded) {
               setState(() {
                 _fullCourse = state.learningPath;
               });
             }
 
-            // Handle enrollment success
-            if (state is PathEnrolled &&
-                state.pathId == widget.course.id &&
-                _isEnrolling) {
+            // Update enrolled path state when enrollment succeeds (triggered from node page)
+            if (state is PathEnrolled && state.pathId == widget.course.id) {
               setState(() {
-                _isEnrolling = false;
-                _enrolledPath =
-                    state.enrolledPath; // Use enrolled path data from backend
+                _enrolledPath = state.enrolledPath;
               });
-              _navigateToNodesOverview();
             }
 
-            // Handle enrollment error
-            if (state is LearningPathError && _isEnrolling) {
-              LogHandler.error('[UI] Enrollment failed: ${state.message}');
-              setState(() => _isEnrolling = false);
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Failed to enroll: ${state.message}',
-                    style: const TextStyle(color: AppColors.textPrimary),
-                  ),
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                ),
-              );
+            // Update enrolled path when overview refreshes
+            if (state is LearningPathOverviewLoaded) {
+              try {
+                final updatedPath = state.enrolledPaths.firstWhere(
+                  (path) => path.pathId == widget.course.id,
+                );
+                setState(() => _enrolledPath = updatedPath);
+              } catch (_) {
+                // Not enrolled yet
+              }
             }
           },
           child: BlocBuilder<LearningPathBloc, LearningPathState>(
             builder: (context, state) {
-              // Update cached nodes when NodesLoaded state is received
               if (state is NodesLoaded && state.pathId == widget.course.id) {
                 _cachedNodes = state.nodes;
               }
 
-              // Use cached nodes to prevent loading spinner when returning from node detail page
               final nodes = _cachedNodes;
 
               return SingleChildScrollView(
@@ -177,19 +159,11 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
                       LearningCourseContent(
                         title: _title,
                         description: _description,
-                        isEnrolled: _enrolledPath != null,
-                        isEnrolling: _isEnrolling,
                         nodes: nodes,
-                        onStartJourney: () => _handleStartJourney(context),
+                        onNodeTap: nodes != null
+                            ? (index) => _handlePreviewNodeTap(index, nodes)
+                            : null,
                       ),
-
-                      if (nodes != null) ...[
-                        const SizedBox(height: 32),
-                        CommentsSection(
-                          pathId: widget.course.id,
-                          userId: _userId ?? '',
-                        ),
-                      ],
                     ],
                   ),
                 ),

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
@@ -10,24 +8,24 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/widget
 class LearningCourseContent extends StatelessWidget {
   final String title;
   final String description;
-  final VoidCallback onStartJourney;
-  final bool isEnrolled;
-  final bool isEnrolling;
   final List<NodeDetail>? nodes;
+  final Function(int)? onNodeTap;
 
   const LearningCourseContent({
     super.key,
     required this.title,
     required this.description,
-    required this.onStartJourney,
-    this.isEnrolled = false,
-    this.isEnrolling = false,
     this.nodes,
+    this.onNodeTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final previewHeight = (MediaQuery.sizeOf(context).height * 0.5).clamp(
+      400.0,
+      530.0,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,44 +44,7 @@ class LearningCourseContent extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 32),
-
-        /// ===== COURSE MAP PREVIEW =====
-        SizedBox(
-          width: double.infinity,
-          height: 400,
-          child: nodes != null && nodes!.isNotEmpty
-              ? Padding(
-                  padding: const EdgeInsets.all(2.0),
-                  child: FittedBox(
-                    fit: BoxFit.cover,
-                    child: SizedBox(
-                      width: 600,
-                      height: 800,
-                      child: IgnorePointer(
-                        child: NodesOverviewCore(
-                          isEditable: false,
-                          nodes: nodes!,
-                          onNodeTap: (_) {}, // Disabled in preview
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              : Center(
-                  child: nodes == null
-                      ? const CircularProgressIndicator()
-                      : Text(
-                          'No nodes available',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(color: colors.onSurface),
-                        ),
-                ),
-        ),
-
-    
+        const SizedBox(height: 16),
 
         /// ===== DESCRIPTION =====
         PixelBorderContainer(
@@ -101,9 +62,7 @@ class LearningCourseContent extends StatelessWidget {
             children: [
               Text(
                 'Description',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
               Text(
@@ -118,64 +77,32 @@ class LearningCourseContent extends StatelessWidget {
 
         const SizedBox(height: 32),
 
-        /// ===== READY TO EXPLORE =====
-      PixelBorderContainer(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        borderColor: AppColors.cardBorder,
-        fillColor: AppColors.surface,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1A3660), AppColors.surface],
-        ),
-        child: Column(
-          children: [
-            /// ===== TITLE (CENTER FIX) =====
-            Center(
-              child: SizedBox(
-                width: double.infinity, 
-                child: Text(
-                  isEnrolled ? 'Continue Your Journey' : 'Ready To Explore?',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.titleSemiBold.copyWith(
-                      color: colors.onSurface,
+        /// ===== COURSE MAP PREVIEW (tappable) =====
+        SizedBox(
+          width: double.infinity,
+          height: previewHeight,
+          child: nodes != null && nodes!.isNotEmpty
+              ? ClipRect(
+                  child: Padding(
+                    padding: const EdgeInsets.all(2.0),
+                    child: NodesOverviewCore(
+                      isEditable: false,
+                      nodeSize: 70,
+                      nodes: nodes!,
+                      onNodeTap: onNodeTap ?? (_) {},
                     ),
+                  ),
+                )
+              : Center(
+                  child: nodes == null
+                      ? const CircularProgressIndicator()
+                      : Text(
+                          'No nodes available',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: colors.onSurface),
+                        ),
                 ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            /// ===== NODE IMAGE =====
-            Center(
-              child: Image.asset(
-                'assets/images/learning_path/node/node_active.png',
-                width: 90,
-                height: 90,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            /// ===== BUTTON =====
-            Center(
-              child: Opacity(
-                opacity: isEnrolling ? 0.6 : 1.0,
-                child: AppButton(
-                  variant: AppButtonVariant.text,
-                  text: isEnrolling 
-                      ? 'Enrolling...'
-                      : (isEnrolled ? 'Continue Journey' : 'Start Journey'),
-                  onPressed: isEnrolling ? () {} : onStartJourney,
-                ),
-              ),
-            ),
-          ],
         ),
-      ),
-
-
       ],
     );
   }

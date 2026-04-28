@@ -71,6 +71,7 @@ class NodeInfoSection extends StatelessWidget {
           borderColor: isTitleInvalid ? AppColors.cancel : null,
           onChanged: isReadOnly ? null : onTitleChanged,
           readOnly: isReadOnly,
+          maxLength: 100,
         ),
 
         if (titleWarningText != null && titleWarningText!.isNotEmpty)
@@ -94,6 +95,7 @@ class NodeInfoSection extends StatelessWidget {
           borderColor: isDescriptionInvalid ? AppColors.cancel : null,
           onChanged: isReadOnly ? null : onDescriptionChanged,
           readOnly: isReadOnly,
+          maxLength: 500,
         ),
 
         if (descriptionWarningText != null &&

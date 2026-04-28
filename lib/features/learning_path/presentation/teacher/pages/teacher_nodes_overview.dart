@@ -1136,18 +1136,22 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
             child: Stack(
               children: [
                 /// ===== CORE =====
-                NodesOverviewCore(
-                  isEditable: true,
-                  isDraggable: !_isPublished,
-                  showAddBetween: !_isPublished,
-                  forceLockedStyle: false,
-                  showNodeTitle: true,
-                  nodes: _displayNodes,
-                  onNodeTap: (index) {
-                    _openEditNodeModal(context, index: index);
-                  },
-                  onReorder: _handleReorder,
-                  onAddNodeAfter: _handleAddNodeAfter,
+                Positioned.fill(
+                  top: 84,
+                  child: NodesOverviewCore(
+                    isEditable: true,
+                    isDraggable: !_isPublished,
+                    showAddBetween: !_isPublished,
+                    forceLockedStyle: false,
+                    showNodeTitle: true,
+                    description: _cachedLearningPath?.description ?? '',
+                    nodes: _displayNodes,
+                    onNodeTap: (index) {
+                      _openEditNodeModal(context, index: index);
+                    },
+                    onReorder: _handleReorder,
+                    onAddNodeAfter: _handleAddNodeAfter,
+                  ),
                 ),
 
                 /// ===== HEADER =====

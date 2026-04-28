@@ -9,6 +9,7 @@ class TreeCanvas extends StatelessWidget {
   final Color? lineColor;
   final bool showAddBetween;
   final Function(int afterIndex)? onAddNodeAfter;
+  final double startYOffset;
 
   const TreeCanvas({
     super.key,
@@ -18,6 +19,7 @@ class TreeCanvas extends StatelessWidget {
     this.lineColor,
     this.showAddBetween = false,
     this.onAddNodeAfter,
+    this.startYOffset = 60.0,
   });
 
   Offset _addButtonCenter({
@@ -56,10 +58,12 @@ class TreeCanvas extends StatelessWidget {
                 final from = TreeLayoutHelper.getOffset(
                   index: i,
                   canvasWidth: canvasWidth,
+                  startYOffset: startYOffset,
                 );
                 final to = TreeLayoutHelper.getOffset(
                   index: i + 1,
                   canvasWidth: canvasWidth,
+                  startYOffset: startYOffset,
                 );
                 final connectorPath = TreeLayoutHelper.createSCurvePath(
                   from,
@@ -85,7 +89,11 @@ class TreeCanvas extends StatelessWidget {
           for (int i = 0; i < itemCount; i++)
             nodeBuilder(
               i,
-              TreeLayoutHelper.getOffset(index: i, canvasWidth: canvasWidth),
+              TreeLayoutHelper.getOffset(
+                index: i,
+                canvasWidth: canvasWidth,
+                startYOffset: startYOffset,
+              ),
             ),
 
           // "+" buttons between nodes
@@ -96,12 +104,14 @@ class TreeCanvas extends StatelessWidget {
                   final pos = TreeLayoutHelper.getOffset(
                     index: i,
                     canvasWidth: canvasWidth,
+                    startYOffset: startYOffset,
                   );
                   Offset nextPos;
                   if (i < itemCount - 1) {
                     nextPos = TreeLayoutHelper.getOffset(
                       index: i + 1,
                       canvasWidth: canvasWidth,
+                      startYOffset: startYOffset,
                     );
                   } else {
                     // For the last node, place "+" button below it

@@ -15,6 +15,7 @@ class LearningNodeContent extends StatefulWidget {
   final List<lp.Material> materials;
   final VoidCallback onStartLearning;
   final VoidCallback onTakeQuiz;
+  final VoidCallback? onMaterialTap;
   final String status;
   final String? videoUrl;
   final YoutubePlayerController? controller;
@@ -27,6 +28,7 @@ class LearningNodeContent extends StatefulWidget {
     required this.materials,
     required this.onStartLearning,
     required this.onTakeQuiz,
+    this.onMaterialTap,
     required this.status,
     this.videoUrl,
     this.controller,
@@ -63,6 +65,7 @@ class _LearningNodeContentState extends State<LearningNodeContent> {
   }
 
   Future<void> _openMaterial(String url) async {
+    widget.onMaterialTap?.call();
     final uri = Uri.tryParse(url.trim());
     if (uri == null || !uri.hasScheme) return;
 

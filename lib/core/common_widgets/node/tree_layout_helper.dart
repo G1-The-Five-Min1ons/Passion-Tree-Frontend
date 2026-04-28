@@ -6,11 +6,12 @@ class TreeLayoutHelper {
     required double canvasWidth,
     double verticalSpacing = 120.0,
     double nodeSize = 64.0,
+    double startYOffset = 60.0,
   }) {
     final double centerX = canvasWidth / 2;
     final double horizontalShift = canvasWidth * 0.25;
 
-    final double dy = 60.0 + (index * verticalSpacing);
+    final double dy = startYOffset + (index * verticalSpacing);
 
     double dx = centerX;
     if (index % 3 == 1) dx = centerX - horizontalShift;
@@ -22,7 +23,6 @@ class TreeLayoutHelper {
     return Offset(dx, dy);
   }
 
-
   static Path createSCurvePath(Offset start, Offset end) {
     final path = Path();
     path.moveTo(start.dx, start.dy);
@@ -33,6 +33,3 @@ class TreeLayoutHelper {
     return path;
   }
 }
-
-
-

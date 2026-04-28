@@ -10,7 +10,7 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/c
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/comment/comment_event.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/comment/comment_state.dart';
 
-class CommentsSection extends StatelessWidget {
+class CommentsSection extends StatefulWidget {
   final String? nodeId;
   final String? pathId;
   final String userId;
@@ -23,15 +23,125 @@ class CommentsSection extends StatelessWidget {
   }) : assert(nodeId != null || pathId != null);
 
   @override
+  State<CommentsSection> createState() => _CommentsSectionState();
+}
+
+class _CommentsSectionState extends State<CommentsSection> {
+  bool _isExpanded = false;
+  bool _hasFetched = false;
+  late final CommentBloc _commentBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _commentBloc = getIt<CommentBloc>();
+  }
+
+  @override
+  void dispose() {
+    _commentBloc.close();
+    super.dispose();
+  }
+
+  void _handleToggle() {
+    if (!_hasFetched) {
+      _hasFetched = true;
+      _commentBloc.add(
+        FetchComments(nodeId: widget.nodeId, pathId: widget.pathId),
+      );
+    }
+    setState(() => _isExpanded = !_isExpanded);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) =>
-          getIt<CommentBloc>()
-            ..add(FetchComments(nodeId: nodeId, pathId: pathId)),
-      child: _CommentsSectionContent(
-        nodeId: nodeId,
-        pathId: pathId,
-        userId: userId,
+    final colors = Theme.of(context).colorScheme;
+
+    return BlocProvider.value(
+      value: _commentBloc,
+      child: PixelBorderContainer(
+        width: double.infinity,
+        padding: const EdgeInsets.all(0),
+        borderColor: AppColors.cardBorder,
+        fillColor: colors.surface,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ===== TOGGLE HEADER =====
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _handleToggle,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                child: BlocBuilder<CommentBloc, CommentState>(
+                  bloc: _commentBloc,
+                  builder: (_, state) {
+                    final count = state is CommentLoaded
+                        ? state.comments.length
+                        : 0;
+                    return Row(
+                      children: [
+                        Text(
+                          'Comments',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        if (count > 0) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.secondaryBrand.withValues(
+                                alpha: 0.15,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '$count',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: AppColors.secondaryBrand,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ),
+                        ],
+                        const Spacer(),
+                        Icon(
+                          _isExpanded
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
+                          color: colors.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            // ===== EXPANDED CONTENT =====
+            if (_isExpanded) ...[
+              Divider(
+                height: 1,
+                thickness: 0.5,
+                color: Colors.white.withValues(alpha: 0.15),
+              ),
+              _CommentsSectionContent(
+                nodeId: widget.nodeId,
+                pathId: widget.pathId,
+                userId: widget.userId,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -272,66 +382,10 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return PixelBorderContainer(
-      width: double.infinity,
-      padding: const EdgeInsets.all(0),
-      borderColor: AppColors.cardBorder,
-      fillColor: colors.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ===== HEADER =====
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: BlocBuilder<CommentBloc, CommentState>(
-              builder: (context, state) {
-                final count = state is CommentLoaded
-                    ? state.comments.length
-                    : _cachedComments.length;
-                return Row(
-                  children: [
-                    Text(
-                      'Comments',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (count > 0) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.secondaryBrand.withValues(
-                            alpha: 0.15,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '$count',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppColors.secondaryBrand,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ),
-                    ],
-                  ],
-                );
-              },
-            ),
-          ),
-
-          Divider(
-            height: 1,
-            thickness: 0.5,
-            color: Colors.white.withValues(alpha: 0.15),
-          ),
-
-          // ===== COMMENTS LIST =====
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ===== COMMENTS LIST =====
           BlocBuilder<CommentBloc, CommentState>(
             builder: (context, state) {
               if (state is CommentLoaded) {
@@ -466,8 +520,7 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
             userInitial: _currentUserInitial,
           ),
         ],
-      ),
-    );
+      );
   }
 }
 

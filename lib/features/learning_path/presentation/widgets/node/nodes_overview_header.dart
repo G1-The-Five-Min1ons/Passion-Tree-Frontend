@@ -30,6 +30,9 @@ class HeaderBar extends StatelessWidget {
           /// ===== TITLE =====
           Text(
             title,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(
               context,
             ).textTheme.displayMedium?.copyWith(color: colors.onPrimary),
