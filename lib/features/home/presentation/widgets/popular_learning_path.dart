@@ -30,7 +30,7 @@ class _PopularLearningPathsSectionState
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(viewportFraction: 1.0);
+    _pageController = PageController(viewportFraction: 0.88);
   }
 
   @override
@@ -88,7 +88,10 @@ class _PopularLearningPathsSectionState
                   onPageChanged: (value) => setState(() => _page = value),
                   itemCount: paths.length,
                   itemBuilder: (context, index) {
-                    return RecommendationCard(course: paths[index]);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: RecommendationCard(course: paths[index]),
+                    );
                   },
                 ),
         ),

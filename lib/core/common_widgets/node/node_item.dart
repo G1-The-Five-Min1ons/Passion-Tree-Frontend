@@ -36,16 +36,16 @@ class NodeItem extends StatelessWidget {
         ),
         if (hasTitle)
           Positioned(
-            left: size + 6,
-            top: (size / 2) - 8,
+            left: size + 8,
+            top: (size / 2) - 12,
             child: SizedBox(
-              width: 96,
+              width: 160,
               child: Text(
                 title!,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.left,
-                style: AppTypography.titleSemiBold.copyWith(
+                style: AppTypography.h3SemiBold.copyWith(
                   color: AppColors.textPrimary,
                 ),
               ),

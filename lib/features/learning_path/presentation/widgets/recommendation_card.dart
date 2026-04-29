@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passion_tree_frontend/core/common_widgets/layout/fullscreen_image_viewer.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
@@ -47,28 +48,37 @@ class RecommendationCard extends StatelessWidget {
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: Image.network(
-                          course.coverImageUrl,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              color: colors.primary.withValues(alpha: 0.1),
-                              alignment: Alignment.center,
-                              child: const CircularProgressIndicator(),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: colors.primary.withValues(alpha: 0.15),
-                              alignment: Alignment.center,
-                              child: Icon(
-                                Icons.broken_image,
-                                size: 64,
-                                color: colors.onPrimary.withValues(alpha: 0.4),
-                              ),
-                            );
-                          },
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: course.coverImageUrl.isEmpty
+                              ? null
+                              : () => FullscreenImageViewer.show(
+                                    context,
+                                    imageUrl: course.coverImageUrl,
+                                  ),
+                          child: Image.network(
+                            course.coverImageUrl,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: colors.primary.withValues(alpha: 0.1),
+                                alignment: Alignment.center,
+                                child: const CircularProgressIndicator(),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: colors.primary.withValues(alpha: 0.15),
+                                alignment: Alignment.center,
+                                child: Icon(
+                                  Icons.broken_image,
+                                  size: 64,
+                                  color: colors.onPrimary.withValues(alpha: 0.4),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
 

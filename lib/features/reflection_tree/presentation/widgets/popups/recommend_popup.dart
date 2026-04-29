@@ -91,7 +91,7 @@ class _RecommendPopupState extends State<RecommendPopup> {
                   const SizedBox(height: 38),
                   
                   Text(
-                    "We recommend you",
+                    "We recommend",
                     style: AppTypography.subtitleRegular,
                   ),
                   const SizedBox(height: 16),

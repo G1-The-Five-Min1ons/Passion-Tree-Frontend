@@ -49,7 +49,7 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
   @override
   void initState() {
     super.initState();
-    _recommendationPageController = PageController(viewportFraction: 1.0);
+    _recommendationPageController = PageController(viewportFraction: 0.88);
     _updateFilteredPaths();
   }
 
@@ -241,8 +241,11 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
                   },
                   itemCount: filteredNonEnrolled.length,
                   itemBuilder: (context, index) {
-                    return RecommendationCard(
-                      course: filteredNonEnrolled[index],
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: RecommendationCard(
+                        course: filteredNonEnrolled[index],
+                      ),
                     );
                   },
                 ),

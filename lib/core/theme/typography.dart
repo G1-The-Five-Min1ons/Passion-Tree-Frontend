@@ -1,49 +1,52 @@
 import 'package:flutter/material.dart';
 
-//Press Start 2P (Headings / Titles)
+// Headings / Titles — เคยเป็น pixel font (PressStart2P) เปลี่ยนมาใช้ Rubik
+// เพื่อให้ตัวอักษรอ่านง่ายขึ้น แต่ยังคงชื่อคลาสเดิมไว้เพื่อหลีกเลี่ยงการแก้
+// callsite ทั่วทั้งโปรเจกต์ ขนาดตัวอักษรปรับให้สมดุลกับฟอนต์ใหม่ (ฟอนต์
+// pixel กว้างกว่าปกติ)
 class AppPixelTypography {
-  static const String fontFamily = 'PressStart2P';
+  static const String fontFamily = 'Rubik';
 
   static const TextStyle h1 = TextStyle(
     fontFamily: fontFamily,
     fontSize: 32,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w700,
   );
 
   static const TextStyle h2 = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 24,
-    fontWeight: FontWeight.w400,
+    fontSize: 26,
+    fontWeight: FontWeight.w700,
   );
 
   static const TextStyle h3 = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 20,
-    fontWeight: FontWeight.w400,
+    fontSize: 22,
+    fontWeight: FontWeight.w700,
   );
 
   static const TextStyle title = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 16,
-    fontWeight: FontWeight.w400,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
   );
 
   static const TextStyle smallTitle = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 12,
-    fontWeight: FontWeight.w400,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
   );
 
   static const TextStyle small = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 10,
-    fontWeight: FontWeight.w400,
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
   );
 
   static const TextStyle littleSmall = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 8,
-    fontWeight: FontWeight.w400,
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
   );
 }
 
@@ -78,19 +81,19 @@ class AppTypography {
 
   static const TextStyle subtitleSemiBold = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: FontWeight.w600,
   );
 
   static const TextStyle bodySemiBold = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: FontWeight.w600,
   );
 
   static const TextStyle smallBodySemiBold = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: FontWeight.w600,
   );
 
@@ -121,19 +124,19 @@ class AppTypography {
 
   static const TextStyle subtitleMedium = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: FontWeight.w500,
   );
 
   static const TextStyle bodyMedium = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: FontWeight.w500,
   );
 
   static const TextStyle smallBodyMedium = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: FontWeight.w500,
   );
 
@@ -158,19 +161,19 @@ class AppTypography {
 
   static const TextStyle subtitleRegular = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: FontWeight.w400,
   );
 
   static const TextStyle bodyRegular = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: FontWeight.w400,
   );
 
   static const TextStyle smallBodyRegular = TextStyle(
     fontFamily: fontFamily,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: FontWeight.w400,
   );
 }

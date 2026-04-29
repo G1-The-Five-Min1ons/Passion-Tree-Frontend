@@ -71,15 +71,21 @@ class _ReflectDetailPopupState extends State<ReflectDetailPopup> {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final maxWidth = (mediaQuery.size.width - 40).clamp(280.0, 380.0);
+    final maxHeight =
+        (mediaQuery.size.height - mediaQuery.viewInsets.bottom - 80)
+            .clamp(420.0, 680.0);
+
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 30),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           SizedBox(
-            width: 380,
-            height: 680,
+            width: maxWidth,
+            height: maxHeight,
             child: PixelBorderContainer(
               pixelSize: 4,
               padding: const EdgeInsets.only(bottom: 4),

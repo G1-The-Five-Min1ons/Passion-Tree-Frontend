@@ -297,7 +297,7 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
   String _shortNodeTitle(String title) {
     final normalized = title.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (normalized.isEmpty) return 'Untitled';
-    if (normalized.length <= 18) return normalized;
-    return '${normalized.substring(0, 18)}...';
+    if (normalized.length <= 32) return normalized;
+    return '${normalized.substring(0, 32)}...';
   }
 }

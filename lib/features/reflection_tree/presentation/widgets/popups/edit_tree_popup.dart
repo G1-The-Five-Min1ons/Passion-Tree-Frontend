@@ -62,11 +62,12 @@ class _EditTreePopUpState extends State<EditTreePopUp> {
 
   @override
   Widget build(BuildContext context) {
+    final maxWidth = (MediaQuery.of(context).size.width - 40).clamp(260.0, 350.0);
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: SizedBox(
-        width: 350,
+        width: maxWidth,
         child: PixelBorderContainer(
           pixelSize: 4,
           padding: const EdgeInsets.all(28),

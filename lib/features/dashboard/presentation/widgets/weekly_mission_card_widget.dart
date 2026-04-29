@@ -7,6 +7,7 @@ import 'package:passion_tree_frontend/features/mission/data/models/user_mission_
 class WeeklyMissionCardWidget extends StatelessWidget {
   final List<UserMissionModel> missions;
   final ValueChanged<UserMissionModel>? onMissionTap;
+  final VoidCallback? onEmptyTap;
   final bool isLoading;
   final String? errorMessage;
   final VoidCallback? onRetry;
@@ -15,6 +16,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
     super.key,
     required this.missions,
     this.onMissionTap,
+    this.onEmptyTap,
     this.isLoading = false,
     this.errorMessage,
     this.onRetry,
@@ -134,13 +136,40 @@ class WeeklyMissionCardWidget extends StatelessWidget {
         else if (missions.isEmpty)
           SizedBox(
             width: double.infinity,
-            child: PixelBorderContainer(
-              pixelSize: 3,
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                'No missions this week',
-                style: AppTypography.bodyRegular.copyWith(
-                  color: AppColors.textSecondary,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onEmptyTap,
+                child: PixelBorderContainer(
+                  pixelSize: 3,
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'No missions this week',
+                          style: AppTypography.bodyRegular.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                      if (onEmptyTap != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          'Mission Center',
+                          style: AppTypography.bodySemiBold.copyWith(
+                            color: AppColors.secondaryBrand,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 16,
+                          color: AppColors.secondaryBrand,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ),

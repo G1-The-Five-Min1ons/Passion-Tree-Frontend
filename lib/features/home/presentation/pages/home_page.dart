@@ -112,6 +112,25 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _openMissionCenter() {
+    final state = context.read<MissionBloc>().state;
+    final List<UserMissionModel> missions;
+    if (state is MissionLoaded) {
+      missions = state.missions;
+    } else if (state is MissionError) {
+      missions = state.previousMissions;
+    } else {
+      missions = const [];
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MissionCenterPage(missions: missions),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -205,6 +224,7 @@ class _HomePageState extends State<HomePage> {
                         isLoading: isLoading,
                         errorMessage: errorMessage,
                         onMissionTap: _onMissionTap,
+                        onEmptyTap: _openMissionCenter,
                         onRetry: () => context.read<MissionBloc>().add(
                           const FetchMyMissions(),
                         ),

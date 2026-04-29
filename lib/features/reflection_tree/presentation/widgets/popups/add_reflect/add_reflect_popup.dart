@@ -74,6 +74,9 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
   Future<void> _submitReflection() async {
     if (_isSubmitting) return;
 
+    // ปิดคีย์บอร์ดทันทีเมื่อกด Submit เพื่อให้ผู้ใช้ไม่สามารถพิมพ์ต่อ
+    // ระหว่างรอ network call
+    FocusScope.of(context).unfocus();
     setState(() => _isSubmitting = true);
 
     try {
@@ -127,16 +130,25 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final maxWidth = (mediaQuery.size.width - 40).clamp(280.0, 380.0);
+    // Account for keyboard so the dialog never gets clipped by it
+    final availableHeight =
+        mediaQuery.size.height - mediaQuery.viewInsets.bottom - 80;
+    final maxHeight = availableHeight.clamp(360.0, 600.0);
+
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 30),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           SizedBox(
-            width: 380,
-            height: 600,
-            child: PixelBorderContainer(
+            width: maxWidth,
+            height: maxHeight,
+            child: AbsorbPointer(
+              absorbing: _isSubmitting,
+              child: PixelBorderContainer(
               pixelSize: 4,
               padding: const EdgeInsets.all(28),
               child: Column(
@@ -194,6 +206,7 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
                   _buildStepBar(),
                 ],
               ),
+            ),
             ),
           ),
 

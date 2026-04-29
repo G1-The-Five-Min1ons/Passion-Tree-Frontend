@@ -8,6 +8,7 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/lea
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
+import 'package:passion_tree_frontend/core/common_widgets/layout/fullscreen_image_viewer.dart';
 
 class CourseProgressCard extends StatelessWidget {
   final EnrolledLearningPath data;
@@ -67,31 +68,40 @@ class CourseProgressCard extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: Image.network(
-                      data.coverImgUrl,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: colors.primary.withValues(alpha: 0.15),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.broken_image,
-                            size: 50,
-                            color: colors.onPrimary.withValues(alpha: 0.5),
-                          ),
-                        );
-                      },
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: data.coverImgUrl.isEmpty
+                          ? null
+                          : () => FullscreenImageViewer.show(
+                                context,
+                                imageUrl: data.coverImgUrl,
+                              ),
+                      child: Image.network(
+                        data.coverImgUrl,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: colors.primary.withValues(alpha: 0.15),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.broken_image,
+                              size: 50,
+                              color: colors.onPrimary.withValues(alpha: 0.5),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                   Positioned(

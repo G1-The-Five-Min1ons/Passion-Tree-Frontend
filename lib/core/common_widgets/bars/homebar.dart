@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/core/services/home_tab_navigation_notifier.dart';
@@ -105,6 +106,7 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
       case 0:
         _pageCache[index] = HomeWrapper(
           enableStartupPrefetch: widget.enableStartupPrefetch,
+          navigatorKey: _navigatorKeys[0],
         );
         break;
       case 1:
@@ -129,55 +131,92 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
   }
 
   void _setSelectedIndex(int index) {
-    if (index < 0 || index >= _tabCount || _selectedIndex == index) {
+    if (index < 0 || index >= _tabCount) {
       return;
     }
 
     _ensurePageInitialized(index);
+
+    // Tapping the currently active tab pops its inner navigator back to its root.
+    if (_selectedIndex == index) {
+      _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
+      return;
+    }
 
     setState(() {
       _selectedIndex = index;
     });
   }
 
+  Future<bool> _handleSystemBack() async {
+    final navigator = _navigatorKeys[_selectedIndex].currentState;
+    if (navigator != null && navigator.canPop()) {
+      navigator.pop();
+      return false; // Consumed — keep app in foreground.
+    }
+
+    // If we're not on the Home tab, jump back to it instead of exiting.
+    if (_selectedIndex != 0) {
+      _ensurePageInitialized(0);
+      setState(() {
+        _selectedIndex = 0;
+      });
+      return false;
+    }
+
+    return true; // Allow the system to background the app.
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: List<Widget>.generate(
-          _tabCount,
-          (index) => _pageCache[index] ?? const SizedBox.shrink(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final shouldExit = await _handleSystemBack();
+        if (shouldExit) {
+          // Send the app to the background instead of force-closing it,
+          // mirroring native Android behavior when the back stack is empty.
+          await SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: List<Widget>.generate(
+            _tabCount,
+            (index) => _pageCache[index] ?? const SizedBox.shrink(),
+          ),
         ),
-      ),
-      bottomNavigationBar: ValueListenableBuilder<bool>(
-        valueListenable: homeBarVisibilityNotifier,
-        builder: (context, isVisible, _) {
-          if (!isVisible) {
-            return const SizedBox.shrink();
-          }
+        bottomNavigationBar: ValueListenableBuilder<bool>(
+          valueListenable: homeBarVisibilityNotifier,
+          builder: (context, isVisible, _) {
+            if (!isVisible) {
+              return const SizedBox.shrink();
+            }
 
-          return BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            onTap: (index) {
-              _setSelectedIndex(index);
-            },
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: AppColors.homeBarColor,
-            selectedItemColor: Theme.of(context).colorScheme.onPrimary,
-            unselectedItemColor: AppColors.iconbar,
+            return BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: (index) {
+                _setSelectedIndex(index);
+              },
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: AppColors.homeBarColor,
+              selectedItemColor: Theme.of(context).colorScheme.onPrimary,
+              unselectedItemColor: AppColors.iconbar,
 
-            selectedLabelStyle: AppPixelTypography.littleSmall,
-            unselectedLabelStyle: AppPixelTypography.littleSmall,
+              selectedLabelStyle: AppPixelTypography.littleSmall,
+              unselectedLabelStyle: AppPixelTypography.littleSmall,
 
-            items: [
-              _buildNavItem('Home', 'assets/icons/Home.png', 0),
-              _buildNavItem('Learn', 'assets/icons/Learn.png', 1),
-              _buildNavItem('Reflect', 'assets/icons/Reflect.png', 2),
-              _buildNavItem('Profile', 'assets/icons/Profile.png', 3),
-            ],
-          );
-        },
+              items: [
+                _buildNavItem('Home', 'assets/icons/Home.png', 0),
+                _buildNavItem('Learn', 'assets/icons/Learn.png', 1),
+                _buildNavItem('Reflect', 'assets/icons/Reflect.png', 2),
+                _buildNavItem('Profile', 'assets/icons/Profile.png', 3),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

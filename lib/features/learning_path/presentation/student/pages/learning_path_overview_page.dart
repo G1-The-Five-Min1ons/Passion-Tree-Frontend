@@ -37,7 +37,7 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
   @override
   void initState() {
     super.initState();
-    _recPageController = PageController(viewportFraction: 1.0);
+    _recPageController = PageController(viewportFraction: 0.88);
     _loadOverviewData();
   }
 
@@ -327,8 +327,12 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                                 setState(() => _recPage = page),
                             itemCount: filteredRecommended.length,
                             itemBuilder: (context, index) {
-                              return RecommendationCard(
-                                course: filteredRecommended[index],
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 6),
+                                child: RecommendationCard(
+                                  course: filteredRecommended[index],
+                                ),
                               );
                             },
                           ),

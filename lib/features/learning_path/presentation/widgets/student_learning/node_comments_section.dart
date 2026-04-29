@@ -492,6 +492,7 @@ class _CommentsSectionContentState extends State<_CommentsSectionContent> {
                     onEdit: _startEdit,
                     onReply: _startReply,
                     currentUserId: widget.userId,
+                    currentUserAvatarUrl: _currentUserAvatarUrl,
                   );
                 },
               );
@@ -820,6 +821,7 @@ class _CommentItem extends StatefulWidget {
   final void Function(String commentId, String message, String username) onEdit;
   final void Function(String commentId, String username) onReply;
   final String currentUserId;
+  final String? currentUserAvatarUrl;
   final bool isNested;
 
   const _CommentItem({
@@ -832,6 +834,7 @@ class _CommentItem extends StatefulWidget {
     required this.onEdit,
     required this.onReply,
     required this.currentUserId,
+    this.currentUserAvatarUrl,
     this.isNested = false,
   });
 
@@ -907,19 +910,36 @@ class _CommentItemState extends State<_CommentItem> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: widget.isNested ? 14 : 18,
-                backgroundColor: AppColors.primaryBrand.withValues(alpha: 0.35),
-                child: Text(
-                  widget.comment.userName.isNotEmpty
-                      ? widget.comment.userName[0].toUpperCase()
-                      : '?',
-                  style: TextStyle(
-                    color: AppColors.secondaryBrand,
-                    fontWeight: FontWeight.bold,
-                    fontSize: widget.isNested ? 11 : 14,
-                  ),
-                ),
+              Builder(
+                builder: (_) {
+                  final isOwnComment =
+                      widget.comment.userId == widget.currentUserId;
+                  final avatarUrl = isOwnComment
+                      ? widget.currentUserAvatarUrl
+                      : null;
+                  final hasAvatar =
+                      avatarUrl != null && avatarUrl.isNotEmpty;
+
+                  return CircleAvatar(
+                    radius: widget.isNested ? 14 : 18,
+                    backgroundColor:
+                        AppColors.primaryBrand.withValues(alpha: 0.35),
+                    backgroundImage:
+                        hasAvatar ? NetworkImage(avatarUrl) : null,
+                    child: hasAvatar
+                        ? null
+                        : Text(
+                            widget.comment.userName.isNotEmpty
+                                ? widget.comment.userName[0].toUpperCase()
+                                : '?',
+                            style: TextStyle(
+                              color: AppColors.secondaryBrand,
+                              fontWeight: FontWeight.bold,
+                              fontSize: widget.isNested ? 11 : 14,
+                            ),
+                          ),
+                  );
+                },
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -976,6 +996,7 @@ class _CommentItemState extends State<_CommentItem> {
                           ),
                           const SizedBox(width: 16),
                           GestureDetector(
+                            behavior: HitTestBehavior.opaque,
                             onTap: () {
                               context.read<CommentBloc>().add(
                                 AddReaction(
@@ -986,34 +1007,43 @@ class _CommentItemState extends State<_CommentItem> {
                                 ),
                               );
                             },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isLiked
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  size: 14,
-                                  color: isLiked
-                                      ? Colors.red
-                                      : colors.onSurface.withValues(alpha: 0.5),
-                                ),
-                                if (likeCount > 0) ...[
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    '$likeCount',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: isLiked
-                                              ? Colors.red
-                                              : colors.onSurface.withValues(
-                                                  alpha: 0.5,
-                                                ),
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 8,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isLiked
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    size: 18,
+                                    color: isLiked
+                                        ? Colors.red
+                                        : colors.onSurface
+                                            .withValues(alpha: 0.5),
                                   ),
+                                  if (likeCount > 0) ...[
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$likeCount',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: isLiked
+                                                ? Colors.red
+                                                : colors.onSurface.withValues(
+                                                    alpha: 0.5,
+                                                  ),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -1101,6 +1131,7 @@ class _CommentItemState extends State<_CommentItem> {
                     nodeId: widget.nodeId,
                     pathId: widget.pathId,
                     currentUserId: widget.currentUserId,
+                    currentUserAvatarUrl: widget.currentUserAvatarUrl,
                     isNested: true,
                     onDelete: () {
                       context.read<CommentBloc>().add(
