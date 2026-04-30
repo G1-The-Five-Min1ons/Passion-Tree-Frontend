@@ -42,12 +42,16 @@ class LogoutSection extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              SaveCancel(
-                saveText: 'Log Out',
-                saveButtonColor: AppColors.cancel,
-                cancelText: 'Cancel',
-                onCancel: () => Navigator.of(ctx).pop(false),
-                onSave: () => Navigator.of(ctx).pop(true),
+              Center(
+                child: UnconstrainedBox(
+                  child: SaveCancel(
+                    saveText: 'Log Out',
+                    saveButtonColor: AppColors.cancel,
+                    cancelText: 'Cancel',
+                    onCancel: () => Navigator.of(ctx).pop(false),
+                    onSave: () => Navigator.of(ctx).pop(true),
+                  ),
+                ),
               ),
             ],
           ),
