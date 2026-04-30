@@ -114,7 +114,9 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
       if (mounted) {
         Navigator.pop(context);
         widget.onReflectionCreated?.call(createdReflection, request);
-        ScaffoldMessenger.of(context).showSnackBar(
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.removeCurrentSnackBar();
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('Reflected successfully'),
             backgroundColor: Colors.green,
@@ -124,7 +126,9 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.removeCurrentSnackBar();
+        messenger.showSnackBar(
           SnackBar(
             content: Text('An error occurred: ${e.toString()}'),
             backgroundColor: Colors.red,
