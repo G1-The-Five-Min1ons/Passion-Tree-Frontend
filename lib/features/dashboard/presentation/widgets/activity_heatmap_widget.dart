@@ -109,33 +109,35 @@ class _ActivityHeatmapWidgetState extends State<ActivityHeatmapWidget> {
       width: double.infinity,
       pixelSize: 3,
       padding: const EdgeInsets.all(10),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final cellGap = 3.0;
-          final totalGap = cellGap * (_cols - 1);
-          final cellSize = (constraints.maxWidth - totalGap) / _cols;
+      child: SizedBox(
+        width: double.infinity,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final cellGap = 3.0;
+            final totalGap = cellGap * (_cols - 1);
+            final cellSize = (constraints.maxWidth - totalGap) / _cols;
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // --- Month labels ---
-              Row(
-                children: List.generate(_cols, (col) {
-                  final label = monthLabels[col];
-                  return SizedBox(
-                    width: col < _cols - 1 ? cellSize + cellGap : cellSize,
-                    child: label.isNotEmpty
-                        ? Text(
-                            label.toUpperCase(),
-                            style: AppTypography.smallBodyRegular.copyWith(
-                              color: AppColors.textPrimary,
-                              fontSize: 10,
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                  );
-                }),
-              ),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- Month labels ---
+                Row(
+                  children: List.generate(_cols, (col) {
+                    final label = monthLabels[col];
+                    return SizedBox(
+                      width: col < _cols - 1 ? cellSize + cellGap : cellSize,
+                      child: label.isNotEmpty
+                          ? Text(
+                              label.toUpperCase(),
+                              style: AppTypography.smallBodyRegular.copyWith(
+                                color: AppColors.textPrimary,
+                                fontSize: 13,
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                    );
+                  }),
+                ),
               const SizedBox(height: 6),
 
               // --- Heatmap grid ---
@@ -173,12 +175,14 @@ class _ActivityHeatmapWidgetState extends State<ActivityHeatmapWidget> {
                             _selectedInfo!,
                             style: AppTypography.smallBodyRegular.copyWith(
                               color: AppColors.textPrimary,
+                              fontSize: 14,
                             ),
                           )
                         : Text(
                             'Tap a cell to see date',
                             style: AppTypography.smallBodyRegular.copyWith(
                               color: AppColors.textSecondary,
+                              fontSize: 14,
                             ),
                           ),
                   ),
@@ -208,9 +212,10 @@ class _ActivityHeatmapWidgetState extends State<ActivityHeatmapWidget> {
                   ),
                 ],
               ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }

@@ -251,8 +251,8 @@ class _EmailNotificationsSectionState extends State<EmailNotificationsSection> {
         Switch(
           value: value,
           onChanged: _updatingKeys.contains(keyName) ? null : onChanged,
-          activeThumbColor: AppColors.primaryBrand,
-          activeTrackColor: AppColors.primaryBrand.withValues(alpha: 0.4),
+          activeThumbColor: AppColors.status,
+          activeTrackColor: AppColors.status.withValues(alpha: 0.35),
           inactiveThumbColor: AppColors.textDisabled,
           inactiveTrackColor: AppColors.cardBorder,
         ),

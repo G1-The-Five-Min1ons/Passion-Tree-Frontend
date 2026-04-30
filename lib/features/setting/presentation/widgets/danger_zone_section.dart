@@ -90,31 +90,28 @@ class DangerZoneSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Expanded(
-                      child: AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'Cancel',
-                        onPressed: () => Navigator.of(ctx).pop(),
-                      ),
+                    AppButton(
+                      variant: AppButtonVariant.text,
+                      text: 'Cancel',
+                      onPressed: () => Navigator.of(ctx).pop(),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'Delete',
-                        backgroundColor: AppColors.cancel,
-                        onPressed: () {
-                          final password = passwordController.text.trim();
-                          if (password.isEmpty) {
-                            setState(() {
-                              errorText = 'Password is required';
-                            });
-                            return;
-                          }
-                          Navigator.of(ctx).pop(password);
-                        },
-                      ),
+                    const SizedBox(width: 16),
+                    AppButton(
+                      variant: AppButtonVariant.text,
+                      text: 'Delete',
+                      backgroundColor: AppColors.cancel,
+                      onPressed: () {
+                        final password = passwordController.text.trim();
+                        if (password.isEmpty) {
+                          setState(() {
+                            errorText = 'Password is required';
+                          });
+                          return;
+                        }
+                        Navigator.of(ctx).pop(password);
+                      },
                     ),
                   ],
                 ),
@@ -160,22 +157,19 @@ class DangerZoneSection extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: AppButton(
-                      variant: AppButtonVariant.text,
-                      text: 'Cancel',
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                    ),
+                  AppButton(
+                    variant: AppButtonVariant.text,
+                    text: 'Cancel',
+                    onPressed: () => Navigator.of(ctx).pop(false),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppButton(
-                      variant: AppButtonVariant.text,
-                      text: confirmLabel,
-                      backgroundColor: confirmColor,
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                    ),
+                  const SizedBox(width: 16),
+                  AppButton(
+                    variant: AppButtonVariant.text,
+                    text: confirmLabel,
+                    backgroundColor: confirmColor,
+                    onPressed: () => Navigator.of(ctx).pop(true),
                   ),
                 ],
               ),

@@ -5,6 +5,12 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_status_page.dart';
 
 class LearningPathWrapper extends StatelessWidget {
+  /// Navigator key for the wrapper's inner stack. Exposed so the bottom
+  /// navigation bar can pop back to the Overview page when the Learn tab is
+  /// re-selected, regardless of which inner route is currently visible.
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   const LearningPathWrapper({super.key});
 
   @override
@@ -12,6 +18,7 @@ class LearningPathWrapper extends StatelessWidget {
     return BlocProvider.value(
       value: context.read<LearningPathBloc>(),
       child: Navigator(
+        key: navigatorKey,
         onGenerateRoute: (settings) {
           if (settings.name == '/status') {
             return MaterialPageRoute(
