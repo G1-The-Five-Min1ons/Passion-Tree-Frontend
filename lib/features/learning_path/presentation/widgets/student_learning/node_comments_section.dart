@@ -997,6 +997,7 @@ class _CommentItemState extends State<_CommentItem> {
                     Padding(
                       padding: const EdgeInsets.only(left: 8, top: 4),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             _formatTimeAgo(widget.comment.createdAt),
@@ -1007,7 +1008,7 @@ class _CommentItemState extends State<_CommentItem> {
                                   ),
                                 ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           GestureDetector(
                             behavior: HitTestBehavior.opaque,
                             onTap: () {
@@ -1020,48 +1021,46 @@ class _CommentItemState extends State<_CommentItem> {
                                 ),
                               );
                             },
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                minWidth: 44,
-                                minHeight: 44,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 4,
                               ),
-                              child: Center(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      isLiked
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      size: 20,
-                                      color: isLiked
-                                          ? Colors.red
-                                          : colors.onSurface
-                                              .withValues(alpha: 0.5),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isLiked
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    size: 18,
+                                    color: isLiked
+                                        ? Colors.red
+                                        : colors.onSurface
+                                            .withValues(alpha: 0.5),
+                                  ),
+                                  if (likeCount > 0) ...[
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$likeCount',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: isLiked
+                                                ? Colors.red
+                                                : colors.onSurface.withValues(
+                                                    alpha: 0.5,
+                                                  ),
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
-                                    if (likeCount > 0) ...[
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '$likeCount',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                              color: isLiked
-                                                  ? Colors.red
-                                                  : colors.onSurface.withValues(
-                                                      alpha: 0.5,
-                                                    ),
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                      ),
-                                    ],
                                   ],
-                                ),
+                                ],
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           GestureDetector(
                             onTap: () => widget.onReply(
                               widget.comment.commentId,
@@ -1078,22 +1077,25 @@ class _CommentItemState extends State<_CommentItem> {
                           ),
                           if (!widget.isNested &&
                               widget.replies.isNotEmpty) ...[
-                            const SizedBox(width: 16),
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _showReplies = !_showReplies;
-                                });
-                              },
-                              child: Text(
-                                _showReplies
-                                    ? 'Hide replies'
-                                    : '${widget.replies.length} ${widget.replies.length == 1 ? "reply" : "replies"}',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.iconbar,
-                                    ),
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _showReplies = !_showReplies;
+                                  });
+                                },
+                                child: Text(
+                                  _showReplies
+                                      ? 'Hide'
+                                      : '${widget.replies.length} ${widget.replies.length == 1 ? "reply" : "replies"}',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.iconbar,
+                                      ),
+                                ),
                               ),
                             ),
                           ],

@@ -149,6 +149,7 @@ class _HomePageState extends State<HomePage> {
                 left: AppSpacing.xmargin,
                 right: AppSpacing.xmargin,
                 top: AppSpacing.ymargin,
+                bottom: AppSpacing.ymargin,
               ),
 
               child: Column(

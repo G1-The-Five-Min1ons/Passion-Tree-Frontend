@@ -6,7 +6,6 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
-import 'package:passion_tree_frontend/core/common_widgets/layout/fullscreen_image_viewer.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_course.dart';
 import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
@@ -75,43 +74,34 @@ class PixelCourseCard extends StatelessWidget {
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: course.coverImageUrl.isEmpty
-                              ? null
-                              : () => FullscreenImageViewer.show(
-                                  context,
-                                  imageUrl: course.coverImageUrl,
+                        child: Image.network(
+                          course.coverImageUrl,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: colors.primary.withValues(alpha: 0.15),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                Icons.broken_image,
+                                size: 40 * scale,
+                                color: colors.onPrimary.withValues(
+                                  alpha: 0.5,
                                 ),
-                          child: Image.network(
-                            course.coverImageUrl,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Center(
-                                child: CircularProgressIndicator(
-                                  value:
-                                      loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                            loadingProgress.expectedTotalBytes!
-                                      : null,
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: colors.primary.withValues(alpha: 0.15),
-                                alignment: Alignment.center,
-                                child: Icon(
-                                  Icons.broken_image,
-                                  size: 40 * scale,
-                                  color: colors.onPrimary.withValues(
-                                    alpha: 0.5,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       // ---------- STAR BADGE ----------

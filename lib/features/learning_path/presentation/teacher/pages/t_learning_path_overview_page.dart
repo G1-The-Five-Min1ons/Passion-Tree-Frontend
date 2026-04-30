@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/core/theme/typography.dart';
-import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 // Filter section removed
@@ -183,41 +181,16 @@ class _TeacherLearningPathOverviewPageState
                       // ===== SEARCH & FILTERS REMOVED =====
 
                       // ===== TAB BAR =====
-                      Row(
-                        children: [
-                          TeacherTabBar(
-                            activeIndex: _activeTab,
-                            onChanged: (index) {
-                              setState(() {
-                                _activeTab = index;
-                                if (_activeTab == 0) {
-                                  _learningView = TeacherLearningView.main;
-                                }
-                              });
-                            },
-                          ),
-                          const Spacer(),
-                          if (_activeTab == 1)
-                            GestureDetector(
-                              onTap: _onCreatePressed,
-                              child: PixelBorderContainer(
-                                pixelSize: 2,
-                                fillColor: Theme.of(context).colorScheme.primary,
-                                borderColor: Colors.black,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 3.8,
-                                ),
-                                child: Text(
-                                  '+',
-                                  style: AppPixelTypography.smallTitle.copyWith(
-                                    color: Theme.of(context).colorScheme.onPrimary,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
+                      TeacherTabBar(
+                        activeIndex: _activeTab,
+                        onChanged: (index) {
+                          setState(() {
+                            _activeTab = index;
+                            if (_activeTab == 0) {
+                              _learningView = TeacherLearningView.main;
+                            }
+                          });
+                        },
                       ),
 
                       const SizedBox(height: 20),
@@ -249,6 +222,7 @@ class _TeacherLearningPathOverviewPageState
                         TeacherCreateTab(
                           allPaths: overviewData.allPaths,
                           userId: _userId,
+                          onCreatePressed: _onCreatePressed,
                         ),
                       ],
 

@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
+import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/create_learning_path_input_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/teacher_nodes_overview.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
@@ -16,8 +18,14 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 class TeacherCreateTab extends StatefulWidget {
   final List<LearningPath> allPaths;
   final String? userId;
+  final VoidCallback? onCreatePressed;
 
-  const TeacherCreateTab({super.key, required this.allPaths, this.userId});
+  const TeacherCreateTab({
+    super.key,
+    required this.allPaths,
+    this.userId,
+    this.onCreatePressed,
+  });
 
   @override
   State<TeacherCreateTab> createState() => _TeacherCreateTabState();
@@ -78,7 +86,11 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
   }
 
   /// Build section header with title and status
-  Widget _buildSectionHeader(String status, Color statusColor) {
+  Widget _buildSectionHeader(
+    String status,
+    Color statusColor, {
+    bool showAction = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -88,7 +100,19 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
             color: Theme.of(context).colorScheme.onPrimary,
           ),
         ),
-        const SizedBox(height: 20),
+        if (showAction && widget.onCreatePressed != null)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              AppButton(
+                variant: AppButtonVariant.iconOnly,
+                icon: const PixelIcon('assets/icons/Pixel_plus.png', size: 16),
+                onPressed: widget.onCreatePressed!,
+              ),
+            ],
+          )
+        else
+          const SizedBox(height: 20),
         RichText(
           text: TextSpan(
             style: AppPixelTypography.smallTitle.copyWith(
@@ -260,7 +284,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
         // My Learning Paths - Drafts
-        _buildSectionHeader('Drafts', colors.secondary),
+        _buildSectionHeader('Drafts', colors.secondary, showAction: true),
         _buildPathGrid(
           paths: inProgressCourses,
           shownCount: inProgressShown,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/more_icon.dart';
-import 'package:passion_tree_frontend/core/common_widgets/layout/fullscreen_image_viewer.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/album_base_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/popups/action_popup.dart';
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/widgets/popups/edit_album_popup.dart';
@@ -60,24 +59,7 @@ class PixelAlbumCover extends StatelessWidget {
         );
       },
     ),
-      topContent: Builder(
-        builder: (context) {
-          final hasNetworkImage = imageUrl != null &&
-              imageUrl!.isNotEmpty &&
-              (imageUrl!.startsWith('http://') ||
-                  imageUrl!.startsWith('https://'));
-          final image = _buildImageWidget(imageUrl, primaryColor);
-          if (!hasNetworkImage) return image;
-          return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => FullscreenImageViewer.show(
-              context,
-              imageUrl: imageUrl!,
-            ),
-            child: image,
-          );
-        },
-      ),
+      topContent: _buildImageWidget(imageUrl, primaryColor),
     );
   }
 
