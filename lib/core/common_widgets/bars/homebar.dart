@@ -142,6 +142,9 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
       _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
       return;
     }
+    // popped back to its root so the user always lands on the first page
+  
+    _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
 
     setState(() {
       _selectedIndex = index;

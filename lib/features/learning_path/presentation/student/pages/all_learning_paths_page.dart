@@ -26,9 +26,22 @@ class _AllLearningPathsPageState extends State<AllLearningPathsPage> {
   // Load 1 additional row (2 items) at a time — matches scroll distance
   static const int _pageSize = 2;
 
-  // Row height = card height + grid mainAxisSpacing
-  static const double _rowHeight =
-      BaseCourseCard.defaultHeight + 35.0;
+  int _gridCrossAxisCount(double width) {
+    if (width < 420) return 1;
+    if (width < 760) return 2;
+    if (width < 1100) return 3;
+    return 4;
+  }
+
+  double _rowHeightForWidth(double width) {
+    final crossAxisCount = _gridCrossAxisCount(width);
+    final usableWidth =
+        width - (AppSpacing.xmargin * 2) - (12.0 * (crossAxisCount - 1));
+    final cardWidth = usableWidth / crossAxisCount;
+    final cardHeight =
+        cardWidth / (BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight);
+    return cardHeight + 35.0;
+  }
 
   @override
   void initState() {
@@ -40,13 +53,12 @@ class _AllLearningPathsPageState extends State<AllLearningPathsPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_shownCount == 0) {
-      // Calculate how many items fill the current viewport on first build
       final mq = MediaQuery.of(context);
+      final crossAxisCount = _gridCrossAxisCount(mq.size.width);
       final available =
           mq.size.height - kToolbarHeight - mq.padding.top - mq.padding.bottom;
-      // +1 row as buffer so the next row is already loading before user hits bottom
-      final rowsVisible = (available / _rowHeight).ceil() + 1;
-      _shownCount = rowsVisible * 2; // 2 columns
+      final rowsVisible = (available / _rowHeightForWidth(mq.size.width)).ceil() + 1;
+      _shownCount = rowsVisible * crossAxisCount;
     }
   }
 
@@ -73,8 +85,9 @@ class _AllLearningPathsPageState extends State<AllLearningPathsPage> {
   void _onScroll() {
     if (_isLoadingMore) return;
     final position = _scrollController.position;
-    // Trigger load when within 1 row-height of the bottom
-    if (position.pixels >= position.maxScrollExtent - _rowHeight &&
+    final currentWidth = MediaQuery.sizeOf(context).width;
+    final rowHeight = _rowHeightForWidth(currentWidth);
+    if (position.pixels >= position.maxScrollExtent - rowHeight &&
         _shownCount < _filtered.length) {
       _loadMore();
     }
@@ -95,6 +108,7 @@ class _AllLearningPathsPageState extends State<AllLearningPathsPage> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final filtered = _filtered;
+    final crossAxisCount = _gridCrossAxisCount(MediaQuery.sizeOf(context).width);
 
     // Guard: viewport count not ready yet
     if (_shownCount == 0) return const SizedBox();
@@ -108,8 +122,7 @@ class _AllLearningPathsPageState extends State<AllLearningPathsPage> {
         showBackButton: true,
         onSearch: (q) => setState(() {
           _searchQuery = q;
-          // Reset shown count to viewport size on new search
-          _shownCount = _shownCount.clamp(2, _shownCount);
+          _shownCount = _shownCount.clamp(crossAxisCount, _shownCount);
         }),
       ),
       body: SafeArea(
@@ -132,9 +145,8 @@ class _AllLearningPathsPageState extends State<AllLearningPathsPage> {
                       top: AppSpacing.ymargin,
                     ),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
                             mainAxisSpacing: 35,
                             crossAxisSpacing: 12,
                             childAspectRatio:

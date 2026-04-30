@@ -58,6 +58,9 @@ class NodeInfoSection extends StatelessWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
 
+    final screenSize = MediaQuery.sizeOf(context);
+    final uploadHeight = (screenSize.height * 0.16).clamp(140.0, 180.0).toDouble();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -148,7 +151,7 @@ class NodeInfoSection extends StatelessWidget {
             onTap: onUploadFile,
             child: PixelBorderContainer(
               width: double.infinity,
-              height: 150,
+              height: uploadHeight,
               padding: EdgeInsets.zero,
               child: Center(
                 child: Column(

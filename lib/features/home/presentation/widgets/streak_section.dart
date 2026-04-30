@@ -25,8 +25,11 @@ class StreakSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final today = DateTime.now().weekday; // 1=Mon, 7=Sun
 
+    final width = MediaQuery.of(context).size.width;
+    final scale = (width / 360).clamp(0.85, 1.4);
+
     return PixelBorderContainer(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      padding: EdgeInsets.fromLTRB(20 * scale, 20 * scale, 20 * scale, 24 * scale),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -42,10 +45,10 @@ class StreakSection extends StatelessWidget {
                       color: streakCount > 0
                           ? AppColors.secondaryBrand
                           : AppColors.textSecondary,
-                      fontSize: 52,
+                      fontSize: 52 * scale,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4 * scale),
                   Text(
                     'Streak Days !',
                     style: AppTypography.titleSemiBold.copyWith(
@@ -60,18 +63,18 @@ class StreakSection extends StatelessWidget {
                 color: streakCount > 0
                     ? AppColors.secondaryBrand
                     : AppColors.textDisabled,
-                size: 72,
+                size: 72 * scale,
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10 * scale),
           Text(
             _motivationalText,
             style: AppTypography.bodyRegular.copyWith(
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20 * scale),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (i) {
@@ -87,7 +90,7 @@ class StreakSection extends StatelessWidget {
                 state = _DayState.inactive;
               }
 
-              return _DayDot(label: _kDayLabels[i], state: state);
+              return _DayDot(label: _kDayLabels[i], state: state, scale: scale as double);
             }),
           ),
         ],
@@ -99,8 +102,9 @@ class StreakSection extends StatelessWidget {
 class _DayDot extends StatelessWidget {
   final String label;
   final _DayState state;
+  final double scale;
 
-  const _DayDot({required this.label, required this.state});
+  const _DayDot({required this.label, required this.state, required this.scale});
 
   @override
   Widget build(BuildContext context) {
@@ -118,8 +122,8 @@ class _DayDot extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 36,
-          height: 36,
+          width: 36 * scale,
+          height: 36 * scale,
           decoration: BoxDecoration(
             color: dotBg,
             shape: BoxShape.circle,
@@ -127,15 +131,15 @@ class _DayDot extends StatelessWidget {
           child: Icon(
             Icons.local_fire_department_rounded,
             color: fireColor,
-            size: 28,
+            size: 28 * scale,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4 * scale),
         Text(
           label,
           style: AppTypography.smallBodyRegular.copyWith(
             color: labelColor,
-            fontSize: 9,
+            fontSize: 9 * scale,
           ),
         ),
       ],

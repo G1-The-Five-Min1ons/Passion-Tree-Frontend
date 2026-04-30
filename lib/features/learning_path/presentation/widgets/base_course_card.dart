@@ -151,32 +151,43 @@ class BaseCourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final resolvedWidth =
+            width == defaultWidth && constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : width;
+        final resolvedHeight =
+            height == defaultHeight && constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : height;
 
-
-    return SizedBox(
-      width: width,
-      height: height,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: ClipPath(
-              clipper: _PixelCourseClipper(pixelSize),
-              child: child,
-            ),
-          ),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: _PixelCoursePainter(
-                  color: borderColor ?? AppColors.cardBorder,
-                  pixelSize: pixelSize,
-                  fillColor: Colors.transparent,
+        return SizedBox(
+          width: resolvedWidth,
+          height: resolvedHeight,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: ClipPath(
+                  clipper: _PixelCourseClipper(pixelSize),
+                  child: child,
                 ),
               ),
-            ),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    painter: _PixelCoursePainter(
+                      color: borderColor ?? AppColors.cardBorder,
+                      pixelSize: pixelSize,
+                      fillColor: Colors.transparent,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

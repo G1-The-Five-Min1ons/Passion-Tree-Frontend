@@ -60,12 +60,16 @@ class CourseProgressCard extends StatelessWidget {
         );
       },
       child: BaseCourseCard(
-        child: Column(
-          children: [
-            SizedBox(
-              height: 90,
-              width: double.infinity,
-              child: Stack(
+        child: LayoutBuilder(builder: (context, constraints) {
+          final scale = (constraints.maxHeight / BaseCourseCard.defaultHeight).clamp(0.6, 1.4);
+          final imageHeight = (90 * scale).clamp(60.0, 180.0);
+
+          return Column(
+            children: [
+              SizedBox(
+                height: imageHeight,
+                width: double.infinity,
+                child: Stack(
                 children: [
                   Positioned.fill(
                     child: GestureDetector(
@@ -155,7 +159,7 @@ class CourseProgressCard extends StatelessWidget {
                       'สอนโดย ${data.instructor}',
                       style: AppTypography.smallBodyMedium,
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6 * scale),
                     SizedBox(
                       height: descriptionBlockHeight,
                       child: Text(
@@ -169,7 +173,7 @@ class CourseProgressCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8 * scale),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -187,17 +191,17 @@ class CourseProgressCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6 * scale),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: progress,
                         backgroundColor: AppColors.cardBorder,
                         color: AppColors.secondaryBrand,
-                        minHeight: 8,
+                        minHeight: 8 * scale,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4 * scale),
                     Text(
                       '${data.completedNodes} / ${data.modules} modules',
                       style: AppTypography.smallBodyMedium.copyWith(
@@ -209,7 +213,8 @@ class CourseProgressCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
+          );
+        }),
       ),
     );
   }

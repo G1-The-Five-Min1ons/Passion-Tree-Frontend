@@ -26,6 +26,13 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
   int inProgressShown = 4;
   int completedShown = 4;
 
+  int _gridCrossAxisCount(double width) {
+    if (width < 420) return 1;
+    if (width < 760) return 2;
+    if (width < 1100) return 3;
+    return 4;
+  }
+
   // Cached filtered lists to avoid re-filtering on every build
   List<LearningPath> _draftPaths = [];
   List<LearningPath> _publishedPaths = [];
@@ -109,6 +116,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
     required String emptyMessage,
   }) {
     final colors = Theme.of(context).colorScheme;
+    final crossAxisCount = _gridCrossAxisCount(MediaQuery.sizeOf(context).width);
 
     if (paths.isEmpty) {
       return SizedBox(
@@ -130,8 +138,8 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: paths.length < shownCount ? paths.length : shownCount,
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 220,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
             mainAxisSpacing: 35,
             crossAxisSpacing: 12,
             childAspectRatio: 0.692,

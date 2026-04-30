@@ -6,8 +6,9 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_progress_card.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/recommendation_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
@@ -29,21 +30,24 @@ class LearningPathOverviewPage extends StatefulWidget {
 class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
   String _searchQuery = '';
   LearningPathOverviewLoaded? _cachedOverview;
-  late final PageController _recPageController;
-  int _recPage = 0;
 
   String? userId;
+
+  int _gridCrossAxisCount(double width) {
+    if (width < 420) return 1;
+    if (width < 760) return 2;
+    if (width < 1100) return 3;
+    return 4;
+  }
 
   @override
   void initState() {
     super.initState();
-    _recPageController = PageController(viewportFraction: 0.88);
     _loadOverviewData();
   }
 
   @override
   void dispose() {
-    _recPageController.dispose();
     super.dispose();
   }
 
@@ -110,6 +114,9 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final size = MediaQuery.sizeOf(context);
+    final enrolledCrossAxisCount = _gridCrossAxisCount(size.width);
+    final allCrossAxisCount = _gridCrossAxisCount(size.width);
 
     return Scaffold(
       appBar: AppBarWidget(
@@ -178,10 +185,10 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                   .where((path) => !enrolledPathIds.contains(path.id.trim()))
                   .toList();
 
-              // First 4 for the overview "All Learning Paths" preview
-              final previewAllCourses = filteredAll.take(4).toList();
+              // First 4 for the overview "All Learning Paths" preview (excluding enrolled)
+              final previewAllCourses = filteredRecommended.take(4).toList();
               final hasMorePaths =
-                  filteredAll.length > previewAllCourses.length;
+                  filteredRecommended.length > previewAllCourses.length;
 
               final hasEnrolledPaths = overviewData.enrolledPaths.isNotEmpty;
 
@@ -256,114 +263,24 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           )
                         else
                           GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: filteredEnrolled.length < 2
-                                ? filteredEnrolled.length
-                                : 2,
-                            gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
-                                  maxCrossAxisExtent: 220,
-                                  mainAxisSpacing: 35,
-                                  crossAxisSpacing: 12,
-                                  childAspectRatio: 0.62,
-                                ),
-                            itemBuilder: (context, index) {
-                              return CourseProgressCard(
-                                data: filteredEnrolled[index],
-                              );
-                            },
-                          ),
-                        const SizedBox(height: 60),
-                      ],
-
-                      // ===== RECOMMENDATION SECTION =====
-                      Text(
-                        hasEnrolledPaths
-                            ? 'Recommendation'
-                            : 'Popular\nLearning Paths',
-                        style: AppPixelTypography.title.copyWith(
-                          color: colors.onPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      if (filteredRecommended.isNotEmpty)
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.swipe_right_alt,
-                              size: 18,
-                              color: colors.onPrimary.withValues(alpha: 0.72),
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: filteredEnrolled.length.clamp(0, 4),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisSpacing: 35,
+                                    crossAxisSpacing: 12,
+                                    childAspectRatio: 0.62,
+                                  ),
+                              itemBuilder: (context, index) {
+                                return CourseProgressCard(
+                                  data: filteredEnrolled[index],
+                                );
+                              },
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Swipe right to see more recommendations',
-                              style: AppTypography.smallBodyMedium.copyWith(
-                                color: colors.onPrimary.withValues(alpha: 0.75),
-                              ),
-                            ),
-                          ],
-                        ),
-                      const SizedBox(height: 22),
-
-                      if (filteredRecommended.isEmpty)
-                        Center(
-                          child: Text(
-                            hasEnrolledPaths
-                                ? 'No recommendations found'
-                                : 'No popular paths found',
-                            style: AppTypography.subtitleSemiBold.copyWith(
-                              color: colors.onPrimary,
-                            ),
-                          ),
-                        )
-                      else ...[
-                        /// Full-width featured cards with peek of next card
-                        SizedBox(
-                          height: 300,
-                          child: PageView.builder(
-                            controller: _recPageController,
-                            onPageChanged: (page) =>
-                                setState(() => _recPage = page),
-                            itemCount: filteredRecommended.length,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 6),
-                                child: RecommendationCard(
-                                  course: filteredRecommended[index],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-
-                        if (filteredRecommended.length > 1) ...[
-                          const SizedBox(height: 14),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              filteredRecommended.length.clamp(0, 7),
-                              (i) => AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                width: _recPage == i ? 14 : 7,
-                                height: 5,
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _recPage == i
-                                      ? colors.primary
-                                      : AppColors.cardBorder,
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                              ),
-                            ),
-                          ),
+                          const SizedBox(height: 40),
                         ],
-                      ],
-
-                      const SizedBox(height: 60),
 
                       // ===== ALL LEARNING PATHS =====
                       Text(
@@ -392,8 +309,8 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: previewAllCourses.length,
                           gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: allCrossAxisCount,
                                 mainAxisSpacing: 35,
                                 crossAxisSpacing: 12,
                                 childAspectRatio:
@@ -410,38 +327,13 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                       if (hasMorePaths) ...[
                         const SizedBox(height: 32),
                         Center(
-                          child: GestureDetector(
-                            onTap: () =>
-                                _navigateToAllPaths(context, filteredAll),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 28,
-                                vertical: 14,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colors.primary.withValues(alpha: 0.12),
-                                border: Border.all(
-                                  color: AppColors.cardBorder,
-                                  width: 2,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'See All Paths',
-                                    style: AppTypography.subtitleSemiBold
-                                        .copyWith(color: colors.onPrimary),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Icon(
-                                    Icons.arrow_forward,
-                                    size: 20,
-                                    color: colors.onPrimary,
-                                  ),
-                                ],
-                              ),
-                            ),
+                          child: AppButton(
+                            variant: AppButtonVariant.text,
+                            text: 'View All',
+                            icon: Icon(Icons.arrow_forward, size: 20, color: colors.onPrimary),
+                            onPressed: () =>
+                                _navigateToAllPaths(context, filteredRecommended),
+                            textColor: colors.onPrimary,
                           ),
                         ),
                       ],

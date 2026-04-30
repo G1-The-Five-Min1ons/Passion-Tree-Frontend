@@ -97,7 +97,6 @@ class _PixelTextFieldState extends State<PixelTextField> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final ScrollController scrollController = ScrollController();
 
     //ถ้าตอนเอาไปใช้ไม่ได้กำหนดสีมา ก็จะใช้สีจาก Theme ที่กำหนดไว้แล้วแทน
     final activeBorderColor = widget.borderColor ?? colorScheme.primary;
@@ -156,33 +155,28 @@ class _PixelTextFieldState extends State<PixelTextField> {
           borderColor: activeBorderColor,
           fillColor: activeFillColor,
           padding: activeContentPadding,
-          child: Scrollbar(
-            controller: scrollController,
-            thumbVisibility: true,
-            child: TextField(
-              controller: _controller,
-              focusNode: widget.focusNode,
-              scrollController: scrollController,
-              minLines: widget.obscureText ? 1 : widget.minLines,
-              maxLines: widget.obscureText ? 1 : widget.maxLines,
-              maxLength: widget.maxLength,
-              expands: widget.obscureText ? false : (widget.maxLines == null),
-              obscureText: widget.obscureText,
-              readOnly: widget.readOnly,
-              textInputAction: widget.textInputAction,
-              onChanged: widget.onChanged,
-              style: (widget.textStyle ?? AppTypography.bodyRegular).copyWith(
-                color: activeTextColor,
-              ),
-              decoration: InputDecoration(
-                hintText: widget.hintText,
-                hintStyle: (widget.textStyle ?? AppTypography.bodyRegular)
-                    .copyWith(color: activeHintColor),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-                counterText: '',
-              ),
+          child: TextField(
+            controller: _controller,
+            focusNode: widget.focusNode,
+            minLines: widget.obscureText ? 1 : widget.minLines,
+            maxLines: widget.obscureText ? 1 : widget.maxLines,
+            maxLength: widget.maxLength,
+            expands: widget.obscureText ? false : (widget.maxLines == null),
+            obscureText: widget.obscureText,
+            readOnly: widget.readOnly,
+            textInputAction: widget.textInputAction,
+            onChanged: widget.onChanged,
+            style: (widget.textStyle ?? AppTypography.bodyRegular).copyWith(
+              color: activeTextColor,
+            ),
+            decoration: InputDecoration(
+              hintText: widget.hintText,
+              hintStyle: (widget.textStyle ?? AppTypography.bodyRegular)
+                  .copyWith(color: activeHintColor),
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.zero,
+              counterText: '',
             ),
           ),
         ),

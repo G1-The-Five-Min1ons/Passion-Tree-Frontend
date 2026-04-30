@@ -46,6 +46,7 @@ class NodesOverviewCore extends StatefulWidget {
 class _NodesOverviewCoreState extends State<NodesOverviewCore> {
   int? _draggingIndex;
   int? _hoverIndex;
+  bool _isDescriptionExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -111,13 +112,27 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Description',
-                    style: Theme.of(context).textTheme.titleLarge,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Description',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      GestureDetector(
+                        onTap: () => setState(() => _isDescriptionExpanded = !_isDescriptionExpanded),
+                        child: Icon(
+                          _isDescriptionExpanded ? Icons.expand_less : Icons.expand_more,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Text(
                     description,
+                    maxLines: _isDescriptionExpanded ? null : 1,
+                    overflow: _isDescriptionExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
                     style: AppTypography.bodySemiBold.copyWith(
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -149,11 +164,14 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
                 return SingleChildScrollView(
                   // physics นี้ทำให้เลื่อนได้นุ่มนวลและไถลงไปดูพื้นหลังด้านล่างได้เสมอ
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xmargin,
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.xmargin,
+                    0,
+                    AppSpacing.xmargin,
+                    40,
                   ),
                   child: SizedBox(
-                    height: finalCanvasHeight,
+                    height: dynamicCanvasHeight,
                     width: canvasWidth,
                     child: TreeCanvas(
                       itemCount: nodeCount,
@@ -297,7 +315,7 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
   String _shortNodeTitle(String title) {
     final normalized = title.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (normalized.isEmpty) return 'Untitled';
-    if (normalized.length <= 32) return normalized;
-    return '${normalized.substring(0, 32)}...';
+    if (normalized.length <= 10) return normalized;
+    return '${normalized.substring(0, 10)}...';
   }
 }
