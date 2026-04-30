@@ -39,16 +39,6 @@ class SaveCancel extends StatelessWidget{
           mainAxisSize: MainAxisSize.min,
           children: [
             AppButton(
-              variant: AppButtonVariant.text,
-              text: cancelText,
-              onPressed: onCancel,
-              backgroundColor: cancelButtonColor ?? AppColors.scale,
-                textColor: cancelTextColor ?? (cancelButtonColor != null
-                  ? colors.onError
-                  : AppColors.background),
-            ),
-            const SizedBox(width: 8),
-            AppButton(
               variant: saveIcon != null
                   ? AppButtonVariant.textWithIcon
                   : AppButtonVariant.text,
@@ -61,6 +51,16 @@ class SaveCancel extends StatelessWidget{
               textColor: saveButtonColor != null
                   ? AppColors.textPrimary
                   : Theme.of(context).colorScheme.onPrimary,
+            ),
+            const SizedBox(width: 8),
+            AppButton(
+              variant: AppButtonVariant.text,
+              text: cancelText,
+              onPressed: onCancel,
+              backgroundColor: cancelButtonColor ?? AppColors.scale,
+                textColor: cancelTextColor ?? (cancelButtonColor != null
+                  ? colors.onError
+                  : AppColors.background),
             ),
           ],
         ),
