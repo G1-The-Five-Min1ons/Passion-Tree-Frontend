@@ -174,6 +174,9 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
       _refreshMissions();
       return;
     }
+    // popped back to its root so the user always lands on the first page
+  
+    _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
 
     // Switching to a different tab — reset the Learn tab's nested navigator
     // so its bottom-bar entry always lands on the Overview page.

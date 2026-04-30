@@ -3,10 +3,11 @@ import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_progress_card.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/recommendation_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/arrow_button.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/all_learning_paths_page.dart';
 
@@ -38,24 +39,27 @@ class TeacherLearningTab extends StatefulWidget {
 
 class _TeacherLearningTabState extends State<TeacherLearningTab> {
   int _allListShownCount = 4;
-  late final PageController _recommendationPageController;
-  int _recommendationPage = 0;
+
 
   // Cached filtered lists to avoid re-filtering on every build
   List<LearningPath> _filteredAll = [];
   List<EnrolledLearningPath> _filteredEnrolled = [];
-  List<LearningPath> _filteredNonEnrolled = [];
+
+  int _gridCrossAxisCount(double width) {
+    if (width < 420) return 1;
+    if (width < 760) return 2;
+    if (width < 1100) return 3;
+    return 4;
+  }
 
   @override
   void initState() {
     super.initState();
-    _recommendationPageController = PageController(viewportFraction: 0.88);
     _updateFilteredPaths();
   }
 
   @override
   void dispose() {
-    _recommendationPageController.dispose();
     super.dispose();
   }
 
@@ -78,12 +82,6 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
   void _updateFilteredPaths() {
     _filteredAll = _filterCourses(widget.allPaths);
     _filteredEnrolled = _filterEnrolledCourses(widget.enrolledPaths);
-
-    // Filter out ALL enrolled paths from "All Learning Paths" and "Recommended"
-    final enrolledPathIds = widget.enrolledPaths.map((e) => e.pathId).toSet();
-    _filteredNonEnrolled = _filteredAll
-        .where((path) => !enrolledPathIds.contains(path.id))
-        .toList();
   }
 
   List<LearningPath> _filterCourses(List<LearningPath> courses) {
@@ -141,12 +139,22 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final size = MediaQuery.sizeOf(context);
+    final enrolledCrossAxisCount = _gridCrossAxisCount(size.width);
+    final allCrossAxisCount = _gridCrossAxisCount(size.width);
 
     final filteredEnrolled = _filteredEnrolled;
     final filteredAll = _filteredAll;
-    final filteredNonEnrolled = _filteredNonEnrolled;
 
-    final shownAllCourses = filteredAll.take(_allListShownCount).toList();
+    // Exclude enrolled paths from all paths display
+    final enrolledPathIds = _filteredEnrolled
+        .map((e) => e.pathId.trim())
+        .toSet();
+    final filteredRecommended = filteredAll
+        .where((path) => !enrolledPathIds.contains(path.id.trim()))
+        .toList();
+
+    final shownAllCourses = filteredRecommended.take(_allListShownCount).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,10 +194,8 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: filteredEnrolled.length < 2
-                ? filteredEnrolled.length
-                : 2,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            itemCount: filteredEnrolled.length.clamp(0, 4),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
@@ -199,78 +205,6 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
               return CourseProgressCard(data: filteredEnrolled[index]);
             },
           ),
-        const SizedBox(height: 60),
-        Text(
-          'Recommendation',
-          style: AppPixelTypography.title.copyWith(color: colors.onPrimary),
-        ),
-        const SizedBox(height: 8),
-        if (filteredNonEnrolled.isNotEmpty)
-          Row(
-            children: [
-              Icon(
-                Icons.swipe_right_alt,
-                size: 18,
-                color: colors.onPrimary.withValues(alpha: 0.72),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Swipe right to see more recommendations',
-                style: AppTypography.smallBodyMedium.copyWith(
-                  color: colors.onPrimary.withValues(alpha: 0.75),
-                ),
-              ),
-            ],
-          ),
-        const SizedBox(height: 18),
-        SizedBox(
-          height: 310,
-          child: filteredNonEnrolled.isEmpty
-              ? Center(
-                  child: Text(
-                    'No recommended paths found',
-                    style: AppTypography.subtitleSemiBold.copyWith(
-                      color: colors.onPrimary,
-                    ),
-                  ),
-                )
-              : PageView.builder(
-                  controller: _recommendationPageController,
-                  onPageChanged: (page) {
-                    setState(() => _recommendationPage = page);
-                  },
-                  itemCount: filteredNonEnrolled.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: RecommendationCard(
-                        course: filteredNonEnrolled[index],
-                      ),
-                    );
-                  },
-                ),
-        ),
-        if (filteredNonEnrolled.length > 1) ...[
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              filteredNonEnrolled.length.clamp(0, 7),
-              (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: _recommendationPage == i ? 14 : 7,
-                height: 5,
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                decoration: BoxDecoration(
-                  color: _recommendationPage == i
-                      ? colors.primary
-                      : colors.onPrimary.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-            ),
-          ),
-        ],
         const SizedBox(height: 60),
         Text(
           'All Learning Paths',
@@ -291,8 +225,8 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: shownAllCourses.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: allCrossAxisCount,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
               childAspectRatio:
@@ -302,41 +236,22 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
               return PixelCourseCard(course: shownAllCourses[index]);
             },
           ),
-        if (filteredAll.length > _allListShownCount) ...[
+        if (filteredRecommended.length > _allListShownCount) ...[
           const SizedBox(height: 32),
           Center(
-            child: GestureDetector(
-              onTap: () {
+            child: AppButton(
+              variant: AppButtonVariant.text,
+              text: 'View All',
+              icon: Icon(Icons.arrow_forward, size: 20, color: colors.onPrimary),
+              onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => AllLearningPathsPage(paths: filteredAll),
+                    builder: (_) => AllLearningPathsPage(paths: filteredRecommended),
                   ),
                 );
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.12),
-                  border: Border.all(color: AppColors.cardBorder, width: 2),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'View All',
-                      style: AppTypography.subtitleSemiBold.copyWith(
-                        color: colors.onPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Icon(Icons.arrow_forward, size: 20, color: colors.onPrimary),
-                  ],
-                ),
-              ),
+              textColor: colors.onPrimary,
             ),
           ),
         ],

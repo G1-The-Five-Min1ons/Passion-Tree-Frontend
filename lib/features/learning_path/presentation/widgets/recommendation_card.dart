@@ -22,6 +22,10 @@ class RecommendationCard extends StatelessWidget {
         final cardWidth = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : MediaQuery.of(context).size.width - 48;
+        final cardHeight = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : 300.0;
+        final imageHeight = (cardHeight * 0.5).clamp(120.0, 180.0).toDouble();
 
         return GestureDetector(
           onTap: () {
@@ -37,14 +41,14 @@ class RecommendationCard extends StatelessWidget {
           },
           child: BaseCourseCard(
             width: cardWidth,
-            height: 300,
+            height: cardHeight,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 /// ===== COVER IMAGE =====
                 SizedBox(
                   width: double.infinity,
-                  height: 150,
+                  height: imageHeight,
                   child: Stack(
                     children: [
                       Positioned.fill(
@@ -102,48 +106,12 @@ class RecommendationCard extends StatelessWidget {
                         ),
                       ),
 
-                      Positioned(
-                        left: 12,
-                        bottom: 10,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.surface.withValues(alpha: 0.88),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: AppColors.cardBorder,
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.swipe_right_alt,
-                                size: 16,
-                                color: colors.onSurface.withValues(alpha: 0.78),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Swipe right for more',
-                                style: AppTypography.smallBodyMedium.copyWith(
-                                  color: colors.onSurface.withValues(
-                                    alpha: 0.78,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      
 
                       /// Rating badge
                       Positioned(
-                        top: 6,
-                        right: 6,
+                        top: 3,
+                        right: 3,
                         child: Container(
                           color: AppColors.cardBorder,
                           padding: const EdgeInsets.symmetric(

@@ -99,7 +99,6 @@ class _PixelTextFieldState extends State<PixelTextField> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final ScrollController scrollController = ScrollController();
 
     //ถ้าตอนเอาไปใช้ไม่ได้กำหนดสีมา ก็จะใช้สีจาก Theme ที่กำหนดไว้แล้วแทน
     final activeBorderColor = widget.borderColor ?? colorScheme.primary;

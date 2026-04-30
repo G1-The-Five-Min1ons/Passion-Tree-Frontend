@@ -23,6 +23,13 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
   int inProgressShown = 4;
   int completedShown = 4;
 
+  int _gridCrossAxisCount(double width) {
+    if (width < 420) return 1;
+    if (width < 760) return 2;
+    if (width < 1100) return 3;
+    return 4;
+  }
+
   // Cached filtered lists to avoid re-filtering on every build
   List<EnrolledLearningPath> _inProgressPaths = [];
   List<EnrolledLearningPath> _completedPaths = [];
@@ -57,6 +64,7 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final crossAxisCount = _gridCrossAxisCount(MediaQuery.sizeOf(context).width);
     
     // Use cached filtered lists instead of filtering on every build
     final inProgressCourses = _inProgressPaths;
@@ -113,8 +121,8 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
             itemCount: inProgressCourses.length < inProgressShown
                 ? inProgressCourses.length
                 : inProgressShown,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
               childAspectRatio: 0.62, // taller progress card
@@ -228,8 +236,8 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
             itemCount: completedCourses.length < completedShown
                 ? completedCourses.length
                 : completedShown,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
               mainAxisSpacing: 35,
               crossAxisSpacing: 12,
               childAspectRatio: 0.62, // taller progress card

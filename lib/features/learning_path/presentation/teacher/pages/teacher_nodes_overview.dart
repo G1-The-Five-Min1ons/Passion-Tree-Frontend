@@ -1138,6 +1138,7 @@ class _TeacherNodesOverviewPageState extends State<TeacherNodesOverviewPage> {
                 /// ===== CORE =====
                 Positioned.fill(
                   top: 84,
+                  bottom: 0,
                   child: NodesOverviewCore(
                     isEditable: true,
                     isDraggable: !_isPublished,

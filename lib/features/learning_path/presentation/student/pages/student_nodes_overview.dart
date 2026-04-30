@@ -36,26 +36,43 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
   EnrolledLearningPath? _currentEnrolledPath;
 
   int _getNextRequiredSequence(List<NodeDetail> nodes) {
-    for (final node in nodes) {
+    final sortedNodes = [...nodes]
+      ..sort((a, b) => a.sequence.compareTo(b.sequence));
+    for (final node in sortedNodes) {
       if (node.complete.toLowerCase() != 'true') {
         return node.sequence;
       }
     }
-    return nodes.length + 1;
+    return sortedNodes.length + 1;
   }
 
   void _showOutOfOrderNodeSnackBar() {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.removeCurrentSnackBar();
-    messenger.showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Please finish the previous node.',
-          style: TextStyle(color: AppColors.textPrimary),
+    ScaffoldMessenger.of(context)
+      ..removeCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please finish the previous node.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+          duration: Duration(seconds: 2),
         ),
-        backgroundColor: AppColors.cancel,
-      ),
-    );
+      );
+  }
+
+  bool _canOpenNode(NodeDetail node, List<NodeDetail> nodes) {
+    final sortedNodes = [...nodes]
+      ..sort((a, b) => a.sequence.compareTo(b.sequence));
+    for (final n in sortedNodes) {
+      if (n.nodeId == node.nodeId) {
+        return true;
+      }
+      if (n.complete.toLowerCase() != 'true') {
+        return false;
+      }
+    }
+    return false;
   }
 
   @override
@@ -130,119 +147,129 @@ class _StudentNodesOverviewPageState extends State<StudentNodesOverviewPage> {
                   _cachedNodes ?? (state is NodesLoaded ? state.nodes : null);
 
               if (nodes != null && nodes.isNotEmpty) {
-                return Stack(
-                  children: [
-                    /// ===== CORE =====
-                    NodesOverviewCore(
-                      isEditable: false,
-                      showNodeTitle: true,
-                      nodes: nodes,
-                      onNodeTap: (index) {
-                        if (index < nodes.length) {
-                          final currentNode = nodes[index];
-                          final nextRequiredSequence = _getNextRequiredSequence(
-                            nodes,
-                          );
+                return SizedBox.expand(
+                  child: Stack(
+                    children: [
+                      /// ===== CORE =====
+                      Positioned.fill(
+                        top: 84,
+                        bottom: 0,
+                        child: NodesOverviewCore(
+                          isEditable: false,
+                          showNodeTitle: true,
+                          description: widget.course.description,
+                          nodes: nodes,
+                          onNodeTap: (index) {
+                            if (index < nodes.length) {
+                              final currentNode = nodes[index];
 
-                          if (currentNode.sequence > nextRequiredSequence) {
-                            _showOutOfOrderNodeSnackBar();
-                            return;
-                          }
+                              if (!_canOpenNode(currentNode, nodes)) {
+                                _showOutOfOrderNodeSnackBar();
+                                return;
+                              }
 
-                          final currentSequence = currentNode.sequence;
+                              final currentSequence = currentNode.sequence;
 
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider.value(
-                                value: context.read<LearningPathBloc>(),
-                                child: LearningNodePage(
-                                  nodeId: currentNode.nodeId,
-                                  pathId: widget.course.id,
-                                  pathName: widget.course.title,
-                                  totalNodes: nodes.length,
-                                  currentNodeSequence: currentSequence,
-                                  userId: _userId ?? '',
-                                ),
-                              ),
-                            ),
-                          ).then((_) {
-                            if (!context.mounted) return;
-                            // Refetch nodes when returning from learning node page
-                            if (_userId != null && _userId!.isNotEmpty) {
-                              _fetchNodes(_userId!);
-                              // Also refetch overview to update enrolled path progress
-                              context.read<LearningPathBloc>().add(
-                                FetchLearningPathOverview(),
-                              );
-                            }
-                          });
-                        }
-                      },
-                    ),
-
-                    /// ===== HEADER (Dynamic Title + Progress) =====
-                    Positioned(
-                      top: 16,
-                      left: 0,
-                      right: 0,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          HeaderBar(
-                            title: widget.course.title,
-                            showAddButton: false,
-                          ),
-                          if (_currentEnrolledPath != null)
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-                              child: Row(
-                                children: [
-                                  // Status badge
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => BlocProvider.value(
+                                    value: context.read<LearningPathBloc>(),
+                                    child: LearningNodePage(
+                                      nodeId: currentNode.nodeId,
+                                      pathId: widget.course.id,
+                                      pathName: widget.course.title,
+                                      totalNodes: nodes.length,
+                                      currentNodeSequence: currentSequence,
+                                      userId: _userId ?? '',
                                     ),
-                                    color:
-                                        _currentEnrolledPath!.progressStatus ==
-                                            'Completed'
-                                        ? AppColors.status
-                                        : AppColors.warning,
-                                    child: Text(
-                                      _currentEnrolledPath!.progressStatus,
+                                  ),
+                                ),
+                              ).then((_) {
+                                if (!context.mounted) return;
+                                // Refetch nodes when returning from learning node page
+                                if (_userId != null && _userId!.isNotEmpty) {
+                                  _fetchNodes(_userId!);
+                                  // Also refetch overview to update enrolled path progress
+                                  context.read<LearningPathBloc>().add(
+                                    FetchLearningPathOverview(),
+                                  );
+                                }
+                              });
+                            }
+                          },
+                        ),
+                      ),
+
+                      /// ===== HEADER (Dynamic Title + Progress) =====
+                      Positioned(
+                        top: 16,
+                        left: 0,
+                        right: 0,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            HeaderBar(
+                              title: widget.course.title,
+                              showAddButton: false,
+                            ),
+                            if (_currentEnrolledPath != null)
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  24,
+                                  0,
+                                  24,
+                                  8,
+                                ),
+                                child: Row(
+                                  children: [
+                                    // Status badge
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      color:
+                                          _currentEnrolledPath!
+                                                  .progressStatus ==
+                                              'Completed'
+                                          ? AppColors.status
+                                          : AppColors.warning,
+                                      child: Text(
+                                        _currentEnrolledPath!.progressStatus,
+                                        style: AppTypography.smallBodyMedium
+                                            .copyWith(
+                                              color: AppColors.background,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    // Nodes count
+                                    Text(
+                                      '${_currentEnrolledPath!.completedNodes} / ${_currentEnrolledPath!.modules} nodes',
                                       style: AppTypography.smallBodyMedium
                                           .copyWith(
-                                            color: AppColors.background,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '(${_currentEnrolledPath!.progressPercent.round()}%)',
+                                      style: AppTypography.smallBodyMedium
+                                          .copyWith(
+                                            color: AppColors.textSecondary,
                                             fontWeight: FontWeight.bold,
                                           ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  // Nodes count
-                                  Text(
-                                    '${_currentEnrolledPath!.completedNodes} / ${_currentEnrolledPath!.modules} nodes',
-                                    style: AppTypography.smallBodyMedium
-                                        .copyWith(
-                                          color: AppColors.textSecondary,
-                                        ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '(${_currentEnrolledPath!.progressPercent.round()}%)',
-                                    style: AppTypography.smallBodyMedium
-                                        .copyWith(
-                                          color: AppColors.textSecondary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               }
 

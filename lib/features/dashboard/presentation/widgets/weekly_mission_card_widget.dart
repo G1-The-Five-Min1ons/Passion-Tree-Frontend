@@ -42,6 +42,9 @@ class WeeklyMissionCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final scale = (width / 360).clamp(0.85, 1.4);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -78,15 +81,15 @@ class WeeklyMissionCardWidget extends StatelessWidget {
             width: double.infinity,
             child: PixelBorderContainer(
               pixelSize: 3,
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16 * scale),
               child: Row(
                 children: [
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                  SizedBox(
+                    width: 16 * scale,
+                    height: 16 * scale,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12 * scale),
                   Text(
                     'Loading missions...',
                     style: AppTypography.bodyRegular.copyWith(
@@ -102,7 +105,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
             width: double.infinity,
             child: PixelBorderContainer(
               pixelSize: 3,
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8 * scale),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -112,7 +115,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4 * scale),
                   Text(
                     errorMessage!,
                     style: AppTypography.smallBodyRegular.copyWith(
@@ -120,7 +123,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
                     ),
                   ),
                   if (onRetry != null) ...[
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8 * scale),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -142,7 +145,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
                 onTap: onEmptyTap,
                 child: PixelBorderContainer(
                   pixelSize: 3,
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.all(12 * scale),
                   child: Row(
                     children: [
                       Expanded(
@@ -154,17 +157,17 @@ class WeeklyMissionCardWidget extends StatelessWidget {
                         ),
                       ),
                       if (onEmptyTap != null) ...[
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8 * scale),
                         Text(
                           'Mission Center',
                           style: AppTypography.bodySemiBold.copyWith(
                             color: AppColors.secondaryBrand,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4 * scale),
                         Icon(
                           Icons.arrow_forward_rounded,
-                          size: 16,
+                          size: 16 * scale,
                           color: AppColors.secondaryBrand,
                         ),
                       ],
@@ -178,7 +181,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
           PixelBorderContainer(
             width: double.infinity,
             pixelSize: 3,
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12 * scale),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: missions
@@ -191,6 +194,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
                           ? 'Done'
                           : '${mission.rewardXp} XP',
                       useRecentActivityStyle: false,
+                      scale: scale as double,
                     ),
                   )
                   .toList(),
@@ -206,6 +210,7 @@ class WeeklyMissionCardWidget extends StatelessWidget {
     required double value,
     required String trailing,
     required bool useRecentActivityStyle,
+    double scale = 1.0,
   }) {
     return Material(
       color: Colors.transparent,
@@ -216,8 +221,8 @@ class WeeklyMissionCardWidget extends StatelessWidget {
               ? const EdgeInsets.only(bottom: 8)
               : EdgeInsets.zero,
           padding: useRecentActivityStyle
-              ? const EdgeInsets.symmetric(horizontal: 8, vertical: 7)
-              : const EdgeInsets.all(8),
+              ? EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 7 * scale)
+              : EdgeInsets.all(8 * scale),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -239,12 +244,12 @@ class WeeklyMissionCardWidget extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4 * scale),
               LinearProgressIndicator(
                 value: value,
                 backgroundColor: AppColors.cardBorder,
                 color: AppColors.secondaryBrand,
-                minHeight: 6,
+                minHeight: 6 * scale,
               ),
             ],
           ),

@@ -27,30 +27,51 @@ class CommentsSection extends StatefulWidget {
 }
 
 class _CommentsSectionState extends State<CommentsSection> {
-  bool _isExpanded = false;
-  bool _hasFetched = false;
   late final CommentBloc _commentBloc;
+
+  int _getTotalActiveLikeCount(List<Comment> comments) {
+    var total = 0;
+
+    for (final comment in comments) {
+      final latestByUser = <String, CommentReaction>{};
+      var unknownUserLikeCount = 0;
+
+      for (final reaction in comment.reactions) {
+        final userId = reaction.userId;
+        if (userId == null || userId.isEmpty) {
+          if (reaction.reactionType == 'like') {
+            unknownUserLikeCount++;
+          }
+          continue;
+        }
+
+        // Latest reaction from the same user determines active state.
+        latestByUser[userId] = reaction;
+      }
+
+      final activeUserLikes = latestByUser.values
+          .where((reaction) => reaction.reactionType == 'like')
+          .length;
+
+      total += activeUserLikes + unknownUserLikeCount;
+    }
+
+    return total;
+  }
 
   @override
   void initState() {
     super.initState();
     _commentBloc = getIt<CommentBloc>();
+    _commentBloc.add(
+      FetchComments(nodeId: widget.nodeId, pathId: widget.pathId),
+    );
   }
 
   @override
   void dispose() {
     _commentBloc.close();
     super.dispose();
-  }
-
-  void _handleToggle() {
-    if (!_hasFetched) {
-      _hasFetched = true;
-      _commentBloc.add(
-        FetchComments(nodeId: widget.nodeId, pathId: widget.pathId),
-      );
-    }
-    setState(() => _isExpanded = !_isExpanded);
   }
 
   @override
@@ -67,79 +88,65 @@ class _CommentsSectionState extends State<CommentsSection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ===== TOGGLE HEADER =====
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _handleToggle,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                child: BlocBuilder<CommentBloc, CommentState>(
-                  bloc: _commentBloc,
-                  builder: (_, state) {
-                    final count = state is CommentLoaded
-                        ? state.comments.length
-                        : 0;
-                    return Row(
-                      children: [
-                        Text(
-                          'Comments',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        if (count > 0) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.secondaryBrand.withValues(
-                                alpha: 0.15,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '$count',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    color: AppColors.secondaryBrand,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
+            // ===== HEADER =====
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: BlocBuilder<CommentBloc, CommentState>(
+                bloc: _commentBloc,
+                builder: (_, state) {
+                  final count = state is CommentLoaded
+                      ? _getTotalActiveLikeCount(state.comments)
+                      : 0;
+                  return Row(
+                    children: [
+                      Text(
+                        'Comments',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      if (count > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
                           ),
-                        ],
-                        const Spacer(),
-                        Icon(
-                          _isExpanded
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          color: colors.onSurface.withValues(alpha: 0.6),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondaryBrand.withValues(
+                              alpha: 0.15,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '$count',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: AppColors.secondaryBrand,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
                         ),
                       ],
-                    );
-                  },
-                ),
+                    ],
+                  );
+                },
               ),
             ),
 
-            // ===== EXPANDED CONTENT =====
-            if (_isExpanded) ...[
-              Divider(
-                height: 1,
-                thickness: 0.5,
-                color: Colors.white.withValues(alpha: 0.15),
-              ),
-              _CommentsSectionContent(
-                nodeId: widget.nodeId,
-                pathId: widget.pathId,
-                userId: widget.userId,
-              ),
-            ],
+            Divider(
+              height: 1,
+              thickness: 0.5,
+              color: Colors.white.withValues(alpha: 0.15),
+            ),
+            _CommentsSectionContent(
+              nodeId: widget.nodeId,
+              pathId: widget.pathId,
+              userId: widget.userId,
+            ),
           ],
         ),
       ),
@@ -972,7 +979,10 @@ class _CommentItemState extends State<_CommentItem> {
                           const SizedBox(height: 2),
                           RichText(
                             text: TextSpan(
-                              style: Theme.of(context).textTheme.bodyMedium,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: colors.onPrimary,
+                                  ),
                               children: _buildMessageSpans(
                                 widget.comment.message,
                                 colors.primary,
@@ -1010,42 +1020,44 @@ class _CommentItemState extends State<_CommentItem> {
                                 ),
                               );
                             },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 8,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                minWidth: 44,
+                                minHeight: 44,
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    isLiked
-                                        ? Icons.favorite
-                                        : Icons.favorite_border,
-                                    size: 18,
-                                    color: isLiked
-                                        ? Colors.red
-                                        : colors.onSurface
-                                            .withValues(alpha: 0.5),
-                                  ),
-                                  if (likeCount > 0) ...[
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '$likeCount',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: isLiked
-                                                ? Colors.red
-                                                : colors.onSurface.withValues(
-                                                    alpha: 0.5,
-                                                  ),
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                              child: Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isLiked
+                                          ? Icons.favorite
+                                          : Icons.favorite_border,
+                                      size: 20,
+                                      color: isLiked
+                                          ? Colors.red
+                                          : colors.onSurface
+                                              .withValues(alpha: 0.5),
                                     ),
+                                    if (likeCount > 0) ...[
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '$likeCount',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: isLiked
+                                                  ? Colors.red
+                                                  : colors.onSurface.withValues(
+                                                      alpha: 0.5,
+                                                    ),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                    ],
                                   ],
-                                ],
+                                ),
                               ),
                             ),
                           ),

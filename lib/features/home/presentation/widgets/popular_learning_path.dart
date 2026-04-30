@@ -79,21 +79,28 @@ class _PopularLearningPathsSectionState
             ],
           ),
         const SizedBox(height: 18),
-        SizedBox(
-          height: 310,
-          child: isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: (value) => setState(() => _page = value),
-                  itemCount: paths.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: RecommendationCard(course: paths[index]),
-                    );
-                  },
-                ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final screenHeight = MediaQuery.of(context).size.height;
+            final computedHeight = ((screenHeight * 0.36).clamp(220.0, 420.0)) as double;
+
+            return SizedBox(
+              height: computedHeight,
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (value) => setState(() => _page = value),
+                      itemCount: paths.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: RecommendationCard(course: paths[index]),
+                        );
+                      },
+                    ),
+            );
+          },
         ),
         if (paths.length > 1) ...[
           const SizedBox(height: 12),

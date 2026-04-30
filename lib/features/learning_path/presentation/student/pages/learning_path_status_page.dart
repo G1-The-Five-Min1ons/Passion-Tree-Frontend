@@ -32,6 +32,13 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
 
   String? userId;
 
+  int _gridCrossAxisCount(double width) {
+    if (width < 420) return 1;
+    if (width < 760) return 2;
+    if (width < 1100) return 3;
+    return 4;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +76,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final crossAxisCount = _gridCrossAxisCount(MediaQuery.sizeOf(context).width);
 
     return Scaffold(
       appBar: AppBarWidget(
@@ -178,8 +186,8 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                               ? inProgress.length
                               : inProgressShown,
                           gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: crossAxisCount,
                                 mainAxisSpacing: 35,
                                 crossAxisSpacing: 12,
                                 childAspectRatio:
@@ -266,8 +274,8 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                               ? completed.length
                               : completedShown,
                           gridDelegate:
-                              const SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 220,
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: crossAxisCount,
                                 mainAxisSpacing: 35,
                                 crossAxisSpacing: 12,
                                 childAspectRatio:
