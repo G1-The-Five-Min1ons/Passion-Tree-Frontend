@@ -30,6 +30,7 @@ class PixelTextField extends StatefulWidget {
   final TextInputAction? textInputAction;
   final EdgeInsets? contentPadding;
   final bool readOnly;
+  final bool showScrollbar;
 
   const PixelTextField({
     super.key,
@@ -57,6 +58,7 @@ class PixelTextField extends StatefulWidget {
     this.textInputAction,
     this.contentPadding,
     this.readOnly = false,
+    this.showScrollbar = true,
   });
 
   @override
@@ -156,36 +158,61 @@ class _PixelTextFieldState extends State<PixelTextField> {
           borderColor: activeBorderColor,
           fillColor: activeFillColor,
           padding: activeContentPadding,
-          child: Scrollbar(
-            controller: scrollController,
-            thumbVisibility: true,
-            child: TextField(
-              controller: _controller,
-              focusNode: widget.focusNode,
-              scrollController: scrollController,
-              minLines: widget.obscureText ? 1 : widget.minLines,
-              maxLines: widget.obscureText ? 1 : widget.maxLines,
-              maxLength: widget.maxLength,
-              expands: widget.obscureText ? false : (widget.maxLines == null),
-              obscureText: widget.obscureText,
-              readOnly: widget.readOnly,
-              textInputAction: widget.textInputAction,
-              onChanged: widget.onChanged,
-              style: (widget.textStyle ?? AppTypography.bodyRegular).copyWith(
-                color: activeTextColor,
-              ),
-              decoration: InputDecoration(
-                hintText: widget.hintText,
-                hintStyle: (widget.textStyle ?? AppTypography.bodyRegular)
-                    .copyWith(color: activeHintColor),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-                counterText: '',
-              ),
-            ),
+          child: widget.showScrollbar
+              ? Scrollbar(
+                  controller: scrollController,
+                  thumbVisibility: true,
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: widget.focusNode,
+                    scrollController: scrollController,
+                    minLines: widget.obscureText ? 1 : widget.minLines,
+                    maxLines: widget.obscureText ? 1 : widget.maxLines,
+                    maxLength: widget.maxLength,
+                    expands: widget.obscureText ? false : (widget.maxLines == null),
+                    obscureText: widget.obscureText,
+                    readOnly: widget.readOnly,
+                    textInputAction: widget.textInputAction,
+                    onChanged: widget.onChanged,
+                    style: (widget.textStyle ?? AppTypography.bodyRegular).copyWith(
+                      color: activeTextColor,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: widget.hintText,
+                      hintStyle: (widget.textStyle ?? AppTypography.bodyRegular)
+                          .copyWith(color: activeHintColor),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                      counterText: '',
+                    ),
+                  ),
+                )
+              : TextField(
+                  controller: _controller,
+                  focusNode: widget.focusNode,
+                  minLines: widget.obscureText ? 1 : widget.minLines,
+                  maxLines: widget.obscureText ? 1 : widget.maxLines,
+                  maxLength: widget.maxLength,
+                  expands: widget.obscureText ? false : (widget.maxLines == null),
+                  obscureText: widget.obscureText,
+                  readOnly: widget.readOnly,
+                  textInputAction: widget.textInputAction,
+                  onChanged: widget.onChanged,
+                  style: (widget.textStyle ?? AppTypography.bodyRegular).copyWith(
+                    color: activeTextColor,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: widget.hintText,
+                    hintStyle: (widget.textStyle ?? AppTypography.bodyRegular)
+                        .copyWith(color: activeHintColor),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                    counterText: '',
+                  ),
+                ),
           ),
-        ),
       ],
     );
   }

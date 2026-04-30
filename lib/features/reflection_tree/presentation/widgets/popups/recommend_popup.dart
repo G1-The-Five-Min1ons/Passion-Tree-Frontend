@@ -28,7 +28,10 @@ class RecommendPopup extends StatefulWidget {
 }
 
 class _RecommendPopupState extends State<RecommendPopup> {
-  late Future<List<LearningPathApiModel>> _recommendedPathsFuture;
+  static final Map<String, List<LearningPathApiModel>> _cachedRecommendations = {};
+
+  List<LearningPathApiModel>? _recommendedPaths;
+  bool _isLoading = true;
   final LearningPathDataSource _dataSource = getIt<LearningPathDataSource>();
 
   void _navigateToLearningPath(LearningPathApiModel path) {
@@ -61,8 +64,34 @@ class _RecommendPopupState extends State<RecommendPopup> {
   @override
   void initState() {
     super.initState();
-    _recommendedPathsFuture =
-        _dataSource.getRecommendedLearningPathsForTree(widget.treeId);
+    final cachedPaths = _cachedRecommendations[widget.treeId];
+    if (cachedPaths != null) {
+      _recommendedPaths = cachedPaths;
+      _isLoading = false;
+      return;
+    }
+
+    _loadRecommendations();
+  }
+
+  Future<void> _loadRecommendations() async {
+    try {
+      final paths = await _dataSource.getRecommendedLearningPathsForTree(
+        widget.treeId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _cachedRecommendations[widget.treeId] = paths;
+        _recommendedPaths = paths;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _recommendedPaths = null;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -96,78 +125,74 @@ class _RecommendPopupState extends State<RecommendPopup> {
                   ),
                   const SizedBox(height: 16),
 
-                  FutureBuilder<List<LearningPathApiModel>>(
-                    future: _recommendedPathsFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24),
-                          child: SizedBox(
-                            height: 50,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.textSecondary,
-                                ),
+                  if (_isLoading)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: SizedBox(
+                        height: 50,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (_recommendedPaths == null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        'Failed to load recommendations',
+                        style: AppTypography.subtitleRegular.copyWith(
+                          color: Colors.red,
+                        ),
+                      ),
+                    )
+                  else
+                    Builder(
+                      builder: (context) {
+                        final recommendedPaths = _recommendedPaths!.take(5).toList();
+
+                        if (recommendedPaths.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Text(
+                              'No recommendations available',
+                              style: AppTypography.subtitleRegular.copyWith(
+                                color: AppColors.textSecondary,
                               ),
                             ),
-                          ),
-                        );
-                      }
+                          );
+                        }
 
-                      if (snapshot.hasError) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Text(
-                            'Failed to load recommendations',
-                            style: AppTypography.subtitleRegular.copyWith(
-                              color: Colors.red,
-                            ),
-                          ),
-                        );
-                      }
-
-                      final recommendedPaths = (snapshot.data ?? []).take(5).toList();
-
-                      if (recommendedPaths.isEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Text(
-                            'No recommendations available',
-                            style: AppTypography.subtitleRegular.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        );
-                      }
-
-                      return Column(
-                        children: recommendedPaths
-                            .map((path) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: GestureDetector(
-                                onTap: () => _navigateToLearningPath(path),
-                                child: PixelBorderContainer(
-                                  pixelSize: 3,
-                                  height: 38,
-                                  fillColor: Colors.transparent,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      path.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppTypography.subtitleSemiBold,
+                        return Column(
+                          children: recommendedPaths
+                              .map((path) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: GestureDetector(
+                                  onTap: () => _navigateToLearningPath(path),
+                                  child: PixelBorderContainer(
+                                    pixelSize: 3,
+                                    height: 38,
+                                    fillColor: Colors.transparent,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    child: Align(
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        path.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTypography.subtitleSemiBold,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ))
-                            .toList(),
-                      );
-                    },
-                  ),
+                              ))
+                              .toList(),
+                        );
+                      },
+                    ),
                 ],
               ),
             ),
