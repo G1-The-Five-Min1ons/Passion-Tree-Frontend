@@ -964,7 +964,10 @@ class _CommentItemState extends State<_CommentItem> {
                           Text(
                             widget.comment.userName,
                             style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(fontWeight: FontWeight.bold),
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.secondaryBrand,
+                                ),
                           ),
                           const SizedBox(height: 2),
                           RichText(

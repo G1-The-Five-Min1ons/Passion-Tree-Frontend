@@ -34,6 +34,8 @@ import 'package:passion_tree_frontend/features/learning_path/domain/entities/cre
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_question_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/update_choice_usecase.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/usecases/delete_question_usecase.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_bloc.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_event.dart';
 
 class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
   final GetAllLearningPaths getAllLearningPaths;
@@ -308,7 +310,7 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
       (event, emit) async {
         LogHandler.debug('[BLoC] CompleteNodeEvent: ${event.nodeId}');
         emit(CompletingNode(event.nodeId));
-        
+
         await safeExecute(emit, 'complete node', () async {
           final userId = await _resolveUserId();
           await completeNode(event.nodeId, userId);
@@ -316,6 +318,18 @@ class LearningPathBloc extends Bloc<LearningPathEvent, LearningPathState> {
           final nodeDetail = await getNodeDetail(event.nodeId, userId);
           LogHandler.debug('[BLoC] Node completed successfully');
           emit(NodeDetailLoaded(nodeDetail));
+
+          // Completing a node may advance one or more weekly missions on the
+          // backend. Trigger a silent re-fetch of the shared MissionBloc so the
+          // mission progress bars on Home/Profile reflect the new state without
+          // needing a manual pull-to-refresh.
+          try {
+            getIt<MissionBloc>().add(const FetchMyMissions(silent: true));
+          } catch (e) {
+            LogHandler.warning(
+              '[BLoC] Failed to refresh missions after node completion: $e',
+            );
+          }
         });
       },
       transformer: droppable(),

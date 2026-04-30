@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
@@ -400,8 +401,8 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
                   const SizedBox(height: 12),
 
                   // Fields
-                  _buildField('First name', _firstName, _firstNameCtrl),
-                  _buildField('Last name', _lastName, _lastNameCtrl),
+                  _buildField('First name', _firstName, _firstNameCtrl, maxLength: 30),
+                  _buildField('Last name', _lastName, _lastNameCtrl, maxLength: 30),
                   _buildField('Username', _username, _usernameCtrl, isReadOnly: true),
                   _buildField('Email', _email, _emailCtrl, isReadOnly: true),
                   _buildField('Location', _location, _locationCtrl),
@@ -470,6 +471,7 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
     TextEditingController? controller, {
     bool isPassword = false,
     bool isReadOnly = false,
+    int? maxLength,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -484,7 +486,12 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
           ),
           const SizedBox(height: 4),
           if (_isEditing && controller != null)
-            _buildInput(controller, readOnly: isReadOnly, obscureText: isPassword)
+            _buildInput(
+              controller,
+              readOnly: isReadOnly,
+              obscureText: isPassword,
+              maxLength: maxLength,
+            )
           else
             Text(
               isPassword ? '••••••••••' : value,
@@ -501,6 +508,7 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
     TextEditingController controller, {
     bool readOnly = false,
     bool obscureText = false,
+    int? maxLength,
   }) {
     return Container(
       height: 36,
@@ -517,6 +525,10 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
         controller: controller,
         readOnly: readOnly,
         obscureText: obscureText,
+        maxLength: maxLength,
+        inputFormatters: maxLength != null
+            ? [LengthLimitingTextInputFormatter(maxLength)]
+            : null,
         style: AppTypography.bodyRegular.copyWith(
           color: readOnly ? AppColors.textDisabled : AppColors.textPrimary,
         ),
@@ -524,6 +536,7 @@ class _AccountSettingsSectionState extends State<AccountSettingsSection> {
           contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           border: InputBorder.none,
           isDense: true,
+          counterText: '',
         ),
       ),
     );

@@ -9,6 +9,9 @@ import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/l
 import 'package:passion_tree_frontend/features/reflection_tree/presentation/bloc/album_bloc.dart';
 import 'package:passion_tree_frontend/features/home/presentation/pages/home_wrapper.dart';
 import 'package:passion_tree_frontend/features/home/presentation/pages/main_tab_bootstrap_pages.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_path_wrapper.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_bloc.dart';
+import 'package:passion_tree_frontend/features/mission/presentation/bloc/mission_event.dart';
 import 'package:passion_tree_frontend/core/common_widgets/icons/pixel_icon.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/homebar_visibility.dart';
@@ -71,12 +74,39 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
     _ensurePageInitialized(target);
 
     _navigatorKeys[target].currentState?.popUntil((route) => route.isFirst);
+    _resetInnerTabStack(target);
+    _refreshMissions();
 
     if (_selectedIndex == target) return;
 
     setState(() {
       _selectedIndex = target;
     });
+  }
+
+  /// Reset nested navigators that live inside a tab so re-selecting the tab
+  /// always returns to its root page. Currently only the Learn tab uses an
+  /// inner Navigator (inside [LearningPathWrapper]).
+  void _resetInnerTabStack(int index) {
+    if (index == 1) {
+      LearningPathWrapper.navigatorKey.currentState?.popUntil(
+        (route) => route.isFirst,
+      );
+    }
+  }
+
+  /// Refresh the shared mission state whenever the user lands on a tab. The
+  /// fetch is silent so the existing progress bars stay visible while fresh
+  /// data is loading, and `MissionBloc` uses a droppable transformer so rapid
+  /// repeat taps are coalesced. This catches mission progress made by any
+  /// backend-tracked action (node completion, enroll, reflect, etc.) without
+  /// needing per-action triggers in every feature bloc.
+  void _refreshMissions() {
+    try {
+      getIt<MissionBloc>().add(const FetchMyMissions(silent: true));
+    } catch (_) {
+      // ignore — provider may not be available in tests
+    }
   }
 
   Future<void> _runStartupPrefetchInOrder() async {
@@ -140,8 +170,16 @@ class _HomeBarWidgetState extends State<HomeBarWidget> {
     // Tapping the currently active tab pops its inner navigator back to its root.
     if (_selectedIndex == index) {
       _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
+      _resetInnerTabStack(index);
+      _refreshMissions();
       return;
     }
+
+    // Switching to a different tab — reset the Learn tab's nested navigator
+    // so its bottom-bar entry always lands on the Overview page.
+    _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
+    _resetInnerTabStack(index);
+    _refreshMissions();
 
     setState(() {
       _selectedIndex = index;

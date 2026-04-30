@@ -80,9 +80,6 @@ class _RecentActivityCardWidgetState extends State<RecentActivityCardWidget> {
                     horizontal: 8,
                     vertical: 7,
                   ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.cardBorder),
-                  ),
                   child: Row(
                     children: [
                       Expanded(
@@ -107,14 +104,18 @@ class _RecentActivityCardWidgetState extends State<RecentActivityCardWidget> {
                         ),
                       ),
                       Container(
+                        width: 96,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
+                          horizontal: 8,
                           vertical: 4,
                         ),
                         alignment: Alignment.center,
                         color: _badgeColor(item),
                         child: Text(
                           item.typeLabel,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: AppTypography.smallBodySemiBold.copyWith(
                             color: AppColors.textPrimary,
                           ),
