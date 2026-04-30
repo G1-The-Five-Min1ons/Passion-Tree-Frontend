@@ -245,7 +245,7 @@ class _AddReflectPageState extends State<AddReflectPage>{
                   padding: const EdgeInsets.only(top: AppSpacing.ymargin),
                   children: [
                     Text(
-                      "Create\nNew Tree",
+                      "Create New Tree",
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         color: Theme.of(context).colorScheme.onPrimary,
                       ),

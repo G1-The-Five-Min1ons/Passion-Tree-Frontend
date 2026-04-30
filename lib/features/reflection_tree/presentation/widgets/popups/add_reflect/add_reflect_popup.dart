@@ -71,6 +71,17 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
     return true;
   }
 
+  Future<void> _goToNextPage() async {
+    if (_currentPage == 2) {
+      FocusScope.of(context).unfocus();
+    }
+
+    await _pageController.nextPage(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+    );
+  }
+
   Future<void> _submitReflection() async {
     if (_isSubmitting) return;
 
@@ -156,7 +167,7 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
                   if (_currentPage < 3) ...[
                     const SizedBox(height: 10),
                     Text(
-                      "Add Reflect",
+                      "Add Reflection",
                       style: Theme.of(context).textTheme.displaySmall,
                     ),
                     const SizedBox(height: 20),
@@ -167,8 +178,12 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
                     child: PageView(
                       controller: _pageController,
                       physics: const NeverScrollableScrollPhysics(),
-                      onPageChanged: (index) =>
-                          setState(() => _currentPage = index),
+                      onPageChanged: (index) {
+                        if (index == 3) {
+                          FocusScope.of(context).unfocus();
+                        }
+                        setState(() => _currentPage = index);
+                      },
                       children: [
                         PageOneView(
                           nodeName: widget.nodeName,
@@ -289,8 +304,8 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
                     color: index <= _currentPage
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.secondary,
+                        ? Theme.of(context).colorScheme.secondary
+                        : Theme.of(context).colorScheme.primary
                   ),
                 ),
               );
@@ -300,10 +315,7 @@ class _AddReflectPopupState extends State<AddReflectPopup> {
         const SizedBox(width: 12),
         GestureDetector(
           onTap: _canGoNext
-              ? () => _pageController.nextPage(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                )
+              ? _goToNextPage
               : null,
           child: Image.asset(
             _canGoNext
