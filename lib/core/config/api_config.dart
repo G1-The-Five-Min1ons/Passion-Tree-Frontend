@@ -1,6 +1,6 @@
 class ApiConfig {
-  static const String apiBaseUrl = 'http://10.0.2.2:5000';
-  static const String _devAIUrl = 'http://10.0.2.2:8000';
+  static const String apiBaseUrl = 'https://api.passion-tree.org';
+  static const String _devAIUrl = 'https://api.passion-tree.org';
 
   // Auto-detect environment (or use --dart-define for build)
   static const String backendBaseUrl = String.fromEnvironment(
