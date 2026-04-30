@@ -44,6 +44,8 @@ class _LearningNodePageState extends State<LearningNodePage> {
   bool _isFullscreen = false;
   late bool _isEnrolled;
   bool _enrollCalled = false;
+  bool _isLoadingNodeDetail = true;
+  String? _nodeDetailError;
 
   @override
   void initState() {
@@ -128,19 +130,21 @@ class _LearningNodePageState extends State<LearningNodePage> {
       appBar: const AppBarWidget(title: 'Learning Paths', showBackButton: true),
       body: SafeArea(
         child: BlocBuilder<LearningPathBloc, LearningPathState>(
+          buildWhen: (_, current) =>
+              current is NodeDetailLoaded ||
+              current is LearningPathLoading ||
+              current is LearningPathInitial,
           builder: (context, state) {
             if (state is NodeDetailLoaded) {
               _cachedNodeDetail = state.nodeDetail;
             }
 
-            if ((state is LearningPathLoading ||
-                    state is LearningPathInitial) &&
-                _cachedNodeDetail == null) {
+            if (_isLoadingNodeDetail && _cachedNodeDetail == null) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is LearningPathError && _cachedNodeDetail == null) {
-              return Center(child: Text('Error: ${state.message}'));
+            if (_nodeDetailError != null && _cachedNodeDetail == null) {
+              return Center(child: Text('Error: $_nodeDetailError'));
             }
 
             final nodeDetail = _cachedNodeDetail;
@@ -237,6 +241,19 @@ class _LearningNodePageState extends State<LearningNodePage> {
       listener: (context, state) {
         if (state is NodeDetailLoaded) {
           _initVideoController(state.nodeDetail.linkVdo);
+          if (_isLoadingNodeDetail) {
+            setState(() {
+              _isLoadingNodeDetail = false;
+              _nodeDetailError = null;
+            });
+          }
+        }
+
+        if (state is LearningPathError && _cachedNodeDetail == null) {
+          setState(() {
+            _isLoadingNodeDetail = false;
+            _nodeDetailError = state.message;
+          });
         }
 
         // Track enrollment confirmation
