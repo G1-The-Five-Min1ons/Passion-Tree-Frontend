@@ -973,7 +973,7 @@ class _CommentItemState extends State<_CommentItem> {
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.secondaryBrand,
+                                  color: colors.onPrimary,
                                 ),
                           ),
                           const SizedBox(height: 2),
