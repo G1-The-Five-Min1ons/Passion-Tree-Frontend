@@ -4,8 +4,7 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/network/log_handler.dart';
 import 'package:passion_tree_frontend/core/common_widgets/inputs/pixel_border.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/app_button.dart';
-import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
+import 'package:passion_tree_frontend/core/common_widgets/buttons/save_cancel.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
 import 'package:passion_tree_frontend/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:passion_tree_frontend/features/authentication/presentation/pages/login_page.dart';
@@ -89,34 +88,25 @@ class DangerZoneSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'Cancel',
-                        onPressed: () => Navigator.of(ctx).pop(),
-                      ),
+                Center(
+                  child: UnconstrainedBox(
+                    child: SaveCancel(
+                      saveText: 'Delete',
+                      cancelText: 'Cancel',
+                      saveButtonColor: AppColors.cancel,
+                      onCancel: () => Navigator.of(ctx).pop(),
+                      onSave: () {
+                        final password = passwordController.text.trim();
+                        if (password.isEmpty) {
+                          setState(() {
+                            errorText = 'Password is required';
+                          });
+                          return;
+                        }
+                        Navigator.of(ctx).pop(password);
+                      },
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: AppButton(
-                        variant: AppButtonVariant.text,
-                        text: 'Delete',
-                        backgroundColor: AppColors.cancel,
-                        onPressed: () {
-                          final password = passwordController.text.trim();
-                          if (password.isEmpty) {
-                            setState(() {
-                              errorText = 'Password is required';
-                            });
-                            return;
-                          }
-                          Navigator.of(ctx).pop(password);
-                        },
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -159,25 +149,16 @@ class DangerZoneSection extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      variant: AppButtonVariant.text,
-                      text: 'Cancel',
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                    ),
+              Center(
+                child: UnconstrainedBox(
+                  child: SaveCancel(
+                    saveText: confirmLabel,
+                    cancelText: 'Cancel',
+                    saveButtonColor: confirmColor,
+                    onCancel: () => Navigator.of(ctx).pop(false),
+                    onSave: () => Navigator.of(ctx).pop(true),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppButton(
-                      variant: AppButtonVariant.text,
-                      text: confirmLabel,
-                      backgroundColor: confirmColor,
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),

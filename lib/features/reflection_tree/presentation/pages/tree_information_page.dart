@@ -45,6 +45,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
   static const double _recommendPopupThreshold = 0.6;
 
   AlbumItem? _currentItem;
+  bool _hasUnlockedRecommendationBadge = false;
   final Map<String, _ReflectionViewData> _latestReflectionByNodeId = {};
   final AlbumDataSource _albumDataSource = AlbumDataSource();
   final ReflectionDataSource _reflectionDataSource = ReflectionDataSource();
@@ -63,7 +64,9 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
   }
 
   void _showTreeDiedSnackbar() {
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
       const SnackBar(
         content: Text('Retrieve the tree to continue'),
         backgroundColor: AppColors.cancel,
@@ -72,7 +75,9 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
   }
 
   void _showTreeIdUnavailableSnackbar() {
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
       const SnackBar(
         content: Text(
           'Tree information is unavailable right now. Please try again.',
@@ -84,8 +89,16 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
 
   void _updateCurrentItem(AlbumItem item) {
     if (!mounted) return;
+
+    final hasReachedRecommendThreshold =
+        _nonStandaloneReflectionProgress(item.chapters) >=
+        _recommendPopupThreshold;
+
     setState(() {
       _currentItem = item;
+      if (hasReachedRecommendThreshold) {
+        _hasUnlockedRecommendationBadge = true;
+      }
     });
   }
 
@@ -104,9 +117,8 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
   }
 
   bool _shouldShowRecommendationBadge(AlbumItem item) {
-    final treeId = item.treeId ?? widget.treeId;
-    if (treeId == null || treeId.isEmpty) return false;
-    return _nonStandaloneReflectionProgress(item.chapters) >=
+    return _hasUnlockedRecommendationBadge ||
+      _nonStandaloneReflectionProgress(item.chapters) >=
         _recommendPopupThreshold;
   }
 
@@ -187,8 +199,11 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
         subjectName: currentItem.subjectName,
         lastEdited: currentItem.lastEdited,
         status: currentItem.status,
+        isReflectionClosed: currentItem.isReflectionClosed,
         chapters: updatedChapters,
         overallStatus: currentItem.overallStatus,
+        treeScore: currentItem.treeScore,
+        isPaused: currentItem.isPaused,
         pauseFrom: currentItem.pauseFrom,
         pauseTo: currentItem.pauseTo,
         resumeOn: currentItem.resumeOn,
@@ -255,10 +270,39 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
     try {
       await _albumDataSource.endReflectingTree(treeId, token);
       if (!mounted) return;
-      Navigator.pop(context, true);
+
+      final currentItem = _currentItem;
+      if (currentItem != null) {
+        _updateCurrentItem(
+          AlbumItem(
+            treeId: currentItem.treeId,
+            subjectName: currentItem.subjectName,
+            lastEdited: currentItem.lastEdited,
+            status: currentItem.status,
+            isReflectionClosed: true,
+            chapters: currentItem.chapters,
+            overallStatus: currentItem.overallStatus,
+            treeScore: currentItem.treeScore,
+            isPaused: currentItem.isPaused,
+            pauseFrom: currentItem.pauseFrom,
+            pauseTo: currentItem.pauseTo,
+            resumeOn: currentItem.resumeOn,
+            pathId: currentItem.pathId,
+          ),
+        );
+      }
+
+      final albumBloc = context.read<AlbumBloc>();
+      if (widget.albumId != null) {
+        albumBloc.add(LoadAlbumByIdEvent(widget.albumId!));
+      } else {
+        albumBloc.add(const LoadAlbumsEvent());
+      }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.removeCurrentSnackBar();
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Failed to end reflecting: $e'),
           backgroundColor: AppColors.cancel,
@@ -358,7 +402,8 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        StatusBadge(status: item.status),
+                        if (!_isTreeReflectionClosed(item))
+                          StatusBadge(status: item.status),
                         if (_shouldShowRecommendationBadge(item)) ...[
                           const SizedBox(width: 8),
                           GestureDetector(
@@ -410,9 +455,11 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
 
                                     if (_isTreeReflectionClosed(item) &&
                                         !chapter.hasReflection) {
-                                      ScaffoldMessenger.of(
+                                      final messenger = ScaffoldMessenger.of(
                                         context,
-                                      ).showSnackBar(
+                                      );
+                                      messenger.removeCurrentSnackBar();
+                                      messenger.showSnackBar(
                                         const SnackBar(
                                           content: Text(
                                             'This tree has ended. You cannot add new reflections.',
@@ -426,9 +473,11 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
 
                                     if (!chapter.canReflect) {
                                       // Learning Path not completed
-                                      ScaffoldMessenger.of(
+                                      final messenger = ScaffoldMessenger.of(
                                         context,
-                                      ).showSnackBar(
+                                      );
+                                      messenger.removeCurrentSnackBar();
+                                      messenger.showSnackBar(
                                         SnackBar(
                                           content: Text(
                                             'Please finish this chapter before reflecting',
@@ -572,8 +621,12 @@ class _TreeDetailPageState extends State<TreeDetailPage> {
                               subjectName: currentItem.subjectName,
                               lastEdited: currentItem.lastEdited,
                               status: currentItem.status,
+                              isReflectionClosed:
+                                  currentItem.isReflectionClosed,
                               chapters: updatedChapters,
                               overallStatus: currentItem.overallStatus,
+                              treeScore: currentItem.treeScore,
+                              isPaused: currentItem.isPaused,
                               pauseFrom: currentItem.pauseFrom,
                               pauseTo: currentItem.pauseTo,
                               resumeOn: currentItem.resumeOn,

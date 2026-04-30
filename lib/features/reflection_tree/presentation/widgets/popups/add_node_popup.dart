@@ -47,7 +47,9 @@ class _AddNodePopupState extends State<AddNodePopup> {
 
   Future<void> _handleSave() async {
     if (_nodeNameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.removeCurrentSnackBar();
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('Please enter node name'),
           backgroundColor: AppColors.cancel,
@@ -91,8 +93,10 @@ class _AddNodePopupState extends State<AddNodePopup> {
       if (!mounted) return;
 
       Navigator.pop(context);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
+
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.removeCurrentSnackBar();
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('Node added successfully!'),
           backgroundColor: AppColors.status,
@@ -107,8 +111,10 @@ class _AddNodePopupState extends State<AddNodePopup> {
       if (!mounted) return;
       
       setState(() => _isLoading = false);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
+
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.removeCurrentSnackBar();
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Failed to add node: $e'),
           backgroundColor: AppColors.cancel,
