@@ -91,7 +91,7 @@ class _PageTwoViewState extends State<PageTwoView>
                   const SizedBox(height: 30),
                   PixelTextField(
                     pixelSize: 3,
-                    hintText: 'Reflect on how you feel',
+                    hintText: 'Reflect on how you feel (Require)',
                     height: 180,
                     value: widget.initialText,
                     onChanged: (val) {

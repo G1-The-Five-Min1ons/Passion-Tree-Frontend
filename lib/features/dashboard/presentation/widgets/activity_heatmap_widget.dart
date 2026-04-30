@@ -16,7 +16,6 @@ class ActivityHeatmapWidget extends StatefulWidget {
 class _ActivityHeatmapWidgetState extends State<ActivityHeatmapWidget> {
   static const _rows = 7;
   static const _cols = 12;
-  static const _totalDays = _rows * _cols;
   static const _months = [
     'Jan',
     'Feb',
@@ -41,9 +40,11 @@ class _ActivityHeatmapWidgetState extends State<ActivityHeatmapWidget> {
   void initState() {
     super.initState();
     final today = DateTime.now();
-    // Align start to a Monday
-    final rawStart = today.subtract(const Duration(days: _totalDays - 1));
-    _startDate = rawStart.subtract(Duration(days: rawStart.weekday - 1));
+    // Start on the Monday of the week that is (_cols-1) weeks before today's week,
+    // so today always lands in the last column at its correct weekday row.
+    _startDate = today.subtract(
+      Duration(days: (_cols - 1) * _rows + (today.weekday - 1)),
+    );
 
     _counts = {};
     for (final item in widget.heatmapData) {

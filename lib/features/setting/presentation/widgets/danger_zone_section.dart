@@ -324,7 +324,7 @@ class DangerZoneSection extends StatelessWidget {
               _buildDangerRow(
                 title: 'Sign out all devices',
                 subtitle: 'Revoke all active sessions and tokens',
-                buttonLabel: 'sign-out all',
+                buttonLabel: 'Sign-out all',
                 buttonColor: AppColors.surface,
                 onTap: () => _handleSignOutAll(context),
               ),

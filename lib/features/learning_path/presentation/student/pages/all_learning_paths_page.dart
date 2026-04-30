@@ -34,13 +34,7 @@ class _AllLearningPathsPageState extends State<AllLearningPathsPage> {
   }
 
   double _rowHeightForWidth(double width) {
-    final crossAxisCount = _gridCrossAxisCount(width);
-    final usableWidth =
-        width - (AppSpacing.xmargin * 2) - (12.0 * (crossAxisCount - 1));
-    final cardWidth = usableWidth / crossAxisCount;
-    final cardHeight =
-        cardWidth / (BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight);
-    return cardHeight + 35.0;
+    return BaseCourseCard.defaultHeight + 35.0;
   }
 
   @override
@@ -149,9 +143,7 @@ class _AllLearningPathsPageState extends State<AllLearningPathsPage> {
                             crossAxisCount: crossAxisCount,
                             mainAxisSpacing: 35,
                             crossAxisSpacing: 12,
-                            childAspectRatio:
-                                BaseCourseCard.defaultWidth /
-                                BaseCourseCard.defaultHeight,
+                            mainAxisExtent: BaseCourseCard.defaultHeight,
                           ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) =>

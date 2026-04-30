@@ -55,8 +55,11 @@ class PixelBaseCard extends StatelessWidget {
                     flex: 32,
                     child: Container(
                       width: double.infinity,
-                      color: primaryColor,
-                      padding: EdgeInsets.all(pixelSize * 2),
+                      decoration: BoxDecoration(color: primaryColor),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: pixelSize * 2,
+                        vertical: pixelSize,
+                      ),
                       child: Stack(
                         children: [
                           Column(
@@ -69,7 +72,7 @@ class PixelBaseCard extends StatelessWidget {
                                   style: AppPixelTypography.smallTitle.copyWith(
                                     color: Theme.of(context).colorScheme.onPrimary),
                                   maxLines: 1,
-                                  overflow: TextOverflow.clip,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               if (subtitle != null)
                                 Text(
@@ -77,7 +80,7 @@ class PixelBaseCard extends StatelessWidget {
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Theme.of(context).colorScheme.onPrimary),
                                   maxLines: 1,
-                                  overflow: TextOverflow.clip,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                             ],
                           ),

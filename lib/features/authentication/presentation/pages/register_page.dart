@@ -481,6 +481,8 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                               children: [
                                 PixelCheckbox(
                                   value: _acceptTerms,
+                                  activeColor: AppColors.secondaryBrand,
+                                  borderColor: AppColors.textPrimary,
                                   onChanged: (value) {
                                     setState(() {
                                       _acceptTerms = value ?? false;
@@ -496,7 +498,7 @@ class _RegisterPageContentState extends State<_RegisterPageContent> {
                                     text: TextSpan(
                                       style: AppTypography.subtitleMedium
                                           .copyWith(
-                                            color: AppColors.textSecondary,
+                                            color: AppColors.textPrimary,
                                           ),
                                       children: [
                                         const TextSpan(text: 'I accept '),

@@ -33,7 +33,7 @@ class CompletionPopup extends StatelessWidget {
               const SizedBox(height: 8),
 
               Text(
-                'You Have Completed This Learning Path',
+                'You have completed this learning path',
                 style: AppTypography.subtitleRegular,
                 textAlign: TextAlign.center,
               ),
@@ -59,7 +59,7 @@ class CompletionPopup extends StatelessWidget {
 
               // ===== QUESTION =====
               Text(
-                'Would You like to Rate This Learning Path',
+                'Would you like to rate. This Learning Path',
                 style: AppTypography.subtitleRegular.copyWith(
                   color: colors.onPrimary,
                 ),

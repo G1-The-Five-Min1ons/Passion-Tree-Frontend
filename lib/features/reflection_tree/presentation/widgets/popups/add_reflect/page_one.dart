@@ -36,7 +36,7 @@ class PageOneView extends StatelessWidget {
                   const SizedBox(height: 12),
                   PixelTextField(
                     pixelSize: 3,
-                    hintText: 'Type what you have learned',
+                    hintText: 'Type what you have learned (Require)',
                     height: 320,
                     value: initialValue,
                     onChanged: onLearnChanged,

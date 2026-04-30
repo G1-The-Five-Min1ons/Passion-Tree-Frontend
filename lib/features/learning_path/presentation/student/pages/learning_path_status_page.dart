@@ -6,6 +6,7 @@ import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_progress_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
@@ -31,13 +32,6 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
   List<EnrolledLearningPath>? _cachedEnrolledPaths;
 
   String? userId;
-
-  int _gridCrossAxisCount(double width) {
-    if (width < 420) return 1;
-    if (width < 760) return 2;
-    if (width < 1100) return 3;
-    return 4;
-  }
 
   @override
   void initState() {
@@ -76,7 +70,7 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final crossAxisCount = _gridCrossAxisCount(MediaQuery.sizeOf(context).width);
+    const crossAxisCount = 1;
 
     return Scaffold(
       appBar: AppBarWidget(
@@ -179,22 +173,32 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                           ),
                         )
                       else
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: inProgress.length < inProgressShown
-                              ? inProgress.length
-                              : inProgressShown,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: crossAxisCount,
-                                mainAxisSpacing: 35,
-                                crossAxisSpacing: 12,
-                                childAspectRatio:
-                                    0.62, // taller progress card
+                        Builder(
+                          builder: (context) {
+                            final count = inProgress.length < inProgressShown
+                                ? inProgress.length
+                                : inProgressShown;
+                            final rows = (count / crossAxisCount).ceil();
+                            final gridHeight = rows * BaseCourseCard.defaultHeight +
+                                (rows > 1 ? (rows - 1) * 35.0 : 0);
+                            return SizedBox(
+                              height: gridHeight,
+                              child: GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: count,
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: crossAxisCount,
+                                      mainAxisSpacing: 35,
+                                      crossAxisSpacing: 12,
+                                      mainAxisExtent: BaseCourseCard.defaultHeight,
+                                    ),
+                                itemBuilder: (context, index) {
+                                  return CourseProgressCard(data: inProgress[index]);
+                                },
                               ),
-                          itemBuilder: (context, index) {
-                            return CourseProgressCard(data: inProgress[index]);
+                            );
                           },
                         ),
 
@@ -267,22 +271,32 @@ class _LearningPathStatusPageState extends State<LearningPathStatusPage> {
                           ),
                         )
                       else
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: completed.length < completedShown
-                              ? completed.length
-                              : completedShown,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: crossAxisCount,
-                                mainAxisSpacing: 35,
-                                crossAxisSpacing: 12,
-                                childAspectRatio:
-                                    0.62, // taller progress card
+                        Builder(
+                          builder: (context) {
+                            final count = completed.length < completedShown
+                                ? completed.length
+                                : completedShown;
+                            final rows = (count / crossAxisCount).ceil();
+                            final gridHeight = rows * BaseCourseCard.defaultHeight +
+                                (rows > 1 ? (rows - 1) * 35.0 : 0);
+                            return SizedBox(
+                              height: gridHeight,
+                              child: GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: count,
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: crossAxisCount,
+                                      mainAxisSpacing: 35,
+                                      crossAxisSpacing: 12,
+                                      mainAxisExtent: BaseCourseCard.defaultHeight,
+                                    ),
+                                itemBuilder: (context, index) {
+                                  return CourseProgressCard(data: completed[index]);
+                                },
                               ),
-                          itemBuilder: (context, index) {
-                            return CourseProgressCard(data: completed[index]);
+                            );
                           },
                         ),
 

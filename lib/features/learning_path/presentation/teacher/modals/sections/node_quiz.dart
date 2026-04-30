@@ -312,7 +312,7 @@ class _NodeQuizSectionState extends State<NodeQuizSection> {
                     TextButton(
                       onPressed: () => _addChoice(qIndex),
                       child: Text(
-                        'Add More Choices',
+                        'Add More Choices (At least 1 choice is required)',
                         style: AppTypography.subtitleSemiBold.copyWith(
                           color: AppColors.textSecondary,
                         ),

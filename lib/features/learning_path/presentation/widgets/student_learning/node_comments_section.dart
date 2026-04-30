@@ -666,31 +666,31 @@ class _CommentInputAreaState extends State<_CommentInputArea> {
                   horizontal: 16,
                   vertical: 8,
                 ),
-                color: colors.primary.withValues(alpha: 0.08),
+                color: AppColors.secondaryBrand.withValues(alpha: 0.12),
                 child: Row(
                   children: [
-                    Icon(Icons.reply, size: 16, color: colors.primary),
+                    Icon(Icons.reply, size: 16, color: AppColors.secondaryBrand),
                     const SizedBox(width: 6),
                     Text(
                       'Replying to ',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.onSurface.withValues(alpha: 0.6),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     Text(
                       widget.replyingToUsername!,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: colors.primary,
+                        color: AppColors.secondaryBrand,
                       ),
                     ),
                     const Spacer(),
                     GestureDetector(
                       onTap: widget.onCancelReply,
-                      child: Icon(
+                      child: const Icon(
                         Icons.close,
                         size: 16,
-                        color: colors.onSurface.withValues(alpha: 0.5),
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -973,7 +973,7 @@ class _CommentItemState extends State<_CommentItem> {
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: colors.onPrimary,
+                                  color: AppColors.secondaryBrand,
                                 ),
                           ),
                           const SizedBox(height: 2),

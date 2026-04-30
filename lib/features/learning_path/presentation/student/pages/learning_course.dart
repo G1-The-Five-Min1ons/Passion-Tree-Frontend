@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/common_widgets/bars/appbar.dart';
 import 'package:passion_tree_frontend/core/di/injection.dart';
-import 'package:passion_tree_frontend/core/theme/theme.dart';
+import 'package:passion_tree_frontend/core/theme/colors.dart';
+import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/learning_path.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
-import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/student_learning/learning_course_content.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_header.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/node/nodes_overview_core.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/student/pages/learning_node.dart';
 
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
@@ -71,9 +73,44 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
     }
   }
 
+  bool _canOpenNode(NodeDetail node, List<NodeDetail> nodes) {
+    if (_enrolledPath == null) return true; // preview mode (not enrolled yet)
+    final sortedNodes = [...nodes]
+      ..sort((a, b) => a.sequence.compareTo(b.sequence));
+    for (final n in sortedNodes) {
+      if (n.nodeId == node.nodeId) {
+        return true;
+      }
+      if (n.complete.toLowerCase() != 'true') {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  void _showOutOfOrderNodeSnackBar() {
+    ScaffoldMessenger.of(context)
+      ..removeCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please finish the previous node.',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          backgroundColor: AppColors.cancel,
+          duration: Duration(seconds: 2),
+        ),
+      );
+  }
+
   void _handlePreviewNodeTap(int index, List<NodeDetail> nodes) {
     if (index >= nodes.length) return;
     final node = nodes[index];
+
+    if (!_canOpenNode(node, nodes)) {
+      _showOutOfOrderNodeSnackBar();
+      return;
+    }
 
     LogHandler.info('Action: Preview node tap → nodeId=${node.nodeId}');
 
@@ -144,29 +181,76 @@ class _LearningCoursePageState extends State<LearningCoursePage> {
 
               final nodes = _cachedNodes;
 
-              return SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    left: AppSpacing.xmargin,
-                    right: AppSpacing.xmargin,
-                    top: AppSpacing.ymargin,
-                    bottom: 40,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      /// ===== COURSE CONTENT =====
-                      LearningCourseContent(
-                        title: _title,
-                        description: _description,
-                        nodes: nodes,
-                        onNodeTap: nodes != null
-                            ? (index) => _handlePreviewNodeTap(index, nodes)
-                            : null,
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /// ===== HEADER (Title + Progress) =====
+                  const SizedBox(height: 16),
+                  HeaderBar(title: _title, showAddButton: false),
+                  if (_enrolledPath != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            color:
+                                _enrolledPath!.progressStatus == 'Completed'
+                                ? AppColors.status
+                                : AppColors.warning,
+                            child: Text(
+                              _enrolledPath!.progressStatus,
+                              style: AppTypography.smallBodyMedium.copyWith(
+                                color: AppColors.background,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            '${_enrolledPath!.completedNodes} / ${_enrolledPath!.modules} nodes',
+                            style: AppTypography.smallBodyMedium.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '(${_enrolledPath!.progressPercent.round()}%)',
+                            style: AppTypography.smallBodyMedium.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+
+                  /// ===== CORE (description + nodes preview) =====
+                  Expanded(
+                    child: nodes == null
+                        ? const Center(child: CircularProgressIndicator())
+                        : nodes.isEmpty
+                        ? Center(
+                            child: Text(
+                              'No nodes available',
+                              style: AppTypography.subtitleSemiBold.copyWith(
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          )
+                        : NodesOverviewCore(
+                            isEditable: false,
+                            showNodeTitle: true,
+                            description: _description,
+                            nodes: nodes,
+                            onNodeTap: (index) =>
+                                _handlePreviewNodeTap(index, nodes),
+                          ),
                   ),
-                ),
+                ],
               );
             },
           ),

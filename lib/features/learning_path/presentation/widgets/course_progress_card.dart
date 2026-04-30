@@ -62,7 +62,7 @@ class CourseProgressCard extends StatelessWidget {
       child: BaseCourseCard(
         child: LayoutBuilder(builder: (context, constraints) {
           final scale = (constraints.maxHeight / BaseCourseCard.defaultHeight).clamp(0.6, 1.4);
-          final imageHeight = (90 * scale).clamp(60.0, 180.0);
+          final imageHeight = (80 * scale).clamp(56.0, 160.0);
 
           return Column(
             children: [
@@ -173,7 +173,7 @@ class CourseProgressCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    SizedBox(height: 8 * scale),
+                    const Spacer(),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

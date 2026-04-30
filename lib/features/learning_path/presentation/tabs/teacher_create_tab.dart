@@ -7,6 +7,7 @@ import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.d
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/create_learning_path_input_page.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/teacher/pages/teacher_nodes_overview.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_bloc.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/bloc/learning_path_event.dart';
@@ -142,7 +143,7 @@ class _TeacherCreateTabState extends State<TeacherCreateTab> {
             crossAxisCount: crossAxisCount,
             mainAxisSpacing: 35,
             crossAxisSpacing: 12,
-            childAspectRatio: 0.692,
+            mainAxisExtent: BaseCourseCard.defaultHeight,
           ),
           itemBuilder: (context, index) {
             return PixelCourseCard(

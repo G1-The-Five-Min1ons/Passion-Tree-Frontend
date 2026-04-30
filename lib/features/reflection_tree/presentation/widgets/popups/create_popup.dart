@@ -241,7 +241,6 @@ class _CreatePopUpState extends State<CreatePopUp> {
                       hintText: widget.hint,
                       height: 35,
                       maxLines: 1,
-                      showScrollbar: false,
                       onChanged: (value) {
                         setState(() {
                           _albumNameError = _validateAlbumName(value.trim());

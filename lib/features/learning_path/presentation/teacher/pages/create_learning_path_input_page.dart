@@ -42,6 +42,7 @@ class _CreateLearningPathInputPageState
   String? _aiPathId;
   List<GeneratedNode> _cachedAiNodes = [];
   String? _userId;
+  String _instructorName = '';
 
   // Image upload states
   File? _selectedImageFile;
@@ -92,9 +93,18 @@ class _CreateLearningPathInputPageState
   }
 
   Future<void> _loadUserId() async {
-    final storedUserId = await getIt<IAuthRepository>().getUserId();
+    final auth = getIt<IAuthRepository>();
+    final storedUserId = await auth.getUserId();
     if (!mounted) return;
     setState(() => _userId = storedUserId);
+
+    try {
+      final profile = await auth.getProfile();
+      final name =
+          '${profile.user.firstName} ${profile.user.lastName}'.trim();
+      if (!mounted) return;
+      setState(() => _instructorName = name);
+    } catch (_) {}
   }
 
   void _loadExistingData() {
@@ -535,7 +545,9 @@ class _CreateLearningPathInputPageState
                   Center(
                     child: CoursePreviewCard(
                       title: _title,
-                      instructor: 'อ.อะตอม',
+                      instructor: _instructorName.isNotEmpty
+                        ? _instructorName
+                        : (widget.existingPath?.instructor ?? ''),
                       objectives: _objectives,
                       imageUrl: _uploadedImageUrl,
                     ),

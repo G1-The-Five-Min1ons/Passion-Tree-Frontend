@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/theme.dart';
-import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_progress_card.dart';
@@ -32,13 +31,6 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
   LearningPathOverviewLoaded? _cachedOverview;
 
   String? userId;
-
-  int _gridCrossAxisCount(double width) {
-    if (width < 420) return 1;
-    if (width < 760) return 2;
-    if (width < 1100) return 3;
-    return 4;
-  }
 
   @override
   void initState() {
@@ -114,9 +106,6 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final size = MediaQuery.sizeOf(context);
-    final enrolledCrossAxisCount = _gridCrossAxisCount(size.width);
-    final allCrossAxisCount = _gridCrossAxisCount(size.width);
 
     return Scaffold(
       appBar: AppBarWidget(
@@ -262,20 +251,29 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                             ),
                           )
                         else
-                          GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: filteredEnrolled.length.clamp(0, 4),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    mainAxisSpacing: 35,
-                                    crossAxisSpacing: 12,
-                                    childAspectRatio: 0.62,
+                          Builder(
+                              builder: (context) {
+                                final count = filteredEnrolled.length.clamp(0, 4);
+                                final gridHeight = count * BaseCourseCard.defaultHeight +
+                                    (count > 1 ? (count - 1) * 35.0 : 0);
+                                return SizedBox(
+                                  height: gridHeight,
+                                  child: GridView.builder(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: count,
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 1,
+                                          mainAxisSpacing: 35,
+                                          mainAxisExtent: BaseCourseCard.defaultHeight,
+                                        ),
+                                    itemBuilder: (context, index) {
+                                      return CourseProgressCard(
+                                        data: filteredEnrolled[index],
+                                      );
+                                    },
                                   ),
-                              itemBuilder: (context, index) {
-                                return CourseProgressCard(
-                                  data: filteredEnrolled[index],
                                 );
                               },
                             ),
@@ -304,22 +302,29 @@ class _LearningPathOverviewPageState extends State<LearningPathOverviewPage> {
                           ),
                         )
                       else
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: previewAllCourses.length,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: allCrossAxisCount,
-                                mainAxisSpacing: 35,
-                                crossAxisSpacing: 12,
-                                childAspectRatio:
-                                    BaseCourseCard.defaultWidth /
-                                    BaseCourseCard.defaultHeight,
+                        Builder(
+                          builder: (context) {
+                            final count = previewAllCourses.length;
+                            final gridHeight = count * BaseCourseCard.defaultHeight +
+                                (count > 1 ? (count - 1) * 35.0 : 0);
+                            return SizedBox(
+                              height: gridHeight,
+                              child: GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: count,
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 1,
+                                      mainAxisSpacing: 35,
+                                      mainAxisExtent: BaseCourseCard.defaultHeight,
+                                    ),
+                                itemBuilder: (context, index) {
+                                  return PixelCourseCard(
+                                    course: previewAllCourses[index],
+                                  );
+                                },
                               ),
-                          itemBuilder: (context, index) {
-                            return PixelCourseCard(
-                              course: previewAllCourses[index],
                             );
                           },
                         ),

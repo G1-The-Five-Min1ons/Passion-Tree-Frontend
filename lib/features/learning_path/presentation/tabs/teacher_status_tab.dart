@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:passion_tree_frontend/core/theme/typography.dart';
 import 'package:passion_tree_frontend/core/theme/colors.dart';
 import 'package:passion_tree_frontend/features/learning_path/domain/entities/enrolled_learning_path.dart';
+import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/base_course_card.dart';
 import 'package:passion_tree_frontend/features/learning_path/presentation/widgets/course_progress_card.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/button_enums.dart';
 import 'package:passion_tree_frontend/core/common_widgets/buttons/navigation_button.dart';
@@ -22,13 +23,6 @@ class TeacherLearningPathStatus extends StatefulWidget {
 class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
   int inProgressShown = 4;
   int completedShown = 4;
-
-  int _gridCrossAxisCount(double width) {
-    if (width < 420) return 1;
-    if (width < 760) return 2;
-    if (width < 1100) return 3;
-    return 4;
-  }
 
   // Cached filtered lists to avoid re-filtering on every build
   List<EnrolledLearningPath> _inProgressPaths = [];
@@ -64,8 +58,6 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final crossAxisCount = _gridCrossAxisCount(MediaQuery.sizeOf(context).width);
-    
     // Use cached filtered lists instead of filtering on every build
     final inProgressCourses = _inProgressPaths;
     final completedCourses = _completedPaths;
@@ -121,11 +113,10 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
             itemCount: inProgressCourses.length < inProgressShown
                 ? inProgressCourses.length
                 : inProgressShown,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1,
               mainAxisSpacing: 35,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.62, // taller progress card
+              mainAxisExtent: BaseCourseCard.defaultHeight,
             ),
             itemBuilder: (context, index) {
               return CourseProgressCard(
@@ -236,11 +227,10 @@ class _TeacherLearningPathStatusState extends State<TeacherLearningPathStatus> {
             itemCount: completedCourses.length < completedShown
                 ? completedCourses.length
                 : completedShown,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1,
               mainAxisSpacing: 35,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.62, // taller progress card
+              mainAxisExtent: BaseCourseCard.defaultHeight,
             ),
             itemBuilder: (context, index) {
               return CourseProgressCard(

@@ -157,10 +157,9 @@ class BaseCourseCard extends StatelessWidget {
             width == defaultWidth && constraints.hasBoundedWidth
             ? constraints.maxWidth
             : width;
-        final resolvedHeight =
-            height == defaultHeight && constraints.hasBoundedHeight
-            ? constraints.maxHeight
-            : height;
+        // Height is always fixed at the specified value (never expands to fill parent).
+        // Width fills the available space so cards stretch across grid columns.
+        final resolvedHeight = height;
 
         return SizedBox(
           width: resolvedWidth,

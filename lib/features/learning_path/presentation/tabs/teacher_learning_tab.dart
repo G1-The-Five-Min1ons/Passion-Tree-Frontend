@@ -45,13 +45,6 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
   List<LearningPath> _filteredAll = [];
   List<EnrolledLearningPath> _filteredEnrolled = [];
 
-  int _gridCrossAxisCount(double width) {
-    if (width < 420) return 1;
-    if (width < 760) return 2;
-    if (width < 1100) return 3;
-    return 4;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -139,9 +132,6 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final size = MediaQuery.sizeOf(context);
-    final enrolledCrossAxisCount = _gridCrossAxisCount(size.width);
-    final allCrossAxisCount = _gridCrossAxisCount(size.width);
 
     final filteredEnrolled = _filteredEnrolled;
     final filteredAll = _filteredAll;
@@ -195,11 +185,10 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: filteredEnrolled.length.clamp(0, 4),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1,
               mainAxisSpacing: 35,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.62,
+              mainAxisExtent: BaseCourseCard.defaultHeight,
             ),
             itemBuilder: (context, index) {
               return CourseProgressCard(data: filteredEnrolled[index]);
@@ -225,12 +214,10 @@ class _TeacherLearningTabState extends State<TeacherLearningTab> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: shownAllCourses.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: allCrossAxisCount,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1,
               mainAxisSpacing: 35,
-              crossAxisSpacing: 12,
-              childAspectRatio:
-                  BaseCourseCard.defaultWidth / BaseCourseCard.defaultHeight,
+              mainAxisExtent: BaseCourseCard.defaultHeight,
             ),
             itemBuilder: (context, index) {
               return PixelCourseCard(course: shownAllCourses[index]);

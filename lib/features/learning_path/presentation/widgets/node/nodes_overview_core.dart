@@ -46,7 +46,7 @@ class NodesOverviewCore extends StatefulWidget {
 class _NodesOverviewCoreState extends State<NodesOverviewCore> {
   int? _draggingIndex;
   int? _hoverIndex;
-  bool _isDescriptionExpanded = false;
+  bool _isDescriptionExpanded = true;
 
   @override
   Widget build(BuildContext context) {
@@ -54,17 +54,6 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
     final nodeCount = displayNodes.length;
     final description = widget.description?.trim() ?? '';
     const verticalSpacing = 120.0;
-    const topCanvasInset = 20.0;
-
-    // 1. เพิ่มค่านี้เพื่อให้พื้นหลังสีน้ำเงิน/เส้นประ วาดลากยาวลงไปใต้ Node สุดท้ายจนถึงขอบ App Bar
-    const bottomCanvasInset = 10.0;
-
-    final dynamicCanvasHeight = nodeCount == 0
-        ? 200.0
-        : topCanvasInset +
-              ((nodeCount - 1) * verticalSpacing) +
-              widget.nodeSize +
-              bottomCanvasInset;
 
     // --- Logic การหา Node ปัจจุบัน (คงเดิม) ---
     NodeDetail? latestActiveNode;
@@ -120,23 +109,29 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       GestureDetector(
-                        onTap: () => setState(() => _isDescriptionExpanded = !_isDescriptionExpanded),
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => setState(
+                          () => _isDescriptionExpanded =
+                              !_isDescriptionExpanded,
+                        ),
                         child: Icon(
-                          _isDescriptionExpanded ? Icons.expand_less : Icons.expand_more,
+                          _isDescriptionExpanded
+                              ? Icons.expand_less
+                              : Icons.expand_more,
                           color: AppColors.textPrimary,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    description,
-                    maxLines: _isDescriptionExpanded ? null : 1,
-                    overflow: _isDescriptionExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
-                    style: AppTypography.bodySemiBold.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
+                  if (_isDescriptionExpanded) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      description,
+                      style: AppTypography.bodySemiBold.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -155,7 +150,18 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
                     ? math.max(110.0, fixedAreaHeight * 0.16)
                     : 60.0;
 
-                // 3. ใช้ความสูงที่ยาวที่สุดเพื่อให้พื้นหลังสีน้ำเงินแผ่เต็มหน้าจอเสมอ
+                // ระยะใต้โหนดสุดท้าย: ถ้ามีปุ่ม "+" ระหว่างโหนด ต้องเผื่อให้กดถึง
+                // (ปุ่มอยู่ที่ pos.dy + 60 + รัศมีปุ่ม ~16)
+                final trailingInset = widget.showAddBetween ? 96.0 : 24.0;
+
+                final dynamicCanvasHeight = nodeCount == 0
+                    ? 200.0
+                    : startYOffset +
+                          ((nodeCount - 1) * verticalSpacing) +
+                          widget.nodeSize / 2 +
+                          trailingInset;
+
+                // ใช้ความสูงที่ยาวที่สุดเพื่อให้พื้นหลังสีน้ำเงินแผ่เต็มหน้าจอเสมอ
                 final finalCanvasHeight = math.max(
                   fixedAreaHeight,
                   dynamicCanvasHeight,
@@ -171,7 +177,7 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
                     40,
                   ),
                   child: SizedBox(
-                    height: dynamicCanvasHeight,
+                    height: finalCanvasHeight,
                     width: canvasWidth,
                     child: TreeCanvas(
                       itemCount: nodeCount,
@@ -315,7 +321,7 @@ class _NodesOverviewCoreState extends State<NodesOverviewCore> {
   String _shortNodeTitle(String title) {
     final normalized = title.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (normalized.isEmpty) return 'Untitled';
-    if (normalized.length <= 10) return normalized;
-    return '${normalized.substring(0, 10)}...';
+    if (normalized.length <= 6) return normalized;
+    return '${normalized.substring(0, 6)}...';
   }
 }
